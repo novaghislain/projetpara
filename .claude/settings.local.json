@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:docs.perfectcorp.com)",
+      "WebSearch",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8000)",
+      "Bash(curl -s -o /tmp/login_check.html -w \"%{http_code}\" http://localhost:8000/login)",
+      "Read(//tmp/**)",
+      "Bash(cat /tmp/login_check.html | head -60)",
+      "Bash(grep -n \"500\\\\|error\\\\|Error\\\\|Error\\\\|trace\\\\|Exception\" /tmp/login_check.html | head -20)",
+      "Bash(cat /tmp/login_test.html)",
+      "Bash(curl -s -o /tmp/services_test.html -w \"HTTP: %{http_code} | Size: %{size_download} bytes\\\\n\" http://localhost:8000/services)",
+      "Bash(rm -f /tmp/cookies_fresh.txt)",
+      "Bash(curl -s -c /tmp/cookies_fresh.txt http://localhost:8000/shop)",
+      "Bash(sed -n 's/.*csrf-token\" content=\"\\\\\\([^\"]*\\\\\\)\".*/\\\\1/p' /tmp/shop_fresh.html)"
+    ]
+  }
+}
