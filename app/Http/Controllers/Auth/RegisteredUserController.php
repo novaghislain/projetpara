@@ -21,20 +21,27 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
+            'name'     => $request->name,
+            'email'    => $request->email,
             'password' => Hash::make($request->password),
+            'role'     => 'client', // les inscriptions publiques sont des clients
         ]);
 
         event(new Registered($user));
         Auth::login($user);
 
-        return redirect(route('home'));
+        // Si le client venait du catalogue (service en session), on le renvoie commander
+        if (session('order_service_id')) {
+            return redirect()->route('commande.step');
+        }
+
+        // Sinon, vers son espace client
+        return redirect()->route('client.orders.index');
     }
 }

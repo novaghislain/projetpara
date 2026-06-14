@@ -23,6 +23,27 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
         $request->session()->regenerate();
+
+        $user = Auth::user();
+
+        // Enregistrer la dernière connexion
+        $user->update(['last_login_at' => now()]);
+
+        // Si une commande est en attente (client venant du catalogue), on le redirige vers le wizard
+        if (session('order_service_id')) {
+            return redirect()->route('commande.step');
+        }
+
+        // Rediriger les utilisateurs d'entreprise vers leur portail
+        if ($user->client_id) {
+            return redirect()->intended(route('company.dashboard'));
+        }
+
+        // Clients purs (role=client) -> espace client
+        if ($user->role === 'client') {
+            return redirect()->intended(route('client.orders.index'));
+        }
+
         return redirect()->intended(route('home'));
     }
 
@@ -31,6 +52,6 @@ class AuthenticatedSessionController extends Controller
         Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/');
+        return redirect('/login');
     }
 }
