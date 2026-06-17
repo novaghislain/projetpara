@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { ref, onMounted, nextTick } from 'vue';
 import GelLayout from '../../../Layouts/GelLayout.vue';
 
@@ -22,11 +22,6 @@ const form = ref({
     start_date: '',
     price: '',
 });
-
-const statusBadgeClass = (status) => {
-    const map = { active: 'bg-success', expired: 'bg-secondary', revoked: 'bg-danger' };
-    return map[status] || 'bg-secondary';
-};
 
 const statusLabel = (status) => {
     const map = { active: 'Actif', expired: 'Expiré', revoked: 'Révoqué' };
@@ -181,132 +176,162 @@ onMounted(async () => {
 
 <template>
     <GelLayout page-title="Gestion des Licences">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div></div>
-            <button class="btn btn-primary btn-sm" @click="openCreateModal">
-                <i class="bi-plus-lg me-1"></i>Nouvelle licence
-            </button>
-        </div>
+        <div class="isup-shell">
 
-        <!-- Loading -->
-        <div v-if="loading" class="d-flex justify-content-center py-5">
-            <div class="spinner-border text-primary"><span class="visually-hidden">Chargement...</span></div>
-        </div>
+            <!-- ══ HEADER ══ -->
+            <div class="isup-portal-header">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="isup-portal-logo">
+                        <i class="bi-key" style="font-size:20px;"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="isup-portal-company">Gestion des Licences</div>
+                        <div class="isup-portal-sub">Licences, abonnements et accès des clients</div>
+                    </div>
+                    <button class="isup-btn-primary flex-shrink-0" @click="openCreateModal">
+                        <i class="bi-plus-lg me-1"></i>Nouvelle licence
+                    </button>
+                </div>
+            </div>
 
-        <!-- Error -->
-        <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
+            <!-- ══ CONTENU ══ -->
+            <div class="p-3">
 
-        <!-- Empty -->
-        <div v-else-if="!licenses.length" class="text-center py-5 text-muted">
-            <i class="bi-key" style="font-size:48px;"></i>
-            <p class="mt-2 fs-5">Aucune licence enregistrée.</p>
-            <button class="btn btn-primary btn-sm" @click="openCreateModal">
-                <i class="bi-plus-lg me-1"></i>Créer une licence
-            </button>
-        </div>
+                <!-- Loading -->
+                <div v-if="loading" class="d-flex align-items-center justify-content-center gap-3 py-5">
+                    <div class="isup-spinner"></div>
+                    <span style="color:#888; font-size:14px;">Chargement…</span>
+                </div>
 
-        <!-- Table -->
-        <div v-else class="card card-dashboard">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="small text-muted">
-                        <tr>
-                            <th>Clé de licence</th>
-                            <th>Entreprise</th>
-                            <th>Service</th>
-                            <th>Durée</th>
-                            <th>Date début</th>
-                            <th>Date fin</th>
-                            <th>Prix</th>
-                            <th>Statut</th>
-                            <th class="text-end">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="lic in licenses" :key="lic.id">
-                            <td>
-                                <code class="small">{{ lic.license_key }}</code>
-                            </td>
-                            <td class="small">{{ lic.client?.company_name || '-' }}</td>
-                            <td class="small">{{ lic.service?.name || '-' }}</td>
-                            <td class="small">{{ durationLabel(lic.duration_months) }}</td>
-                            <td class="small">{{ formatDate(lic.start_date) }}</td>
-                            <td class="small">{{ formatDate(lic.end_date) }}</td>
-                            <td class="small">{{ formatCurrency(lic.price) }}</td>
-                            <td>
-                                <span class="badge" :class="statusBadgeClass(lic.status)">
-                                    {{ statusLabel(lic.status) }}
-                                </span>
-                            </td>
-                            <td class="text-end">
-                                <button class="btn btn-sm btn-outline-secondary me-1" title="Modifier" @click="openEditModal(lic.id)">
-                                    <i class="bi-pencil"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger" title="Supprimer" @click="deleteLicense(lic.id)">
-                                    <i class="bi-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <!-- Error -->
+                <div v-else-if="error" class="isup-alert-error">
+                    <i class="bi-exclamation-triangle-fill me-2"></i>{{ error }}
+                    <button @click="fetchLicenses" class="isup-btn-primary ms-3" style="padding:4px 12px; font-size:11px;">
+                        <i class="bi-arrow-clockwise me-1"></i>Réessayer
+                    </button>
+                </div>
+
+                <!-- Empty -->
+                <div v-else-if="!licenses.length" class="text-center py-5">
+                    <i class="bi-key" style="font-size:48px; color:#dce3ee; display:block; margin-bottom:12px;"></i>
+                    <p style="font-size:15px; color:#888; margin-bottom:16px;">Aucune licence enregistrée.</p>
+                    <button class="isup-btn-primary" @click="openCreateModal">
+                        <i class="bi-plus-lg me-1"></i>Créer une licence
+                    </button>
+                </div>
+
+                <!-- Table -->
+                <div v-else class="isup-panel">
+                    <div class="isup-panel-header">
+                        <i class="bi-key me-2" style="color:#FF7900;"></i>Liste des licences
+                    </div>
+                    <div class="isup-panel-body p-0">
+                        <div class="isup-table-wrap">
+                            <table class="isup-table w-100">
+                                <thead>
+                                    <tr>
+                                        <th>Clé de licence</th>
+                                        <th>Entreprise</th>
+                                        <th>Service</th>
+                                        <th>Durée</th>
+                                        <th>Date début</th>
+                                        <th>Date fin</th>
+                                        <th>Prix</th>
+                                        <th>Statut</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="lic in licenses" :key="lic.id">
+                                        <td>
+                                            <code class="isup-code">{{ lic.license_key }}</code>
+                                        </td>
+                                        <td style="font-size:12px;">{{ lic.client?.company_name || '-' }}</td>
+                                        <td style="font-size:12px;">{{ lic.service?.name || '-' }}</td>
+                                        <td style="font-size:12px;">{{ durationLabel(lic.duration_months) }}</td>
+                                        <td style="font-size:12px;">{{ formatDate(lic.start_date) }}</td>
+                                        <td style="font-size:12px;">{{ formatDate(lic.end_date) }}</td>
+                                        <td style="font-size:12px; font-weight:600;">{{ formatCurrency(lic.price) }}</td>
+                                        <td>
+                                            <span class="isup-status" :class="lic.status === 'active' ? 'isup-status-green' : lic.status === 'expired' ? 'isup-status-grey' : 'isup-status-red'">
+                                                {{ statusLabel(lic.status) }}
+                                            </span>
+                                        </td>
+                                        <td class="text-end">
+                                            <button class="isup-icon-btn" title="Modifier" @click="openEditModal(lic.id)">
+                                                <i class="bi-pencil"></i>
+                                            </button>
+                                            <button class="isup-icon-btn isup-icon-danger ms-1" title="Supprimer" @click="deleteLicense(lic.id)">
+                                                <i class="bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Create/Edit Modal -->
-        <div ref="modalEl" class="modal fade" tabindex="-1" @hidden.self="showModal = false">
-            <div class="modal-dialog modal-dialog-scrollable">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title fw-bold">{{ isEditing ? 'Modifier la licence' : 'Nouvelle licence' }}</h5>
-                        <button type="button" class="btn-close" @click="closeModal"></button>
+        <!-- ══ MODAL ══ -->
+        <div v-if="showModal" class="isup-modal-overlay" @click.self="closeModal">
+            <div class="isup-modal">
+                <div class="isup-modal-header">
+                    <span>{{ isEditing ? 'Modifier la licence' : 'Nouvelle licence' }}</span>
+                    <button class="isup-modal-close" @click="closeModal">&times;</button>
+                </div>
+                <form @submit.prevent="submitForm" class="isup-modal-body">
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <label class="isup-label">Entreprise *</label>
+                            <select v-model="form.client_id" class="isup-select" required>
+                                <option value="">Sélectionner une entreprise</option>
+                                <option v-for="c in clients" :key="c.id" :value="c.id">{{ c.company_name }}</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="isup-label">Service *</label>
+                            <select v-model="form.service_id" class="isup-select" required>
+                                <option value="">Sélectionner un service</option>
+                                <option v-for="s in services" :key="s.id" :value="s.id">
+                                    {{ s.name }}
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="isup-label">Durée *</label>
+                            <select v-model="form.duration_months" class="isup-select" required>
+                                <option value="12">12 mois</option>
+                                <option value="24">24 mois</option>
+                                <option value="36">36 mois</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="isup-label">Date début *</label>
+                            <input v-model="form.start_date" type="date" class="isup-input" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="isup-label">Prix (FCFA) *</label>
+                            <input v-model="form.price" type="number" step="0.01" min="0" class="isup-input" required placeholder="0">
+                        </div>
                     </div>
-                    <div class="modal-body">
-                        <form @submit.prevent="submitForm">
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    <label class="form-label small">Entreprise *</label>
-                                    <select v-model="form.client_id" class="form-select form-select-sm" required>
-                                        <option value="">Sélectionner une entreprise</option>
-                                        <option v-for="c in clients" :key="c.id" :value="c.id">{{ c.company_name }}</option>
-                                    </select>
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label small">Service *</label>
-                                    <select v-model="form.service_id" class="form-select form-select-sm" required>
-                                        <option value="">Sélectionner un service</option>
-                                        <option v-for="s in services" :key="s.id" :value="s.id">
-                                            <i :class="s.icon || 'bi-gear'"></i> {{ s.name }}
-                                        </option>
-                                    </select>
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label small">Durée *</label>
-                                    <select v-model="form.duration_months" class="form-select form-select-sm" required>
-                                        <option value="12">12 mois</option>
-                                        <option value="24">24 mois</option>
-                                        <option value="36">36 mois</option>
-                                    </select>
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label small">Date début *</label>
-                                    <input v-model="form.start_date" type="date" class="form-control form-control-sm" required>
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label small">Prix (FCFA) *</label>
-                                    <input v-model="form.price" type="number" step="0.01" min="0" class="form-control form-control-sm" required placeholder="0">
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-sm btn-secondary" @click="closeModal">Annuler</button>
-                        <button type="button" class="btn btn-sm btn-primary" :disabled="submitting" @click="submitForm">
-                            <span v-if="submitting" class="spinner-border spinner-border-sm me-1"></span>
-                            {{ isEditing ? 'Mettre à jour' : 'Créer la licence' }}
-                        </button>
-                    </div>
+                </form>
+                <div class="isup-modal-footer">
+                    <button type="button" class="isup-btn-grey" @click="closeModal">Annuler</button>
+                    <button type="button" class="isup-btn-primary" :disabled="submitting" @click="submitForm">
+                        <span v-if="submitting" class="isup-spinner-sm me-1"></span>
+                        {{ isEditing ? 'Mettre à jour' : 'Créer la licence' }}
+                    </button>
                 </div>
             </div>
         </div>
     </GelLayout>
 </template>
+
+<style scoped>
+/* ══ Licenses — unique styles ══ */
+
+.isup-code { font-family:'SF Mono','Fira Code','Consolas',monospace; background:#f4f6f8; padding:2px 6px; border-radius:3px; font-size:13px; color:#163A5E; border:1px solid #e0e4e8; }
+.isup-key { background:#eef3f9; padding:2px 6px; border-radius:3px; font-size:12px; font-family:monospace; }
+</style>

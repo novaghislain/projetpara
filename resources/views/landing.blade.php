@@ -4,564 +4,997 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>GEL Cabinet | Gestion de Cabinet Multi-Pôles</title>
-    <meta name="description" content="Plateforme intégrée de gestion de cabinet pluridisciplinaire. CRM, GED, Pôles, Missions et Comptabilité.">
+    <title>GEL Cabinet | Gestion de Cabinet</title>
+    <meta name="description" content="CRM, GED, Pôles, Missions, Comptabilité, ERP — la gestion de cabinet tout-en-un.">
 
-    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
-
-    <!-- Bootstrap 5 CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <style>
         :root {
-            --gel-primary:   #FF7900;
-            --gel-navy:      #13476E;
-            --gel-navy:      #FF7900;
-            --gel-dark:      #1a1a1a;
-            --gel-light:     #f4f5f7;
-            --gel-border:    #e0e0e0;
+            --gel-primary:     #FF7900;
+            --gel-primary-hov: #e06700;
+            --gel-primary-soft:rgba(255,121,0,0.06);
+            --gel-blue:        #3B82F6;
+            --gel-blue-dark:   #1E3A5F;
+            --gel-blue-light:  #F0F7FF;
+            --gel-blue-medium: #DBEAFE;
+            --gel-blue-soft:   rgba(59,130,246,0.06);
+            --gel-dark:        #111827;
+            --gel-darker:      #0F172A;
+            --gel-white:       #ffffff;
+            --gel-light:       #F8FAFC;
+            --gel-light2:      #F1F5F9;
+            --gel-border:      #E2E8F0;
+            --gel-border-light:#F1F5F9;
+            --gel-muted:       #64748B;
+            --gel-text:        #1E293B;
+            --font-body:       'Inter', sans-serif;
+            --font-heading:    'Outfit', sans-serif;
+            --nav-height:      72px;
+            --radius:          4px;
+            --shadow-sm:       0 1px 3px rgba(0,0,0,0.04);
+            --shadow-md:       0 4px 20px rgba(0,0,0,0.06);
+            --shadow-lg:       0 12px 40px rgba(0,0,0,0.08);
+            --transition:      0.25s cubic-bezier(0.4,0,0.2,1);
         }
-        * { box-sizing: border-box; }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: 'Inter', sans-serif;
-            background: #fff;
-            color: #1a1a1a;
-            margin: 0;
-        }
-        h1, h2, h3, h4, h5, h6, .font-heading {
-            font-family: 'Outfit', sans-serif;
-            font-weight: 700;
+            font-family: var(--font-body);
+            background: var(--gel-white);
+            color: var(--gel-text);
+            line-height: 1.6;
         }
 
-        /* ── Navbar ─────────────────────────────────────────── */
+        h1,h2,h3,h4,h5,h6 { font-family: var(--font-heading); font-weight: 700; }
+
+        /* ============================================================
+           SCROLL ANIMATIONS
+        ============================================================ */
+        .anim-fade-up { opacity: 0; transform: translateY(36px); transition: opacity 0.65s var(--transition), transform 0.65s var(--transition); }
+        .anim-fade-left { opacity: 0; transform: translateX(-36px); transition: opacity 0.65s var(--transition), transform 0.65s var(--transition); }
+        .anim-fade-right { opacity: 0; transform: translateX(36px); transition: opacity 0.65s var(--transition), transform 0.65s var(--transition); }
+        .anim-scale { opacity: 0; transform: scale(0.92); transition: opacity 0.55s var(--transition), transform 0.55s var(--transition); }
+        .anim-visible { opacity: 1 !important; transform: none !important; }
+        .delay-1 { transition-delay: 0.1s !important; }
+        .delay-2 { transition-delay: 0.2s !important; }
+        .delay-3 { transition-delay: 0.3s !important; }
+        .delay-4 { transition-delay: 0.4s !important; }
+        .delay-5 { transition-delay: 0.5s !important; }
+        .delay-6 { transition-delay: 0.6s !important; }
+
+        /* ============================================================
+           NAVBAR — Glassmorphism
+        ============================================================ */
         .gel-navbar {
-            background: var(--gel-navy);
-            height: 56px;
-            border-bottom: 3px solid var(--gel-primary);
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            z-index: 1030;
-            display: flex;
-            align-items: center;
-        }
-        .gel-navbar .container {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .gel-brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none;
-        }
-        .gel-brand-icon {
-            width: 32px; height: 32px;
-            background: var(--gel-primary);
-            border-radius: 2px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 13px; font-weight: 900;
-            color: #fff; letter-spacing: -0.5px;
-        }
-        .gel-brand-name {
-            font-family: 'Outfit', sans-serif;
-            font-weight: 700; font-size: 16px;
-            color: #fff;
-        }
-        .gel-nav-links { display: flex; align-items: center; gap: 4px; }
-        .gel-nav-link {
-            color: rgba(255,255,255,0.75);
-            font-size: 13px; font-weight: 500;
-            padding: 6px 14px;
-            text-decoration: none;
-            border-radius: 2px;
-            transition: all 0.15s;
-        }
-        .gel-nav-link:hover { color: #fff; background: rgba(255,255,255,0.1); }
-        .gel-btn-primary {
-            background: var(--gel-primary);
-            color: #fff;
-            border: none; border-radius: 2px;
-            padding: 7px 18px;
-            font-size: 13px; font-weight: 600;
-            cursor: pointer; text-decoration: none;
-            transition: background 0.15s;
-        }
-        .gel-btn-primary:hover { background: #e06700; color: #fff; }
-        .gel-btn-outline {
-            background: transparent;
-            color: rgba(255,255,255,0.85);
-            border: 1px solid rgba(255,255,255,0.35);
-            border-radius: 2px;
-            padding: 6px 16px;
-            font-size: 13px; font-weight: 500;
-            cursor: pointer; text-decoration: none;
-            transition: all 0.15s;
-        }
-        .gel-btn-outline:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.6); }
-        .gel-btn-danger {
-            background: #cd3c14; color: #fff;
-            border: none; border-radius: 2px;
-            padding: 6px 16px; font-size: 13px; font-weight: 600;
-            cursor: pointer; text-decoration: none;
-            transition: background 0.15s;
-        }
-        .gel-btn-danger:hover { background: #a83010; color: #fff; }
-        .navbar-toggler-custom {
-            background: none; border: 1px solid rgba(255,255,255,0.3);
-            border-radius: 2px; color: #fff;
-            padding: 6px 10px; cursor: pointer;
-            display: none;
-        }
-        @media (max-width: 991px) {
-            .gel-nav-links { display: none; }
-            .navbar-toggler-custom { display: block; }
-        }
-
-        /* ── Orange Sub-bar ─────────────────────────────────── */
-        .gel-subbar {
-            background: var(--gel-primary);
-            height: 32px;
-            margin-top: 56px;
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1050;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid transparent;
+            height: var(--nav-height);
             display: flex; align-items: center;
+            transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
         }
-        .gel-subbar .container {
-            display: flex; align-items: center; gap: 24px;
+        .gel-navbar.scrolled {
+            background: rgba(255,255,255,0.98);
+            border-bottom-color: var(--gel-border);
+            box-shadow: var(--shadow-sm);
         }
-        .gel-subnav-link {
-            color: rgba(255,255,255,0.85);
-            font-size: 12px; font-weight: 600;
-            text-decoration: none;
-            padding: 0 2px;
-            border-bottom: 2px solid transparent;
-            transition: all 0.15s;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-        .gel-subnav-link:hover, .gel-subnav-link.active {
-            color: #fff;
-            border-bottom-color: rgba(255,255,255,0.6);
+        .gel-navbar .container-fluid {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 32px; max-width: 1320px; margin: 0 auto; width: 100%;
         }
 
-        /* ── Hero ───────────────────────────────────────────── */
+        .gel-brand { display: flex; align-items: center; gap: 11px; text-decoration: none; flex-shrink: 0; }
+        .gel-brand-logo { width: 38px; height: 38px; background: var(--gel-primary); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-family: var(--font-heading); font-size: 13px; font-weight: 900; color: #fff; letter-spacing: -0.5px; flex-shrink: 0; }
+        .gel-brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+        .gel-brand-name { font-family: var(--font-heading); font-weight: 800; font-size: 16px; color: var(--gel-dark); letter-spacing: -0.3px; }
+        .gel-brand-sub { font-size: 8.5px; font-weight: 600; color: var(--gel-muted); letter-spacing: 0.1em; text-transform: uppercase; }
+
+        .gel-nav-center { display: flex; align-items: center; gap: 0; list-style: none; }
+        .gel-nav-item { position: relative; }
+        .gel-nav-link {
+            display: flex; align-items: center; gap: 3px;
+            padding: 7px 13px;
+            font-size: 13px; font-weight: 500;
+            color: var(--gel-text); text-decoration: none;
+            border-radius: var(--radius);
+            transition: color var(--transition), background var(--transition);
+            white-space: nowrap;
+        }
+        .gel-nav-link:hover, .gel-nav-link.active { color: var(--gel-primary); background: var(--gel-primary-soft); }
+        .gel-nav-link .chevron { font-size: 10px; transition: transform var(--transition); }
+        .gel-nav-item:hover > a .chevron { transform: rotate(180deg); }
+
+        .gel-dropdown {
+            position: absolute; top: calc(100% + 8px); left: 50%;
+            transform: translateX(-50%);
+            background: var(--gel-white); border: 1px solid var(--gel-border);
+            border-radius: 10px; box-shadow: var(--shadow-lg);
+            padding: 6px; min-width: 220px;
+            opacity: 0; visibility: hidden;
+            transform: translateX(-50%) translateY(-8px);
+            transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
+            list-style: none;
+        }
+        .gel-nav-item:hover .gel-dropdown { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+        .gel-dropdown li a {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 12px; font-size: 13px; font-weight: 500;
+            color: var(--gel-text); text-decoration: none;
+            border-radius: var(--radius);
+            transition: background var(--transition), color var(--transition);
+        }
+        .gel-dropdown li a:hover { background: var(--gel-primary-soft); color: var(--gel-primary); }
+        .gel-dropdown li a .drop-icon { width: 26px; height: 26px; background: var(--gel-light2); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: var(--gel-primary); font-size: 12px; flex-shrink: 0; }
+        .gel-dropdown-divider { border: none; border-top: 1px solid var(--gel-border); margin: 4px 0; }
+
+        .gel-nav-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .gel-phone { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; color: var(--gel-muted); text-decoration: none; padding: 6px 10px; border-radius: var(--radius); transition: color var(--transition); }
+        .gel-phone:hover { color: var(--gel-primary); }
+        .gel-phone i { color: var(--gel-primary); font-size: 13px; }
+        .gel-btn-nav { display: inline-flex; align-items: center; gap: 5px; padding: 7px 16px; font-size: 12.5px; font-weight: 600; border-radius: 6px; text-decoration: none; transition: all var(--transition); border: none; cursor: pointer; }
+        .gel-btn-nav-outline { background: transparent; color: var(--gel-text); border: 1.5px solid var(--gel-border); }
+        .gel-btn-nav-outline:hover { border-color: var(--gel-primary); color: var(--gel-primary); }
+        .gel-btn-nav-primary { background: var(--gel-primary); color: #fff; }
+        .gel-btn-nav-primary:hover { background: var(--gel-primary-hov); color: #fff; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(255,121,0,0.3); }
+        .gel-toggler { display: none; background: none; border: 1.5px solid var(--gel-border); border-radius: var(--radius); padding: 6px 9px; cursor: pointer; color: var(--gel-dark); font-size: 17px; transition: all var(--transition); }
+        .gel-toggler:hover { border-color: var(--gel-primary); color: var(--gel-primary); }
+
+        .gel-mobile-menu { display: none; position: fixed; top: var(--nav-height); left: 0; right: 0; background: var(--gel-white); border-bottom: 3px solid var(--gel-primary); box-shadow: var(--shadow-md); z-index: 1040; padding: 16px 24px 24px; max-height: calc(100vh - var(--nav-height)); overflow-y: auto; }
+        .gel-mobile-menu.open { display: block; }
+        .gel-mobile-link { display: flex; align-items: center; gap: 10px; padding: 11px 0; font-size: 14px; font-weight: 500; color: var(--gel-text); text-decoration: none; border-bottom: 1px solid var(--gel-border); }
+        .gel-mobile-link:last-child { border-bottom: none; }
+        .gel-mobile-link:hover { color: var(--gel-primary); }
+
+        @media (max-width: 991px) {
+            .gel-nav-center { display: none; }
+            .gel-phone { display: none; }
+            .gel-toggler { display: flex; }
+            .gel-navbar .container-fluid { padding: 0 16px; }
+        }
+
         .gel-hero {
-            background: linear-gradient(135deg, var(--gel-navy) 0%, #FF7900 100%);
-            padding: 72px 0 64px;
-            color: #fff;
-            position: relative;
-            overflow: hidden;
-            border-bottom: 4px solid var(--gel-primary);
+            position: relative; width: 100%; height: 100vh;
+            max-height: 750px; min-height: 480px;
+            margin-top: 0; overflow: hidden;
         }
-        .gel-hero::before {
-            content: '';
-            position: absolute; top: 0; right: 0;
-            width: 400px; height: 100%;
-            background: rgba(255,121,0,0.06);
-            clip-path: polygon(100px 0, 100% 0, 100% 100%, 0 100%);
-        }
-        .gel-hero-badge {
+        .gel-slides-wrapper { position: relative; width: 100%; height: 100%; }
+        .gel-slide { position: absolute; inset: 0; opacity: 0; transition: opacity 1s ease; z-index: 1; }
+        .gel-slide.active { opacity: 1; z-index: 2; }
+        .gel-slide-bg { position: absolute; inset: 0; background-size: cover; background-position: center; background-repeat: no-repeat; transform: scale(1.08); transition: transform 6s ease; }
+        .gel-slide.active .gel-slide-bg { transform: scale(1); }
+        .gel-slide-overlay { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(15,23,42,0.75) 0%, rgba(15,23,42,0.40) 100%); }
+        .gel-slide-content { position: relative; z-index: 3; height: 100%; display: flex; align-items: center; padding: 0 24px; }
+        .gel-slide-badge {
             display: inline-flex; align-items: center; gap: 6px;
-            background: rgba(255,121,0,0.2);
-            border: 1px solid rgba(255,121,0,0.4);
-            color: #FF7900;
-            font-size: 12px; font-weight: 600;
-            padding: 5px 14px; border-radius: 2px;
-            margin-bottom: 20px;
-            text-transform: uppercase; letter-spacing: 0.06em;
-        }
-        .gel-hero h1 { font-size: 2.6rem; font-weight: 800; line-height: 1.2; color: #fff; }
-        .gel-hero p { font-size: 1.05rem; color: rgba(255,255,255,0.8); }
-        .gel-hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
-        .gel-hero-btn-main {
-            background: var(--gel-primary); color: #fff;
-            border: none; border-radius: 2px;
-            padding: 12px 28px; font-size: 14px; font-weight: 700;
-            cursor: pointer; text-decoration: none;
-            transition: background 0.15s;
-        }
-        .gel-hero-btn-main:hover { background: #e06700; color: #fff; }
-        .gel-hero-btn-sec {
-            background: transparent; color: #fff;
-            border: 2px solid rgba(255,255,255,0.45); border-radius: 2px;
-            padding: 12px 28px; font-size: 14px; font-weight: 600;
-            cursor: pointer; text-decoration: none;
-            transition: all 0.15s;
-        }
-        .gel-hero-btn-sec:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.8); color: #fff; }
-        .gel-hero-visual {
-            background: rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.12); backdrop-filter: blur(8px);
             border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 2px;
-            padding: 32px;
-            text-align: center;
+            padding: 6px 16px; border-radius: 100px;
+            font-size: 12px; font-weight: 600;
+            color: rgba(255,255,255,0.9); margin-bottom: 18px;
+            letter-spacing: 0.02em;
         }
-        .gel-hero-stats {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 40px;
-        }
-        .gel-stat {
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 2px; padding: 14px;
-        }
-        .gel-stat-num { font-size: 22px; font-weight: 800; color: var(--gel-primary); }
-        .gel-stat-lbl { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+        .gel-slide-badge i { color: var(--gel-primary); font-size: 13px; }
+        .gel-slide-content h1 { font-family: var(--font-heading); font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 900; color: #fff; letter-spacing: -1px; line-height: 1.1; }
+        .gel-slide-content h1 span { color: var(--gel-primary); }
+        .gel-slide-sub { font-size: clamp(14px, 1.1vw, 16px); color: rgba(255,255,255,0.7); max-width: 480px; margin-top: 14px; line-height: 1.7; }
+        .gel-slide-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+        .gel-slide-btn { display: inline-flex; align-items: center; gap: 7px; padding: 12px 26px; border-radius: var(--radius); font-size: 14px; font-weight: 700; text-decoration: none; transition: all 0.3s; }
+        .gel-slide-btn-primary { background: var(--gel-primary); color: #fff; }
+        .gel-slide-btn-primary:hover { background: var(--gel-primary-hov); color: #fff; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,121,0,0.4); }
+        .gel-slide-btn-outline { background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); border: 1.5px solid rgba(255,255,255,0.3); color: #fff; }
+        .gel-slide-btn-outline:hover { background: rgba(255,255,255,0.2); color: #fff; transform: translateY(-2px); }
 
-        /* ── Sections ────────────────────────────────────────── */
-        .gel-section { padding: 64px 0; }
+        .gel-hero-cta-float { position: absolute; top: 20px; right: 24px; z-index: 10; display: flex; align-items: center; gap: 6px; padding: 8px 18px; background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); border-radius: 100px; color: rgba(255,255,255,0.85); font-size: 12px; font-weight: 600; text-decoration: none; transition: all 0.3s; }
+        .gel-hero-cta-float:hover { background: rgba(255,255,255,0.2); color: #fff; transform: translateY(-2px); }
+
+        .gel-carousel-prev, .gel-carousel-next { position: absolute; top: 50%; transform: translateY(-50%); z-index: 10; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
+        .gel-carousel-prev { left: 20px; }
+        .gel-carousel-next { right: 20px; }
+        .gel-carousel-prev:hover, .gel-carousel-next:hover { background: rgba(255,255,255,0.2); border-color: var(--gel-primary); color: var(--gel-primary); transform: translateY(-50%) scale(1.1); }
+
+        .gel-carousel-dots { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 10; display: flex; gap: 10px; }
+        .gel-dot { width: 8px; height: 8px; border-radius: 50%; border: none; background: rgba(255,255,255,0.35); cursor: pointer; transition: all 0.3s; padding: 0; }
+        .gel-dot.active { background: var(--gel-primary); width: 24px; border-radius: 4px; }
+
+        @media (max-width: 575px) {
+            .gel-hero { max-height: 520px; min-height: 420px; }
+            .gel-carousel-prev, .gel-carousel-next { display: none; }
+            .gel-slide-actions { flex-direction: column; }
+            .gel-slide-btn { justify-content: center; }
+            .gel-hero-cta-float { top: 12px; right: 12px; font-size: 11px; padding: 6px 14px; }
+        }
+
+        .gel-section { padding: 80px 0; }
         .gel-section-alt { background: var(--gel-light); }
-        .gel-section-header { margin-bottom: 40px; }
-        .gel-section-label {
+        .gel-section-chip {
             display: inline-flex; align-items: center; gap: 6px;
-            background: rgba(255,121,0,0.1); color: var(--gel-primary);
-            font-size: 11px; font-weight: 700;
-            padding: 4px 12px; border-radius: 2px;
-            text-transform: uppercase; letter-spacing: 0.08em;
-            margin-bottom: 12px;
+            background: var(--gel-white);
+            color: var(--gel-primary);
+            font-size: 11px; font-weight: 700; padding: 4px 14px;
+            border-radius: 100px; text-transform: uppercase; letter-spacing: 0.08em;
+            margin-bottom: 14px;
+            border: 1.5px solid rgba(255,121,0,0.2);
         }
-        .gel-section-title { font-size: 2rem; font-weight: 800; color: #1a1a1a; margin-bottom: 8px; }
-        .gel-section-sub { font-size: 15px; color: #666; }
+        .gel-section-chip i { font-size: 12px; }
+        .gel-section-title {
+            font-family: var(--font-heading);
+            font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 800;
+            color: var(--gel-dark); letter-spacing: -0.5px; line-height: 1.2;
+            margin-bottom: 14px;
+        }
+        .gel-section-sub { font-size: 15px; color: var(--gel-muted); max-width: 540px; line-height: 1.7; }
+        .gel-section-sub.mx-auto { margin-left: auto; margin-right: auto; }
 
-        /* ── Service Cards ───────────────────────────────────── */
-        .gel-service-card {
-            background: #fff;
+        .gel-stats-band {
+            background: var(--gel-white);
+            padding: 48px 0;
+            border-bottom: 1px solid var(--gel-border);
+        }
+        .gel-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+        }
+        .gel-stat-item { text-align: center; padding: 8px; }
+        .gel-stat-number {
+            font-family: var(--font-heading);
+            font-size: 2.2rem; font-weight: 900;
+            color: var(--gel-primary);
+            display: block;
+            line-height: 1.1;
+        }
+        .gel-stat-label {
+            font-size: 13px; font-weight: 500;
+            color: var(--gel-muted);
+            margin-top: 6px;
+            letter-spacing: 0.02em;
+        }
+
+        @media (max-width: 767px) {
+            .gel-stats-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+            .gel-stat-number { font-size: 1.8rem; }
+        }
+
+        .gel-why-card {
+            background: var(--gel-white);
             border: 1px solid var(--gel-border);
-            border-radius: 2px;
+            border-radius: 10px;
             padding: 28px 24px;
             height: 100%;
-            transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
+            transition: transform var(--transition), box-shadow var(--transition);
+        }
+        .gel-why-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+        .gel-why-icon {
+            width: 44px; height: 44px;
+            background: var(--gel-light);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--gel-primary);
+            font-size: 20px;
+            margin-bottom: 14px;
+            transition: background var(--transition), color var(--transition);
+        }
+        .gel-why-card:hover .gel-why-icon { background: var(--gel-primary); color: #fff; }
+        .gel-why-card h6 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+        .gel-why-card p { font-size: 13px; color: var(--gel-muted); margin: 0; line-height: 1.6; }
+
+        .gel-service-card {
+            background: var(--gel-white);
+            border: 1px solid var(--gel-border);
+            border-radius: 10px;
+            padding: 28px 24px;
+            height: 100%;
+            transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+        }
+        .gel-service-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--gel-primary);
+        }
+        .gel-service-icon-wrap {
+            width: 44px; height: 44px;
+            background: var(--gel-light2);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 16px;
+            transition: background var(--transition);
+        }
+        .gel-service-card:hover .gel-service-icon-wrap { background: var(--gel-primary-soft); }
+        .gel-service-icon-wrap svg { width: 22px; height: 22px; }
+        .gel-service-card h5 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+        .gel-service-card { display: flex; flex-direction: column; }
+        .gel-service-card p { font-size: 13px; color: var(--gel-muted); margin-bottom: 14px; line-height: 1.7; flex: 1; }
+        .gel-service-card .gel-service-arrow { margin-top: auto; }
+        .gel-service-arrow { font-size: 12.5px; font-weight: 600; color: var(--gel-primary); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: gap var(--transition); }
+        .gel-service-arrow:hover { gap: 8px; color: var(--gel-primary-hov); }
+
+        /* ============================================================
+           TESTIMONIALS
+        ============================================================ */
+        .gel-testimonial-card {
+            background: var(--gel-white);
+            border: 1px solid var(--gel-border);
+            border-radius: 12px;
+            padding: 32px 28px;
+            height: 100%;
+            position: relative;
+            transition: transform var(--transition), box-shadow var(--transition);
+        }
+        .gel-testimonial-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+        .gel-testimonial-card::before {
+            content: '\201C';
+            font-family: Georgia, serif;
+            font-size: 56px; line-height: 1;
+            color: var(--gel-primary);
+            opacity: 0.2;
+            position: absolute; top: 12px; left: 20px;
+        }
+        .gel-testimonial-text {
+            font-size: 14px; color: var(--gel-text);
+            line-height: 1.7; font-style: italic;
+            margin: 8px 0 18px;
+        }
+        .gel-testimonial-author { display: flex; align-items: center; gap: 12px; }
+        .gel-testimonial-avatar {
+            width: 42px; height: 42px; border-radius: 50%;
+            background: var(--gel-light2);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--gel-muted); font-size: 18px;
+            flex-shrink: 0;
+        }
+        .gel-testimonial-name { font-size: 13px; font-weight: 700; }
+        .gel-testimonial-role { font-size: 11.5px; color: var(--gel-muted); }
+
+        .gel-value-card {
+            text-align: center;
+            padding: 28px 16px;
+        }
+        .gel-value-icon {
+            width: 56px; height: 56px;
+            background: var(--gel-light);
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 24px;
+            color: var(--gel-primary);
+            transition: background var(--transition), color var(--transition), transform var(--transition);
+        }
+        .gel-value-card:hover .gel-value-icon {
+            background: var(--gel-primary);
+            color: #fff;
+            transform: scale(1.08);
+        }
+        .gel-value-card h6 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+        .gel-value-card p { font-size: 13px; color: var(--gel-muted); margin: 0; line-height: 1.6; }
+
+        .gel-features-light {
+            background: var(--gel-white);
+            padding: 80px 0;
+        }
+        .gel-feature-item {
+            display: flex; align-items: flex-start; gap: 14px;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid var(--gel-border);
+            background: var(--gel-white);
+            height: 100%;
+            transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+        }
+        .gel-feature-item:hover {
+            border-color: var(--gel-primary);
+            box-shadow: var(--shadow-sm);
+            transform: translateY(-2px);
+        }
+        .gel-feature-icon {
+            width: 40px; height: 40px; flex-shrink: 0;
+            background: var(--gel-light);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--gel-primary);
+            font-size: 18px;
+            transition: background var(--transition), color var(--transition);
+        }
+        .gel-feature-item:hover .gel-feature-icon { background: var(--gel-primary); color: #fff; }
+        .gel-feature-item h6 { font-size: 14px; font-weight: 700; color: var(--gel-dark); margin-bottom: 4px; }
+        .gel-feature-item p { font-size: 12.5px; color: var(--gel-muted); margin: 0; line-height: 1.55; }
+
+        .gel-process-step { text-align: center; padding: 20px; }
+        .gel-process-num {
+            width: 52px; height: 52px;
+            border-radius: 50%;
+            background: var(--gel-white);
+            border: 2px solid var(--gel-primary);
+            color: var(--gel-primary);
+            font-family: var(--font-heading);
+            font-size: 20px; font-weight: 800;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 16px;
+            transition: background var(--transition), color var(--transition), transform var(--transition);
+        }
+        .gel-process-step:hover .gel-process-num { background: var(--gel-primary); color: #fff; transform: scale(1.08); }
+        .gel-process-step h5 { font-size: 15px; font-weight: 700; color: var(--gel-dark); margin-bottom: 8px; }
+        .gel-process-step p { font-size: 13px; color: var(--gel-muted); line-height: 1.6; margin: 0; }
+
+        .gel-cta-band {
+            background: linear-gradient(135deg, var(--gel-primary) 0%, #ff9a3c 100%);
+            padding: 60px 0;
             position: relative;
             overflow: hidden;
         }
-        .gel-service-card::before {
-            content: '';
-            position: absolute; top: 0; left: 0; right: 0;
-            height: 3px;
-            background: var(--gel-primary);
-            transform: scaleX(0);
-            transition: transform 0.2s;
-            transform-origin: left;
-        }
-        .gel-service-card:hover {
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
-            border-color: rgba(255,121,0,0.3);
-        }
-        .gel-service-card:hover::before { transform: scaleX(1); }
-        .gel-service-icon {
-            width: 52px; height: 52px;
-            border-radius: 2px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 24px;
-            margin-bottom: 16px;
-        }
-        .gel-service-card h5 { font-size: 15px; font-weight: 700; color: #1a1a1a; margin-bottom: 10px; }
-        .gel-service-card p { font-size: 13px; color: #666; line-height: 1.6; margin: 0; }
+        .gel-cta-band::before { content: ''; position: absolute; top: -60px; right: -60px; width: 280px; height: 280px; background: rgba(255,255,255,0.08); border-radius: 50%; }
+        .gel-cta-band::after { content: ''; position: absolute; bottom: -80px; left: -40px; width: 200px; height: 200px; background: rgba(255,255,255,0.06); border-radius: 50%; }
+        .gel-cta-band h2 { font-size: clamp(1.5rem, 2.5vw, 2rem); font-weight: 900; color: #fff; letter-spacing: -0.5px; }
+        .gel-cta-band p { color: rgba(255,255,255,0.85); font-size: 15px; margin-top: 8px; }
+        .gel-btn-white { display: inline-flex; align-items: center; gap: 8px; background: #fff; color: var(--gel-primary); font-size: 14px; font-weight: 700; padding: 12px 28px; border-radius: var(--radius); text-decoration: none; transition: all 0.3s; }
+        .gel-btn-white:hover { background: var(--gel-dark); color: #fff; transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,0.15); }
 
-        /* ── Feature Cards ───────────────────────────────────── */
-        .gel-feature-card {
-            background: #fff;
-            border: 1px solid var(--gel-border);
-            border-radius: 2px;
-            padding: 20px;
-            height: 100%;
-            display: flex; align-items: flex-start; gap: 14px;
-            transition: box-shadow 0.15s;
-        }
-        .gel-feature-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.07); }
-        .gel-feature-icon {
-            width: 40px; height: 40px; flex-shrink: 0;
-            background: rgba(255,121,0,0.1);
-            border-radius: 2px;
-            display: flex; align-items: center; justify-content: center;
-            color: var(--gel-primary); font-size: 18px;
-        }
-        .gel-feature-card h6 { font-size: 13px; font-weight: 700; color: #1a1a1a; margin-bottom: 4px; }
-        .gel-feature-card p { font-size: 12px; color: #777; margin: 0; line-height: 1.5; }
-
-        /* ── Contact Form ────────────────────────────────────── */
-        .gel-form-card {
-            background: #fff;
-            border: 1px solid var(--gel-border);
-            border-radius: 2px;
+        .gel-contact-info {
             padding: 36px;
-        }
-        .form-label { font-size: 12px; font-weight: 600; color: #444; margin-bottom: 5px; }
-        .form-control, .form-select {
-            border-radius: 2px !important;
+            background: var(--gel-light);
             border: 1px solid var(--gel-border);
-            font-size: 13px;
-            padding: 10px 14px;
+            border-radius: 10px;
+            height: 100%;
         }
-        .form-control:focus, .form-select:focus {
-            border-color: var(--gel-primary);
-            box-shadow: 0 0 0 2px rgba(255,121,0,0.15);
-        }
+        .gel-contact-info h3 { font-size: 22px; margin-bottom: 8px; color: var(--gel-dark); }
+        .gel-contact-info > p { font-size: 14px; color: var(--gel-muted); line-height: 1.7; }
+        .gel-contact-detail { display: flex; align-items: flex-start; gap: 12px; margin-top: 20px; }
+        .gel-contact-detail-icon { width: 38px; height: 38px; flex-shrink: 0; background: var(--gel-white); border: 1px solid var(--gel-border); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--gel-primary); font-size: 16px; }
+        .gel-contact-detail h6 { font-size: 11px; font-weight: 600; color: var(--gel-muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 2px; }
+        .gel-contact-detail p { font-size: 14px; font-weight: 500; color: var(--gel-dark); margin: 0; }
 
-        /* ── Footer ─────────────────────────────────────────── */
-        .gel-footer {
-            background: var(--gel-dark);
-            color: rgba(255,255,255,0.6);
-            padding: 24px 0;
-            border-top: 3px solid var(--gel-primary);
-        }
-        .gel-footer a { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 13px; }
-        .gel-footer a:hover { color: var(--gel-primary); }
+        .gel-form-wrap { background: var(--gel-white); border: 1px solid var(--gel-border); border-radius: 10px; padding: 36px; }
+        .gel-form-title { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+        .gel-form-sub { font-size: 13px; color: var(--gel-muted); margin-bottom: 28px; }
+        .gel-form-label { font-size: 12px; font-weight: 600; color: var(--gel-text); margin-bottom: 6px; display: block; }
+        .gel-form-control { width: 100%; border: 1.5px solid var(--gel-border); border-radius: var(--radius); padding: 11px 14px; font-size: 13.5px; font-family: var(--font-body); color: var(--gel-text); background: var(--gel-white); transition: border-color 0.2s, box-shadow 0.2s; outline: none; }
+        .gel-form-control:focus { border-color: var(--gel-primary); box-shadow: 0 0 0 3px rgba(255,121,0,0.1); }
+        .gel-form-control::placeholder { color: #c0cbd8; }
+        .gel-btn-submit { width: 100%; background: var(--gel-primary); color: #fff; font-size: 14px; font-weight: 700; padding: 13px; border: none; border-radius: var(--radius); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s; margin-top: 8px; }
+        .gel-btn-submit:hover { background: var(--gel-primary-hov); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255,121,0,0.35); }
 
-        /* ── Section divider ─────────────────────────────────── */
-        .gel-divider {
-            height: 3px;
-            background: linear-gradient(90deg, var(--gel-primary) 0%, var(--gel-navy) 100%);
+        .gel-footer { background: #0A1628; padding: 64px 0 0; border-top: 3px solid var(--gel-primary); }
+        .gel-footer-brand-name { font-family: var(--font-heading); font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+        .gel-footer-brand-sub { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.1em; }
+        .gel-footer-desc { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.7; margin-top: 16px; max-width: 280px; }
+        .gel-footer-social { display: flex; gap: 10px; margin-top: 20px; }
+        .gel-social-btn { width: 36px; height: 36px; border-radius: 6px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.55); font-size: 15px; text-decoration: none; transition: all var(--transition); }
+        .gel-social-btn:hover { background: var(--gel-primary); border-color: var(--gel-primary); color: #fff; transform: translateY(-2px); }
+        .gel-footer-heading { font-family: var(--font-heading); font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 18px; }
+        .gel-footer-links { list-style: none; padding: 0; }
+        .gel-footer-links li { margin-bottom: 10px; }
+        .gel-footer-links a { font-size: 13.5px; color: rgba(255,255,255,0.45); text-decoration: none; transition: color var(--transition); display: flex; align-items: center; gap: 6px; }
+        .gel-footer-links a:hover { color: var(--gel-primary); }
+        .gel-footer-links a::before { content: '\203A'; color: var(--gel-primary); font-size: 16px; }
+        .gel-footer-bottom { border-top: 1px solid rgba(255,255,255,0.07); padding: 20px 0; margin-top: 48px; }
+        .gel-footer-bottom p { font-size: 12px; color: rgba(255,255,255,0.3); margin: 0; }
+        .gel-footer-bottom a { font-size: 12px; color: rgba(255,255,255,0.3); text-decoration: none; transition: color var(--transition); margin-left: 16px; }
+        .gel-footer-bottom a:hover { color: var(--gel-primary); }
+
+        .text-orange { color: var(--gel-primary); }
+        .bg-orange { background: var(--gel-primary); }
+
+        @media (max-width: 991px) {
+            .gel-section { padding: 60px 0; }
+            .gel-features-light { padding: 60px 0; }
+            .gel-cta-band { padding: 48px 0; }
+            .gel-hero { max-height: 600px; }
+        }
+        @media (max-width: 575px) {
+            .gel-contact-info { padding: 24px 20px; }
+            .gel-form-wrap { padding: 24px 20px; }
         }
     </style>
 </head>
 <body>
-    <!-- Navbar iSupplier style -->
-    <nav class="gel-navbar">
-        <div class="container">
-            <a class="gel-brand" href="/">
-                <div class="gel-brand-icon">GEL</div>
-                <span class="gel-brand-name">GEL Cabinet</span>
+
+        <!-- navbar -->
+<nav class="gel-navbar" id="gelNavbar">
+        <div class="container-fluid">
+            <a href="/" class="gel-brand">
+                <div class="gel-brand-logo">GEL</div>
+                <div class="gel-brand-text">
+                    <span class="gel-brand-name">GEL Cabinet</span>
+                    <span class="gel-brand-sub">Gestion Multi-Pôles</span>
+                </div>
             </a>
-            <div class="gel-nav-links">
-                <a class="gel-nav-link" href="/nos-services"><i class="bi-shop me-1"></i>Nos Services</a>
-                <a class="gel-nav-link" href="#services">Modules ERP</a>
-                <a class="gel-nav-link" href="#fonctionnalites">Fonctionnalités</a>
-                <a class="gel-nav-link" href="#contact">Contact</a>
+
+            <ul class="gel-nav-center" id="gelNavCenter">
+                <li class="gel-nav-item">
+                    <a href="/nos-modules" class="gel-nav-link">
+                        Nos Modules
+                        <i class="bi-chevron-down chevron"></i>
+                    </a>
+                    <ul class="gel-dropdown">
+                        <li><a href="/nos-modules#module-crm"><span class="drop-icon"><i class="bi-people"></i></span> CRM Clients</a></li>
+                        <li><a href="/nos-modules#module-ged"><span class="drop-icon"><i class="bi-folder2-open"></i></span> GED — Documents</a></li>
+                        <li><a href="/nos-modules#module-poles"><span class="drop-icon"><i class="bi-diagram-3"></i></span> Pôles & Missions</a></li>
+                        <li><hr class="gel-dropdown-divider"></li>
+                        <li><a href="/nos-modules#module-compta"><span class="drop-icon"><i class="bi-calculator"></i></span> Comptabilité</a></li>
+                        <li><a href="/nos-modules#module-erp"><span class="drop-icon"><i class="bi-box-seam"></i></span> ERP Intégré</a></li>
+                    </ul>
+                </li>
+                <li class="gel-nav-item">
+                    <a href="/services" class="gel-nav-link">
+                        Services
+                        <i class="bi-chevron-down chevron"></i>
+                    </a>
+                    <ul class="gel-dropdown">
+                        <li><a href="/services/comptabilite"><span class="drop-icon"><i class="bi-calculator"></i></span> Comptabilité</a></li>
+                        <li><a href="/services/juridique"><span class="drop-icon"><i class="bi-bank2"></i></span> Juridique</a></li>
+                        <li><a href="/services/fiscal"><span class="drop-icon"><i class="bi-receipt"></i></span> Fiscal</a></li>
+                        <li><a href="/services/social-paie"><span class="drop-icon"><i class="bi-people"></i></span> Social & Paie</a></li>
+                    </ul>
+                </li>
+                <li class="gel-nav-item">
+                    <a href="#" class="gel-nav-link">
+                        À propos
+                        <i class="bi-chevron-down chevron"></i>
+                    </a>
+                    <ul class="gel-dropdown">
+                        <li><a href="{{ route('notre-cabinet') }}"><span class="drop-icon"><i class="bi-building"></i></span> Notre Cabinet</a></li>
+                        <li><a href="{{ route('notre-equipe') }}"><span class="drop-icon"><i class="bi-people-fill"></i></span> Notre Équipe</a></li>
+                        <li><a href="{{ route('carrieres') }}"><span class="drop-icon"><i class="bi-briefcase-fill"></i></span> Carrières</a></li>
+                    </ul>
+                </li>
+                <li class="gel-nav-item">
+                    <a href="#" class="gel-nav-link">
+                        Ressources
+                        <i class="bi-chevron-down chevron"></i>
+                    </a>
+                    <ul class="gel-dropdown">
+                        <li><a href="/blogue"><span class="drop-icon"><i class="bi-pencil-square"></i></span> Blogue</a></li>
+                        <li><a href="/documentation"><span class="drop-icon"><i class="bi-file-text"></i></span> Documentation</a></li>
+                        <li><a href="/faq"><span class="drop-icon"><i class="bi-question-circle"></i></span> FAQ</a></li>
+                        <li><hr class="gel-dropdown-divider"></li>
+                        <li><a href="/centre-aide"><span class="drop-icon"><i class="bi-headset"></i></span> Centre d'aide</a></li>
+                    </ul>
+                </li>
+                <li class="gel-nav-item"><a href="#" class="gel-nav-link">Tarifs</a></li>
+                <li class="gel-nav-item"><a href="/contact" class="gel-nav-link">Contact</a></li>
+            </ul>
+
+            <div class="gel-nav-right">
+                <a href="tel:+22900000000" class="gel-phone d-none d-lg-flex">
+                    <i class="bi-telephone-fill"></i>
+                    +229 XX XX XX XX
+                </a>
                 @auth
                     @if(auth()->user()->role === 'client')
-                        <a href="{{ route('client.orders.index') }}" class="gel-btn-outline ms-2">
-                            <i class="bi-speedometer2 me-1"></i>Mon Espace
+                        <a href="{{ route('client.orders.index') }}" class="gel-btn-nav gel-btn-nav-outline">
+                            <i class="bi-speedometer2"></i> Mon Espace
                         </a>
                     @elseif(auth()->user()->client_id)
-                        <a href="{{ route('company.dashboard') }}" class="gel-btn-outline ms-2">
-                            <i class="bi-speedometer2 me-1"></i>Portail Entreprise
+                        <a href="{{ route('company.dashboard') }}" class="gel-btn-nav gel-btn-nav-outline">
+                            <i class="bi-speedometer2"></i> Portail
                         </a>
                     @else
-                        <a href="{{ route('dashboard') }}" class="gel-btn-outline ms-2">
-                            <i class="bi-speedometer2 me-1"></i>Tableau de bord
+                        <a href="{{ route('dashboard') }}" class="gel-btn-nav gel-btn-nav-outline">
+                            <i class="bi-speedometer2"></i> Tableau de bord
                         </a>
                     @endif
                     <form method="POST" action="{{ route('logout') }}" style="display:inline;">
                         @csrf
-                        <button type="submit" class="gel-btn-danger ms-2">
-                            <i class="bi-box-arrow-right me-1"></i>Déconnexion
+                        <button type="submit" class="gel-btn-nav gel-btn-nav-outline" style="color:#dc2626; border-color:#fca5a5;">
+                            <i class="bi-box-arrow-right"></i>
                         </button>
                     </form>
                 @else
-                    <a href="/login" class="gel-btn-primary ms-2">
-                        <i class="bi-box-arrow-in-right me-1"></i>Connexion
+                    <a href="/register" class="gel-btn-nav gel-btn-nav-outline">
+                        <i class="bi-person-plus"></i> S'inscrire
+                    </a>
+                    <a href="/login" class="gel-btn-nav gel-btn-nav-primary" id="nav-login-btn">
+                        <i class="bi-box-arrow-in-right"></i> Connexion
                     </a>
                 @endauth
+                <button class="gel-toggler" id="gelToggler" aria-label="Menu">
+                    <i class="bi-list" id="togglerIcon"></i>
+                </button>
             </div>
-            <button class="navbar-toggler-custom" type="button">
-                <i class="bi-list"></i>
-            </button>
         </div>
     </nav>
 
-    <!-- Orange sub-navigation bar (iSupplier style) -->
-    <div class="gel-subbar">
-        <div class="container">
-            <a href="/" class="gel-subnav-link active">Accueil</a>
-            <a href="/nos-services" class="gel-subnav-link">Catalogue</a>
-            <a href="#services" class="gel-subnav-link">ERP</a>
-            <a href="#contact" class="gel-subnav-link">Contact</a>
-        </div>
+    <!-- Mobile Menu -->
+    <div class="gel-mobile-menu" id="gelMobileMenu">
+        <a href="/" class="gel-mobile-link"><i class="bi-house text-orange me-2"></i>Accueil</a>
+        <a href="/nos-modules" class="gel-mobile-link"><i class="bi-grid-3x3-gap text-orange me-2"></i>Nos Modules</a>
+        <a href="/services" class="gel-mobile-link"><i class="bi-grid-3x3-gap text-orange me-2"></i>Services</a>
+        <a href="/blogue" class="gel-mobile-link"><i class="bi-pencil-square text-orange me-2"></i>Blogue</a>
+        <a href="/documentation" class="gel-mobile-link"><i class="bi-file-text text-orange me-2"></i>Documentation</a>
+        <a href="/faq" class="gel-mobile-link"><i class="bi-question-circle text-orange me-2"></i>FAQ</a>
+        <a href="/centre-aide" class="gel-mobile-link"><i class="bi-headset text-orange me-2"></i>Centre d'aide</a>
+        <a href="{{ route('notre-cabinet') }}" class="gel-mobile-link"><i class="bi-building text-orange me-2"></i>Notre Cabinet</a>
+        <a href="{{ route('notre-equipe') }}" class="gel-mobile-link"><i class="bi-people-fill text-orange me-2"></i>Notre Équipe</a>
+        <a href="{{ route('carrieres') }}" class="gel-mobile-link"><i class="bi-briefcase-fill text-orange me-2"></i>Carrières</a>
+        <a href="#" class="gel-mobile-link"><i class="bi-currency-dollar text-orange me-2"></i>Tarifs</a>
+        <a href="/contact" class="gel-mobile-link"><i class="bi-envelope text-orange me-2"></i>Contact</a>
+        <a href="/login" class="gel-mobile-link"><i class="bi-box-arrow-in-right text-orange me-2"></i>Connexion</a>
+        <a href="/register" class="gel-mobile-link"><i class="bi-person-plus text-orange me-2"></i>S'inscrire</a>
     </div>
 
-    <!-- Hero Section -->
-    <section class="gel-hero">
-        <div class="container position-relative">
-            <div class="row align-items-center">
-                <div class="col-lg-7">
-                    <div class="gel-hero-badge">
-                        <i class="bi-star-fill" style="color: #FF7900;"></i>Solution intégrée de gestion
-                    </div>
-                    <h1>Gérez votre cabinet<br>d'expertise en toute sérénité</h1>
-                    <p class="my-3">CRM, GED, Pôles, Missions, Comptabilité et ERP — une plateforme unique pour piloter l'intégralité de votre cabinet pluridisciplinaire.</p>
-                    <div class="gel-hero-actions">
-                        <a href="/nos-services" class="gel-hero-btn-main">
-                            <i class="bi-shop me-2"></i>Découvrir nos services
-                        </a>
-                        <a href="/login" class="gel-hero-btn-sec">
-                            <i class="bi-box-arrow-in-right me-2"></i>Espace Client
-                        </a>
-                    </div>
-                    <!-- Stats bar -->
-                    <div class="gel-hero-stats">
-                        <div class="gel-stat">
-                            <div class="gel-stat-num">6+</div>
-                            <div class="gel-stat-lbl">Modules ERP</div>
-                        </div>
-                        <div class="gel-stat">
-                            <div class="gel-stat-num">100%</div>
-                            <div class="gel-stat-lbl">Sécurisé</div>
-                        </div>
-                        <div class="gel-stat">
-                            <div class="gel-stat-num">24/7</div>
-                            <div class="gel-stat-lbl">Disponible</div>
+    <section class="gel-hero" id="hero">
+        <div class="gel-slides-wrapper" id="gelSlides">
+
+            <!-- Slide 1 -->
+            <div class="gel-slide active" id="slide-0">
+                <div class="gel-slide-bg" style="background-image: url('/images/hero_slide_1.png');"></div>
+                <div class="gel-slide-overlay"></div>
+                <div class="gel-slide-content">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-lg-7">
+                                <h1>Votre cabinet<br>en toute <span>simplicité</span></h1>
+                                <p class="gel-slide-sub">CRM, GED, Pôles, Missions, Comptabilité, ERP — tout ce dont vous avez besoin, dans une seule plateforme.</p>
+                                <div class="gel-slide-actions">
+                                    <a href="/register" class="gel-slide-btn gel-slide-btn-primary">
+                                        <i class="bi-person-plus"></i> Créer un compte
+                                    </a>
+                                    <a href="/nos-services" class="gel-slide-btn gel-slide-btn-outline">
+                                        <i class="bi-shop"></i> Nos Services
+                                    </a>
+                                    <a href="/login" class="gel-slide-btn gel-slide-btn-outline">
+                                        <i class="bi-box-arrow-in-right"></i> Espace Client
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-lg-5 d-none d-lg-block text-center">
-                    <div class="gel-hero-visual">
-                        <i class="bi-building" style="font-size: 5rem; color: rgba(255,121,0,0.6);"></i>
-                        <p class="mt-3 small" style="color: rgba(255,255,255,0.6);">Gestion complète de votre cabinet</p>
-                        <!-- Mini springboard preview -->
-                        <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
-                            @foreach([['bi-calculator','Compta'],['bi-folder','GED'],['bi-people','RH'],['bi-receipt','Factures'],['bi-graph-up','ERP'],['bi-shield','Sécurité']] as $item)
-                            <div style="background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.18); border-radius:2px; padding:8px 12px; text-align:center; min-width:72px;">
-                                <i class="bi {{ $item[0] }}" style="color:#FF7900; font-size:18px; display:block;"></i>
-                                <span style="font-size:10px; color:rgba(255,255,255,0.7);">{{ $item[1] }}</span>
+            </div>
+
+            <!-- Slide 2 -->
+            <div class="gel-slide" id="slide-1">
+                <div class="gel-slide-bg" style="background-image: url('/images/hero_slide_2.png');"></div>
+                <div class="gel-slide-overlay"></div>
+                <div class="gel-slide-content">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-lg-7">
+                                <h1>Tout votre cabinet<br>à <span>portée de main</span></h1>
+                                <p class="gel-slide-sub">Suivez vos missions, coordonnez vos équipes et partagez vos documents en temps réel.</p>
+                                <div class="gel-slide-actions">
+                                    <a href="/register" class="gel-slide-btn gel-slide-btn-primary">
+                                        <i class="bi-person-plus"></i> Créer un compte
+                                    </a>
+                                    <a href="/nos-services" class="gel-slide-btn gel-slide-btn-outline">
+                                        <i class="bi-shop"></i> Nos Services
+                                    </a>
+                                    <a href="/login" class="gel-slide-btn gel-slide-btn-outline">
+                                        <i class="bi-box-arrow-in-right"></i> Accéder à mon espace
+                                    </a>
+                                </div>
                             </div>
-                            @endforeach
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3 -->
+            <div class="gel-slide" id="slide-2">
+                <div class="gel-slide-bg" style="background-image: url('/images/hero_slide_3.png');"></div>
+                <div class="gel-slide-overlay"></div>
+                <div class="gel-slide-content">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-lg-7">
+                                <h1>Des données<br><span>toujours protégées</span></h1>
+                                <p class="gel-slide-sub">Authentification, rôles, permissions, audit : votre cabinet est protégé à chaque niveau.</p>
+                                <div class="gel-slide-actions">
+                                    <a href="/register" class="gel-slide-btn gel-slide-btn-primary">
+                                        <i class="bi-person-plus"></i> Créer un compte
+                                    </a>
+                                    <a href="/login" class="gel-slide-btn gel-slide-btn-outline">
+                                        <i class="bi-box-arrow-in-right"></i> Accéder à mon espace
+                                    </a>
+                                    <a href="/nos-services" class="gel-slide-btn gel-slide-btn-outline">
+                                        <i class="bi-info-circle"></i> En savoir plus
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <a href="/login" class="gel-hero-cta-float d-none d-md-flex">
+            <i class="bi-speedometer2"></i> Accéder à mon espace
+        </a>
+
+        <button class="gel-carousel-prev" id="prevSlide" aria-label="Slide précédent">
+            <i class="bi-chevron-left"></i>
+        </button>
+        <button class="gel-carousel-next" id="nextSlide" aria-label="Slide suivant">
+            <i class="bi-chevron-right"></i>
+        </button>
+
+        <div class="gel-carousel-dots" id="carouselDots">
+            <button class="gel-dot active" data-slide="0" aria-label="Slide 1"></button>
+            <button class="gel-dot" data-slide="1" aria-label="Slide 2"></button>
+            <button class="gel-dot" data-slide="2" aria-label="Slide 3"></button>
+        </div>
+    </section>
+
+    <!-- stats -->
+    <div class="gel-stats-band">
+        <div class="container">
+            <div class="gel-stats-grid">
+                <div class="gel-stat-item anim-fade-up">
+                    <span class="gel-stat-number" data-target="6">0</span>
+                    <div class="gel-stat-label">Modules</div>
+                </div>
+                <div class="gel-stat-item anim-fade-up delay-1">
+                    <span class="gel-stat-number" data-target="100" data-suffix="%">0</span>
+                    <div class="gel-stat-label">Sécurité</div>
+                </div>
+                <div class="gel-stat-item anim-fade-up delay-2">
+                    <span class="gel-stat-number" data-suffix="/7">24</span>
+                    <div class="gel-stat-label">Dispo 24/7</div>
+                </div>
+                <div class="gel-stat-item anim-fade-up delay-3">
+                    <span class="gel-stat-number" data-target="500" data-suffix="+">0</span>
+                    <div class="gel-stat-label">Dossiers</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- valeurs -->
+    <section class="gel-section" style="padding:60px 0 40px;">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-3 col-6 anim-fade-up">
+                    <div style="text-align:center; padding:16px;">
+                        <div style="font-family:var(--font-heading); font-size:30px; font-weight:900; color:var(--gel-primary); line-height:1; margin-bottom:8px;">01</div>
+                        <h6 style="font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em;">L'innovation</h6>
+                        <p style="font-size:12px; color:var(--gel-muted); margin:4px 0 0;">La technologie au service de la gestion de cabinet, tout simplement.</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 anim-fade-up delay-1">
+                    <div style="text-align:center; padding:16px;">
+                        <div style="font-family:var(--font-heading); font-size:30px; font-weight:900; color:var(--gel-primary); line-height:1; margin-bottom:8px;">02</div>
+                        <h6 style="font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em;">La proximité</h6>
+                        <p style="font-size:12px; color:var(--gel-muted); margin:4px 0 0;">Chaque client est unique. On construit ensemble une relation de confiance.</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 anim-fade-up delay-2">
+                    <div style="text-align:center; padding:16px;">
+                        <div style="font-family:var(--font-heading); font-size:30px; font-weight:900; color:var(--gel-primary); line-height:1; margin-bottom:8px;">03</div>
+                        <h6 style="font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em;">L'excellence</h6>
+                        <p style="font-size:12px; color:var(--gel-muted); margin:4px 0 0;">Rigueur et qualité dans tout ce qu'on fait.</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 anim-fade-up delay-3">
+                    <div style="text-align:center; padding:16px;">
+                        <div style="font-family:var(--font-heading); font-size:30px; font-weight:900; color:var(--gel-primary); line-height:1; margin-bottom:8px;">04</div>
+                        <h6 style="font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em;">L'impact</h6>
+                        <p style="font-size:12px; color:var(--gel-muted); margin:4px 0 0;">Changer la façon de travailler, un cabinet à la fois.</p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <div class="gel-divider"></div>
-
-    <!-- Services -->
-    <section id="services" class="gel-section">
+    <!-- pourquoi -->
+    <section class="gel-section gel-section-alt">
         <div class="container">
-            <div class="gel-section-header text-center">
-                <div class="gel-section-label"><i class="bi-grid-3x3-gap"></i>Nos Services</div>
-                <h2 class="gel-section-title">Tout ce qu'il faut pour votre cabinet</h2>
-                <p class="gel-section-sub">Des modules spécialisés pour chaque pôle d'expertise</p>
+            <div class="row justify-content-center mb-5">
+                <div class="col-lg-7 text-center">
+                    <h2 class="gel-section-title anim-fade-up delay-1">Ce qu'on vous propose</h2>
+                    <p class="gel-section-sub mx-auto anim-fade-up delay-2">Six bonnes raisons de travailler avec GEL Cabinet.</p>
+                </div>
             </div>
             <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="gel-service-card">
-                        <div class="gel-service-icon" style="background: #e3f2fd; color: #1565c0;">
-                            <i class="bi-calculator"></i>
-                        </div>
-                        <h5>Comptabilité</h5>
-                        <p>Plan comptable, journaux, balance, bilan et compte de résultat. Gestion complète de la chaîne comptable.</p>
+                <div class="col-md-4 anim-fade-up delay-1">
+                    <div class="gel-why-card">
+                        <div class="gel-why-icon"><i class="bi-boxes"></i></div>
+                        <h6>Une plateforme, tout-en-un</h6>
+                        <p>CRM, GED, Comptabilité, ERP, Missions — plus besoin de jongler entre 5 outils. Tout est intégré.</p>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="gel-service-card">
-                        <div class="gel-service-icon" style="background: #fce4ec; color: #c62828;">
-                            <i class="bi-bank"></i>
-                        </div>
-                        <h5>Juridique</h5>
-                        <p>Suivi des dossiers, veille juridique, gestion des formalités et constitution de sociétés.</p>
+                <div class="col-md-4 anim-fade-up delay-2">
+                    <div class="gel-why-card">
+                        <div class="gel-why-icon"><i class="bi-clock-history"></i></div>
+                        <h6>Gagnez du temps</h6>
+                        <p>Fini les tâches répétitives : vos données sont centralisées, votre temps est libéré.</p>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="gel-service-card">
-                        <div class="gel-service-icon" style="background: #e8f5e9; color: #2e7d32;">
-                            <i class="bi-file-earmark-text"></i>
-                        </div>
-                        <h5>Fiscal</h5>
-                        <p>Déclarations fiscales, optimisation, gestion des échéances et accompagnement contrôle fiscal.</p>
+                <div class="col-md-4 anim-fade-up delay-3">
+                    <div class="gel-why-card">
+                        <div class="gel-why-icon"><i class="bi-shield-check"></i></div>
+                        <h6>Sécurité & Conformité</h6>
+                        <p>Authentification, chiffrement, permissions et audit — vos données sont sous contrôle.</p>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="gel-service-card">
-                        <div class="gel-service-icon" style="background: #fff3e0; color: #e65100;">
-                            <i class="bi-people"></i>
-                        </div>
-                        <h5>Social &amp; Paie</h5>
-                        <p>Gestion de la paie, déclarations sociales, contrats de travail et administration du personnel.</p>
+                <div class="col-md-4 anim-fade-up delay-1">
+                    <div class="gel-why-card">
+                        <div class="gel-why-icon"><i class="bi-people-fill"></i></div>
+                        <h6>Multi-utilisateurs & Rôles</h6>
+                        <p>Des comptes pour toute l'équipe avec des rôles personnalisés. Chacun voit ce qui le concerne.</p>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="gel-service-card">
-                        <div class="gel-service-icon" style="background: #f3e5f5; color: #6a1b9a;">
-                            <i class="bi-shop"></i>
-                        </div>
-                        <h5>Commercial</h5>
-                        <p>Suivi commercial, facturation, relances clients et gestion des contrats de prestation.</p>
+                <div class="col-md-4 anim-fade-up delay-2">
+                    <div class="gel-why-card">
+                        <div class="gel-why-icon"><i class="bi-cloud-arrow-up"></i></div>
+                        <h6>Accessible partout</h6>
+                        <p>100% cloud : ordinateur, tablette ou smartphone — votre cabinet vous suit.</p>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="gel-service-card">
-                        <div class="gel-service-icon" style="background: rgba(255,121,0,0.1); color: #FF7900;">
-                            <i class="bi-box-seam"></i>
-                        </div>
-                        <h5>ERP Intégré</h5>
-                        <p>Catalogue, stocks, facturation, RH &amp; paie, trésorerie. Un ERP complet pour votre cabinet.</p>
+                <div class="col-md-4 anim-fade-up delay-3">
+                    <div class="gel-why-card">
+                        <div class="gel-why-icon"><i class="bi-headset"></i></div>
+                        <h6>Support dédié 24/7</h6>
+                        <p>Une équipe à votre écoute, une assistance en ligne et une formation à votre déploiement.</p>
                     </div>
                 </div>
             </div>
-            <div class="text-center mt-5">
-                <a href="/nos-services" class="gel-hero-btn-main">
-                    <i class="bi-arrow-right me-2"></i>Voir tous nos services
+        </div>
+    </section>
+
+    <!-- services -->
+    <section id="services" class="gel-section">
+        <div class="container">
+            <div class="row justify-content-center mb-4">
+                <div class="col-lg-8 text-center">
+                    <h2 class="gel-section-title anim-fade-up delay-1">Tout ce qu'il faut pour<br>votre cabinet</h2>
+                    <p class="gel-section-sub mx-auto anim-fade-up delay-2" style="max-width:680px;">Tous les services comptables, fiscaux, juridiques et RH pour vous accompagner au quotidien dans la gestion de votre entreprise. Épargnez du temps et de l'argent. Faites équipe avec des techniciens et des professionnels passionnés et dynamiques, prêts à transformer votre façon de travailler.</p>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <!-- Production d'états financiers -->
+                <div class="col-md-6 col-sm-6 anim-fade-up delay-1">
+                    <div class="gel-service-card">
+                        <div class="gel-service-icon-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="3" width="20" height="14" rx="2"/>
+                                <line x1="8" y1="21" x2="16" y2="21"/>
+                                <line x1="12" y1="17" x2="12" y2="21"/>
+                                <path d="M6 8h2l2 4 2-6 2 6 2-4 2 2"/>
+                            </svg>
+                        </div>
+                        <h5>Production d'états financiers</h5>
+                        <p>Bénéficiez d'un accompagnement comptable complet pour piloter sereinement votre entreprise au quotidien. Notre équipe de techniciens et de comptables professionnels, passionnés et dynamiques, vous aide à gagner du temps et à réduire vos coûts. Nous produisons vos états financiers avec le niveau d'assurance adapté aux attentes de vos partenaires, élément clé de tout travail fiscal et financier. Faites confiance à nos experts CPA pour renforcer la transparence et la crédibilité de votre gestion.</p>
+                        <a href="/services/comptabilite" class="gel-service-arrow">En savoir plus <i class="bi-arrow-right"></i></a>
+                    </div>
+                </div>
+                <!-- Impôts -->
+                <div class="col-md-6 col-sm-6 anim-fade-up delay-2">
+                    <div class="gel-service-card">
+                        <div class="gel-service-icon-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                                <polyline points="10 9 9 9 8 9"/>
+                            </svg>
+                        </div>
+                        <h5>Impôts</h5>
+                        <p>Confiez vos déclarations fiscales à de véritables professionnels. Nous prenons en charge les déclarations d'impôts des particuliers, des entreprises et des fiducies, pour vous garantir une parfaite conformité avec les autorités fiscales. Chaque déclaration est préparée par des comptables expérimentés et rigoureusement révisée par des fiscalistes. Un rapport d'impôt signé par un bureau comptable professionnel renforce considérablement votre crédibilité auprès des administrations publiques.</p>
+                        <a href="/services/fiscal" class="gel-service-arrow">En savoir plus <i class="bi-arrow-right"></i></a>
+                    </div>
+                </div>
+                <!-- Fiscalité -->
+                <div class="col-md-6 col-sm-6 anim-fade-up delay-3">
+                    <div class="gel-service-card">
+                        <div class="gel-service-icon-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2L2 7v1c0 6.1 3 12 10 15 7-3 10-8.9 10-15V7l-10-5z"/>
+                                <path d="M12 6v10"/>
+                                <path d="M8 9h8"/>
+                            </svg>
+                        </div>
+                        <h5>Fiscalité</h5>
+                        <p>Optimisez votre stratégie fiscale avec un accompagnement sur mesure. Les impôts représentent souvent la troisième charge la plus lourde pour un entrepreneur — nos fiscalistes vous aident à la réduire intelligemment. Que ce soit pour l'achat ou la vente d'une entreprise, la planification de la relève, l'impôt au décès, la TPS et la TVQ, notre équipe vous propose des solutions avantageuses adaptées à chaque situation.</p>
+                        <a href="/services/fiscal" class="gel-service-arrow">En savoir plus <i class="bi-arrow-right"></i></a>
+                    </div>
+                </div>
+                <!-- Ressources Humaines -->
+                <div class="col-md-6 col-sm-6 anim-fade-up delay-1">
+                    <div class="gel-service-card">
+                        <div class="gel-service-icon-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                        </div>
+                        <h5>Ressources Humaines</h5>
+                        <p>Valorisez votre capital humain avec une gestion RH professionnelle et personnalisée. Bien qu'il n'apparaisse pas au bilan, le capital humain est souvent l'actif le plus précieux d'une entreprise. Nos conseillers en ressources humaines vous accompagnent pour recruter, fidéliser et manager vos équipes avec des solutions adaptées. Face à la complexité des décisions liées à la gestion du personnel, laissez nos experts vous épauler au quotidien.</p>
+                        <a href="/services/social-paie" class="gel-service-arrow">En savoir plus <i class="bi-arrow-right"></i></a>
+                    </div>
+                </div>
+                <!-- Stratégie -->
+                <div class="col-md-6 col-sm-6 anim-fade-up delay-2">
+                    <div class="gel-service-card">
+                        <div class="gel-service-icon-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="9" cy="21" r="1"/>
+                                <circle cx="20" cy="21" r="1"/>
+                                <path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6L23 6H6"/>
+                            </svg>
+                        </div>
+                        <h5>Stratégie</h5>
+                        <p>Bâtissez un avantage concurrentiel durable grâce à une stratégie d'entreprise solide. Le succès en affaires n'est jamais le fruit du hasard — les entreprises les plus performantes sont celles qui élaborent une stratégie claire et la communiquent efficacement. Pourtant, nombreux sont les entrepreneurs qui négligent cette étape cruciale. Pour la planification stratégique, la rédaction de plans d'affaires, la recherche de financement et les conseils aux dirigeants, fiez-vous à l'expertise de nos spécialistes.</p>
+                        <a href="/services/commercial" class="gel-service-arrow">En savoir plus <i class="bi-arrow-right"></i></a>
+                    </div>
+                </div>
+                <!-- Juridique -->
+                <div class="col-md-6 col-sm-6 anim-fade-up delay-3">
+                    <div class="gel-service-card">
+                        <div class="gel-service-icon-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2L2 7v1c0 6.1 3 12 10 15 7-3 10-8.9 10-15V7l-10-5z"/>
+                                <path d="M12 6v10"/>
+                                <path d="M8 9h8"/>
+                            </svg>
+                        </div>
+                        <h5>Juridique</h5>
+                        <p>Constitution de sociétés, formalités administratives, rédaction de contrats et veille juridique. Notre équipe vous accompagne dans toutes vos démarches légales pour sécuriser vos décisions et rester en conformité avec la réglementation en vigueur. De la création d'entreprise aux contentieux, bénéficiez d'un accompagnement sur mesure.</p>
+                        <a href="/services/juridique" class="gel-service-arrow">En savoir plus <i class="bi-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-5 anim-fade-up">
+                <a href="/nos-services" class="gel-slide-btn gel-slide-btn-primary" style="display:inline-flex;">
+                    <i class="bi-arrow-right-circle"></i> Tous nos services
                 </a>
             </div>
         </div>
     </section>
 
-    <div class="gel-divider"></div>
-
-    <!-- Fonctionnalités -->
-    <section id="fonctionnalites" class="gel-section gel-section-alt">
+    <!-- témoignages -->
+    <section class="gel-section gel-section-alt">
         <div class="container">
-            <div class="gel-section-header text-center">
-                <div class="gel-section-label"><i class="bi-lightning-charge"></i>Fonctionnalités</div>
-                <h2 class="gel-section-title">Une plateforme complète</h2>
-                <p class="gel-section-sub">Tout ce dont vous avez besoin, intégré en un seul outil</p>
+            <div class="row justify-content-center mb-5">
+                <div class="col-lg-7 text-center">
+                    <h2 class="gel-section-title anim-fade-up delay-1">Ce qu'ils disent de nous</h2>
+                    <p class="gel-section-sub mx-auto anim-fade-up delay-2">Quelques retours de cabinets qui utilisent GEL Cabinet.</p>
+                </div>
             </div>
-            <div class="row g-3">
-                <div class="col-md-4 col-6">
-                    <div class="gel-feature-card">
-                        <div class="gel-feature-icon"><i class="bi-people"></i></div>
-                        <div>
-                            <h6>CRM Clients</h6>
-                            <p>Gestion des entreprises, contacts et relations</p>
+            <div class="row g-4">
+                <div class="col-lg-4 anim-fade-up delay-1">
+                    <div class="gel-testimonial-card">
+                        <p class="gel-testimonial-text">« GEL Cabinet a complètement transformé notre organisation. Plus besoin de 4 logiciels différents, tout est accessible depuis une seule plateforme. Un gain de temps considérable. »</p>
+                        <div class="gel-testimonial-author">
+                            <div class="gel-testimonial-avatar"><i class="bi-person-fill"></i></div>
+                            <div>
+                                <div class="gel-testimonial-name">Isabelle Kpossou</div>
+                                <div class="gel-testimonial-role">Directrice, Cabinet BSA</div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4 col-6">
-                    <div class="gel-feature-card">
-                        <div class="gel-feature-icon"><i class="bi-diagram-3"></i></div>
-                        <div>
-                            <h6>Pôles &amp; Missions</h6>
-                            <p>Organisation par départements et suivi des missions</p>
+                <div class="col-lg-4 anim-fade-up delay-2">
+                    <div class="gel-testimonial-card">
+                        <p class="gel-testimonial-text">« La gestion des missions et la GED intégrée nous ont permis de réduire de 30% le temps passé sur la documentation. L'accompagnement de l'équipe GEL est remarquable. »</p>
+                        <div class="gel-testimonial-author">
+                            <div class="gel-testimonial-avatar"><i class="bi-person-fill"></i></div>
+                            <div>
+                                <div class="gel-testimonial-name">Marc Tchobo</div>
+                                <div class="gel-testimonial-role">Expert-comptable, Cabinet MT</div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4 col-6">
-                    <div class="gel-feature-card">
-                        <div class="gel-feature-icon"><i class="bi-folder2-open"></i></div>
-                        <div>
-                            <h6>GED</h6>
-                            <p>Gestion électronique de documents et dossiers</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4 col-6">
-                    <div class="gel-feature-card">
-                        <div class="gel-feature-icon"><i class="bi-calculator"></i></div>
-                        <div>
-                            <h6>Comptabilité</h6>
-                            <p>Plan comptable, journaux, bilan, résultat</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4 col-6">
-                    <div class="gel-feature-card">
-                        <div class="gel-feature-icon"><i class="bi-graph-up"></i></div>
-                        <div>
-                            <h6>ERP Intégré</h6>
-                            <p>Stocks, factures, RH, trésorerie</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4 col-6">
-                    <div class="gel-feature-card">
-                        <div class="gel-feature-icon"><i class="bi-shield-check"></i></div>
-                        <div>
-                            <h6>Sécurisé</h6>
-                            <p>Authentification, rôles et permissions avancées</p>
+                <div class="col-lg-4 anim-fade-up delay-3">
+                    <div class="gel-testimonial-card">
+                        <p class="gel-testimonial-text">« Nous gérons 5 sociétés avec des pôles différents. GEL Cabinet nous offre une vue globale et centralisée que nous n'avions jamais eue auparavant. Indispensable au quotidien. »</p>
+                        <div class="gel-testimonial-author">
+                            <div class="gel-testimonial-avatar"><i class="bi-person-fill"></i></div>
+                            <div>
+                                <div class="gel-testimonial-name">Awa Sèna</div>
+                                <div class="gel-testimonial-role">CEO, Groupe AS Holding</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -569,50 +1002,248 @@
         </div>
     </section>
 
-    <div class="gel-divider"></div>
+    <!-- fonctionnalités -->
+    <section id="fonctionnalites" class="gel-features-light">
+        <div class="container">
+            <div class="row justify-content-center mb-5">
+                <div class="col-lg-7 text-center">
+                    <h2 class="gel-section-title anim-fade-up delay-1">Tout-en-un</h2>
+                    <p class="gel-section-sub mx-auto anim-fade-up delay-2">Tout pour piloter votre cabinet dans un seul outil.</p>
+                </div>
+            </div>
 
-    <!-- Contact / Demande -->
+            <div class="row g-3">
+                @foreach([
+                    ['bi-people-fill','CRM Clients','Gestion complète des entreprises, contacts et historique des relations'],
+                    ['bi-diagram-3-fill','Pôles & Missions','Organisation par départements et suivi détaillé des missions'],
+                    ['bi-folder2-open','GED','Gestion électronique de documents avec indexation et recherche'],
+                    ['bi-calculator-fill','Comptabilité','Plan comptable, journaux, bilan, compte de résultat automatisé'],
+                    ['bi-graph-up-arrow','ERP Intégré','Stocks, factures, RH, trésorerie — tout synchronisé'],
+                    ['bi-shield-check','Sécurité Avancée','Authentification, rôles, permissions et audit des accès'],
+                    ['bi-file-earmark-text-fill','Déclarations','Suivi des échéances fiscales et sociales, rappels automatiques'],
+                    ['bi-bell-fill','Notifications','Alertes temps réel, tâches, rappels et tableau de bord'],
+                    ['bi-cloud-arrow-up-fill','Sauvegarde Cloud','Vos données toujours sécurisées et accessibles partout'],
+                ] as $f)
+                <div class="col-lg-4 col-md-6 anim-fade-up">
+                    <div class="gel-feature-item">
+                        <div class="gel-feature-icon">
+                            <i class="bi {{ $f[0] }}"></i>
+                        </div>
+                        <div>
+                            <h6>{{ $f[1] }}</h6>
+                            <p>{{ $f[2] }}</p>
+                        </div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </section>
+
+    <!-- engagements -->
+    <section class="gel-section">
+        <div class="container">
+            <div class="row justify-content-center mb-5">
+                <div class="col-lg-7 text-center">
+                    <h2 class="gel-section-title anim-fade-up delay-1">Notre cap</h2>
+                    <p class="gel-section-sub mx-auto anim-fade-up delay-2">Des principes simples qui guident notre travail.</p>
+                </div>
+            </div>
+            <div class="row g-4 justify-content-center">
+                <div class="col-md-3 col-6 anim-fade-up delay-1">
+                    <div class="gel-value-card">
+                        <div class="gel-value-icon"><i class="bi-check-circle-fill"></i></div>
+                        <h6>Rigueur</h6>
+                        <p>L'exactitude et la précision au cœur de nos services.</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 anim-fade-up delay-2">
+                    <div class="gel-value-card">
+                        <div class="gel-value-icon"><i class="bi-hand-thumbs-up-fill"></i></div>
+                        <h6>Intégrité</h6>
+                        <p>Transparence et éthique dans toutes nos relations.</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 anim-fade-up delay-3">
+                    <div class="gel-value-card">
+                        <div class="gel-value-icon"><i class="bi-arrow-repeat"></i></div>
+                        <h6>Adaptabilité</h6>
+                        <p>Nous évoluons avec les besoins de nos clients.</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 anim-fade-up delay-4">
+                    <div class="gel-value-card">
+                        <div class="gel-value-icon"><i class="bi-people-fill"></i></div>
+                        <h6>Esprit d'équipe</h6>
+                        <p>La collaboration est notre plus grande force.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- processus -->
+    <section class="gel-section gel-section-alt">
+        <div class="container">
+            <div class="row justify-content-center mb-5">
+                <div class="col-lg-7 text-center">
+                    <h2 class="gel-section-title anim-fade-up delay-1">Prêt en 3 étapes</h2>
+                    <p class="gel-section-sub mx-auto anim-fade-up delay-2">On vous accompagne de la demande à la mise en route.</p>
+                </div>
+            </div>
+            <div class="row g-4 justify-content-center">
+                <div class="col-md-4 anim-fade-up delay-1">
+                    <div class="gel-process-step">
+                        <div class="gel-process-num">1</div>
+                        <h5>1. Choisissez un logiciel</h5>
+                        <p>Parcourez notre catalogue. Notre équipe vous contacte sous 24h.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 anim-fade-up delay-2">
+                    <div class="gel-process-step">
+                        <div class="gel-process-num">2</div>
+                        <h5>2. Configuration</h5>
+                        <p>On configure votre cabinet, vos pôles, vos utilisateurs et on importe vos données.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 anim-fade-up delay-3">
+                    <div class="gel-process-step">
+                        <div class="gel-process-num">3</div>
+                        <h5>3. C'est parti</h5>
+                        <p>Votre équipe accède à la plateforme. Formation incluse et support dédié.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- cta -->
+    <section class="gel-cta-band">
+        <div class="container" style="position:relative; z-index:1;">
+            <div class="row align-items-center">
+                <div class="col-lg-7 anim-fade-left">
+                    <h2>Vous voulez essayer ?</h2>
+                    <p>Rejoignez les cabinets qui pilotent déjà leur activité avec GEL Cabinet.</p>
+                </div>
+                <div class="col-lg-5 text-lg-end mt-4 mt-lg-0 anim-fade-right">
+                    <a href="/nos-services" class="gel-btn-white me-3">
+                        <i class="bi-calendar-check"></i> Prendre un logiciel
+                    </a>
+                    <a href="/login" class="gel-btn-white" style="background:rgba(255,255,255,0.15); color:#fff; border:2px solid rgba(255,255,255,0.5);">
+                        <i class="bi-box-arrow-in-right"></i> Se connecter
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- contact -->
     <section id="contact" class="gel-section">
         <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-lg-7">
-                    <div class="gel-section-header text-center">
-                        <div class="gel-section-label"><i class="bi-envelope"></i>Contact</div>
-                        <h2 class="gel-section-title">Demander une démo</h2>
-                        <p class="gel-section-sub">Laissez-nous vos coordonnées, nous vous recontacterons</p>
+            <div class="row justify-content-center mb-5">
+                <div class="col-lg-7 text-center">
+                    <h2 class="gel-section-title anim-fade-up delay-1">Contact</h2>
+                    <p class="gel-section-sub mx-auto anim-fade-up delay-2">Une question ? Un besoin spécifique ? On est là pour vous répondre.</p>
+                </div>
+            </div>
+
+            <div class="row g-4 align-items-stretch">
+                <div class="col-lg-4 anim-fade-left">
+                    <div class="gel-contact-info">
+                        <h3>GEL Cabinet</h3>
+                        <p>CRM, GED, Comptabilité, ERP — la plateforme tout-en-un pour votre cabinet.</p>
+
+                        <div class="gel-contact-detail">
+                            <div class="gel-contact-detail-icon"><i class="bi-geo-alt-fill"></i></div>
+                            <div>
+                                <h6>Adresse</h6>
+                                <p>Cotonou, Bénin</p>
+                            </div>
+                        </div>
+                        <div class="gel-contact-detail">
+                            <div class="gel-contact-detail-icon"><i class="bi-telephone-fill"></i></div>
+                            <div>
+                                <h6>Téléphone</h6>
+                                <p>+229 XX XX XX XX</p>
+                            </div>
+                        </div>
+                        <div class="gel-contact-detail">
+                            <div class="gel-contact-detail-icon"><i class="bi-envelope-fill"></i></div>
+                            <div>
+                                <h6>Email</h6>
+                                <p>contact@gelcabinet.com</p>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--gel-border);">
+                            <div class="gel-footer-heading" style="margin-bottom: 14px; color:var(--gel-dark);">Suivez-nous</div>
+                            <div class="gel-footer-social">
+                                <a href="#" class="gel-social-btn" style="background:var(--gel-light); border-color:var(--gel-border); color:var(--gel-muted);" aria-label="Facebook"><i class="bi-facebook"></i></a>
+                                <a href="#" class="gel-social-btn" style="background:var(--gel-light); border-color:var(--gel-border); color:var(--gel-muted);" aria-label="LinkedIn"><i class="bi-linkedin"></i></a>
+                                <a href="#" class="gel-social-btn" style="background:var(--gel-light); border-color:var(--gel-border); color:var(--gel-muted);" aria-label="Twitter"><i class="bi-twitter-x"></i></a>
+                            </div>
+                        </div>
                     </div>
-                    <div class="gel-form-card">
-                        <form id="demo-form" method="POST" action="/demande">
+                </div>
+
+                <div class="col-lg-8 anim-fade-right">
+                    <div class="gel-form-wrap">
+                        <div class="gel-form-title">Demander un logiciel</div>
+                        <div class="gel-form-sub">Laissez vos coordonnées, on vous recontacte sous 24h pour vous présenter la solution adaptée.</div>
+
+                        @if(session('success'))
+                            <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; border-radius:6px; padding:12px 16px; font-size:13px; margin-bottom:20px; display:flex; align-items:center; gap:8px;">
+                                <i class="bi-check-circle-fill"></i> {{ session('success') }}
+                            </div>
+                        @endif
+
+                        <form method="POST" action="/demande">
                             @csrf
-                            @if(session('success'))
-                                <div class="alert" style="background:#e8f5e9; border:1px solid #c8e6c9; color:#198754; border-radius:2px; font-size:13px; padding:12px 16px; margin-bottom:20px;">
-                                    <i class="bi-check-circle me-2"></i>{{ session('success') }}
-                                </div>
-                            @endif
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label class="form-label">Entreprise</label>
-                                    <input type="text" name="company_name" class="form-control" required placeholder="Nom de votre entreprise">
+                                    <label class="gel-form-label">Entreprise</label>
+                                    <input type="text" name="company_name" class="gel-form-control" required placeholder="Nom de votre entreprise">
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Personne à contacter</label>
-                                    <input type="text" name="contact_name" class="form-control" required placeholder="Votre nom">
+                                    <label class="gel-form-label">Personne à contacter</label>
+                                    <input type="text" name="contact_name" class="gel-form-control" required placeholder="Votre nom complet">
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Email</label>
-                                    <input type="email" name="email" class="form-control" required placeholder="email@entreprise.com">
+                                    <label class="gel-form-label">Email</label>
+                                    <input type="email" name="email" class="gel-form-control" required placeholder="email@entreprise.com">
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Téléphone</label>
-                                    <input type="tel" name="phone" class="form-control" placeholder="+229 XX XX XX XX">
+                                    <label class="gel-form-label">Téléphone</label>
+                                    <input type="tel" name="phone" class="gel-form-control" placeholder="+229 XX XX XX XX">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="gel-form-label">Secteur d'activité</label>
+                                    <select name="sector" class="gel-form-control">
+                                        <option value="">Choisir un secteur</option>
+                                        <option>Cabinet d'expertise comptable</option>
+                                        <option>Cabinet juridique</option>
+                                        <option>Cabinet multi-pôles</option>
+                                        <option>Autre</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="gel-form-label">Module souhaité</label>
+                                    <select name="module" class="gel-form-control">
+                                        <option value="">Choisir un module</option>
+                                        <option>CRM Clients</option>
+                                        <option>GED — Documents</option>
+                                        <option>Comptabilité</option>
+                                        <option>ERP Intégré</option>
+                                        <option>Tous les modules</option>
+                                    </select>
                                 </div>
                                 <div class="col-12">
-                                    <label class="form-label">Message</label>
-                                    <textarea name="message" class="form-control" rows="3" placeholder="Parlez-nous de vos besoins..."></textarea>
+                                    <label class="gel-form-label">Message</label>
+                                    <textarea name="message" class="gel-form-control" rows="4" placeholder="Décrivez vos besoins, le nombre d'utilisateurs, votre contexte..."></textarea>
                                 </div>
-                                <div class="col-12 text-center mt-3">
-                                    <button type="submit" class="gel-hero-btn-main" style="padding: 12px 40px; font-size: 14px;">
-                                        <i class="bi-send me-2"></i>Envoyer la demande
+                                <div class="col-12">
+                                    <button type="submit" class="gel-btn-submit">
+                                        <i class="bi-send-fill"></i> Envoyer ma demande
                                     </button>
                                 </div>
                             </div>
@@ -623,31 +1254,221 @@
         </div>
     </section>
 
-    <!-- Footer -->
+    <!-- footer -->
     <footer class="gel-footer">
         <div class="container">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <div style="width:24px; height:24px; background:#FF7900; border-radius:2px; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:900; color:#fff;">GEL</div>
-                        <span style="font-family:'Outfit',sans-serif; font-weight:700; font-size:14px; color:rgba(255,255,255,0.8);">GEL Cabinet</span>
+            <div class="row g-5">
+                <div class="col-lg-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div style="width:40px; height:40px; background:#FF7900; border-radius:4px; display:flex; align-items:center; justify-content:center; font-family:'Outfit',sans-serif; font-size:13px; font-weight:900; color:#fff;">GEL</div>
+                        <div>
+                            <div class="gel-footer-brand-name">GEL Cabinet</div>
+                            <div class="gel-footer-brand-sub">Gestion Multi-Pôles</div>
+                        </div>
                     </div>
-                    <p class="mb-0" style="font-size:12px;">
-                        &copy; {{ date('Y') }} GEL Cabinet. Tous droits réservés.
-                    </p>
+                    <p class="gel-footer-desc">CRM, GED, Pôles, Missions, Comptabilité — votre cabinet dans une seule plateforme.</p>
+                    <div class="gel-footer-social">
+                        <a href="#" class="gel-social-btn" aria-label="Facebook"><i class="bi-facebook"></i></a>
+                        <a href="#" class="gel-social-btn" aria-label="LinkedIn"><i class="bi-linkedin"></i></a>
+                        <a href="#" class="gel-social-btn" aria-label="Twitter"><i class="bi-twitter-x"></i></a>
+                        <a href="#" class="gel-social-btn" aria-label="WhatsApp"><i class="bi-whatsapp"></i></a>
+                    </div>
                 </div>
-                <div class="col-md-6 text-md-end mt-3 mt-md-0">
-                    <a href="/login" class="me-3">
-                        <i class="bi-box-arrow-in-right me-1"></i>Connexion
-                    </a>
-                    <a href="/nos-services">
-                        <i class="bi-shop me-1"></i>Catalogue
-                    </a>
+
+                <div class="col-lg-2 col-md-4 col-6">
+                    <div class="gel-footer-heading">Modules</div>
+                    <ul class="gel-footer-links">
+                        <li><a href="/login">CRM Clients</a></li>
+                        <li><a href="/login">GED</a></li>
+                        <li><a href="/login">Pôles & Missions</a></li>
+                        <li><a href="/login">Comptabilité</a></li>
+                        <li><a href="/login">ERP</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-2 col-md-4 col-6">
+                    <div class="gel-footer-heading">Services</div>
+                    <ul class="gel-footer-links">
+                        <li><a href="/services/comptabilite">Comptabilité</a></li>
+                        <li><a href="/services/juridique">Juridique</a></li>
+                        <li><a href="/services/fiscal">Fiscal</a></li>
+                        <li><a href="/services/social-paie">Social & Paie</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-2 col-md-4 col-6">
+                    <div class="gel-footer-heading">Cabinet</div>
+                    <ul class="gel-footer-links">
+                        <li><a href="/">Accueil</a></li>
+                        <li><a href="/nos-services">Services</a></li>
+                        <li><a href="/contact">Contact</a></li>
+                        <li><a href="/login">Connexion</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-2 col-md-4 col-6">
+                    <div class="gel-footer-heading">Contact</div>
+                    <ul class="gel-footer-links" style="font-size:13px;">
+                        <li style="margin-bottom:10px;">
+                            <span style="color:rgba(255,255,255,0.4); font-size:13px; display:flex; align-items:center; gap:7px;">
+                                <i class="bi-geo-alt" style="color:#FF7900;"></i> Cotonou, Bénin
+                            </span>
+                        </li>
+                        <li style="margin-bottom:10px;">
+                            <span style="color:rgba(255,255,255,0.4); font-size:13px; display:flex; align-items:center; gap:7px;">
+                                <i class="bi-telephone" style="color:#FF7900;"></i> +229 XX XX XX XX
+                            </span>
+                        </li>
+                        <li>
+                            <span style="color:rgba(255,255,255,0.4); font-size:13px; display:flex; align-items:center; gap:7px;">
+                                <i class="bi-envelope" style="color:#FF7900;"></i> contact@gelcabinet.com
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="gel-footer-bottom">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <p>&copy; {{ date('Y') }} GEL Cabinet. Tous droits réservés.</p>
+                    </div>
+                    <div class="col-md-6 text-md-end mt-2 mt-md-0">
+                        <a href="/login">Connexion</a>
+                        <a href="#">Confidentialité</a>
+                        <a href="#">CGU</a>
+                    </div>
                 </div>
             </div>
         </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+    // NAVBAR SCROLL
+    const navbar = document.getElementById('gelNavbar');
+    window.addEventListener('scroll', () => {
+        navbar.classList.toggle('scrolled', window.scrollY > 20);
+    }, { passive: true });
+
+    // MOBILE MENU
+    const toggler = document.getElementById('gelToggler');
+    const mobileMenu = document.getElementById('gelMobileMenu');
+    const togglerIcon = document.getElementById('togglerIcon');
+
+    toggler.addEventListener('click', () => {
+        const isOpen = mobileMenu.classList.toggle('open');
+        togglerIcon.className = isOpen ? 'bi-x-lg' : 'bi-list';
+        document.body.style.overflow = isOpen ? 'hidden' : '';
+    });
+
+    function closeMobileMenu() {
+        mobileMenu.classList.remove('open');
+        togglerIcon.className = 'bi-list';
+        document.body.style.overflow = '';
+    }
+
+    document.addEventListener('click', (e) => {
+        if (!navbar.contains(e.target) && !mobileMenu.contains(e.target)) {
+            closeMobileMenu();
+        }
+    });
+
+    // HERO CAROUSEL
+    const slides = document.querySelectorAll('.gel-slide');
+    const dots = document.querySelectorAll('.gel-dot');
+    let currentSlide = 0;
+    let autoplayTimer;
+
+    function goToSlide(n) {
+        slides[currentSlide].classList.remove('active');
+        dots[currentSlide].classList.remove('active');
+        currentSlide = (n + slides.length) % slides.length;
+        slides[currentSlide].classList.add('active');
+        dots[currentSlide].classList.add('active');
+    }
+
+    function nextSlide() { goToSlide(currentSlide + 1); }
+    function prevSlide() { goToSlide(currentSlide - 1); }
+
+    function startAutoplay() {
+        autoplayTimer = setInterval(nextSlide, 6000);
+    }
+    function resetAutoplay() {
+        clearInterval(autoplayTimer);
+        startAutoplay();
+    }
+
+    document.getElementById('nextSlide').addEventListener('click', () => { nextSlide(); resetAutoplay(); });
+    document.getElementById('prevSlide').addEventListener('click', () => { prevSlide(); resetAutoplay(); });
+    dots.forEach((dot, i) => {
+        dot.addEventListener('click', () => { goToSlide(i); resetAutoplay(); });
+    });
+
+    let touchStartX = 0;
+    const heroEl = document.getElementById('hero');
+    heroEl.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+    heroEl.addEventListener('touchend', e => {
+        const diff = touchStartX - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 50) { diff > 0 ? nextSlide() : prevSlide(); resetAutoplay(); }
+    }, { passive: true });
+
+    startAutoplay();
+
+    // SCROLL ANIMATIONS
+    const animEls = document.querySelectorAll('.anim-fade-up, .anim-fade-left, .anim-fade-right, .anim-scale');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('anim-visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.12 });
+    animEls.forEach(el => observer.observe(el));
+
+    // COUNTER ANIMATION
+    const counters = document.querySelectorAll('[data-target]');
+    const counterObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                animateCounter(entry.target);
+                counterObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.5 });
+
+    function animateCounter(el) {
+        const target = parseInt(el.dataset.target);
+        const suffix = el.dataset.suffix || '';
+        const duration = 1800;
+        const start = performance.now();
+        const update = (ts) => {
+            const progress = Math.min((ts - start) / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            el.textContent = Math.floor(eased * target) + suffix;
+            if (progress < 1) requestAnimationFrame(update);
+        };
+        requestAnimationFrame(update);
+    }
+    counters.forEach(c => counterObserver.observe(c));
+
+    // SMOOTH SCROLL FOR ANCHOR LINKS
+    document.querySelectorAll('a[href^="#"]').forEach(link => {
+        link.addEventListener('click', e => {
+            const target = document.querySelector(link.getAttribute('href'));
+            if (target) {
+                e.preventDefault();
+                const navH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--nav-height'));
+                window.scrollTo({
+                    top: target.getBoundingClientRect().top + window.scrollY - navH - 12,
+                    behavior: 'smooth'
+                });
+                closeMobileMenu();
+            }
+        });
+    });
+    </script>
 </body>
 </html>

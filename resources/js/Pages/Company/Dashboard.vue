@@ -1,6 +1,7 @@
-<script setup>
-import { ref, computed, onMounted } from 'vue';
+﻿<script setup>
+import { ref, computed, watch, onMounted } from 'vue';
 import CompanyLayout from '../../Layouts/CompanyLayout.vue';
+import { authStore } from '../../stores/auth';
 
 const company   = ref(null);
 const licenses  = ref([]);
@@ -33,14 +34,52 @@ const loadData = async () => {
 onMounted(loadData);
 
 // ── Onglets (iSupplier style) ───────────────────────────────
-const tabs = [
+const allTabs = [
     { key: 'accueil',       label: "Accueil",          icon: 'bi-house' },
     { key: 'commandes',     label: "Commandes",        icon: 'bi-cart-check' },
-    { key: 'finance',       label: "Finance",          icon: 'bi-receipt' },
-    { key: 'comptabilite',  label: "Comptabilité",     icon: 'bi-calculator' },
-    { key: 'secretariat',   label: "Secrétariat",      icon: 'bi-briefcase' },
+    { key: 'finance',       label: "Finance",          icon: 'bi-receipt',          module: 'facturation' },
+    { key: 'comptabilite',  label: "Comptabilité",     icon: 'bi-calculator',       module: 'comptabilite' },
+    { key: 'secretariat',   label: "Secrétariat",      icon: 'bi-briefcase',        module: 'document' },
     { key: 'administration',label: "Administration",   icon: 'bi-gear' },
 ];
+const tabs = computed(() =>
+    allTabs.filter(t => !t.module || authStore.hasModule(t.module))
+);
+
+// Si l'onglet actif n'est plus visible → revenir à Accueil
+watch(tabs, (visible) => {
+    if (!visible.some(t => t.key === activeTab.value)) {
+        activeTab.value = 'accueil';
+    }
+}, { immediate: true });
+
+/* ── Module requis pour les liens rapides ── */
+const qlModuleMap = {
+    '/company/ged':        'document',
+    '/company/caisse':     'caisse',
+    '/company/invoices':   'facturation',
+    '/company/hr':         'rh',
+    '/company/accounting': 'comptabilite',
+    '/company/legal':      'juridique',
+    '/company/projects':   'projets',
+    '/company/services':   'document',
+    '/company/ai':         null,
+    '/company/crm':        null,
+};
+
+function qlVisible(href) {
+    const mod = qlModuleMap[href];
+    return !mod || authStore.hasModule(mod);
+}
+
+// ── Liens rapides filtrés par module ──
+const filteredQuickLinks = computed(() => {
+    const section = quickLinks[activeTab.value] || [];
+    return section.map(group => ({
+        ...group,
+        links: group.links.filter(l => qlVisible(l.href))
+    })).filter(group => group.links.length > 0);
+});
 
 // ── Liens rapides par section (sidebar iSupplier style) ─────
 const quickLinks = {
@@ -201,7 +240,7 @@ const tabContent = {
                     <!-- Sidebar de liens rapides (iSupplier Quick Links) -->
                     <aside class="isup-quicklinks">
                         <div class="isup-ql-title">Liens rapides</div>
-                        <div v-for="group in (quickLinks[activeTab] || [])" :key="group.group" class="isup-ql-group">
+                        <div v-for="group in filteredQuickLinks" :key="group.group" class="isup-ql-group">
                             <div class="isup-ql-group-label">{{ group.group }}</div>
                             <ul class="isup-ql-list">
                                 <li v-for="link in group.links" :key="link.label">
@@ -652,43 +691,8 @@ const tabContent = {
 </template>
 
 <style scoped>
-/* ══════════════════════════════════════════════════════════════
-   GEL Portal — iSupplier layout : Orange + Blanc + Bleu
-   ══════════════════════════════════════════════════════════════ */
+/* ══ Dashboard-specific styles ══ */
 
-/* ── Portal shell ────────────────────────────────────────── */
-.isup-shell {
-    border: 1px solid #dce3ee;
-    border-radius: 4px;
-    overflow: hidden;
-    background: #fff;
-}
-
-/* ── Company banner (blue header) ────────────────────────── */
-.isup-portal-header {
-    background: linear-gradient(135deg, #163A5E 0%, #1e4d7a 100%);
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
-    border-bottom: 3px solid #FF7900;
-}
-.isup-portal-logo {
-    width: 44px; height: 44px;
-    background: #FF7900; color: #fff;
-    border-radius: 4px;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-}
-.isup-portal-company {
-    font-family: 'Outfit', sans-serif;
-    font-size: 17px; font-weight: 800; color: #fff;
-}
-.isup-portal-sub {
-    font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 2px;
-}
 .isup-stat-pill {
     background: rgba(255,255,255,0.12);
     border: 1px solid rgba(255,255,255,0.2);
@@ -704,7 +708,7 @@ const tabContent = {
     font-size: 10px; color: rgba(255,255,255,0.6);
 }
 
-/* ── Tabs bar (iSupplier horizontal tabs with notch) ─────── */
+/* ── Tabs bar (dark header tabs) ─────── */
 .isup-tabs-bar {
     display: flex;
     background: #163A5E;
@@ -713,7 +717,6 @@ const tabContent = {
 }
 .isup-tabs-bar::-webkit-scrollbar { height: 3px; }
 .isup-tabs-bar::-webkit-scrollbar-thumb { background: #FF7900; }
-
 .isup-tab {
     position: relative;
     background: transparent;
@@ -733,7 +736,6 @@ const tabContent = {
     color: #163A5E;
     font-weight: 700;
 }
-/* Notch indicator under active tab */
 .isup-tab-notch {
     position: absolute;
     bottom: 0; left: 50%;
@@ -744,13 +746,10 @@ const tabContent = {
     border-bottom: 8px solid #FF7900;
 }
 
-/* ── Content layout ──────────────────────────────────────── */
-.isup-content {
-    min-height: 480px;
-    background: #f5f7fb;
-}
+/* ── Content layout ─────── */
+.isup-content { min-height: 480px; background: #f5f7fb; }
 
-/* ── Quick links sidebar ─────────────────────────────────── */
+/* ── Quick links sidebar ─── */
 .isup-quicklinks {
     width: 190px;
     min-width: 190px;
@@ -783,10 +782,10 @@ const tabContent = {
 }
 .isup-ql-icon { font-size: 12px; width: 14px; text-align: center; color: #888; flex-shrink: 0; }
 
-/* ── Main panel ──────────────────────────────────────────── */
+/* ── Main panel ─── */
 .isup-main { padding: 16px; min-width: 0; }
 
-/* ── Search bar ──────────────────────────────────────────── */
+/* ── Search bar ─── */
 .isup-search-bar {
     background: #fff; border: 1px solid #dce3ee;
     border-radius: 4px; padding: 14px 16px;
@@ -796,57 +795,24 @@ const tabContent = {
     text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;
 }
 
-/* ── Panels ──────────────────────────────────────────────── */
-.isup-panel {
-    background: #fff; border: 1px solid #dce3ee; border-radius: 4px;
-    overflow: hidden;
-}
-.isup-panel-header {
-    background: linear-gradient(90deg, #163A5E, #1e4d7a);
-    color: #fff; font-size: 13px; font-weight: 700;
-    padding: 10px 14px;
-    display: flex; align-items: center;
-}
+/* ── Panel link ─── */
 .isup-panel-link {
     font-size: 12px; color: rgba(255,255,255,0.7);
     text-decoration: none; font-weight: 600;
     transition: color 0.15s;
 }
 .isup-panel-link:hover { color: #FF7900; }
-.isup-panel-body { padding: 14px; }
 .isup-count-badge {
     background: #FF7900; color: #fff;
     font-size: 10px; font-weight: 700;
     padding: 1px 7px; border-radius: 10px;
 }
 
-/* ── Tables ──────────────────────────────────────────────── */
-.isup-table-wrap { overflow-x: auto; }
-.isup-table { border-collapse: collapse; font-size: 13px; }
-.isup-table thead th {
-    background: #EEF3F9; color: #163A5E;
-    font-weight: 700; font-size: 11px;
-    text-transform: uppercase; letter-spacing: 0.04em;
-    border-bottom: 1px solid #dce3ee;
-    padding: 9px 12px; white-space: nowrap;
-}
-.isup-table td {
-    padding: 9px 12px; border-bottom: 1px solid #f0f4f8;
-    vertical-align: middle; white-space: nowrap;
-}
-.isup-table tbody tr:hover { background: #f8fbff; }
-
-/* ── Status badges ───────────────────────────────────────── */
-.isup-status {
-    display: inline-flex; align-items: center;
-    font-size: 11px; font-weight: 700;
-    padding: 3px 10px; border-radius: 4px;
-    text-transform: uppercase; letter-spacing: 0.04em;
-}
+/* ── Status badges ─── */
 .isup-status-active { background: #e8f5e9; color: #2e7d32; }
 .isup-status-expired { background: #fdecea; color: #c62828; }
 
-/* ── Module cards ────────────────────────────────────────── */
+/* ── Module cards ─── */
 .isup-module-card {
     display: flex; flex-direction: column; align-items: center;
     background: #fff; border: 1px solid #dce3ee; border-radius: 4px;
@@ -865,41 +831,5 @@ const tabContent = {
 }
 .isup-mc-label {
     font-size: 12px; font-weight: 700; color: #163A5E; line-height: 1.3;
-}
-
-/* ── Inputs ──────────────────────────────────────────────── */
-.isup-input {
-    border: 1px solid #dce3ee; border-radius: 4px;
-    padding: 7px 12px; font-size: 13px; outline: none;
-    transition: border-color 0.15s;
-}
-.isup-input:focus { border-color: #FF7900; box-shadow: 0 0 0 2px rgba(255,121,0,0.12); }
-.isup-select {
-    border: 1px solid #dce3ee; border-radius: 4px;
-    padding: 7px 12px; font-size: 13px; background: #fff;
-}
-
-/* ── Buttons ─────────────────────────────────────────────── */
-.isup-btn-primary {
-    background: #FF7900; color: #fff; border: none;
-    border-radius: 4px; padding: 8px 16px;
-    font-size: 13px; font-weight: 700;
-    cursor: pointer; text-decoration: none;
-    display: inline-flex; align-items: center;
-    transition: background 0.15s;
-}
-.isup-btn-primary:hover { background: #e06700; color: #fff; }
-
-/* ── Admin fields ────────────────────────────────────────── */
-.isup-field-row {
-    padding: 10px 0; border-bottom: 1px solid #f0f4f8;
-}
-.isup-field-label { font-size: 11px; font-weight: 700; color: #163A5E; text-transform: uppercase; margin-bottom: 3px; }
-.isup-field-val { font-size: 13px; color: #333; }
-
-/* ── Alert ───────────────────────────────────────────────── */
-.isup-alert-error {
-    background: #fdecea; border: 1px solid #f5c6c0; color: #c62828;
-    border-radius: 4px; padding: 12px 16px; font-size: 13px;
 }
 </style>

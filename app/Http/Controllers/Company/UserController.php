@@ -289,14 +289,20 @@ class UserController extends Controller
         // Toutes les permissions existantes
         $allPermissions = Permission::all();
 
-        // Filtrer par modules sous licence + permissions générales
-        $permissions = $allPermissions
-            ->whereIn('module', $licensedModules)
-            ->values();
+        // Modules accessibles par l'admin entreprise (tous, sauf désactivés)
+        $user = Auth::user();
+        $adminModules = $user->getAccessibleModules();
 
-        // Ajouter aussi le module 'ged' (toujours accessible)
-        $gedPermissions = $allPermissions->where('module', 'document')->values();
-        $permissions = $permissions->merge($gedPermissions);
+        // Fusion : licences actives + modules admin + ged (toujours)
+        $allowedModules = array_unique(array_merge(
+            $licensedModules,
+            $adminModules,
+            ['document'] // ged toujours accessible
+        ));
+
+        $permissions = $allPermissions
+            ->whereIn('module', $allowedModules)
+            ->values();
 
         // Grouper par module
         $grouped = $permissions->groupBy('module')->map(function ($perms, $module) {

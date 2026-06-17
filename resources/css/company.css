@@ -1,0 +1,123 @@
+/* ═══════════════════════════════════════════════════════════
+   COMPANY PORTAL — Classes partagées isup-* (Portail Client)
+   Style unifié pour toutes les pages du compte entreprise
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Shell / Conteneur principal ───────────────────────── */
+.isup-shell { border:1px solid #dce3ee; border-radius:6px; overflow:hidden; background:#fff; }
+.isup-portal-header { background:linear-gradient(135deg,#163A5E,#1e4d7a); padding:14px 20px; display:flex;align-items:center; border-bottom:3px solid #FF7900; }
+.isup-portal-logo { width:42px;height:42px;background:#FF7900;color:#fff;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+.isup-portal-company { font-family:'Outfit',sans-serif;font-size:16px;font-weight:800;color:#fff; }
+.isup-portal-sub { font-size:11px;color:rgba(255,255,255,.6);margin-top:2px; }
+
+/* ── Tabs ──────────────────────────────────────────────── */
+.isup-tabs { display:flex;gap:4px; }
+.isup-tab { background:#fff;border:1px solid #dce3ee;border-bottom:none;padding:9px 18px;font-size:12px;font-weight:600;color:#888;cursor:pointer;border-radius:4px 4px 0 0;transition:all .12s; }
+.isup-tab:hover { background:#f8fbff;color:#163A5E; }
+.isup-tab.active { background:#163A5E;color:#fff;border-color:#163A5E; }
+
+/* ── Stat cards ────────────────────────────────────────── */
+.isup-stat-card { background:#fff;border:1px solid #dce3ee;border-radius:6px;padding:14px 16px;display:flex;align-items:center;gap:14px; }
+.isup-stat-icon { width:44px;height:44px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0; }
+.isup-stat-blue { background:#e3f2fd;color:#1565c0; }
+.isup-stat-green { background:#e8f5e9;color:#2e7d32; }
+.isup-stat-red { background:#fdecea;color:#c62828; }
+.isup-stat-cyan { background:#e0f7fa;color:#00838f; }
+.isup-stat-orange { background:#fff3e0;color:#e65100; }
+.isup-stat-label { font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.04em; }
+.isup-stat-num { font-family:'Outfit',sans-serif;font-size:20px;font-weight:800;color:#163A5E;line-height:1.2; }
+
+/* ── Panel ─────────────────────────────────────────────── */
+.isup-panel { background:#fff;border:1px solid #dce3ee;border-radius:4px;overflow:hidden;margin-bottom:12px; }
+.isup-panel-header { background:linear-gradient(90deg,#163A5E,#1e4d7a);color:#fff;font-size:13px;font-weight:700;padding:10px 14px;display:flex;align-items:center; }
+.isup-panel-body { padding:14px; }
+
+/* ── Tables ────────────────────────────────────────────── */
+.isup-table-wrap { overflow-x:auto; }
+.isup-table { border-collapse:collapse;font-size:13px; }
+.isup-table thead th { background:#EEF3F9;color:#163A5E;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #dce3ee;padding:8px 10px;white-space:nowrap; }
+.isup-table td { padding:8px 10px;border-bottom:1px solid #f0f4f8;vertical-align:middle; }
+.isup-table tbody tr:hover { background:#f8fbff; }
+.isup-table-bordered td { border:1px solid #eef2f7; }
+.isup-table-bordered thead th { border:1px solid #dce3ee; }
+
+/* ── Status badges ─────────────────────────────────────── */
+.isup-status { display:inline-flex;align-items:center;font-size:11px;font-weight:700;padding:3px 10px;border-radius:4px;text-transform:uppercase;letter-spacing:.04em; }
+.isup-status-green { background:#e8f5e9;color:#2e7d32; }
+.isup-status-red { background:#fdecea;color:#c62828; }
+.isup-status-grey { background:#f5f5f5;color:#757575; }
+.isup-status-blue { background:#e3f2fd;color:#1565c0; }
+.isup-status-cyan { background:#e0f7fa;color:#00838f; }
+.isup-status-orange { background:#fff3e0;color:#e65100; }
+
+/* ── Badges simples ────────────────────────────────────── */
+.isup-badge { display:inline-flex;font-size:10px;font-weight:600;padding:1px 8px;border-radius:3px; }
+.isup-badge-light { background:#f0f4f8;color:#555; }
+.isup-badge-pill { border-radius:12px;padding:2px 12px; }
+
+/* ── Boutons ───────────────────────────────────────────── */
+.isup-btn-primary { background:#FF7900;color:#fff;border:none;border-radius:4px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;transition:background .15s;white-space:nowrap; }
+.isup-btn-primary:hover { background:#e06700; }
+.isup-btn-primary:disabled { opacity:.5;cursor:not-allowed; }
+.isup-btn-grey { background:#f3f4f6;color:#666;border:1px solid #dce3ee;border-radius:4px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center; }
+.isup-btn-grey:hover { background:#e5e7eb; }
+.isup-btn-page { background:#fff;color:#555;border:1px solid #dce3ee;border-radius:4px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s; }
+.isup-btn-page:hover { background:#f5f5f5;color:#163A5E;border-color:#bbb; }
+.isup-btn-page.active { background:#163A5E;color:#fff;border-color:#163A5E; }
+
+.isup-icon-btn { background:#fff;border:1px solid #dce3ee;border-radius:4px;width:30px;height:28px;display:inline-flex;align-items:center;justify-content:center;color:#888;cursor:pointer;transition:all .15s; }
+.isup-icon-btn:hover { background:#f5f5f5;color:#163A5E;border-color:#bbb; }
+.isup-icon-danger:hover { background:#fdecea;color:#c62828;border-color:#f5c6c0; }
+
+/* ── Formulaires ───────────────────────────────────────── */
+.isup-input,.isup-select { width:100%;padding:7px 10px;font-size:12px;border:1px solid #dce3ee;border-radius:4px;background:#fff;color:#333;outline:none; }
+.isup-input:focus,.isup-select:focus { border-color:#FF7900;box-shadow:0 0 0 2px rgba(255,121,0,.12); }
+.isup-select-sm { padding:4px 8px;font-size:11px; }
+.isup-label { display:block;font-size:11px;font-weight:600;color:#163A5E;margin-bottom:3px; }
+
+/* ── Modales ───────────────────────────────────────────── */
+.isup-modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1060;display:flex;align-items:center;justify-content:center;padding:20px; }
+.isup-modal { background:#fff;border-radius:6px;width:100%;max-width:480px;box-shadow:0 8px 32px rgba(0,0,0,.18);max-height:90vh;overflow:auto; }
+.isup-modal-lg { max-width:640px; }
+.isup-modal-xl { max-width:900px; }
+.isup-modal-header { display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #dce3ee;font-size:13px;font-weight:700;color:#163A5E; }
+.isup-modal-close { background:none;border:none;font-size:22px;color:#aaa;cursor:pointer;padding:0;line-height:1; }
+.isup-modal-close:hover { color:#e53935; }
+.isup-modal-body { padding:16px;max-height:70vh;overflow-y:auto; }
+.isup-modal-footer { display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid #f0f4f8; }
+
+/* ── Alertes / Messages ────────────────────────────────── */
+.isup-alert-success { background:#e8f5e9;border:1px solid #c8e6c9;color:#2e7d32;border-radius:4px;padding:8px 12px;font-size:12px; }
+.isup-alert-error { background:#fdecea;border:1px solid #f5c6c0;color:#c62828;border-radius:4px;padding:8px 12px;font-size:12px; }
+.isup-alert-warning { background:#fff3e0;border:1px solid #ffe0b2;color:#e65100;border-radius:4px;padding:8px 12px;font-size:12px; }
+.isup-info-box { background:#e3f2fd;border:1px solid #bbdefb;color:#1565c0;border-radius:4px;padding:8px 12px;font-size:12px; }
+
+/* ── Spinners ──────────────────────────────────────────── */
+.isup-spinner { width:26px;height:26px;border:3px solid #ffe0b2;border-top-color:#FF7900;border-radius:50%;animation:isup-spin .7s linear infinite;display:inline-block; }
+.isup-spinner-sm { display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:isup-spin .7s linear infinite; }
+@keyframes isup-spin { to { transform:rotate(360deg); } }
+
+/* ── Switch custom ─────────────────────────────────────── */
+.isup-switch { position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0; }
+.isup-switch input { opacity:0;width:0;height:0; }
+.isup-switch-slider { position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:20px;transition:.2s; }
+.isup-switch-slider::before { content:'';position:absolute;height:14px;width:14px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s; }
+.isup-switch input:checked+.isup-switch-slider { background:#FF7900; }
+.isup-switch input:checked+.isup-switch-slider::before { transform:translateX(16px); }
+
+/* ── Utilitaires ───────────────────────────────────────── */
+.isup-detail-label { display:block;font-size:11px;color:#888;margin-bottom:2px; }
+.isup-check-item { display:flex;align-items:center;gap:10px;margin-bottom:8px;padding:4px 0; }
+.isup-empty-cell { color:#888;font-size:13px;padding:30px 20px!important; }
+.isup-field-row { padding:10px 0; border-bottom:1px solid #f0f4f8; }
+.isup-field-row:last-child { border-bottom:none; }
+.isup-field-label { font-size:11px;font-weight:700;color:#163A5E;text-transform:uppercase;margin-bottom:3px; }
+.isup-field-val { font-size:13px;color:#333; }
+.isup-misc-row { padding:6px 0;border-bottom:1px solid #f0f4f8;font-size:13px; }
+.isup-misc-row:last-child { border-bottom:none; }
+
+/* ── Responsive ────────────────────────────────────────── */
+@media (max-width:767.98px) {
+    .isup-portal-header { flex-wrap:wrap; }
+    .isup-tabs { flex-wrap:wrap; }
+}

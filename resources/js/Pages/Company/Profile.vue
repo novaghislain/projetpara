@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { ref, onMounted } from 'vue';
 import CompanyLayout from '../../Layouts/CompanyLayout.vue';
 
@@ -67,89 +67,113 @@ onMounted(loadData);
 
 <template>
     <CompanyLayout page-title="Mon Profil">
-        <div v-if="loading" class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Chargement...</span>
-            </div>
+        <!-- Loading -->
+        <div v-if="loading" class="d-flex align-items-center justify-content-center gap-3 py-5">
+            <div class="isup-spinner"></div>
+            <span style="color:#888; font-size:14px;">Chargement…</span>
         </div>
 
-        <div v-else class="row g-4">
-            <!-- Company Info -->
-            <div class="col-lg-7">
-                <div class="card border-0 rounded-4">
-                    <div class="card-body p-4">
-                        <h5 class="fw-bold mb-4 font-heading">
-                            <i class="bi-building me-2 text-primary"></i>Informations de l'entreprise
-                        </h5>
-
-                        <div v-if="success" class="alert alert-success rounded-3">{{ success }}</div>
-                        <div v-if="error" class="alert alert-danger rounded-3">{{ error }}</div>
-
-                        <form @submit.prevent="updateProfile">
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold small">Raison sociale</label>
-                                <input type="text" class="form-control" v-model="form.company_name" required>
-                            </div>
-                            <div class="row g-3 mb-3">
-                                <div class="col-md-6">
-                                    <label class="form-label fw-semibold small">Email</label>
-                                    <input type="email" class="form-control" v-model="form.email">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label fw-semibold small">Téléphone</label>
-                                    <input type="tel" class="form-control" v-model="form.phone">
-                                </div>
-                            </div>
-                            <div class="mb-4">
-                                <label class="form-label fw-semibold small">Adresse</label>
-                                <textarea class="form-control" rows="2" v-model="form.address"></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary px-4" :disabled="saving">
-                                <i class="bi-check2 me-2"></i>{{ saving ? 'Enregistrement...' : 'Enregistrer' }}
-                            </button>
-                        </form>
+        <template v-else>
+            <div class="isup-shell">
+                <!-- Header -->
+                <div class="isup-portal-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="isup-portal-logo">
+                            <i class="bi-person" style="font-size:20px;"></i>
+                        </div>
+                        <div>
+                            <div class="isup-portal-company">Mon Profil</div>
+                            <div class="isup-portal-sub">Informations de l'entreprise</div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Side info -->
-            <div class="col-lg-5">
-                <div class="card border-0 rounded-4 mb-4">
-                    <div class="card-body p-4">
-                        <h5 class="fw-bold mb-3 font-heading">
-                            <i class="bi-info-circle me-2 text-primary"></i>Détails
-                        </h5>
-                        <div class="small">
-                            <div v-if="company?.legal_form" class="d-flex justify-content-between py-2 border-bottom">
-                                <span class="text-muted">Forme juridique</span>
-                                <span class="fw-semibold">{{ company.legal_form }}</span>
+                <div class="p-3">
+                    <!-- Success / Error -->
+                    <div v-if="success" class="isup-alert-success mb-3">
+                        <i class="bi-check-circle-fill me-2"></i>{{ success }}
+                    </div>
+                    <div v-if="error" class="isup-alert-error mb-3">
+                        <i class="bi-exclamation-triangle-fill me-2"></i>{{ error }}
+                    </div>
+
+                    <div class="row g-3">
+                        <!-- Company Info Form -->
+                        <div class="col-lg-7">
+                            <div class="isup-panel">
+                                <div class="isup-panel-header">
+                                    <i class="bi-building me-2" style="color:#FF7900;"></i>Informations de l'entreprise
+                                </div>
+                                <div class="isup-panel-body">
+                                    <form @submit.prevent="updateProfile">
+                                        <div class="mb-3">
+                                            <label class="isup-label">Raison sociale</label>
+                                            <input type="text" class="isup-input" v-model="form.company_name" required>
+                                        </div>
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-md-6">
+                                                <label class="isup-label">Email</label>
+                                                <input type="email" class="isup-input" v-model="form.email">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="isup-label">Téléphone</label>
+                                                <input type="tel" class="isup-input" v-model="form.phone">
+                                            </div>
+                                        </div>
+                                        <div class="mb-4">
+                                            <label class="isup-label">Adresse</label>
+                                            <textarea class="isup-input" rows="2" v-model="form.address"></textarea>
+                                        </div>
+                                        <button type="submit" class="isup-btn-primary" :disabled="saving">
+                                            <span v-if="saving" class="isup-spinner-sm me-1"></span>
+                                            <i v-else class="bi-check2 me-1"></i>
+                                            {{ saving ? 'Enregistrement...' : 'Enregistrer' }}
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
-                            <div v-if="company?.ifu" class="d-flex justify-content-between py-2 border-bottom">
-                                <span class="text-muted">IFU</span>
-                                <span class="fw-semibold">{{ company.ifu }}</span>
-                            </div>
-                            <div v-if="company?.rccm" class="d-flex justify-content-between py-2 border-bottom">
-                                <span class="text-muted">RCCM</span>
-                                <span class="fw-semibold">{{ company.rccm }}</span>
-                            </div>
-                            <div class="d-flex justify-content-between py-2 border-bottom">
-                                <span class="text-muted">Statut</span>
-                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill">
-                                    {{ company?.status || 'Actif' }}
-                                </span>
-                            </div>
-                            <div v-if="company?.contract_start" class="d-flex justify-content-between py-2 border-bottom">
-                                <span class="text-muted">Début contrat</span>
-                                <span class="fw-semibold">{{ new Date(company.contract_start).toLocaleDateString('fr-FR') }}</span>
-                            </div>
-                            <div v-if="company?.contract_end" class="d-flex justify-content-between py-2">
-                                <span class="text-muted">Fin contrat</span>
-                                <span class="fw-semibold">{{ new Date(company.contract_end).toLocaleDateString('fr-FR') }}</span>
+                        </div>
+
+                        <!-- Side info -->
+                        <div class="col-lg-5">
+                            <div class="isup-panel">
+                                <div class="isup-panel-header">
+                                    <i class="bi-info-circle me-2" style="color:#FF7900;"></i>Détails
+                                </div>
+                                <div class="isup-panel-body">
+                                    <div v-if="company?.legal_form" class="isup-field-row">
+                                        <span class="isup-field-label">Forme juridique</span>
+                                        <span class="isup-field-val">{{ company.legal_form }}</span>
+                                    </div>
+                                    <div v-if="company?.ifu" class="isup-field-row">
+                                        <span class="isup-field-label">IFU</span>
+                                        <span class="isup-field-val">{{ company.ifu }}</span>
+                                    </div>
+                                    <div v-if="company?.rccm" class="isup-field-row">
+                                        <span class="isup-field-label">RCCM</span>
+                                        <span class="isup-field-val">{{ company.rccm }}</span>
+                                    </div>
+                                    <div class="isup-field-row">
+                                        <span class="isup-field-label">Statut</span>
+                                        <span class="isup-field-val">
+                                            <span class="isup-status isup-status-green">{{ company?.status || 'Actif' }}</span>
+                                        </span>
+                                    </div>
+                                    <div v-if="company?.contract_start" class="isup-field-row">
+                                        <span class="isup-field-label">Début contrat</span>
+                                        <span class="isup-field-val">{{ new Date(company.contract_start).toLocaleDateString('fr-FR') }}</span>
+                                    </div>
+                                    <div v-if="company?.contract_end" class="isup-field-row">
+                                        <span class="isup-field-label">Fin contrat</span>
+                                        <span class="isup-field-val">{{ new Date(company.contract_end).toLocaleDateString('fr-FR') }}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </template>
     </CompanyLayout>
 </template>
+

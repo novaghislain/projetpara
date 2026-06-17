@@ -1,4 +1,5 @@
 import '../css/app.css';
+import '../css/company.css';
 import './bootstrap';
 
 import { createApp } from 'vue';
@@ -41,6 +42,7 @@ import ErpTreasury from './Pages/Gel/Erp/Treasury.vue';
 import GelLicenses from './Pages/Gel/Licenses/Index.vue';
 import GelCompanyAdmins from './Pages/Gel/CompanyAdmins/Index.vue';
 import GelRequests from './Pages/Gel/Admin/Requests/Index.vue';
+import GelSettings from './Pages/Gel/Settings.vue';
 
 const app = createApp({});
 
@@ -88,6 +90,7 @@ app.component('ErpTreasury', ErpTreasury);
 app.component('GelLicenses', GelLicenses);
 app.component('GelCompanyAdmins', GelCompanyAdmins);
 app.component('GelRequests', GelRequests);
+app.component('GelSettings', GelSettings);
 
 // Nos Services Components
 import PublicCatalogueIndex from './Pages/Public/Catalogue/Index.vue';
@@ -141,6 +144,14 @@ app.component('CompanyCrm', CompanyCrm);
 app.component('CompanyAiAssistant', CompanyAiAssistant);
 app.component('CompanyAccounting', CompanyAccounting);
 app.component('CompanyCaisse', CompanyCaisse);
+
+// CPA (Crescendo) Dashboard Components
+import CpaDashboard from './Pages/Cpa/Dashboard.vue';
+import CpaLogin from './Pages/Auth/CpaLogin.vue';
+import CpaRegister from './Pages/Auth/CpaRegister.vue';
+app.component('cpa-dashboard', CpaDashboard);
+app.component('cpa-login', CpaLogin);
+app.component('cpa-register', CpaRegister);
 
 // Only mount Vue on pages that have the #app container
 if (document.getElementById('app')) {

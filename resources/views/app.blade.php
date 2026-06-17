@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>GEL Cabinet | Gestion de Cabinet Multi-Pôles</title>
-    <meta name="description" content="Plateforme intégrée de gestion de cabinet pluridisciplinaire. CRM, GED, Pôles, Missions et Comptabilité.">
+    <title>GEL Cabinet | Gestion de Cabinet</title>
+    <meta name="description" content="CRM, GED, Pôles, Missions, Comptabilité — votre cabinet tout-en-un.">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -161,10 +161,10 @@
                     <gel-mission-form :mission-id="{{ $missionId }}"></gel-mission-form>
                     @break
                 @case('gel-dossiers')
-                    <gel-dossiers :client-id="{{ $clientId }}"></gel-dossiers>
+                    <gel-dossiers :client-id="{{ $clientId ?? 'null' }}"></gel-dossiers>
                     @break
                 @case('gel-documents')
-                    <gel-dossiers :client-id="{{ $clientId }}"></gel-dossiers>
+                    <gel-dossiers :client-id="{{ $clientId ?? 'null' }}"></gel-dossiers>
                     @break
                 @case('gel-services')
                     <gel-services></gel-services>
@@ -243,6 +243,18 @@
                     @break
                 @case('admin-services-index')
                     <admin-services-index :categories='@json($props["categories"] ?? [])'></admin-services-index>
+                    @break
+                @case('cpa-login')
+                    <cpa-login></cpa-login>
+                    @break
+                @case('cpa-register')
+                    <cpa-register></cpa-register>
+                    @break
+                @case('cpa-dashboard')
+                    <cpa-dashboard></cpa-dashboard>
+                    @break
+                @case('settings')
+                    <gel-settings></gel-settings>
                     @break
                 @default
                     <gel-dashboard></gel-dashboard>

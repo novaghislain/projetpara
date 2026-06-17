@@ -28,6 +28,37 @@ use App\Http\Controllers\Catalogue\AdminCatalogueController;
 // Page d'accueil publique : Landing page
 Route::get('/', [DashboardController::class, 'index'])->name('home');
 
+// Pages À propos
+Route::view('/notre-cabinet', 'pages.notre-cabinet')->name('notre-cabinet');
+Route::view('/notre-equipe', 'pages.notre-equipe')->name('notre-equipe');
+Route::view('/carrieres', 'pages.carrieres')->name('carrieres');
+
+// Nos Modules
+Route::view('/nos-modules', 'pages.nos-modules')->name('nos-modules');
+
+// Pages Ressources
+Route::view('/blogue', 'pages.blog')->name('blogue');
+Route::view('/documentation', 'pages.documentation')->name('documentation');
+Route::view('/faq', 'pages.faq')->name('faq');
+Route::view('/centre-aide', 'pages.centre-aide')->name('centre-aide');
+Route::view('/contact', 'contact')->name('contact');
+
+// Pages Services
+Route::get('/services', function () {
+    // Si l'utilisateur est connecté en tant que staff cabinet, afficher la vue interne
+    if (auth()->check() && auth()->user()->client_id && auth()->user()->role !== 'client') {
+        return app(\App\Http\Controllers\Gel\ServiceController::class)->index();
+    }
+    // Sinon, afficher la page publique des services
+    return view('services.index');
+})->name('services.public');
+Route::view('/services/comptabilite', 'services.comptabilite')->name('services.comptabilite');
+Route::view('/services/juridique', 'services.juridique')->name('services.juridique');
+Route::view('/services/fiscal', 'services.fiscal')->name('services.fiscal');
+Route::view('/services/social-paie', 'services.social-paie')->name('services.social-paie');
+Route::view('/services/commercial', 'services.commercial')->name('services.commercial');
+Route::view('/services/erp', 'services.erp')->name('services.erp');
+
 // Catalogue Public "Nos Services" & Commande
 Route::get('/nos-services', [PublicCatalogueController::class, 'index'])->name('catalogue.index');
 Route::get('/nos-services/{category_id}/{service_id}', [PublicCatalogueController::class, 'show'])->name('catalogue.show');
@@ -112,12 +143,18 @@ Route::middleware(['auth', 'company', 'not_client'])->group(function () {
     })->name('accounting.resultat');
 
     // Dossiers / GED
+    Route::get('/dossiers', function () {
+        return view('app', ['page' => 'gel-dossiers']);
+    })->name('dossiers.index.all');
     Route::get('/dossiers/{clientId}', [FolderController::class, 'index'])->name('dossiers.index');
     Route::post('/dossiers', [FolderController::class, 'store'])->name('dossiers.store');
     Route::put('/dossiers/{id}', [FolderController::class, 'update'])->name('dossiers.update');
     Route::delete('/dossiers/{id}', [FolderController::class, 'destroy'])->name('dossiers.destroy');
 
     // Documents
+    Route::get('/documents', function () {
+        return view('app', ['page' => 'gel-documents']);
+    })->name('documents.index.all');
     Route::get('/documents/{clientId}', [DocumentController::class, 'index'])->name('documents.index');
     Route::post('/documents/upload', [DocumentController::class, 'upload'])->name('documents.upload');
     Route::get('/documents/download/{id}', [DocumentController::class, 'download'])->name('documents.download');
@@ -542,14 +579,23 @@ require __DIR__.'/auth.php';
 require __DIR__.'/debug.php';
 
 // Routes publiques
-require __DIR__.'/auth.php';
-require __DIR__.'/debug.php';
-
-// Routes publiques
 Route::post('/demande', [\App\Http\Controllers\Gel\PublicController::class, 'storeDemande'])->name('demande.store');
 
-// Espace Client - Suivi des commandes
+// ─── Pages Auth CPA (publiques) ────────────────────────────
+Route::get('/cpa-login', function () {
+    return view('app', ['page' => 'cpa-login']);
+})->name('cpa.login');
+
+Route::get('/cpa-register', function () {
+    return view('app', ['page' => 'cpa-register']);
+})->name('cpa.register');
+
+// ─── Dashboard Crescendo CPA ────────────────────────────────────
 Route::middleware(['auth'])->group(function () {
+    Route::get('/cpa-dashboard', [\App\Http\Controllers\Cpa\DashboardController::class, 'index'])->name('cpa.dashboard');
+    Route::get('/api/cpa/stats', [\App\Http\Controllers\Cpa\DashboardController::class, 'stats'])->name('cpa.stats');
+
+    // Espace Client - Suivi des commandes
     Route::get('/mes-commandes', [ClientDashboardController::class, 'index'])->name('client.orders.index');
     Route::get('/mes-commandes/{id}', [ClientDashboardController::class, 'show'])->name('client.orders.show');
     Route::post('/mes-commandes/{id}/messages', [ClientDashboardController::class, 'storeMessage'])->name('client.orders.messages.store');

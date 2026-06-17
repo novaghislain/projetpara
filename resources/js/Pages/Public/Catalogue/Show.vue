@@ -1,24 +1,33 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { authStore } from '../../../stores/auth';
 
 const props = defineProps({
-    category: {
-        type: Object,
-        required: true,
-    },
-    service: {
-        type: Object,
-        required: true,
-    }
+    category: { type: Object, required: true },
+    service: { type: Object, required: true }
 });
 
 const processing = ref(false);
+const animated = ref(false);
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
+// ── IntersectionObserver for scroll animations ──
+let observer = null;
+const initObserver = () => {
+    observer = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+            if (e.isIntersecting) {
+                e.target.classList.add('show-visible');
+                observer.unobserve(e.target);
+            }
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.anim-show').forEach(el => observer.observe(el));
+};
+
+// ── Start order ──
 const startOrder = async () => {
     processing.value = true;
-
     if (!authStore.isAuthenticated) {
         try {
             await fetch('/commande/preparer', {
@@ -30,13 +39,10 @@ const startOrder = async () => {
                 },
                 body: JSON.stringify({ service_id: props.service.id })
             });
-        } catch (e) {
-            console.error(e);
-        }
+        } catch (e) { /* silent */ }
         window.location.href = '/login';
         return;
     }
-
     try {
         const res = await fetch('/commande/initialiser', {
             method: 'POST',
@@ -47,7 +53,6 @@ const startOrder = async () => {
             },
             body: JSON.stringify({ service_id: props.service.id })
         });
-
         if (res.ok || res.redirected) {
             window.location.href = res.url || '/commande/etape';
         }
@@ -56,12 +61,21 @@ const startOrder = async () => {
         processing.value = false;
     }
 };
+
+onMounted(() => {
+    setTimeout(() => { animated.value = true; }, 80);
+    requestAnimationFrame(() => initObserver());
+});
+
+onUnmounted(() => {
+    if (observer) observer.disconnect();
+});
 </script>
 
 <template>
-    <div style="font-family: 'Inter', sans-serif; background: #f4f5f7; min-height: 100vh;">
+    <div style="font-family: 'Inter', sans-serif; background: #F8FAFC; min-height: 100vh;">
 
-        <!-- Navbar iSupplier -->
+        <!-- ═══ Navbar ═══ -->
         <nav class="show-navbar">
             <div class="container d-flex align-items-center justify-content-between">
                 <a href="/" class="show-brand text-decoration-none">
@@ -82,8 +96,8 @@ const startOrder = async () => {
             </div>
         </nav>
 
-        <!-- Orange sub-bar + breadcrumb -->
-        <div class="show-subbar">
+        <!-- ═══ Sub-bar / Breadcrumb ═══ -->
+        <div class="show-subbar anim-show">
             <div class="container d-flex align-items-center gap-2" style="font-size: 12px;">
                 <a href="/" class="show-subnav-link">Accueil</a>
                 <span style="color:rgba(255,255,255,0.4);">/</span>
@@ -93,8 +107,8 @@ const startOrder = async () => {
             </div>
         </div>
 
-        <!-- Service Header Banner -->
-        <div class="show-hero">
+        <!-- ═══ Hero Banner ═══ -->
+        <div :class="['show-hero', { 'show-anim-hero': animated }]">
             <div class="container">
                 <div class="d-flex align-items-center gap-3 mb-3">
                     <div class="show-category-badge" v-html="category.icone"></div>
@@ -119,15 +133,15 @@ const startOrder = async () => {
             </div>
         </div>
 
-        <!-- Main Content -->
+        <!-- ═══ Main Content ═══ -->
         <div class="container py-5">
             <div class="row g-4">
 
-                <!-- Left: Service Info -->
+                <!-- ─── Left: Service Info ─── -->
                 <div class="col-lg-8">
 
                     <!-- Description card -->
-                    <div class="show-card mb-4">
+                    <div class="show-card mb-4 anim-show" style="transition-delay: 0.1s;">
                         <div class="show-card-header">
                             <i class="bi-info-circle me-2" style="color: #FF7900;"></i>
                             Description du service
@@ -138,9 +152,9 @@ const startOrder = async () => {
                     </div>
 
                     <div class="row g-4">
-                        <!-- Ce qui est inclus -->
+                        <!-- Included items -->
                         <div v-if="service.inclus_json && service.inclus_json.length" class="col-md-6">
-                            <div class="show-card h-100">
+                            <div class="show-card h-100 anim-show" style="transition-delay: 0.2s;">
                                 <div class="show-card-header">
                                     <i class="bi-check-circle me-2" style="color: #198754;"></i>
                                     Ce qui est inclus
@@ -158,9 +172,9 @@ const startOrder = async () => {
                             </div>
                         </div>
 
-                        <!-- Documents requis -->
+                        <!-- Required documents -->
                         <div v-if="service.documents_requis_json && service.documents_requis_json.length" class="col-md-6">
-                            <div class="show-card h-100">
+                            <div class="show-card h-100 anim-show" style="transition-delay: 0.3s;">
                                 <div class="show-card-header">
                                     <i class="bi-file-earmark-text me-2" style="color: #FF7900;"></i>
                                     Documents requis
@@ -180,16 +194,14 @@ const startOrder = async () => {
                     </div>
                 </div>
 
-                <!-- Right: Order Box -->
+                <!-- ─── Right: Order Box ─── -->
                 <div class="col-lg-4">
                     <div class="position-sticky" style="top: 100px;">
-                        <div class="show-order-card">
-                            <!-- Card header -->
+                        <div class="show-order-card anim-show" style="transition-delay: 0.4s;">
                             <div class="show-order-header">
                                 <i class="bi-cart-plus me-2"></i>Commander ce service
                             </div>
                             <div class="show-order-body">
-                                <!-- Délai -->
                                 <div class="show-order-row">
                                     <div class="show-order-label">
                                         <i class="bi-clock-history me-2" style="color: #FF7900;"></i>
@@ -197,8 +209,6 @@ const startOrder = async () => {
                                     </div>
                                     <div class="show-order-value">{{ service.delai_jours || 'Sur mesure' }}</div>
                                 </div>
-
-                                <!-- Tarif -->
                                 <div class="show-order-row">
                                     <div class="show-order-label">
                                         <i class="bi-tag me-2" style="color: #FF7900;"></i>
@@ -211,8 +221,6 @@ const startOrder = async () => {
                                         <span v-else>Sur devis</span>
                                     </div>
                                 </div>
-
-                                <!-- Catégorie -->
                                 <div class="show-order-row">
                                     <div class="show-order-label">
                                         <i class="bi-folder me-2" style="color: #FF7900;"></i>
@@ -220,8 +228,6 @@ const startOrder = async () => {
                                     </div>
                                     <div class="show-order-value">{{ category.nom }}</div>
                                 </div>
-
-                                <!-- CTA Button -->
                                 <button
                                     @click="startOrder"
                                     :disabled="processing"
@@ -241,9 +247,7 @@ const startOrder = async () => {
                                 </p>
                             </div>
                         </div>
-
-                        <!-- Back link -->
-                        <a href="/nos-services" class="show-back-link">
+                        <a href="/nos-services" class="show-back-link anim-show" style="transition-delay: 0.5s;">
                             <i class="bi-arrow-left me-2"></i>Retour au catalogue
                         </a>
                     </div>
@@ -252,7 +256,7 @@ const startOrder = async () => {
             </div>
         </div>
 
-        <!-- Footer -->
+        <!-- ═══ Footer ═══ -->
         <footer class="show-footer">
             <div class="container d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center gap-2">
@@ -268,12 +272,72 @@ const startOrder = async () => {
 </template>
 
 <style scoped>
-/* ── Navbar ─────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   KEYFRAMES
+   ═══════════════════════════════════════════════════════════════ */
+@keyframes showFadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: none; }
+}
+@keyframes showFadeDown {
+    from { opacity: 0; transform: translateY(-12px); }
+    to   { opacity: 1; transform: none; }
+}
+@keyframes showScaleIn {
+    from { opacity: 0; transform: scale(0.92); }
+    to   { opacity: 1; transform: scale(1); }
+}
+@keyframes showSlideRight {
+    from { opacity: 0; transform: translateX(-20px); }
+    to   { opacity: 1; transform: none; }
+}
+@keyframes showShimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+@keyframes showPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,121,0,0.3); }
+    50%      { box-shadow: 0 0 0 8px rgba(255,121,0,0); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SCROLL ANIMATIONS
+   ═══════════════════════════════════════════════════════════════ */
+.anim-show {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.55s cubic-bezier(0.16, 0.6, 0.2, 1),
+                transform 0.55s cubic-bezier(0.16, 0.6, 0.2, 1);
+}
+.show-visible {
+    opacity: 1 !important;
+    transform: none !important;
+}
+
+/* Hero entrance — keyframe based (plays once on mount) */
+.show-anim-hero .show-category-badge {
+    animation: showFadeDown 0.4s cubic-bezier(0.16, 0.6, 0.2, 1) both;
+}
+.show-anim-hero .show-service-title {
+    animation: showFadeUp 0.5s cubic-bezier(0.16, 0.6, 0.2, 1) 0.1s both;
+}
+.show-anim-hero .show-quick-info {
+    animation: showFadeUp 0.5s cubic-bezier(0.16, 0.6, 0.2, 1) 0.2s both;
+}
+.show-anim-hero .show-quick-info:last-child {
+    animation-delay: 0.28s;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   NAVBAR
+   ═══════════════════════════════════════════════════════════════ */
 .show-navbar {
-    background: #163A5E; height: 56px;
+    background: #ffffff;
+    height: 56px;
     border-bottom: 3px solid #FF7900;
     display: flex; align-items: center;
     position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 .show-brand { display: flex; align-items: center; gap: 10px; }
 .show-brand-icon {
@@ -281,27 +345,37 @@ const startOrder = async () => {
     border-radius: 2px; display: flex; align-items: center;
     justify-content: center; font-size: 12px; font-weight: 900; color: #fff;
 }
-.show-brand-name { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 16px; color: #fff; }
+.show-brand-name { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 16px; color: #1E293B; }
 .show-nav-link {
-    color: rgba(255,255,255,0.75); font-size: 13px; font-weight: 500;
-    text-decoration: none; padding: 6px 12px; border-radius: 2px; transition: all 0.15s;
+    color: #64748B; font-size: 13px; font-weight: 500;
+    text-decoration: none; padding: 6px 12px; border-radius: 2px;
+    transition: all 0.2s;
 }
-.show-nav-link:hover { color: #fff; background: rgba(255,255,255,0.1); }
+.show-nav-link:hover { color: #1E293B; background: #F1F5F9; }
 .show-btn-primary {
     background: #FF7900; color: #fff; border: none; border-radius: 2px;
     padding: 7px 16px; font-size: 13px; font-weight: 600;
-    cursor: pointer; text-decoration: none; transition: background 0.15s;
+    cursor: pointer; text-decoration: none;
+    transition: background 0.2s, transform 0.2s;
 }
-.show-btn-primary:hover { background: #e06700; color: #fff; }
+.show-btn-primary:hover { background: #e06700; color: #fff; transform: translateY(-1px); }
 .show-btn-outline {
-    background: transparent; color: rgba(255,255,255,0.85);
-    border: 1px solid rgba(255,255,255,0.35); border-radius: 2px;
-    padding: 6px 14px; font-size: 13px; font-weight: 500;
-    text-decoration: none; transition: all 0.15s;
+    background: transparent;
+    color: #64748B;
+    border: 1px solid #CBD5E1;
+    border-radius: 2px; padding: 6px 14px;
+    font-size: 13px; font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s;
 }
-.show-btn-outline:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.show-btn-outline:hover {
+    background: #F1F5F9; color: #1E293B;
+    border-color: #94A3B8;
+}
 
-/* ── Sub-bar ─────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   SUB-BAR
+   ═══════════════════════════════════════════════════════════════ */
 .show-subbar {
     background: #FF7900; height: 32px;
     display: flex; align-items: center;
@@ -312,17 +386,21 @@ const startOrder = async () => {
 }
 .show-subnav-link:hover, .show-subnav-link.active { color: #fff; }
 
-/* ── Hero Banner ─────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   HERO BANNER
+   ═══════════════════════════════════════════════════════════════ */
 .show-hero {
-    background: linear-gradient(135deg, #163A5E 0%, #1e4d7a 100%);
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
     padding: 36px 0 32px;
     border-bottom: 1px solid rgba(255,255,255,0.1);
+    overflow: hidden;
 }
 .show-category-badge {
-    width: 36px; height: 36px; background: rgba(255,121,0,0.2);
-    border: 1px solid rgba(255,121,0,0.4); border-radius: 2px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px; color: #FF7900; flex-shrink: 0;
+    width: 36px; height: 36px;
+    background: rgba(255,121,0,0.2);
+    border: 1px solid rgba(255,121,0,0.4);
+    border-radius: 2px; display: flex; align-items: center;
+    justify-content: center; font-size: 18px; color: #FF7900; flex-shrink: 0;
 }
 .show-category-name {
     font-size: 13px; font-weight: 700; color: #FF7900;
@@ -333,59 +411,102 @@ const startOrder = async () => {
     font-size: 2rem; font-weight: 800; color: #fff; margin: 0;
 }
 .show-quick-info {
-    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 2px; padding: 6px 14px; font-size: 13px; color: rgba(255,255,255,0.85);
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 2px; padding: 6px 14px;
+    font-size: 13px; color: rgba(255,255,255,0.85);
 }
 
-/* ── Cards ───────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   CARDS
+   ═══════════════════════════════════════════════════════════════ */
 .show-card {
-    background: #fff; border: 1px solid #e5e5e5; border-radius: 2px; overflow: hidden;
+    background: #fff;
+    border: 1px solid #E2E8F0;
+    border-radius: 4px;
+    overflow: hidden;
+    transition: box-shadow 0.35s cubic-bezier(0.16, 0.6, 0.2, 1),
+                transform 0.35s cubic-bezier(0.16, 0.6, 0.2, 1),
+                border-color 0.3s;
+}
+.show-card:hover {
+    box-shadow: 0 8px 28px rgba(0,0,0,0.07);
+    border-color: rgba(255,121,0,0.15);
 }
 .show-card-header {
-    background: #f8f8f8; border-bottom: 1px solid #e5e5e5;
-    padding: 11px 16px; font-size: 13px; font-weight: 700; color: #333;
+    padding: 12px 18px;
+    font-size: 13px; font-weight: 700; color: #1E293B;
     display: flex; align-items: center;
+    background: #F8FAFC;
+    border-bottom: 1px solid #E2E8F0;
 }
-.show-card-body { padding: 16px; }
+.show-card-body { padding: 18px; }
 .show-description {
-    font-size: 14px; color: #444; line-height: 1.8; white-space: pre-line;
+    font-size: 14px; color: #475569;
+    line-height: 1.8; white-space: pre-line;
 }
 
-/* ── Checklist ───────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   CHECKLIST
+   ═══════════════════════════════════════════════════════════════ */
 .show-checklist { list-style: none; padding: 0; margin: 0; }
 .show-check-item {
     display: flex; align-items: flex-start; gap: 10px;
-    padding: 7px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px; color: #444;
+    padding: 8px 0;
+    border-bottom: 1px solid #F1F5F9;
+    font-size: 13px; color: #475569;
+    animation: showFadeUp 0.4s cubic-bezier(0.16, 0.6, 0.2, 1) both;
 }
+.show-check-item:nth-child(1) { animation-delay: 0.05s; }
+.show-check-item:nth-child(2) { animation-delay: 0.10s; }
+.show-check-item:nth-child(3) { animation-delay: 0.15s; }
+.show-check-item:nth-child(4) { animation-delay: 0.20s; }
+.show-check-item:nth-child(5) { animation-delay: 0.25s; }
+.show-check-item:nth-child(6) { animation-delay: 0.30s; }
+.show-check-item:nth-child(7) { animation-delay: 0.35s; }
+.show-check-item:nth-child(8) { animation-delay: 0.40s; }
 .show-check-item:last-child { border-bottom: none; }
 .show-check-dot {
     width: 22px; height: 22px; border-radius: 2px;
     display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
+    flex-shrink: 0; margin-top: 1px;
 }
-.show-check-ok { background: #e8f5e9; color: #198754; }
-.show-check-doc { background: rgba(255,121,0,0.1); color: #FF7900; }
+.show-check-ok { background: #F0FDF4; color: #16A34A; }
+.show-check-doc { background: rgba(255,121,0,0.08); color: #FF7900; }
 
-/* ── Order Box ───────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   ORDER BOX
+   ═══════════════════════════════════════════════════════════════ */
 .show-order-card {
-    background: #fff; border: 1px solid #e5e5e5; border-radius: 2px;
-    overflow: hidden; margin-bottom: 16px;
+    background: #fff;
+    border: 1px solid #E2E8F0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    transition: box-shadow 0.35s cubic-bezier(0.16, 0.6, 0.2, 1),
+                transform 0.35s cubic-bezier(0.16, 0.6, 0.2, 1);
+}
+.show-order-card:hover {
+    box-shadow: 0 12px 36px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
 }
 .show-order-header {
-    background: #163A5E; color: #fff;
-    padding: 14px 16px; font-size: 14px; font-weight: 700;
+    background: #3B82F6; color: #fff;
+    padding: 14px 18px;
+    font-size: 14px; font-weight: 700;
     font-family: 'Outfit', sans-serif;
     display: flex; align-items: center;
 }
 .show-order-body { padding: 20px; }
 .show-order-row {
-    padding: 12px 0; border-bottom: 1px solid #f0f0f0;
+    padding: 12px 0;
+    border-bottom: 1px solid #F1F5F9;
 }
 .show-order-row:last-child { border-bottom: none; }
 .show-order-label {
-    font-size: 11px; font-weight: 600; color: #999;
-    text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;
-    display: flex; align-items: center;
+    font-size: 11px; font-weight: 600; color: #94a3b8;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    margin-bottom: 4px; display: flex; align-items: center;
 }
 .show-order-value { font-size: 14px; font-weight: 600; color: #1a1a1a; }
 .show-tarif { font-size: 22px; font-weight: 800; color: #FF7900; font-family: 'Outfit', sans-serif; }
@@ -393,23 +514,43 @@ const startOrder = async () => {
     width: 100%; background: #FF7900; color: #fff;
     border: none; border-radius: 2px; padding: 14px;
     font-size: 14px; font-weight: 700; cursor: pointer;
-    transition: background 0.15s; font-family: 'Outfit', sans-serif;
+    font-family: 'Outfit', sans-serif;
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
 }
-.show-cta-btn:hover:not(:disabled) { background: #e06700; }
+.show-cta-btn:hover:not(:disabled) {
+    background: #e06700;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(255,121,0,0.3);
+}
+.show-cta-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
 .show-cta-btn:disabled { opacity: 0.7; cursor: not-allowed; }
 
-/* ── Back link ───────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   BACK LINK
+   ═══════════════════════════════════════════════════════════════ */
 .show-back-link {
     display: flex; align-items: center;
-    color: #163A5E; font-size: 13px; font-weight: 600;
-    text-decoration: none; padding: 12px 16px;
-    background: #fff; border: 1px solid #e5e5e5;
-    border-radius: 2px; transition: all 0.15s;
+    color: #3B82F6; font-size: 13px; font-weight: 600;
+    text-decoration: none; padding: 12px 18px;
+    background: #fff; border: 1px solid #E2E8F0;
+    border-radius: 4px;
+    transition: all 0.25s cubic-bezier(0.16, 0.6, 0.2, 1);
 }
-.show-back-link:hover { background: #eef5fb; color: #163A5E; }
+.show-back-link:hover {
+    background: #EFF6FF;
+    border-color: #3B82F6;
+    color: #2563EB;
+    transform: translateX(-4px);
+}
 
-/* ── Footer ─────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════════════════════════════ */
 .show-footer {
-    background: #1a1a1a; border-top: 3px solid #FF7900; padding: 18px 0;
+    background: #1a1a1a;
+    border-top: 3px solid #FF7900;
+    padding: 18px 0;
 }
 </style>

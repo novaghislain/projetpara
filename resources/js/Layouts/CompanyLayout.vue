@@ -11,88 +11,156 @@ const licenses = ref([]);
 const loading = ref(true);
 
 const userInitial = computed(() => {
-    return authStore.user?.name?.charAt(0).toUpperCase() || 'E';
+    return authStore.user?.name?.charAt(0).toUpperCase() || 'U';
 });
 
+const userRoleLabel = computed(() => {
+    const labels = {
+        super_admin: 'Super Admin',
+        director: 'Directeur',
+        pole_responsible: 'Responsable Pôle',
+        collaborator: 'Collaborateur',
+        client: 'Client',
+        company_admin: 'Admin Entreprise'
+    };
+    return labels[authStore.user?.role] || 'Client';
+});
+
+const sidebarOpen = ref(true);
 let stopPermissionPolling = null;
 
+const tabs = [
+    { name: 'Accueil',        icon: 'bi-house',          route: '/company/dashboard',    key: 'company-dashboard' },
+    { name: 'Commandes',      icon: 'bi-cart-check',     route: '/mes-commandes',        key: 'mes-commandes' },
+    { name: 'Finance',        icon: 'bi-cash-stack',     route: '/company/invoices',     key: 'company-invoices',  module: 'facturation' },
+    { name: 'Comptabilité',   icon: 'bi-calculator',     route: '/company/accounting',   key: 'company-accounting', module: 'comptabilite' },
+    { name: 'Secrétariat',    icon: 'bi-file-text',      route: '/company/ged',          key: 'company-ged',       module: 'document' },
+    { name: 'Administration', icon: 'bi-gear',           route: '/company/profile',      key: 'company-profile' },
+];
+
+const visibleTabs = computed(() =>
+    tabs.filter(t => !t.module || authStore.hasModule(t.module))
+);
+
+/* ── Module requirements for sidebar items ── */
+const sidebarModuleMap = {
+    // clés : href → module requis
+    '/company/ged':        'document',
+    '/company/caisse':     'caisse',
+    '/company/invoices':   'facturation',
+    '/company/hr':         'rh',
+    '/company/accounting': 'comptabilite',
+    '/company/legal':      'juridique',
+    '/company/projects':   'projets',
+};
+
+function hasSidebarAccess(href) {
+    const mod = sidebarModuleMap[href];
+    return !mod || authStore.hasModule(mod);
+}
+
+const sidebarBySection = {
+    'company-dashboard': [
+        { group: 'Actions rapides', items: [
+            { label: 'Mes commandes',     href: '/mes-commandes',       icon: 'bi-cart-check' },
+            { label: 'Catalogue GEL',     href: '/nos-services',       icon: 'bi-shop' },
+            { label: 'Notifications',     href: '/company/notifications', icon: 'bi-bell' },
+        ]},
+        { group: 'Consultation', items: [
+            { label: 'Services actifs',   href: '/company/services',   icon: 'bi-grid-3x3-gap' },
+            { label: 'Documents (GED)',   href: '/company/ged',        icon: 'bi-folder2-open' },
+        ]},
+    ],
+    'mes-commandes': [
+        { group: 'Commandes', items: [
+            { label: 'Mes commandes',     href: '/mes-commandes',       icon: 'bi-cart-check' },
+            { label: 'Catalogue GEL',     href: '/nos-services',       icon: 'bi-shop' },
+            { label: 'Suivi des demandes',href: '/company/notifications', icon: 'bi-envelope' },
+        ]},
+    ],
+    'company-invoices': [
+        { group: 'Finance', items: [
+            { label: 'Facturation',       href: '/company/invoices',   icon: 'bi-receipt' },
+            { label: 'Caisse',            href: '/company/caisse',     icon: 'bi-cash-stack' },
+        ]},
+    ],
+    'company-accounting': [
+        { group: 'Comptabilité', items: [
+            { label: 'Comptabilité',      href: '/company/accounting', icon: 'bi-calculator' },
+            { label: 'Facturation',       href: '/company/invoices',   icon: 'bi-receipt' },
+        ]},
+    ],
+    'company-ged': [
+        { group: 'Documents', items: [
+            { label: 'GED — Documents',   href: '/company/ged',        icon: 'bi-folder2-open' },
+        ]},
+        { group: 'Ressources', items: [
+            { label: 'RH',                href: '/company/hr',         icon: 'bi-people' },
+            { label: 'Juridique',         href: '/company/legal',      icon: 'bi-file-earmark-text' },
+            { label: 'Projets',           href: '/company/projects',   icon: 'bi-kanban' },
+            { label: 'CRM',               href: '/company/crm',        icon: 'bi-person-lines-fill' },
+            { label: 'Assistant IA',      href: '/company/ai',         icon: 'bi-robot' },
+        ]},
+    ],
+    'company-profile': [
+        { group: 'Administration', items: [
+            { label: 'Mon Profil',        href: '/company/profile',        icon: 'bi-person-circle' },
+            { label: 'Notifications',     href: '/company/notifications',  icon: 'bi-bell' },
+            { label: 'Utilisateurs',      href: '/company/users',          icon: 'bi-people-fill' },
+        ]},
+    ],
+};
+
 const sidebarLinks = computed(() => {
-    const links = [
-        { name: 'Tableau de bord', icon: 'bi-speedometer2', route: '/company/dashboard', key: 'company-dashboard', module: null },
-        { name: 'Catalogue GEL', icon: 'bi-shop', route: '/nos-services', key: 'catalogue', module: null },
-        { name: 'Mes Commandes', icon: 'bi-cart-check', route: '/mes-commandes', key: 'mes-commandes', module: null },
-        { name: 'Mes Services', icon: 'bi-grid-3x3-gap', route: '/company/services', key: 'company-services', module: null },
-        { name: 'Caisse', icon: 'bi-cash-stack', route: '/company/caisse', key: 'company-caisse', module: 'caisse' },
-        { name: 'Documents (GED)', icon: 'bi-folder2-open', route: '/company/ged', key: 'company-ged', module: 'document' },
-        { name: 'Comptabilité', icon: 'bi-calculator', route: '/company/accounting', key: 'company-accounting', module: 'comptabilite' },
-        { name: 'Facturation', icon: 'bi-receipt', route: '/company/invoices', key: 'company-invoices', module: 'facturation' },
-        { name: 'RH', icon: 'bi-people', route: '/company/hr', key: 'company-hr', module: 'rh' },
-        { name: 'Juridique', icon: 'bi-file-earmark-text', route: '/company/legal', key: 'company-legal', module: 'juridique' },
-        { name: 'Projets', icon: 'bi-kanban', route: '/company/projects', key: 'company-projects', module: 'projets' },
-        { name: 'CRM', icon: 'bi-person-lines-fill', route: '/company/crm', key: 'company-crm', module: null },
-        { name: 'Assistant IA', icon: 'bi-robot', route: '/company/ai', key: 'company-ai', module: null },
-        { name: 'Notifications', icon: 'bi-bell', route: '/company/notifications', key: 'company-notifications', module: null },
-        { name: 'Mon Profil', icon: 'bi-person', route: '/company/profile', key: 'company-profile', module: null },
-    ];
+    const raw = sidebarBySection[pageKey.value] || sidebarBySection['company-dashboard'];
+    return raw.map(group => ({
+        ...group,
+        items: group.items.filter(item => hasSidebarAccess(item.href))
+    })).filter(group => group.items.length > 0);
+});
 
-    // Only company admins can manage users
-    if (authStore.user?.is_company_admin) {
-        const usersLink = { name: 'Utilisateurs', icon: 'bi-people-fill', route: '/company/users', key: 'company-users', module: null };
-        // Insert after Dashboard
-        links.splice(1, 0, usersLink);
-    }
+const sectionTitles = {
+    'company-dashboard': 'Accueil',
+    'mes-commandes': 'Commandes',
+    'company-invoices': 'Finance',
+    'company-accounting': 'Comptabilité',
+    'company-ged': 'Secrétariat',
+    'company-profile': 'Administration',
+};
 
-    // Filtrer : ce qui n'est pas activé n'existe pas
-    return links.filter(link => {
-        // Un simple client (sans client_id) ne voit que le catalogue, ses commandes et son profil
-        if (authStore.user?.role === 'client' && !authStore.user?.client_id) {
-            return ['catalogue', 'mes-commandes', 'company-profile'].includes(link.key);
-        }
-
-        if (!link.module) return true; // toujours visible (dashboard, profil, etc.)
-        return authStore.hasModule(link.module);
-    });
+const sectionTitle = computed(() => {
+    return sectionTitles[pageKey.value] || 'Accueil';
 });
 
 const pageKey = computed(() => {
     const path = window.location.pathname;
     if (path.startsWith('/company/dashboard') || path === '/company') return 'company-dashboard';
-    if (path.startsWith('/company/services')) return 'company-services';
-    if (path.startsWith('/company/users')) return 'company-users';
+    if (path.startsWith('/company/services')) return 'company-dashboard';
+    if (path.startsWith('/company/users')) return 'company-profile';
     if (path.startsWith('/company/profile')) return 'company-profile';
     if (path.startsWith('/company/ged')) return 'company-ged';
-    if (path.startsWith('/company/caisse')) return 'company-caisse';
+    if (path.startsWith('/company/caisse')) return 'company-dashboard';
     if (path.startsWith('/company/accounting')) return 'company-accounting';
     if (path.startsWith('/company/invoices')) return 'company-invoices';
-    if (path.startsWith('/company/hr')) return 'company-hr';
-    if (path.startsWith('/company/legal')) return 'company-legal';
-    if (path.startsWith('/company/projects')) return 'company-projects';
-    if (path.startsWith('/company/crm')) return 'company-crm';
-    if (path.startsWith('/company/ai')) return 'company-ai';
-    if (path.startsWith('/company/notifications')) return 'company-notifications';
+    if (path.startsWith('/company/hr')) return 'company-ged';
+    if (path.startsWith('/company/legal')) return 'company-ged';
+    if (path.startsWith('/company/projects')) return 'company-ged';
+    if (path.startsWith('/company/crm')) return 'company-ged';
+    if (path.startsWith('/company/ai')) return 'company-ged';
+    if (path.startsWith('/company/notifications')) return 'company-profile';
+    if (path.startsWith('/mes-commandes')) return 'mes-commandes';
+    if (path.startsWith('/nos-services')) return 'mes-commandes';
     return 'company-dashboard';
 });
-
-const isSidebarCollapsed = ref(false);
-
-const toggleSidebar = () => {
-    isSidebarCollapsed.value = !isSidebarCollapsed.value;
-};
 
 const logout = async () => {
     const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
     try {
         const res = await fetch('/logout', {
             method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': csrfToken,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-            },
+            headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', 'Accept': 'application/json' },
         });
-        if (res.redirected || res.ok) {
-            window.location.href = '/login';
-        }
+        if (res.redirected || res.ok) window.location.href = '/login';
     } catch {
         const form = document.getElementById('logout-form');
         const input = document.getElementById('logout-csrf-token');
@@ -101,30 +169,27 @@ const logout = async () => {
     }
 };
 
-    // Carte page → module requis
-    const pageModuleMap = {
-        'company-caisse': 'caisse',
-        'company-ged': 'document',
-        'company-accounting': 'comptabilite',
-        'company-invoices': 'facturation',
-        'company-hr': 'rh',
-        'company-legal': 'juridique',
-        'company-projects': 'projets',
-    };
+// Carte page → module requis
+const pageModuleMap = {
+    'company-caisse': 'caisse',
+    'company-ged': 'document',
+    'company-accounting': 'comptabilite',
+    'company-invoices': 'facturation',
+    'company-hr': 'rh',
+    'company-legal': 'juridique',
+    'company-projects': 'projets',
+};
 
 onMounted(async () => {
     const clientId = window.__CLIENT_ID__;
     if (!clientId) { loading.value = false; return; }
 
-    // Attendre que les permissions soient chargées
     if (!authStore.modules.length && authStore.isAuthenticated) {
         await authStore.refreshPermissions();
     }
 
-    // Vérifier l'accès au module de la page courante
     const requiredModule = pageModuleMap[pageKey.value];
     if (requiredModule && !authStore.hasModule(requiredModule)) {
-        // Règle "ce qui n'est pas activé n'existe pas" : rediriger
         window.location.href = '/company/dashboard';
         return;
     }
@@ -136,11 +201,12 @@ onMounted(async () => {
         licenses.value = data.licenses;
     } catch (e) {
         console.error('Erreur chargement entreprise', e);
-        // Démarrer le polling des permissions (temps réel)
-        stopPermissionPolling = startPermissionPolling();
     } finally {
         loading.value = false;
     }
+
+    // ═══ Détection des changements de permissions (polling 15s) ═══
+    stopPermissionPolling = startPermissionPolling();
 });
 
 // ─── Notifications ─────────────────────────────────────────────
@@ -212,164 +278,128 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div class="d-flex" style="min-height: 100vh;">
-        <!-- Sidebar Orange+Blanc -->
-        <nav class="co-sidebar d-flex flex-column flex-shrink-0"
-             :style="{ width: isSidebarCollapsed ? '60px' : '240px', transition: 'width 0.25s ease' }">
+    <div class="g-shell d-flex flex-column" style="min-height:100vh; background:#f0f4f8;">
 
-            <!-- Logo -->
-            <div class="co-sidebar-logo d-flex align-items-center gap-2"
-                 :class="{ 'justify-content-center': isSidebarCollapsed }">
-                <div class="co-logo-box">
-                    <i class="bi-building" style="font-size:16px;"></i>
+        <!-- ═══ TOP BAR — Logo + Tabs + User ═══ -->
+        <header class="g-topbar d-flex align-items-center justify-content-between px-3">
+            <div class="d-flex align-items-center gap-1">
+                <div class="g-logo d-flex align-items-center gap-2 me-3">
+                    <button class="g-toggler d-lg-none me-1" @click="sidebarOpen = !sidebarOpen">
+                        <i class="bi-list"></i>
+                    </button>
+                    <button class="g-toggle-btn d-none d-lg-flex me-1" @click="sidebarOpen = !sidebarOpen" title="Afficher/Masquer le panneau latéral">
+                        <i :class="sidebarOpen ? 'bi-layout-sidebar-inset' : 'bi-layout-sidebar'"></i>
+                    </button>
+                    <div class="g-logo-icon"><i class="bi-gem"></i></div>
+                    <span class="g-logo-text d-none d-sm-inline">Portail Client — GEL</span>
                 </div>
-                <div v-if="!isSidebarCollapsed" class="text-truncate">
-                    <div class="co-logo-text">{{ company?.company_name || 'Mon Entreprise' }}</div>
-                    <div class="co-logo-sub">ESPACE CLIENT</div>
-                </div>
-            </div>
 
-            <!-- Section label -->
-            <div v-if="!isSidebarCollapsed" class="co-section-lbl px-3 pt-3 pb-1">Navigation</div>
-
-            <!-- Nav -->
-            <ul class="nav flex-column flex-grow-1 px-1 mt-1">
-                <li v-for="link in sidebarLinks" :key="link.key">
-                    <a :href="link.route"
-                       class="co-nav-link d-flex align-items-center gap-2"
-                       :class="{ 'co-nav-active': pageKey === link.key }"
-                       :title="isSidebarCollapsed ? link.name : ''">
-                        <i :class="link.icon" class="co-nav-icon flex-shrink-0"></i>
-                        <span v-if="!isSidebarCollapsed" class="co-nav-label">{{ link.name }}</span>
+                <nav class="g-tabs d-flex">
+                    <a v-for="tab in visibleTabs" :key="tab.key"
+                       :href="tab.route"
+                       class="g-tab"
+                       :class="{ 'g-tab-active': pageKey === tab.key }">
+                        <i :class="tab.icon"></i>
+                        <span class="d-none d-md-inline">{{ tab.name }}</span>
                     </a>
-                </li>
-            </ul>
-
-            <!-- Licences actives -->
-            <div v-if="!isSidebarCollapsed && licenses.length" class="co-section-lbl px-3 pt-2 pb-1">
-                <i class="bi-key me-1"></i>Services actifs
+                </nav>
             </div>
-            <ul v-if="!isSidebarCollapsed" class="nav flex-column mb-1 px-1">
-                <li v-for="lic in licenses.slice(0,4)" :key="lic.id">
-                    <span class="co-lic-item d-flex align-items-center gap-2">
-                        <i class="bi-check-circle-fill flex-shrink-0"
-                           :style="{ color: lic.valid ? '#FF7900' : '#e0e0e0', fontSize: '11px' }"></i>
-                        <span class="text-truncate">{{ lic.service_name }}</span>
-                        <span v-if="!lic.valid" class="co-lic-badge ms-auto">Exp.</span>
-                    </span>
-                </li>
-            </ul>
 
-            <!-- Toggle -->
-            <div class="co-sidebar-foot px-2 py-3">
-                <button @click="toggleSidebar"
-                        class="co-toggle-btn w-100"
-                        :class="{ 'justify-content-center': isSidebarCollapsed }"
-                        :title="isSidebarCollapsed ? 'Étendre' : 'Réduire'">
-                    <i :class="isSidebarCollapsed ? 'bi-chevron-double-right' : 'bi-chevron-double-left'"></i>
-                    <span v-if="!isSidebarCollapsed" class="ms-2">Réduire</span>
-                </button>
-            </div>
-        </nav>
-
-        <!-- Main Content -->
-        <div class="d-flex flex-column flex-grow-1" style="min-width: 0;">
-
-            <!-- Header Orange -->
-            <header class="co-header d-flex align-items-center justify-content-between px-4">
-                <div class="d-flex align-items-center gap-2">
-                    <div class="co-header-logo">
-                        <span>GEL</span>
-                    </div>
-                    <h5 class="mb-0 co-header-title">{{ pageTitle }}</h5>
-                </div>
-                <div class="d-flex align-items-center gap-2">
-
-                    <!-- Notifications -->
-                    <div class="dropdown" v-if="authStore.user">
-                        <button class="co-icon-btn position-relative" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi-bell" style="font-size: 17px;"></i>
-                            <span v-if="unreadCount > 0"
-                                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill"
-                                  style="background:#fff; color:#FF7900; font-size:9px; padding:3px 5px;">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
-                        </button>
-                        <div class="dropdown-menu dropdown-menu-end co-notif-menu" style="width:360px;">
-                            <div class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
-                                <h6 class="mb-0 fw-bold" style="font-size:13px;">Notifications</h6>
-                                <button v-if="unreadCount > 0" @click="markAllRead"
-                                        class="btn btn-sm btn-link p-0 text-decoration-none" style="font-size:12px;color:#FF7900;">
-                                    Tout marquer lu
-                                </button>
-                            </div>
-                            <div style="max-height:320px; overflow-y:auto;">
-                                <div v-if="notifications.length === 0" class="text-center py-4 text-muted small">
-                                    Aucune notification
-                                </div>
-                                <a v-for="n in notifications" :key="n.id" href="#"
-                                   @click.prevent="markRead(n)" class="dropdown-item px-3 py-2"
-                                   :style="{ background: !n.read_at ? '#fff8f0' : '' }">
-                                    <div class="d-flex gap-2">
-                                        <i :class="notifIcon(n.type)" class="mt-1" style="font-size:15px;"></i>
-                                        <div class="flex-grow-1">
-                                            <div class="fw-semibold" style="font-size:12px;">{{ n.title }}</div>
-                                            <div class="text-muted text-truncate" style="font-size:12px;">{{ n.message }}</div>
-                                            <div class="text-muted" style="font-size:10px;">{{ relativeDate(n.created_at) }}</div>
-                                        </div>
+            <div class="d-flex align-items-center gap-2">
+                <div class="dropdown" v-if="authStore.user">
+                    <button class="g-icon-btn position-relative" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi-bell" style="font-size:16px;"></i>
+                        <span v-if="unreadCount > 0"
+                              class="position-absolute top-0 start-100 translate-middle badge rounded-pill"
+                              style="background:#FF7900; color:#fff; font-size:9px; padding:2px 5px;">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end g-dropdown" style="width:360px;">
+                        <div class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 fw-bold" style="font-size:13px;">Notifications</h6>
+                            <button v-if="unreadCount > 0" @click="markAllRead"
+                                    class="btn btn-sm btn-link p-0 text-decoration-none" style="font-size:12px;color:#FF7900;">
+                                Tout marquer lu
+                            </button>
+                        </div>
+                        <div style="max-height:320px; overflow-y:auto;">
+                            <div v-if="notifications.length === 0" class="text-center py-4 text-muted small">Aucune notification</div>
+                            <a v-for="n in notifications" :key="n.id" href="#"
+                               @click.prevent="markRead(n)" class="dropdown-item px-3 py-2"
+                               :style="{ background: !n.read_at ? '#fff8f0' : '' }">
+                                <div class="d-flex gap-2">
+                                    <i :class="notifIcon(n.type)" class="mt-1" style="font-size:15px;"></i>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-semibold" style="font-size:12px;">{{ n.title }}</div>
+                                        <div class="text-muted text-truncate" style="font-size:12px;">{{ n.message }}</div>
+                                        <div class="text-muted" style="font-size:10px;">{{ relativeDate(n.created_at) }}</div>
                                     </div>
-                                </a>
-                            </div>
-                            <div class="border-top px-3 py-2">
-                                <a href="/company/notifications" class="co-notif-all-btn">Voir toutes les notifications</a>
-                            </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="border-top px-3 py-2">
+                            <a href="/company/notifications" class="g-notif-all">Voir toutes les notifications</a>
                         </div>
                     </div>
-
-                    <!-- User -->
-                    <div class="dropdown">
-                        <button class="co-user-btn d-flex align-items-center gap-2"
-                                data-bs-toggle="dropdown" aria-expanded="false">
-                            <div class="co-user-avatar">{{ userInitial }}</div>
-                            <div class="text-start d-none d-md-block">
-                                <div class="co-user-name">{{ authStore.user?.name || 'Utilisateur' }}</div>
-                                <div class="co-user-role">{{ authStore.user?.role_name || 'Utilisateur' }}</div>
-                            </div>
-                            <i class="bi-chevron-down" style="font-size:10px; color:rgba(255,255,255,0.6);"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end co-user-menu">
-                            <li><a class="co-dd-item dropdown-item" href="/company/profile">
-                                <i class="bi-person me-2"></i>Mon Profil
-                            </a></li>
-                            <li><hr class="dropdown-divider my-1"></li>
-                            <li>
-                                <a href="#" class="co-dd-item co-dd-danger dropdown-item" @click.prevent="logout">
-                                    <i class="bi-box-arrow-right me-2"></i>Déconnexion
-                                </a>
-                                <form id="logout-form" method="POST" action="/logout" style="display:none;">
-                                    <input type="hidden" name="_token" id="logout-csrf-token">
-                                </form>
-                            </li>
-                        </ul>
-                    </div>
                 </div>
-            </header>
 
-            <!-- Breadcrumb blanc sous header orange -->
-            <div class="co-breadcrumb px-4 d-flex align-items-center justify-content-between">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-0" style="font-size:12px;">
-                        <li class="breadcrumb-item">
-                            <a href="/company/dashboard" class="text-decoration-none" style="color:#FF7900;">Accueil</a>
+                <span class="g-role-badge d-none d-sm-inline">{{ userRoleLabel }}</span>
+                <div class="dropdown">
+                    <button class="g-user-btn d-flex align-items-center gap-2"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="g-avatar">{{ userInitial }}</div>
+                        <i class="bi-chevron-down" style="font-size:9px; color:rgba(255,255,255,0.6);"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end g-dropdown">
+                        <li>
+                            <div class="g-dd-user px-3 py-2 border-bottom">
+                                <div class="fw-bold" style="font-size:13px; color:#163A5E;">{{ authStore.user?.name }}</div>
+                                <div style="font-size:11px; color:#888;">{{ authStore.user?.email }}</div>
+                            </div>
                         </li>
-                        <li class="breadcrumb-item active" style="color:#555;" aria-current="page">{{ pageTitle }}</li>
-                    </ol>
-                </nav>
-                <div v-if="company" class="d-none d-md-block" style="font-size:11px; color:#999;">
-                    <i class="bi-building me-1" style="color:#FF7900;"></i>{{ company.company_name }}
+                        <li><a class="g-dd-item dropdown-item" href="/company/profile">
+                            <i class="bi-person me-2" style="color:#FF7900;"></i>Mon Profil</a></li>
+                        <li><hr class="dropdown-divider my-1"></li>
+                        <li>
+                            <a href="#" class="g-dd-item g-dd-danger dropdown-item" @click.prevent="logout">
+                                <i class="bi-box-arrow-right me-2"></i>Déconnexion
+                            </a>
+                            <form id="logout-form" method="POST" action="/logout" style="display:none;">
+                                <input type="hidden" name="_token" id="logout-csrf-token">
+                            </form>
+                        </li>
+                    </ul>
                 </div>
             </div>
+        </header>
 
-            <!-- Content -->
-            <main class="flex-grow-1 p-4" style="overflow-y:auto; background:#fafafa;">
+        <!-- ═══ MAIN LAYOUT: Sidebar gauche + Contenu ═══ -->
+        <div class="g-body d-flex flex-grow-1" style="min-height:0;">
+
+            <!-- Sidebar gauche (contextuelle) -->
+            <aside class="g-sidebar d-flex flex-column flex-shrink-0"
+                   :class="{ 'g-sidebar-closed': !sidebarOpen }">
+                <div class="g-sb-header">
+                    <i class="bi-layout-sidebar me-1"></i>
+                    <span>{{ sectionTitle }}</span>
+                </div>
+                <div class="g-sb-content">
+                    <div v-for="group in sidebarLinks" :key="group.group" class="g-sb-group">
+                        <div class="g-sb-group-title">{{ group.group }}</div>
+                        <a v-for="link in group.items" :key="link.label"
+                           :href="link.href"
+                           class="g-sb-link">
+                            <i :class="link.icon"></i>
+                            {{ link.label }}
+                        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Overlay mobile -->
+            <div v-if="sidebarOpen" class="g-overlay d-lg-none" @click="sidebarOpen = false"></div>
+
+            <!-- Contenu principal -->
+            <main class="g-main flex-grow-1 p-4">
                 <slot />
             </main>
         </div>
@@ -377,141 +407,192 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-/* ══ Palette Orange + Blanc ══════════════════════════════ */
+/* ══ PORTAL CLIENT LAYOUT — Top tabs + Left sidebar ══ */
 
-/* ── Sidebar ─────────────────────────────────────────── */
-.co-sidebar {
-    background: #FFFFFF;
-    border-right: 1px solid #FFE0B2;
-    overflow: hidden;
-}
-.co-sidebar-logo {
-    padding: 12px;
+/* ── Top bar ─────────────────────────────── */
+.g-topbar {
+    background: #163A5E;
+    height: 52px;
+    flex-shrink: 0;
     border-bottom: 2px solid #FF7900;
-    min-height: 56px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    box-shadow: 0 2px 6px rgba(22,58,94,0.12);
+    position: sticky;
+    top: 0;
+    z-index: 1030;
 }
-.co-logo-box {
-    width: 34px; height: 34px;
+.g-logo-icon {
+    width: 30px; height: 30px;
     background: #FF7900; color: #fff;
     border-radius: 4px;
     display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
+    font-size: 14px; flex-shrink: 0;
 }
-.co-logo-text {
+.g-logo-text {
     font-family: 'Outfit', sans-serif;
-    font-weight: 800; font-size: 14px;
-    color: #FF7900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-weight: 800; font-size: 14px; color: #fff;
 }
-.co-logo-sub {
-    font-size: 9px; font-weight: 700;
-    color: #FFAB6E; letter-spacing: 0.1em;
+.g-toggler {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    border-radius: 4px;
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 15px;
 }
-.co-section-lbl {
-    font-size: 10px; font-weight: 700;
-    letter-spacing: 0.1em; text-transform: uppercase; color: #FFAB6E;
+.g-toggle-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.7);
+    border-radius: 4px;
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 14px;
+    transition: all 0.15s;
 }
-.co-nav-link {
-    color: #555; padding: 9px 10px; margin: 1px 0;
-    font-size: 13px; text-decoration: none;
-    border-radius: 4px; border-left: 3px solid transparent;
-    transition: all 0.15s; white-space: nowrap; overflow: hidden;
+.g-toggle-btn:hover {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
 }
-.co-nav-link:hover {
-    color: #FF7900; background: #FFF3E0; border-left-color: #FFD0A0;
-}
-.co-nav-link.co-nav-active {
-    color: #FF7900; background: #FFF3E0; border-left-color: #FF7900; font-weight: 700;
-}
-.co-nav-icon { font-size: 15px; width: 18px; text-align: center; }
-.co-nav-label { font-size: 13px; overflow: hidden; text-overflow: ellipsis; }
-.co-lic-item {
-    padding: 5px 10px; font-size: 12px; color: #777;
-}
-.co-lic-badge {
-    background: #FFE0B2; color: #e65100;
-    font-size: 10px; padding: 1px 5px; border-radius: 2px;
-}
-.co-sidebar-foot { border-top: 1px solid #FFE0B2; }
-.co-toggle-btn {
-    display: flex; align-items: center;
-    background: #FFF3E0; border: 1px solid #FFD0A0;
-    color: #FF7900; font-size: 12px; font-weight: 600;
-    padding: 7px 10px; border-radius: 4px; cursor: pointer; transition: all 0.15s;
-}
-.co-toggle-btn:hover { background: #FFE0B2; }
 
-/* ── Header Orange ───────────────────────────────────── */
-.co-header {
-    background: #FF7900;
-    height: 56px;
-    border-bottom: 1px solid #e06700;
-    flex-shrink: 0;
+/* ── Tabs ────────────────────────────────── */
+.g-tabs { gap: 2px; }
+.g-tab {
+    display: flex; align-items: center; gap: 5px;
+    padding: 0 14px;
+    height: 50px;
+    font-size: 12px; font-weight: 600;
+    color: rgba(255,255,255,0.7);
+    text-decoration: none;
+    border-bottom: 3px solid transparent;
+    transition: all 0.15s;
+    white-space: nowrap;
 }
-.co-header-logo {
-    width: 34px; height: 34px;
-    background: rgba(255,255,255,0.2);
-    border: 1px solid rgba(255,255,255,0.35);
+.g-tab:hover { color: #fff; background: rgba(255,255,255,0.06); border-bottom-color: rgba(255,121,0,0.4); }
+.g-tab.g-tab-active { color: #fff; border-bottom-color: #FF7900; background: rgba(255,121,0,0.1); }
+.g-tab i { font-size: 14px; }
+
+/* ── User / Notifs ───────────────────────── */
+.g-icon-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 4px; width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,0.8); cursor: pointer;
+    transition: background 0.15s;
+}
+.g-icon-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+.g-role-badge {
+    font-size: 9px; font-weight: 800; letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: rgba(255,121,0,0.2);
+    color: #FF7900;
+    padding: 3px 8px; border-radius: 3px;
+}
+.g-user-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 4px; padding: 3px 8px; cursor: pointer;
+    transition: background 0.15s;
+}
+.g-user-btn:hover { background: rgba(255,255,255,0.18); }
+.g-avatar {
+    width: 28px; height: 28px;
+    background: #fff; color: #163A5E;
+    font-weight: 800; font-size: 11px;
     border-radius: 4px;
     display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-}
-.co-header-logo span {
-    font-size: 12px; font-weight: 900; color: #fff; letter-spacing: -0.5px;
-}
-.co-header-title {
-    font-family: 'Outfit', sans-serif;
-    font-size: 15px; font-weight: 800; color: #fff;
 }
 
-/* ── Icon btn (notifications) ────────────────────────── */
-.co-icon-btn {
-    background: rgba(255,255,255,0.15);
-    border: 1px solid rgba(255,255,255,0.35);
-    border-radius: 4px; width: 36px; height: 36px;
-    display: flex; align-items: center; justify-content: center;
-    color: #fff; cursor: pointer; transition: background 0.15s;
-}
-.co-icon-btn:hover { background: rgba(255,255,255,0.25); }
-
-/* ── User btn ────────────────────────────────────────── */
-.co-user-btn {
-    background: rgba(255,255,255,0.15);
-    border: 1px solid rgba(255,255,255,0.35);
-    border-radius: 4px; padding: 6px 12px; cursor: pointer; transition: background 0.15s;
-}
-.co-user-btn:hover { background: rgba(255,255,255,0.25); }
-.co-user-avatar {
-    width: 30px; height: 30px;
-    background: #fff; color: #FF7900;
-    font-weight: 800; font-size: 13px; border-radius: 4px;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-}
-.co-user-name { font-size: 13px; font-weight: 700; color: #fff; line-height: 1.2; }
-.co-user-role { font-size: 11px; color: rgba(255,255,255,0.7); line-height: 1.2; }
-
-/* ── Breadcrumb ──────────────────────────────────────── */
-.co-breadcrumb {
-    background: #fff; height: 36px; border-bottom: 1px solid #FFE0B2; flex-shrink: 0;
-}
-
-/* ── Dropdowns ───────────────────────────────────────── */
-.co-notif-menu { border-radius: 4px !important; border: 1px solid #FFE0B2 !important; }
-.co-notif-all-btn {
+/* ── Dropdowns ───────────────────────────── */
+.g-dropdown { border-radius: 4px !important; min-width: 210px; margin-top: 6px; border: 1px solid #dce3ee !important; box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important; }
+.g-dd-user { background: #f8fbff; }
+.g-dd-item { font-size: 13px; padding: 9px 16px; color: #333; }
+.g-dd-item:hover { background: #FFF3E0 !important; color: #FF7900 !important; }
+.g-dd-danger { color: #e53935 !important; }
+.g-dd-danger:hover { background: #fdecea !important; color: #e53935 !important; }
+.g-notif-all {
     display: block; text-align: center; padding: 7px;
     background: #FFF3E0; color: #FF7900; border-radius: 4px;
     font-size: 12px; font-weight: 600; text-decoration: none;
 }
-.co-notif-all-btn:hover { background: #FFE0B2; color: #e06700; }
-.co-user-menu { border-radius: 4px !important; border: 1px solid #FFE0B2 !important; min-width: 190px; }
-.co-dd-item { font-size: 13px; padding: 9px 16px; color: #333; }
-.co-dd-item:hover { background: #FFF3E0 !important; color: #FF7900 !important; }
-.co-dd-danger { color: #e53935 !important; }
-.co-dd-danger:hover { background: #fdecea !important; color: #e53935 !important; }
+.g-notif-all:hover { background: #FFE0B2; color: #e06700; }
 
-/* ── Deep overrides ──────────────────────────────────── */
+/* ── Sidebar gauche ───────────────────────── */
+.g-body { position: relative; }
+.g-sidebar {
+    width: 210px;
+    background: #fff;
+    border-right: 1px solid #dce3ee;
+    overflow-y: auto;
+    transition: width 0.2s ease;
+}
+.g-sidebar-closed {
+    width: 0;
+    overflow: hidden;
+    border-right: none;
+    padding: 0;
+}
+.g-sb-header {
+    padding: 12px 14px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #FF7900;
+    border-bottom: 1px solid #f0f4f8;
+    white-space: nowrap;
+}
+.g-sb-content { padding: 8px 0; }
+.g-sb-group { padding: 4px 0; }
+.g-sb-group-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #163A5E;
+    padding: 6px 14px 4px;
+    white-space: nowrap;
+}
+.g-sb-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #444;
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    transition: all 0.12s;
+    white-space: nowrap;
+}
+.g-sb-link:hover {
+    color: #FF7900;
+    background: #FFF3E0;
+    border-left-color: #FF7900;
+}
+.g-sb-link i {
+    font-size: 13px;
+    width: 16px;
+    text-align: center;
+    color: #888;
+    flex-shrink: 0;
+}
+.g-sb-link:hover i { color: #FF7900; }
+
+/* ── Main ────────────────────────────────── */
+.g-main { background: #f0f4f8; min-width: 0; }
+
+/* ── Mobile overlay ──────────────────────── */
+.g-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 1040;
+}
+
+/* ── Deep overrides ──────────────────── */
 :deep(.btn) { border-radius: 4px !important; font-size: 13px; }
 :deep(.btn-primary) {
     background: #FF7900 !important; border-color: #FF7900 !important;
@@ -522,27 +603,57 @@ onUnmounted(() => {
 :deep(.btn-outline-primary:hover) { background: #FF7900 !important; color: #fff !important; }
 :deep(.btn-outline-secondary) { color: #888 !important; border-color: #ddd !important; }
 :deep(.btn-outline-secondary:hover) { background: #f5f5f5 !important; color: #555 !important; }
-:deep(.card) { border-radius: 4px !important; border: 1px solid #FFE0B2; box-shadow: 0 1px 4px rgba(255,121,0,0.06); }
+:deep(.card) { border-radius: 6px !important; border: 1px solid #dce3ee; box-shadow: 0 1px 4px rgba(22,58,94,0.06); }
 :deep(.card-header) {
-    background: #fff8f0; border-bottom: 1px solid #FFE0B2;
-    font-size: 13px; font-weight: 700; padding: 10px 16px;
-    border-radius: 4px 4px 0 0 !important; color: #FF7900;
+    background: linear-gradient(90deg, #163A5E, #1e4d7a);
+    border-bottom: none; font-size: 13px; font-weight: 700;
+    padding: 10px 16px; border-radius: 6px 6px 0 0 !important; color: #fff;
 }
 :deep(.table) { font-size: 13px; }
 :deep(.table thead th) {
-    background: #FFF3E0; color: #FF7900; font-weight: 700;
+    background: #EEF3F9; color: #163A5E; font-weight: 700;
     font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
-    border-color: #FFD0A0; padding: 10px 12px;
+    border-color: #dce3ee; padding: 10px 12px;
 }
-:deep(.table td) { padding: 10px 12px; vertical-align: middle; border-color: #fff0e0; }
-:deep(.table tbody tr:hover) { background: #FFF8F0; }
+:deep(.table td) { padding: 10px 12px; border-color: #f0f4f8; }
+:deep(.table tbody tr:hover) { background: #f8fbff; }
 :deep(.badge) { border-radius: 4px !important; font-size: 11px; font-weight: 700; }
 :deep(.form-control), :deep(.form-select) {
-    border-radius: 4px !important; font-size: 13px; border: 1px solid #FFD0A0;
+    border-radius: 4px !important; font-size: 13px; border: 1px solid #dce3ee;
 }
 :deep(.form-control:focus), :deep(.form-select:focus) {
     border-color: #FF7900; box-shadow: 0 0 0 2px rgba(255,121,0,0.15);
 }
 :deep(.text-primary) { color: #FF7900 !important; }
 :deep(.bg-primary) { background: #FF7900 !important; }
+:deep(.border-primary) { border-color: #FF7900 !important; }
+:deep(.progress-bar) { background: #FF7900; }
+
+/* ══ RESPONSIVE ══ */
+@media (max-width: 991.98px) {
+    .g-topbar { padding-left: 10px !important; padding-right: 10px !important; }
+    .g-tab { padding: 0 10px; font-size: 11px; height: 46px; }
+    .g-tab i { font-size: 13px; }
+    .g-main { padding: 12px !important; }
+    .g-sidebar {
+        position: fixed;
+        left: 0;
+        top: 52px;
+        bottom: 0;
+        z-index: 1050;
+        box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+        width: 230px;
+    }
+    .g-sidebar-closed {
+        width: 0 !important;
+        transform: translateX(-100%);
+    }
+}
+@media (max-width: 575.98px) {
+    .g-topbar { height: 48px; }
+    .g-tab { padding: 0 8px; font-size: 10px; height: 42px; gap: 3px; }
+    .g-tab i { font-size: 12px; }
+    .g-main { padding: 8px !important; }
+    .g-role-badge { display: none; }
+}
 </style>

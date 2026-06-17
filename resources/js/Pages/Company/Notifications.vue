@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import CompanyLayout from '../../Layouts/CompanyLayout.vue';
 
@@ -27,29 +27,19 @@ const statusOptions = [
 
 function notifIcon(type) {
     const icons = {
-        info: 'bi-info-circle text-primary',
-        success: 'bi-check-circle text-success',
-        warning: 'bi-exclamation-triangle text-warning',
-        error: 'bi-x-circle text-danger',
+        info: 'bi-info-circle',
+        success: 'bi-check-circle',
+        warning: 'bi-exclamation-triangle',
+        error: 'bi-x-circle',
     };
-    return 'bi ' + (icons[type] || 'bi-bell text-secondary');
-}
-
-function notifBadge(type) {
-    const badges = {
-        info: 'bg-primary',
-        success: 'bg-success',
-        warning: 'bg-warning text-dark',
-        error: 'bg-danger',
-    };
-    return badges[type] || 'bg-secondary';
+    return 'bi ' + (icons[type] || 'bi-bell');
 }
 
 function relativeDate(dateStr) {
     if (!dateStr) return '';
     const diff = Date.now() - new Date(dateStr).getTime();
     const mins = Math.floor(diff / 60000);
-    if (mins < 1) return "à l'instant";
+    if (mins < 1) return "À l'instant";
     if (mins < 60) return 'il y a ' + mins + ' min';
     const hours = Math.floor(mins / 60);
     if (hours < 24) return 'il y a ' + hours + ' h';
@@ -138,146 +128,133 @@ function resetFilters() {
     fetchNotifications();
 }
 
-onMounted(() => {
-    fetchNotifications();
-});
+const unreadCount = computed(() => notifications.value.filter(n => !n.read_at).length);
+
+onMounted(() => { fetchNotifications(); });
 </script>
 
 <template>
     <CompanyLayout page-title="Notifications">
-        <div class="container-fluid px-0">
-            <!-- Header -->
-            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
-                <div>
-                    <h4 class="fw-bold mb-1">Notifications</h4>
-                    <p class="text-muted small mb-0">
-                        {{ total }} notification{{ total > 1 ? 's' : '' }} au total
-                    </p>
-                </div>
-                <button
-                    v-if="notifications.some(n => !n.read_at)"
-                    @click="markAllAsRead"
-                    class="btn btn-outline-primary btn-sm rounded-pill px-3"
-                >
-                    <i class="bi-check-all me-1"></i> Tout marquer comme lu
-                </button>
-            </div>
-
-            <!-- Filters -->
-            <div class="row g-2 mb-4">
-                <div class="col-auto">
-                    <select v-model="filterType" @change="currentPage=1; fetchNotifications()"
-                            class="form-select form-select-sm" style="min-width: 180px;">
-                        <option v-for="opt in typeOptions" :key="opt.value" :value="opt.value">
-                            {{ opt.label }}
-                        </option>
-                    </select>
-                </div>
-                <div class="col-auto">
-                    <select v-model="filterStatus" @change="currentPage=1; fetchNotifications()"
-                            class="form-select form-select-sm" style="min-width: 140px;">
-                        <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">
-                            {{ opt.label }}
-                        </option>
-                    </select>
-                </div>
-                <div class="col-auto" v-if="filterType || filterStatus">
-                    <button @click="resetFilters" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
-                        <i class="bi-x-circle me-1"></i> Effacer
-                    </button>
-                </div>
-            </div>
-
-            <!-- Loading -->
-            <div v-if="loading" class="text-center py-5">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Chargement...</span>
-                </div>
-            </div>
-
-            <!-- Empty -->
-            <div v-else-if="notifications.length === 0" class="text-center py-5">
-                <i class="bi-bell-slash" style="font-size: 48px; color: #ccc;"></i>
-                <p class="text-muted mt-3 mb-0">Aucune notification trouvée</p>
-            </div>
-
-            <!-- Notifications List -->
-            <div v-else class="list-group rounded-3 shadow-sm">
-                <div
-                    v-for="n in notifications"
-                    :key="n.id"
-                    class="list-group-item list-group-item-action d-flex gap-3 align-items-start border-0 border-bottom"
-                    :class="{ 'bg-light': !n.read_at }"
-                    style="border-radius: 0;"
-                >
-                    <!-- Icon -->
-                    <div class="mt-1">
-                        <i :class="notifIcon(n.type)" style="font-size: 20px;"></i>
-                    </div>
-
-                    <!-- Content -->
-                    <div class="flex-grow-1 min-width-0">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <span class="fw-semibold small">{{ n.title }}</span>
-                                <span class="badge rounded-pill ms-2" :class="notifBadge(n.type)" style="font-size: 9px;">
-                                    {{ n.type }}
-                                </span>
-                            </div>
-                            <div class="d-flex align-items-center gap-1 flex-shrink-0">
-                                <!-- Mark as read -->
-                                <button
-                                    v-if="!n.read_at"
-                                    @click="markAsRead(n)"
-                                    class="btn btn-sm btn-link text-decoration-none text-muted p-1"
-                                    title="Marquer comme lue"
-                                >
-                                    <i class="bi-check-circle" style="font-size: 14px;"></i>
-                                </button>
-                                <!-- Delete -->
-                                <button
-                                    @click="destroy(n)"
-                                    class="btn btn-sm btn-link text-decoration-none text-danger p-1"
-                                    title="Supprimer"
-                                >
-                                    <i class="bi-trash" style="font-size: 14px;"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <p class="mb-1 small text-muted">{{ n.message }}</p>
-                        <div class="text-muted" style="font-size: 10px;">
-                            {{ relativeDate(n.created_at) }}
-                            <span v-if="n.read_at" class="ms-2 text-success">
-                                <i class="bi-check-circle-fill" style="font-size: 9px;"></i> Lue
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Pagination -->
-            <nav v-if="lastPage > 1" class="mt-4">
-                <ul class="pagination pagination-sm justify-content-center">
-                    <li class="page-item" :class="{ disabled: currentPage <= 1 }">
-                        <button class="page-link" @click="goToPage(currentPage - 1)">
-                            <i class="bi-chevron-left"></i>
-                        </button>
-                    </li>
-                    <li
-                        v-for="page in lastPage"
-                        :key="page"
-                        class="page-item"
-                        :class="{ active: page === currentPage }"
-                    >
-                        <button class="page-link" @click="goToPage(page)">{{ page }}</button>
-                    </li>
-                    <li class="page-item" :class="{ disabled: currentPage >= lastPage }">
-                        <button class="page-link" @click="goToPage(currentPage + 1)">
-                            <i class="bi-chevron-right"></i>
-                        </button>
-                    </li>
-                </ul>
-            </nav>
+        <div v-if="loading" class="d-flex align-items-center justify-content-center gap-3 py-5">
+            <div class="isup-spinner"></div>
+            <span style="color:#888;font-size:14px;">Chargement…</span>
         </div>
+
+        <template v-else>
+            <div class="isup-shell">
+                <div class="isup-portal-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="isup-portal-logo"><i class="bi-bell" style="font-size:20px;"></i></div>
+                        <div>
+                            <div class="isup-portal-company">Notifications</div>
+                            <div class="isup-portal-sub">
+                                {{ total }} notification{{ total > 1 ? 's' : '' }}
+                                <span v-if="unreadCount"> · <span style="color:#FF7900;font-weight:700;">{{ unreadCount }} non lue{{ unreadCount>1?'s':'' }}</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-3">
+                    <!-- Filtres + actions -->
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <select v-model="filterType" @change="currentPage=1; fetchNotifications()" class="isup-select" style="width:auto;min-width:160px;">
+                                <option v-for="opt in typeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+                            </select>
+                            <select v-model="filterStatus" @change="currentPage=1; fetchNotifications()" class="isup-select" style="width:auto;min-width:140px;">
+                                <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+                            </select>
+                            <button v-if="filterType || filterStatus" class="isup-btn-outline" @click="resetFilters">
+                                <i class="bi-x-circle me-1"></i> Effacer
+                            </button>
+                        </div>
+                        <button v-if="unreadCount" class="isup-btn-outline" @click="markAllAsRead">
+                            <i class="bi-check2-all me-1"></i> Tout marquer comme lu
+                        </button>
+                    </div>
+
+                    <!-- Empty -->
+                    <div v-if="notifications.length === 0" class="isup-empty-state">
+                        <i class="bi-bell-slash" style="font-size:48px;color:#dce3ee;display:block;margin-bottom:12px;"></i>
+                        <p style="font-size:14px;color:#888;">Aucune notification trouvée</p>
+                    </div>
+
+                    <!-- Liste -->
+                    <div v-else class="isup-notif-list">
+                        <div v-for="n in notifications" :key="n.id"
+                             class="isup-notif-item" :class="{ 'isup-notif-unread': !n.read_at }"
+                             @click="markAsRead(n)">
+                            <div class="isup-notif-icon" :class="n.type === 'error' ? 'notif-icon-red' : n.type === 'warning' ? 'notif-icon-orange' : n.type === 'success' ? 'notif-icon-green' : 'notif-icon-blue'">
+                                <i :class="notifIcon(n.type)"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="isup-notif-title">{{ n.title }}</span>
+                                        <span class="isup-badge-notif" :class="'badge-' + n.type">{{ n.type }}</span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-1 flex-shrink-0 ms-2">
+                                        <button v-if="!n.read_at" class="isup-notif-action" title="Marquer comme lue" @click.stop="markAsRead(n)">
+                                            <i class="bi-check-circle fs-6"></i>
+                                        </button>
+                                        <button class="isup-notif-action isup-notif-action-danger" title="Supprimer" @click.stop="destroy(n)">
+                                            <i class="bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="isup-notif-msg">{{ n.message }}</div>
+                                <div class="isup-notif-time-text">
+                                    {{ relativeDate(n.created_at) }}
+                                    <span v-if="n.read_at" class="isup-notif-read-badge"><i class="bi-check-circle-fill"></i> Lue</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pagination -->
+                    <nav v-if="lastPage > 1" class="d-flex justify-content-center align-items-center gap-2 mt-3">
+                        <button class="isup-btn-page" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">&laquo;</button>
+                        <button v-for="page in lastPage" :key="page"
+                                class="isup-btn-page" :class="{ 'isup-btn-page-active': page === currentPage }"
+                                @click="goToPage(page)">{{ page }}</button>
+                        <button class="isup-btn-page" :disabled="currentPage >= lastPage" @click="goToPage(currentPage + 1)">&raquo;</button>
+                    </nav>
+                </div>
+            </div>
+        </template>
     </CompanyLayout>
 </template>
+
+<style scoped>
+/* ── Notification-specific styles ── */
+.isup-btn-outline { background:#fff;border:1px solid #dce3ee;border-radius:4px;padding:6px 12px;font-size:11px;font-weight:600;color:#555;cursor:pointer;white-space:nowrap; }
+.isup-btn-outline:hover { background:#f8fbff;border-color:#FF7900;color:#FF7900; }
+.isup-notif-list { border:1px solid #eef2f7;border-radius:4px;overflow:hidden; }
+.isup-notif-item { display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-bottom:1px solid #f0f4f8;cursor:pointer;transition:background .1s; }
+.isup-notif-item:last-child { border-bottom:none; }
+.isup-notif-item:hover { background:#fafcfd; }
+.isup-notif-unread { background:#f0f7ff;border-left:3px solid #FF7900; }
+.isup-notif-icon { width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;margin-top:2px; }
+.notif-icon-blue { background:#e3f2fd;color:#1565c0; }
+.notif-icon-orange { background:#fff3e0;color:#e65100; }
+.notif-icon-green { background:#e8f5e9;color:#2e7d32; }
+.notif-icon-red { background:#fdecea;color:#c62828; }
+.isup-notif-title { font-size:13px;font-weight:700;color:#163A5E; }
+.isup-notif-msg { font-size:12px;color:#666;margin-top:2px;line-height:1.4; }
+.isup-notif-time-text { font-size:10px;color:#aaa;margin-top:4px; }
+.isup-notif-read-badge { color:#2e7d32;margin-left:8px; }
+.isup-badge-notif { font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;text-transform:uppercase; }
+.badge-info { background:#e3f2fd;color:#1565c0; }
+.badge-success { background:#e8f5e9;color:#2e7d32; }
+.badge-warning { background:#fff3e0;color:#e65100; }
+.badge-error { background:#fdecea;color:#c62828; }
+.isup-notif-action { background:none;border:none;color:#aaa;cursor:pointer;padding:2px;border-radius:3px;line-height:1; }
+.isup-notif-action:hover { color:#163A5E;background:#f0f4f8; }
+.isup-notif-action-danger:hover { color:#c62828;background:#fdecea; }
+.isup-btn-page { background:#f3f4f6;border:1px solid #dce3ee;border-radius:4px;padding:4px 12px;font-size:13px;cursor:pointer;color:#555;min-width:32px;text-align:center; }
+.isup-btn-page:hover { background:#e5e7eb; }
+.isup-btn-page:disabled { opacity:.4;cursor:not-allowed; }
+.isup-btn-page-active { background:#163A5E;color:#fff;border-color:#163A5E; }
+.isup-empty-state { text-align:center;padding:40px 20px; }
+</style>

@@ -6,9 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\Mission;
 use App\Models\Pole;
-use App\Models\Document;
+use App\Models\CompanyInvoice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -52,13 +53,66 @@ class DashboardController extends Controller
             });
         }
 
+        // Clients récents
+        $recentClients = (clone $clientsQuery)
+            ->select('id', 'company_name', 'email', 'status')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        // Missions récentes avec leur client
+        $recentMissions = (clone $missionsQuery)
+            ->with('client:id,company_name')
+            ->select('id', 'title', 'status', 'progress', 'client_id')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        // Répartition par pôle
+        $poles = $polesQuery->select('id', 'name', 'color', 'slug')->get();
+        $poleDistribution = $poles->map(function ($pole) {
+            $clientCount = DB::table('client_pole')->where('pole_id', $pole->id)->count();
+            return [
+                'name' => $pole->name,
+                'color' => $pole->color ?: '#FF7900',
+                'count' => $clientCount,
+                'pourcentage' => 0, // calculé après
+            ];
+        });
+        $maxCount = $poleDistribution->max('count') ?: 1;
+        $poleDistribution = $poleDistribution->map(function ($p) use ($maxCount) {
+            $p['pourcentage'] = round(($p['count'] / $maxCount) * 100);
+            return $p;
+        })->values();
+
+        // Revenus mensuels (factures émises)
+        $monthlyRevenue = CompanyInvoice::select(
+            DB::raw("DATE_FORMAT(issue_date, '%Y-%m') as month"),
+            DB::raw('SUM(total_ttc) as total')
+        )
+            ->where('status', '!=', 'cancelled')
+            ->whereNotNull('issue_date')
+            ->groupBy(DB::raw("DATE_FORMAT(issue_date, '%Y-%m')"))
+            ->orderBy(DB::raw("DATE_FORMAT(issue_date, '%Y-%m')"))
+            ->take(12)
+            ->get()
+            ->map(fn($r) => [
+                'month' => $r->month,
+                'total' => (float) $r->total,
+            ]);
+
         return response()->json([
-            'total_clients' => $clientsQuery->count(),
-            'active_clients' => (clone $clientsQuery)->where('status', 'actif')->count(),
-            'total_missions' => $missionsQuery->count(),
-            'pending_missions' => (clone $missionsQuery)->whereIn('status', ['a_faire', 'en_cours'])->count(),
+            'total_clients'      => $clientsQuery->count(),
+            'active_clients'     => (clone $clientsQuery)->where('status', 'actif')->count(),
+            'total_missions'     => $missionsQuery->count(),
+            'pending_missions'   => (clone $missionsQuery)->whereIn('status', ['a_faire', 'en_cours'])->count(),
             'completed_missions' => (clone $missionsQuery)->where('status', 'terminee')->count(),
-            'total_poles' => $polesQuery->count(),
+            'total_poles'        => $polesQuery->count(),
+
+            'recent_clients'   => $recentClients,
+            'recent_missions'  => $recentMissions,
+            'pole_distribution' => $poleDistribution,
+            'monthly_revenue'  => $monthlyRevenue,
         ]);
     }
 }

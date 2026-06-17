@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             ErpBankAccountSeeder::class,
             DemoCompanySeeder::class,
             EdenStoreFolderSeeder::class,
+            CrescendoDemoSeeder::class,
         ]);
     }
 }

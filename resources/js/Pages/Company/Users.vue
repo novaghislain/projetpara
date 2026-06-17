@@ -1,5 +1,5 @@
-<script setup>
-import { ref, onMounted, nextTick, computed } from 'vue';
+﻿<script setup>
+import { ref, onMounted, nextTick } from 'vue';
 import CompanyLayout from '../../Layouts/CompanyLayout.vue';
 
 const users = ref([]);
@@ -10,6 +10,7 @@ const submitting = ref(false);
 const savingPermissions = ref(false);
 
 const showModal = ref(false);
+const showPermModal = ref(false);
 const isEditing = ref(false);
 const editingId = ref(null);
 
@@ -27,7 +28,6 @@ const form = ref({
 });
 
 // ─── Helpers ──────────────────────────────────────────────
-const statusClass = (active) => active ? 'bg-success' : 'bg-secondary';
 const statusLabel = (active) => active ? 'Actif' : 'Inactif';
 
 const moduleIcon = (mod) => {
@@ -81,14 +81,12 @@ function toggleModule(moduleSlug, active) {
     if (!modPerms) return;
     const permIds = modPerms.permissions.map(p => p.id);
     if (active) {
-        // Activer toutes les permissions du module
         permIds.forEach(id => {
             if (!form.value.permissions.includes(id)) {
                 form.value.permissions.push(id);
             }
         });
     } else {
-        // Désactiver toutes les permissions du module
         form.value.permissions = form.value.permissions.filter(id => !permIds.includes(id));
     }
 }
@@ -151,15 +149,8 @@ const openCreateModal = async () => {
     resetForm();
     isEditing.value = false;
     editingId.value = null;
-    showModal.value = true;
     await fetchAvailablePermissions();
-    nextTick(() => {
-        const el = document.getElementById('user-modal');
-        if (el) {
-            const modal = bootstrap.Modal.getOrCreateInstance(el);
-            modal.show();
-        }
-    });
+    showModal.value = true;
 };
 
 const openEditModal = async (id) => {
@@ -177,26 +168,14 @@ const openEditModal = async (id) => {
         };
         isEditing.value = true;
         editingId.value = id;
-        showModal.value = true;
         await fetchAvailablePermissions();
-        nextTick(() => {
-            const el = document.getElementById('user-modal');
-            if (el) {
-                const modal = bootstrap.Modal.getOrCreateInstance(el);
-                modal.show();
-            }
-        });
+        showModal.value = true;
     } catch (e) {
         alert('Erreur: ' + e.message);
     }
 };
 
 const closeModal = () => {
-    const el = document.getElementById('user-modal');
-    if (el) {
-        const modal = bootstrap.Modal.getOrCreateInstance(el);
-        modal.hide();
-    }
     showModal.value = false;
 };
 
@@ -273,11 +252,11 @@ const openPermissionsModal = async (user) => {
     editingId.value = user.id;
     form.value.permissions = [...(user.permissions || [])];
     await fetchAvailablePermissions();
-    const el = document.getElementById('permissions-modal');
-    if (el) {
-        const modal = bootstrap.Modal.getOrCreateInstance(el);
-        modal.show();
-    }
+    showPermModal.value = true;
+};
+
+const closePermModal = () => {
+    showPermModal.value = false;
 };
 
 const savePermissions = async () => {
@@ -294,11 +273,7 @@ const savePermissions = async () => {
             body: JSON.stringify({ permissions: form.value.permissions }),
         });
         if (!res.ok) throw new Error('Erreur de mise à jour');
-        const el = document.getElementById('permissions-modal');
-        if (el) {
-            const modal = bootstrap.Modal.getOrCreateInstance(el);
-            modal.hide();
-        }
+        closePermModal();
         await fetchUsers();
     } catch (e) {
         alert('Erreur: ' + e.message);
@@ -307,231 +282,229 @@ const savePermissions = async () => {
     }
 };
 
+const moduleLabel = (mod) => {
+    const labels = {
+        comptabilite: 'Compta',
+        facturation: 'Facturation',
+        caisse: 'Caisse',
+        rh: 'RH',
+        juridique: 'Juridique',
+        projets: 'Projets',
+        document: 'GED',
+    };
+    return labels[mod] || mod;
+};
+
 onMounted(fetchUsers);
 </script>
 
 <template>
     <CompanyLayout page-title="Gestion des Utilisateurs">
-        <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <p class="text-muted mb-0 small">
-                <i class="bi-people me-1"></i>
-                Gérez les utilisateurs et leurs accès aux modules.
-                <span class="fw-semibold text-dark">Ce qui n'est pas activé n'existe pas</span> dans l'interface de l'utilisateur.
-            </p>
-            <button class="btn btn-primary rounded-3" @click="openCreateModal">
-                <i class="bi-plus-lg me-1"></i> Nouvel utilisateur
-            </button>
-        </div>
-
         <!-- Loading -->
-        <div v-if="loading" class="d-flex justify-content-center py-5">
-            <div class="spinner-border text-primary"><span class="visually-hidden">Chargement...</span></div>
+        <div v-if="loading" class="d-flex align-items-center justify-content-center gap-3 py-5">
+            <div class="isup-spinner"></div>
+            <span style="color:#888; font-size:14px;">Chargement…</span>
         </div>
 
         <!-- Error -->
-        <div v-else-if="error" class="alert alert-danger rounded-3 border-0 shadow-sm">
-            <i class="bi-exclamation-triangle me-2"></i>{{ error }}
+        <div v-else-if="error" class="isup-alert-error mb-3">
+            <i class="bi-exclamation-triangle-fill me-2"></i>{{ error }}
         </div>
 
-        <!-- Empty -->
-        <div v-else-if="!users.length" class="text-center py-5 text-muted">
-            <i class="bi-people" style="font-size: 48px;"></i>
-            <p class="mt-2 fs-5">Aucun utilisateur dans votre entreprise.</p>
-            <button class="btn btn-primary rounded-3" @click="openCreateModal">
-                <i class="bi-plus-lg me-1"></i> Créer un utilisateur
-            </button>
-        </div>
+        <template v-else>
+            <div class="isup-shell">
+                <!-- ══ HEADER ══ -->
+                <div class="isup-portal-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="isup-portal-logo">
+                            <i class="bi-people" style="font-size:20px;"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="isup-portal-company">Gestion des Utilisateurs</div>
+                            <div class="isup-portal-sub">
+                                Gérez les utilisateurs et leurs accès aux modules.
+                                <strong>Ce qui n'est pas activé n'existe pas</strong> dans l'interface.
+                            </div>
+                        </div>
+                        <button class="isup-btn-primary flex-shrink-0" @click="openCreateModal">
+                            <i class="bi-plus-lg me-1"></i>Nouvel utilisateur
+                        </button>
+                    </div>
+                </div>
 
-        <!-- Users Table -->
-        <div v-else class="card border-0 rounded-4 shadow-sm">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light small">
-                        <tr>
-                            <th>Utilisateur</th>
-                            <th>Fonction</th>
-                            <th>Rôle</th>
-                            <th>Modules</th>
-                            <th>Statut</th>
-                            <th>Dernière connexion</th>
-                            <th class="text-end">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="u in users" :key="u.id">
-                            <td>
-                                <div class="d-flex align-items-center gap-2">
-                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
-                                         style="width: 36px; height: 36px; font-size: 14px; font-weight: 600; flex-shrink: 0;">
-                                        {{ (u.name || '?').charAt(0).toUpperCase() }}
-                                    </div>
-                                    <div>
-                                        <div class="fw-semibold small">{{ u.name }}</div>
-                                        <div class="text-muted small" style="font-size: 11px;">{{ u.email }}</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="small">{{ u.fonction || '-' }}</td>
-                            <td>
-                                <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill">
-                                    {{ u.role_name || 'N/A' }}
-                                </span>
-                            </td>
-                            <td>
-                                <div class="d-flex flex-wrap gap-1">
-                                    <span v-if="!u.modules || !u.modules.length" class="text-muted small">Aucun</span>
-                                    <span v-for="mod in (u.modules || [])" :key="mod"
-                                          class="badge rounded-pill"
-                                          :class="'bg-' + moduleColor(mod) + ' bg-opacity-10 text-' + moduleColor(mod)">
-                                        <i :class="moduleIcon(mod)" class="me-1"></i>
-                                        {{ mod === 'comptabilite' ? 'Compta' :
-                                           mod === 'facturation' ? 'Facturation' :
-                                           mod === 'caisse' ? 'Caisse' :
-                                           mod === 'rh' ? 'RH' :
-                                           mod === 'juridique' ? 'Juridique' :
-                                           mod === 'projets' ? 'Projets' :
-                                           mod === 'document' ? 'GED' : mod }}
-                                    </span>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge rounded-pill" :class="statusClass(u.is_active)">
-                                    {{ statusLabel(u.is_active) }}
-                                </span>
-                            </td>
-                            <td class="small text-muted">{{ u.last_login || 'Jamais' }}</td>
-                            <td class="text-end">
-                                <div class="d-flex gap-1 justify-content-end">
-                                    <button class="btn btn-sm btn-outline-primary" title="Permissions"
-                                            @click="openPermissionsModal(u)">
-                                        <i class="bi-shield-lock"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-secondary"
-                                            :title="u.is_active ? 'Désactiver' : 'Activer'"
-                                            @click="toggleStatus(u.id, u.is_active)">
-                                        <i :class="u.is_active ? 'bi-pause-circle' : 'bi-play-circle'"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-info" title="Modifier"
-                                            @click="openEditModal(u.id)">
-                                        <i class="bi-pencil"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger" title="Supprimer"
-                                            @click="deleteUser(u.id)">
-                                        <i class="bi-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <!-- Contenu -->
+                <div class="p-3">
+                    <!-- Empty -->
+                    <div v-if="!users.length" class="text-center py-5">
+                        <i class="bi-people" style="font-size:48px; color:#dce3ee; display:block; margin-bottom:12px;"></i>
+                        <p style="font-size:15px; color:#888; margin-bottom:16px;">Aucun utilisateur dans votre entreprise.</p>
+                        <button class="isup-btn-primary" @click="openCreateModal">
+                            <i class="bi-plus-lg me-1"></i>Créer un utilisateur
+                        </button>
+                    </div>
+
+                    <!-- Table -->
+                    <div v-else class="isup-panel">
+                        <div class="isup-panel-header">
+                            <i class="bi-people me-2" style="color:#FF7900;"></i>Liste des utilisateurs
+                        </div>
+                        <div class="isup-panel-body p-0">
+                            <div class="isup-table-wrap">
+                                <table class="isup-table w-100">
+                                    <thead>
+                                        <tr>
+                                            <th>Utilisateur</th>
+                                            <th>Fonction</th>
+                                            <th>Rôle</th>
+                                            <th>Modules</th>
+                                            <th>Statut</th>
+                                            <th>Dernière connexion</th>
+                                            <th class="text-end">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="u in users" :key="u.id">
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <div class="isup-user-avatar">{{ (u.name || '?').charAt(0).toUpperCase() }}</div>
+                                                    <div>
+                                                        <div class="isup-user-name">{{ u.name }}</div>
+                                                        <div class="isup-user-email">{{ u.email }}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td style="font-size:12px;">{{ u.fonction || '-' }}</td>
+                                            <td>
+                                                <span class="isup-badge isup-badge-role">{{ u.role_name || 'N/A' }}</span>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex flex-wrap gap-1">
+                                                    <span v-if="!u.modules || !u.modules.length" class="text-muted small">Aucun</span>
+                                                    <span v-for="mod in (u.modules || [])" :key="mod"
+                                                          class="isup-mod-badge"
+                                                          :class="'isup-mod-' + moduleColor(mod)">
+                                                        <i :class="moduleIcon(mod)" class="me-1"></i>
+                                                        {{ moduleLabel(mod) }}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="isup-status" :class="u.is_active ? 'isup-status-green' : 'isup-status-grey'">
+                                                    {{ statusLabel(u.is_active) }}
+                                                </span>
+                                            </td>
+                                            <td style="font-size:11px; color:#888;">{{ shortDate(u.last_login) }}</td>
+                                            <td class="text-end">
+                                                <button class="isup-icon-btn" title="Permissions" @click="openPermissionsModal(u)">
+                                                    <i class="bi-shield-lock"></i>
+                                                </button>
+                                                <button class="isup-icon-btn ms-1" :title="u.is_active ? 'Désactiver' : 'Activer'"
+                                                        @click="toggleStatus(u.id, u.is_active)">
+                                                    <i :class="u.is_active ? 'bi-pause-circle' : 'bi-play-circle'"></i>
+                                                </button>
+                                                <button class="isup-icon-btn ms-1" title="Modifier" @click="openEditModal(u.id)">
+                                                    <i class="bi-pencil"></i>
+                                                </button>
+                                                <button class="isup-icon-btn isup-icon-danger ms-1" title="Supprimer" @click="deleteUser(u.id)">
+                                                    <i class="bi-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+        </template>
 
         <!-- ════════════════════════════════════════════════════════════════ -->
         <!-- Create/Edit Modal -->
         <!-- ════════════════════════════════════════════════════════════════ -->
-        <div id="user-modal" class="modal fade" tabindex="-1" @hidden.bs.modal="showModal = false">
-            <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                <div class="modal-content border-0 rounded-4 shadow">
-                    <div class="modal-header border-0">
-                        <h5 class="modal-title fw-bold">
-                            <i :class="isEditing ? 'bi-pencil' : 'bi-person-plus'" class="me-2 text-primary"></i>
-                            {{ isEditing ? "Modifier l'utilisateur" : 'Nouvel utilisateur' }}
-                        </h5>
-                        <button type="button" class="btn-close" @click="closeModal"></button>
+        <div v-if="showModal" class="isup-modal-overlay" @click.self="closeModal">
+            <div class="isup-modal isup-modal-lg">
+                <div class="isup-modal-header">
+                    <span>
+                        <i :class="isEditing ? 'bi-pencil' : 'bi-person-plus'" class="me-2"></i>
+                        {{ isEditing ? "Modifier l'utilisateur" : 'Nouvel utilisateur' }}
+                    </span>
+                    <button class="isup-modal-close" @click="closeModal">&times;</button>
+                </div>
+                <div class="isup-modal-body">
+                    <!-- Basic Info -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="isup-label">Nom complet <span class="isup-req">*</span></label>
+                            <input v-model="form.name" type="text" class="isup-input" required placeholder="Jean Martin">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="isup-label">Email <span class="isup-req">*</span></label>
+                            <input v-model="form.email" type="email" class="isup-input" required placeholder="jean@entreprise.com">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="isup-label">
+                                {{ isEditing ? 'Nouveau mot de passe (optionnel)' : 'Mot de passe *' }}
+                            </label>
+                            <input v-model="form.password" type="password" class="isup-input"
+                                   :required="!isEditing" minlength="8" placeholder="Min. 8 caractères">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="isup-label">Rôle</label>
+                            <select v-model="form.role_id" class="isup-select">
+                                <option value="">Sélectionner</option>
+                                <option v-for="r in roles" :key="r.id" :value="r.id">{{ r.name }}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="isup-label">Fonction</label>
+                            <input v-model="form.fonction" type="text" class="isup-input" placeholder="Ex: Comptable">
+                        </div>
                     </div>
-                    <div class="modal-body">
-                        <!-- Basic Info -->
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold small">Nom complet <span class="text-danger">*</span></label>
-                                <input v-model="form.name" type="text" class="form-control" required placeholder="Jean Martin">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold small">Email <span class="text-danger">*</span></label>
-                                <input v-model="form.email" type="email" class="form-control" required placeholder="jean@entreprise.com">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold small">
-                                    {{ isEditing ? 'Nouveau mot de passe (optionnel)' : 'Mot de passe *' }}
+
+                    <!-- Permissions -->
+                    <div class="isup-perm-section">
+                        <div class="isup-perm-title">
+                            <i class="bi-shield-lock me-2"></i>
+                            Permissions par module
+                            <span class="isup-perm-sub">— Ce qui n'est pas coché n'existe pas</span>
+                        </div>
+
+                        <div v-if="!availableModules.length" class="isup-perm-empty">
+                            <i class="bi-info-circle me-1"></i>
+                            Aucun module disponible. Activez des services dans la section licences.
+                        </div>
+
+                        <div v-for="mod in availableModules" :key="mod.module" class="isup-mod-card">
+                            <div class="isup-mod-header">
+                                <label class="isup-switch">
+                                    <input type="checkbox"
+                                           :checked="isModuleActive(mod.module)"
+                                           @change="toggleModule(mod.module, $event.target.checked)">
+                                    <span class="isup-switch-slider"></span>
                                 </label>
-                                <input v-model="form.password" type="password" class="form-control"
-                                       :required="!isEditing" minlength="8" placeholder="Minimum 8 caractères">
+                                <i :class="'bi-' + moduleIcon(mod.module).replace('bi-','') + ' isup-mod-icon-' + moduleColor(mod.module)"></i>
+                                <span class="isup-mod-label">{{ mod.label }}</span>
+                                <span v-if="!isModuleActive(mod.module)" class="isup-mod-off">(aucun accès)</span>
                             </div>
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold small">Rôle</label>
-                                <select v-model="form.role_id" class="form-select">
-                                    <option value="">Sélectionner</option>
-                                    <option v-for="r in roles" :key="r.id" :value="r.id">
-                                        {{ r.name }}
-                                    </option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold small">Fonction</label>
-                                <input v-model="form.fonction" type="text" class="form-control"
-                                       placeholder="Ex: Comptable">
-                            </div>
-                        </div>
-
-                        <!-- Permissions -->
-                        <div class="border-top pt-3">
-                            <h6 class="fw-bold mb-3">
-                                <i class="bi-shield-lock me-2 text-primary"></i>
-                                Permissions par module
-                                <span class="small text-muted fw-normal">— Ce qui n'est pas coché n'existe pas pour cet utilisateur</span>
-                            </h6>
-
-                            <div v-if="!availableModules.length" class="text-muted small py-3">
-                                <i class="bi-info-circle me-1"></i>
-                                Aucun module disponible. Activez des services dans la section licences.
-                            </div>
-
-                            <div v-for="mod in availableModules" :key="mod.module"
-                                 class="card border rounded-3 mb-2 overflow-hidden">
-                                <div class="card-body p-3">
-                                    <div class="d-flex align-items-center gap-2 mb-2">
-                                        <div class="form-check form-switch mb-0">
-                                            <input class="form-check-input" type="checkbox"
-                                                   :id="'mod-switch-' + mod.module"
-                                                   :checked="isModuleActive(mod.module)"
-                                                   @change="toggleModule(mod.module, $event.target.checked)">
-                                        </div>
-                                        <i :class="moduleIcon(mod.module) + ' text-' + moduleColor(mod.module)"
-                                           style="font-size: 18px;"></i>
-                                        <label class="form-check-label fw-semibold"
-                                               :for="'mod-switch-' + mod.module">
-                                            {{ mod.label }}
-                                        </label>
-                                        <span v-if="!isModuleActive(mod.module)" class="text-muted" style="font-size: 11px;">
-                                            (aucun accès)
-                                        </span>
-                                    </div>
-                                    <div v-if="isModuleActive(mod.module)" class="d-flex flex-wrap gap-2 ms-4 ps-3">
-                                        <div v-for="perm in mod.permissions" :key="perm.id"
-                                             class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox"
-                                                   :id="'perm-' + perm.id"
-                                                   :checked="isPermissionActive(perm.id)"
-                                                   @change="togglePermission(perm.id)">
-                                            <label class="form-check-label small" :for="'perm-' + perm.id">
-                                                {{ perm.display_name }}
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div v-if="isModuleActive(mod.module)" class="isup-perm-list">
+                                <label v-for="perm in mod.permissions" :key="perm.id" class="isup-perm-item">
+                                    <input type="checkbox"
+                                           :checked="isPermissionActive(perm.id)"
+                                           @change="togglePermission(perm.id)">
+                                    <span>{{ perm.display_name }}</span>
+                                </label>
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer border-0">
-                        <button type="button" class="btn btn-light rounded-3" @click="closeModal">Annuler</button>
-                        <button type="button" class="btn btn-primary rounded-3" :disabled="submitting" @click="submitForm">
-                            <span v-if="submitting" class="spinner-border spinner-border-sm me-1"></span>
-                            <i class="bi-check-lg me-1"></i>
-                            {{ isEditing ? 'Mettre à jour' : "Créer l'utilisateur" }}
-                        </button>
-                    </div>
+                </div>
+                <div class="isup-modal-footer">
+                    <button type="button" class="isup-btn-grey" @click="closeModal">Annuler</button>
+                    <button type="button" class="isup-btn-primary" :disabled="submitting" @click="submitForm">
+                        <span v-if="submitting" class="isup-spinner-sm me-1"></span>
+                        <i v-else class="bi-check-lg me-1"></i>
+                        {{ isEditing ? 'Mettre à jour' : "Créer l'utilisateur" }}
+                    </button>
                 </div>
             </div>
         </div>
@@ -539,61 +512,45 @@ onMounted(fetchUsers);
         <!-- ════════════════════════════════════════════════════════════════ -->
         <!-- Permissions Modal (standalone) -->
         <!-- ════════════════════════════════════════════════════════════════ -->
-        <div id="permissions-modal" class="modal fade" tabindex="-1">
-            <div class="modal-dialog modal-dialog-scrollable">
-                <div class="modal-content border-0 rounded-4 shadow">
-                    <div class="modal-header border-0">
-                        <h5 class="modal-title fw-bold">
-                            <i class="bi-shield-lock me-2 text-primary"></i>
-                            Permissions
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div v-if="showPermModal" class="isup-modal-overlay" @click.self="closePermModal">
+            <div class="isup-modal">
+                <div class="isup-modal-header">
+                    <span><i class="bi-shield-lock me-2"></i>Permissions</span>
+                    <button class="isup-modal-close" @click="closePermModal">&times;</button>
+                </div>
+                <div class="isup-modal-body">
+                    <div v-if="!availableModules.length" class="text-muted small py-3">
+                        Aucun module disponible.
                     </div>
-                    <div class="modal-body">
-                        <div v-if="!availableModules.length" class="text-muted small py-3">
-                            Aucun module disponible.
-                        </div>
 
-                        <div v-for="mod in availableModules" :key="mod.module"
-                             class="card border rounded-3 mb-2 overflow-hidden">
-                            <div class="card-body p-3">
-                                <div class="d-flex align-items-center gap-2 mb-2">
-                                    <div class="form-check form-switch mb-0">
-                                        <input class="form-check-input" type="checkbox"
-                                               :id="'perm-mod-switch-' + mod.module"
-                                               :checked="isModuleActive(mod.module)"
-                                               @change="toggleModule(mod.module, $event.target.checked)">
-                                    </div>
-                                    <i :class="moduleIcon(mod.module) + ' text-' + moduleColor(mod.module)" style="font-size: 18px;"></i>
-                                    <label class="form-check-label fw-semibold" :for="'perm-mod-switch-' + mod.module">
-                                        {{ mod.label }}
-                                    </label>
-                                    <span v-if="!isModuleActive(mod.module)" class="text-muted" style="font-size: 11px;">
-                                        (aucun accès)
-                                    </span>
-                                </div>
-                                <div v-if="isModuleActive(mod.module)" class="d-flex flex-wrap gap-2 ms-4 ps-3">
-                                    <div v-for="perm in mod.permissions" :key="perm.id"
-                                         class="form-check form-check-inline">
-                                        <input class="form-check-input" type="checkbox"
-                                               :id="'perm-only-' + perm.id"
-                                               :checked="isPermissionActive(perm.id)"
-                                               @change="togglePermission(perm.id)">
-                                        <label class="form-check-label small" :for="'perm-only-' + perm.id">
-                                            {{ perm.display_name }}
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
+                    <div v-for="mod in availableModules" :key="mod.module" class="isup-mod-card">
+                        <div class="isup-mod-header">
+                            <label class="isup-switch">
+                                <input type="checkbox"
+                                       :checked="isModuleActive(mod.module)"
+                                       @change="toggleModule(mod.module, $event.target.checked)">
+                                <span class="isup-switch-slider"></span>
+                            </label>
+                            <i :class="'bi-' + moduleIcon(mod.module).replace('bi-','') + ' isup-mod-icon-' + moduleColor(mod.module)"></i>
+                            <span class="isup-mod-label">{{ mod.label }}</span>
+                            <span v-if="!isModuleActive(mod.module)" class="isup-mod-off">(aucun accès)</span>
+                        </div>
+                        <div v-if="isModuleActive(mod.module)" class="isup-perm-list">
+                            <label v-for="perm in mod.permissions" :key="perm.id" class="isup-perm-item">
+                                <input type="checkbox"
+                                       :checked="isPermissionActive(perm.id)"
+                                       @change="togglePermission(perm.id)">
+                                <span>{{ perm.display_name }}</span>
+                            </label>
                         </div>
                     </div>
-                    <div class="modal-footer border-0">
-                        <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Annuler</button>
-                        <button type="button" class="btn btn-primary rounded-3" :disabled="savingPermissions" @click="savePermissions">
-                            <span v-if="savingPermissions" class="spinner-border spinner-border-sm me-1"></span>
-                            <i class="bi-check-lg me-1"></i> Enregistrer
-                        </button>
-                    </div>
+                </div>
+                <div class="isup-modal-footer">
+                    <button type="button" class="isup-btn-grey" @click="closePermModal">Annuler</button>
+                    <button type="button" class="isup-btn-primary" :disabled="savingPermissions" @click="savePermissions">
+                        <span v-if="savingPermissions" class="isup-spinner-sm me-1"></span>
+                        <i v-else class="bi-check-lg me-1"></i> Enregistrer
+                    </button>
                 </div>
             </div>
         </div>
@@ -601,22 +558,44 @@ onMounted(fetchUsers);
 </template>
 
 <style scoped>
-.form-check-input:checked {
-    background-color: var(--gel-primary, #1a237e);
-    border-color: var(--gel-primary, #1a237e);
-}
-.form-switch .form-check-input:checked {
-    background-color: var(--gel-primary, #1a237e);
-    border-color: var(--gel-primary, #1a237e);
-}
-.card {
-    transition: all 0.2s;
-}
-.table th {
-    font-weight: 600;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #6c757d;
-}
+/* ── Users-specific styles ── */
+.isup-user-avatar { width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0; }
+.isup-user-name { font-size:13px; font-weight:600; color:#163A5E; }
+.isup-user-email { font-size:11px; color:#888; }
+.isup-badge { display:inline-block; font-size:10px; font-weight:600; padding:2px 8px; border-radius:3px; }
+.isup-badge-role { background:#f0f4f8; color:#555; }
+.isup-mod-badge { display:inline-block; font-size:11px; font-weight:700; padding:2px 10px; border-radius:4px; text-transform:uppercase; letter-spacing:0.03em; }
+.isup-mod-success { background:#e8f5e9; color:#2e7d32; }
+.isup-mod-primary { background:#e3f2fd; color:#1565c0; }
+.isup-mod-info { background:#e0f7fa; color:#00838f; }
+.isup-mod-warning { background:#fff8e1; color:#e65100; }
+.isup-mod-danger { background:#fdecea; color:#c62828; }
+.isup-mod-secondary { background:#f5f5f5; color:#616161; }
+.isup-mod-dark { background:#e8e8e8; color:#333; }
+.isup-req { color:#e53935; }
+.isup-perm-section { padding:16px; border:1px solid #eef2f7; border-radius:4px; margin-bottom:16px; }
+.isup-perm-title { font-size:14px; font-weight:700; color:#163A5E; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+.isup-perm-title i { color:#FF7900; }
+.isup-perm-sub { font-size:11px; font-weight:400; color:#888; margin-left:8px; }
+.isup-perm-empty { text-align:center; padding:20px; color:#aaa; font-size:13px; }
+.isup-mod-card { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #f0f4f8; }
+.isup-mod-header { display:flex; align-items:center; gap:8px; }
+.isup-mod-label { font-size:13px; font-weight:600; color:#163A5E; }
+.isup-mod-off { font-size:11px; color:#aaa; }
+.isup-mod-icon-success { color:#2e7d32; font-size:16px; }
+.isup-mod-icon-primary { color:#1565c0; font-size:16px; }
+.isup-mod-icon-info { color:#00838f; font-size:16px; }
+.isup-mod-icon-warning { color:#e65100; font-size:16px; }
+.isup-mod-icon-danger { color:#c62828; font-size:16px; }
+.isup-mod-icon-secondary { color:#616161; font-size:16px; }
+.isup-mod-icon-dark { color:#333; font-size:16px; }
+.isup-perm-list { display:flex; flex-direction:column; gap:4px; }
+.isup-perm-item { display:flex; align-items:center; gap:8px; padding:4px 0; }
+.isup-perm-item input[type="checkbox"] { width:16px; height:16px; accent-color:#FF7900; cursor:pointer; }
+.isup-switch { position:relative; display:inline-block; width:32px; height:18px; margin-bottom:0; flex-shrink:0; }
+.isup-switch input { opacity:0; width:0; height:0; }
+.isup-switch-slider { position:absolute; cursor:pointer; top:0;left:0;right:0;bottom:0; background:#ccc; border-radius:18px; transition:0.2s; }
+.isup-switch-slider::before { content:""; position:absolute; height:14px; width:14px; left:2px; bottom:2px; background:#fff; border-radius:50%; transition:0.2s; }
+.isup-switch input:checked + .isup-switch-slider { background:#FF7900; }
+.isup-switch input:checked + .isup-switch-slider::before { transform:translateX(14px); }
 </style>

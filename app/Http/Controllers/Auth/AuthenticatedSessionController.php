@@ -35,16 +35,17 @@ class AuthenticatedSessionController extends Controller
         }
 
         // Rediriger les utilisateurs d'entreprise vers leur portail
-        if ($user->client_id) {
+        if ($user->client_id && $user->role === 'company_admin') {
             return redirect()->intended(route('company.dashboard'));
         }
 
-        // Clients purs (role=client) -> espace client
+        // Clients purs (role=client) -> espace client catalogue
         if ($user->role === 'client') {
             return redirect()->intended(route('client.orders.index'));
         }
 
-        return redirect()->intended(route('home'));
+        // Tous les autres profils (super_admin, comptable, collaborateur) -> CPA dashboard
+        return redirect()->intended(route('cpa.dashboard'));
     }
 
     public function destroy(Request $request): RedirectResponse

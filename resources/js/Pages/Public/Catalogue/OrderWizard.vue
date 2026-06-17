@@ -305,11 +305,11 @@ const submitOrder = async () => {
     background-color: #FF7900 !important;
 }
 .btn-outline-secondary {
-    border-color: #163A5E !important;
-    color: #163A5E !important;
+    border-color: #3B82F6 !important;
+    color: #3B82F6 !important;
 }
 .btn-outline-secondary:hover {
-    background-color: #163A5E !important;
+    background-color: #3B82F6 !important;
     color: white !important;
 }
 </style>

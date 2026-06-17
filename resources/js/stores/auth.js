@@ -77,7 +77,10 @@ export const authStore = reactive({
             if (res.ok) {
                 const data = await res.json();
                 if (data.updated) {
-                    this.init(data);
+                    // Mettre à jour modules/permissions sans écraser l'utilisateur
+                    this.permissions = data.permissions || [];
+                    this.modules = data.modules || [];
+                    this.permissionIds = data.permission_ids || [];
                     return true;
                 }
             }
@@ -126,7 +129,7 @@ export function startPermissionPolling() {
     let interval = null;
     function poll() {
         authStore.checkForUpdates().then(updated => {
-            if (updated && window.location.pathname !== '/company/dashboard') {
+            if (updated) {
                 // Les permissions ont changé — recharger la page
                 window.location.reload();
             }

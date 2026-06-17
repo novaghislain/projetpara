@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { ref, computed, onMounted } from 'vue';
 import CompanyLayout from '../../Layouts/CompanyLayout.vue';
 import { authStore } from '../../stores/auth';
@@ -49,13 +49,13 @@ const formatDate = (dateStr) => {
 
 const statusBadge = (status) => {
     const map = {
-        draft: 'bg-secondary',
-        sent: 'bg-primary',
-        paid: 'bg-success',
-        cancelled: 'bg-danger',
-        overdue: 'bg-warning text-dark',
+        draft: 'isup-status-grey',
+        sent: 'isup-status-blue',
+        paid: 'isup-status-green',
+        cancelled: 'isup-status-red',
+        overdue: 'isup-status-orange',
     };
-    return map[status] || 'bg-secondary';
+    return map[status] || 'isup-status-grey';
 };
 
 const statusLabel = (status) => {
@@ -164,7 +164,6 @@ const submitInvoice = async () => {
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Erreur création');
         successMsg.value = data.message;
-        // Reset form
         form.value = {
             type: 'invoice',
             recipient_name: '',
@@ -209,10 +208,7 @@ const deleteInvoice = async (id) => {
     try {
         const res = await fetch(`/api/company/invoices/${id}`, {
             method: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': csrfToken.value,
-                Accept: 'application/json',
-            },
+            headers: { 'X-CSRF-TOKEN': csrfToken.value, Accept: 'application/json' },
         });
         if (!res.ok) throw new Error('Erreur suppression');
         await loadInvoices();
@@ -266,397 +262,376 @@ onMounted(() => {
 
 <template>
     <CompanyLayout page-title="Facturation">
-        <!-- Messages -->
-        <div v-if="successMsg" class="alert alert-success alert-dismissible rounded-3 fade show">
-            <i class="bi-check-circle-fill me-2"></i>{{ successMsg }}
-            <button type="button" class="btn-close" @click="successMsg = ''"></button>
-        </div>
-        <div v-if="error" class="alert alert-danger alert-dismissible rounded-3 fade show">
-            <i class="bi-exclamation-triangle-fill me-2"></i>{{ error }}
-            <button type="button" class="btn-close" @click="error = null"></button>
-        </div>
-
-        <!-- Onglets -->
-        <ul class="nav nav-tabs border-0 mb-4">
-            <li class="nav-item" v-for="tab in [{ key: 'list', label: 'Liste', icon: 'bi-list-ul' }, { key: 'create', label: 'Nouvelle', icon: 'bi-plus-circle' }, { key: 'stats', label: 'Statistiques', icon: 'bi-bar-chart' }]" :key="tab.key">
-                <button class="nav-link rounded-top-3 px-4 py-3 fw-semibold"
-                        :class="activeTab === tab.key ? 'active bg-white shadow-sm border-bottom-0' : 'text-muted'"
-                        @click="activeTab = tab.key; error = null">
-                    <i :class="tab.icon + ' me-2'"></i>{{ tab.label }}
-                </button>
-            </li>
-        </ul>
-
-        <!-- ================================ ONGLET LISTE ================================ -->
-        <div v-if="activeTab === 'list'">
-            <div class="card border-0 rounded-4 shadow-sm">
-                <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex flex-wrap align-items-center justify-content-between gap-3">
-                    <h5 class="fw-bold mb-0 font-heading">Toutes les factures</h5>
-                    <div class="d-flex gap-2 align-items-center">
-                        <label class="small text-muted">Filtrer :</label>
-                        <select class="form-select form-select-sm" style="width: auto;" v-model="statusFilter" @change="loadInvoices">
-                            <option value="">Tous les statuts</option>
-                            <option value="draft">Brouillon</option>
-                            <option value="sent">Envoyée</option>
-                            <option value="paid">Payée</option>
-                            <option value="cancelled">Annulée</option>
-                            <option value="overdue">En retard</option>
-                        </select>
-                        <button class="btn btn-sm btn-outline-primary" @click="activeTab = 'create'">
-                            <i class="bi-plus-lg me-1"></i>Nouvelle facture
-                        </button>
+        <div class="isup-shell">
+            <!-- ══ HEADER ══ -->
+            <div class="isup-portal-header">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="isup-portal-logo">
+                        <i class="bi-receipt" style="font-size:20px;"></i>
                     </div>
-                </div>
-                <div class="card-body p-0">
-                    <div v-if="loading" class="text-center py-5">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Chargement...</span>
-                        </div>
-                    </div>
-
-                    <div v-else-if="!invoices.length" class="text-center py-5 text-muted">
-                        <i class="bi-invoice" style="font-size: 3rem;"></i>
-                        <p class="mt-3 fs-5">Aucune facture trouvée.</p>
-                        <button class="btn btn-primary" @click="activeTab = 'create'">Créer une facture</button>
-                    </div>
-
-                    <div v-else class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th class="ps-4">N°</th>
-                                    <th>Type</th>
-                                    <th>Client</th>
-                                    <th>Date</th>
-                                    <th>Échéance</th>
-                                    <th class="text-end">Montant TTC</th>
-                                    <th class="text-end">Payé</th>
-                                    <th>Statut</th>
-                                    <th class="text-end pe-4">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="inv in invoices" :key="inv.id">
-                                    <td class="ps-4 fw-semibold">{{ inv.number }}</td>
-                                    <td><span class="badge bg-light text-dark">{{ typeLabel(inv.type) }}</span></td>
-                                    <td>{{ inv.recipient_name }}</td>
-                                    <td>{{ formatDate(inv.issue_date) }}</td>
-                                    <td>{{ formatDate(inv.due_date) }}</td>
-                                    <td class="text-end fw-semibold">{{ formatCurrency(inv.total_ttc) }} F</td>
-                                    <td class="text-end">{{ formatCurrency(inv.paid_amount) }} F</td>
-                                    <td>
-                                        <span class="badge rounded-pill" :class="statusBadge(inv.computed_status || inv.status)">
-                                            {{ statusLabel(inv.computed_status || inv.status) }}
-                                        </span>
-                                    </td>
-                                    <td class="text-end pe-4">
-                                        <div class="d-flex gap-1 justify-content-end">
-                                            <button class="btn btn-sm btn-outline-info" title="Détail" @click="loadInvoiceDetail(inv.id)">
-                                                <i class="bi-eye"></i>
-                                            </button>
-                                            <button v-if="inv.status === 'draft'" class="btn btn-sm btn-outline-success" title="Marquer envoyée" @click="updateInvoiceStatus(inv.id, 'sent')">
-                                                <i class="bi-send"></i>
-                                            </button>
-                                            <button v-if="inv.status === 'draft'" class="btn btn-sm btn-outline-danger" title="Supprimer" @click="deleteInvoice(inv.id)">
-                                                <i class="bi-trash"></i>
-                                            </button>
-                                            <button v-if="inv.status !== 'paid' && inv.status !== 'cancelled'" class="btn btn-sm btn-outline-success" title="Enregistrer paiement" @click="openPaymentModal(inv)">
-                                                <i class="bi-cash"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div>
+                        <div class="isup-portal-company">Facturation</div>
+                        <div class="isup-portal-sub">Factures, devis, avoirs et paiements</div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- ================================ ONGLET CRÉATION ================================ -->
-        <div v-if="activeTab === 'create'">
-            <div class="card border-0 rounded-4 shadow-sm">
-                <div class="card-header bg-transparent border-0 pt-4 px-4">
-                    <h5 class="fw-bold mb-0 font-heading">Nouvelle facture</h5>
+            <div class="p-3">
+                <!-- Messages -->
+                <div v-if="successMsg" class="isup-alert-success mb-3">
+                    <i class="bi-check-circle-fill me-2"></i>{{ successMsg }}
+                    <button class="isup-alert-close" @click="successMsg = ''">&times;</button>
                 </div>
-                <div class="card-body p-4">
-                    <form @submit.prevent="submitInvoice">
-                        <div class="row g-4">
-                            <!-- Type -->
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold small">Type</label>
-                                <select class="form-select" v-model="form.type">
-                                    <option value="invoice">Facture</option>
-                                    <option value="credit_note">Avoir</option>
-                                    <option value="devis">Devis</option>
+                <div v-if="error" class="isup-alert-error mb-3">
+                    <i class="bi-exclamation-triangle-fill me-2"></i>{{ error }}
+                    <button class="isup-alert-close" @click="error = null">&times;</button>
+                </div>
+
+                <!-- Onglets -->
+                <div class="isup-tabs mb-3">
+                    <button class="isup-tab" :class="{ active: activeTab === 'list' }" @click="activeTab = 'list'; error = null">
+                        <i class="bi-list-ul me-1"></i>Liste
+                    </button>
+                    <button class="isup-tab" :class="{ active: activeTab === 'create' }" @click="activeTab = 'create'; error = null">
+                        <i class="bi-plus-circle me-1"></i>Nouvelle
+                    </button>
+                    <button class="isup-tab" :class="{ active: activeTab === 'stats' }" @click="activeTab = 'stats'; error = null">
+                        <i class="bi-bar-chart me-1"></i>Statistiques
+                    </button>
+                </div>
+
+                <!-- ═══ ONGLET LISTE ═══ -->
+                <div v-if="activeTab === 'list'">
+                    <div class="isup-panel">
+                        <div class="isup-panel-header d-flex align-items-center justify-content-between">
+                            <span><i class="bi-list-ul me-2" style="color:#FF7900;"></i>Toutes les factures</span>
+                            <div class="d-flex gap-2 align-items-center">
+                                <span class="isup-filter-label">Filtrer :</span>
+                                <select class="isup-select" style="width:auto;" v-model="statusFilter" @change="loadInvoices">
+                                    <option value="">Tous les statuts</option>
+                                    <option value="draft">Brouillon</option>
+                                    <option value="sent">Envoyée</option>
+                                    <option value="paid">Payée</option>
+                                    <option value="cancelled">Annulée</option>
+                                    <option value="overdue">En retard</option>
                                 </select>
-                            </div>
-
-                            <!-- Date d'émission -->
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold small">Date d'émission</label>
-                                <input type="date" class="form-control" v-model="form.issue_date" required>
-                            </div>
-
-                            <!-- Date d'échéance -->
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold small">Date d'échéance</label>
-                                <input type="date" class="form-control" v-model="form.due_date" required>
-                            </div>
-
-                            <!-- Destinataire -->
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold small">Client / Destinataire</label>
-                                <input type="text" class="form-control" v-model="form.recipient_name" placeholder="Nom du client" required>
-                            </div>
-
-                            <!-- Adresse -->
-                            <div class="col-12">
-                                <label class="form-label fw-semibold small">Adresse du destinataire</label>
-                                <textarea class="form-control" rows="2" v-model="form.recipient_address" placeholder="Adresse..."></textarea>
-                            </div>
-
-                            <!-- Notes -->
-                            <div class="col-12">
-                                <label class="form-label fw-semibold small">Notes</label>
-                                <textarea class="form-control" rows="2" v-model="form.notes" placeholder="Notes optionnelles..."></textarea>
+                                <button class="isup-btn-primary" style="padding:4px 12px;font-size:11px;" @click="activeTab = 'create'">
+                                    <i class="bi-plus-lg me-1"></i>Nouvelle
+                                </button>
                             </div>
                         </div>
-
-                        <!-- Lignes de facture -->
-                        <hr class="my-4">
-                        <div class="d-flex align-items-center justify-content-between mb-3">
-                            <h6 class="fw-bold mb-0">Lignes de facture</h6>
-                            <button type="button" class="btn btn-sm btn-outline-primary" @click="addLine">
-                                <i class="bi-plus-lg me-1"></i>Ajouter ligne
-                            </button>
-                        </div>
-
-                        <div class="table-responsive">
-                            <table class="table table-bordered align-middle">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th style="width: 35%;">Description</th>
-                                        <th style="width: 12%;">Quantité</th>
-                                        <th style="width: 15%;">Prix unitaire</th>
-                                        <th style="width: 10%;">TVA %</th>
-                                        <th style="width: 13%;">Total HT</th>
-                                        <th style="width: 13%;">Total TTC</th>
-                                        <th style="width: 2%;"></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="(item, index) in form.items" :key="index">
-                                        <td>
-                                            <input type="text" class="form-control form-control-sm" v-model="item.description" placeholder="Description" required>
-                                        </td>
-                                        <td>
-                                            <input type="number" step="0.01" min="0.01" class="form-control form-control-sm" v-model.number="item.quantity" required>
-                                        </td>
-                                        <td>
-                                            <input type="number" step="0.01" min="0" class="form-control form-control-sm" v-model.number="item.unit_price" required>
-                                        </td>
-                                        <td>
-                                            <input type="number" step="0.01" min="0" max="100" class="form-control form-control-sm" v-model.number="item.tax_rate">
-                                        </td>
-                                        <td class="text-end fw-semibold">{{ formatCurrency(lineTotalHt(item)) }}</td>
-                                        <td class="text-end fw-semibold">{{ formatCurrency(lineTotalTtc(item)) }}</td>
-                                        <td>
-                                            <button type="button" class="btn btn-sm btn-outline-danger" @click="removeLine(index)" :disabled="form.items.length <= 1">
-                                                <i class="bi-x-lg"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                                <tfoot class="table-light fw-bold">
-                                    <tr>
-                                        <td colspan="4" class="text-end">Totaux :</td>
-                                        <td class="text-end">{{ formatCurrency(formTotalHt) }}</td>
-                                        <td class="text-end">{{ formatCurrency(formTotalTtc) }}</td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="4" class="text-end text-muted small">TVA :</td>
-                                        <td colspan="2" class="text-end text-muted small">{{ formatCurrency(formTotalTva) }}</td>
-                                        <td></td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-
-                        <div class="d-flex justify-content-end gap-2 mt-4">
-                            <button type="button" class="btn btn-light rounded-3 px-4" @click="activeTab = 'list'">Annuler</button>
-                            <button type="submit" class="btn btn-primary rounded-3 px-4" :disabled="submitting">
-                                <span v-if="submitting" class="spinner-border spinner-border-sm me-1"></span>
-                                <i v-else class="bi-check-lg me-1"></i>Créer la facture
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- ================================ ONGLET STATISTIQUES ================================ -->
-        <div v-if="activeTab === 'stats'">
-            <div v-if="!stats" class="text-center py-5 text-muted">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Chargement...</span>
-                </div>
-            </div>
-            <template v-else>
-                <!-- Cartes récapitulatives -->
-                <div class="row g-4 mb-4">
-                    <div class="col-md-3">
-                        <div class="card border-0 rounded-4 shadow-sm h-100">
-                            <div class="card-body p-4">
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="stat-icon" style="background: #e3f2fd; color: #1565c0;">
-                                        <i class="bi-receipt"></i>
-                                    </div>
-                                    <div>
-                                        <div class="text-muted small">Total factures</div>
-                                        <div class="fs-3 fw-bold">{{ stats.total_invoices }}</div>
-                                    </div>
-                                </div>
+                        <div class="isup-panel-body p-0">
+                            <!-- Loading -->
+                            <div v-if="loading" class="text-center py-5">
+                                <div class="isup-spinner"></div>
                             </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card border-0 rounded-4 shadow-sm h-100">
-                            <div class="card-body p-4">
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="stat-icon" style="background: #e8f5e9; color: #2e7d32;">
-                                        <i class="bi-cash-stack"></i>
-                                    </div>
-                                    <div>
-                                        <div class="text-muted small">Total TTC</div>
-                                        <div class="fs-3 fw-bold">{{ formatCurrency(stats.total_ttc) }} F</div>
-                                    </div>
-                                </div>
+
+                            <!-- Empty -->
+                            <div v-else-if="!invoices.length" class="text-center py-5">
+                                <i class="bi-receipt" style="font-size:48px;color:#dce3ee;display:block;margin-bottom:12px;"></i>
+                                <p style="font-size:15px;color:#888;margin-bottom:16px;">Aucune facture trouvée.</p>
+                                <button class="isup-btn-primary" @click="activeTab = 'create'">
+                                    <i class="bi-plus-lg me-1"></i>Créer une facture
+                                </button>
                             </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card border-0 rounded-4 shadow-sm h-100">
-                            <div class="card-body p-4">
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="stat-icon" style="background: #fff3e0; color: #e65100;">
-                                        <i class="bi-wallet2"></i>
-                                    </div>
-                                    <div>
-                                        <div class="text-muted small">Payé</div>
-                                        <div class="fs-3 fw-bold">{{ formatCurrency(stats.total_paid) }} F</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card border-0 rounded-4 shadow-sm h-100">
-                            <div class="card-body p-4">
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="stat-icon" style="background: #fce4ec; color: #c62828;">
-                                        <i class="bi-exclamation-triangle"></i>
-                                    </div>
-                                    <div>
-                                        <div class="text-muted small">Restant du</div>
-                                        <div class="fs-3 fw-bold">{{ formatCurrency(stats.total_due) }} F</div>
-                                    </div>
-                                </div>
+
+                            <!-- Table -->
+                            <div v-else class="isup-table-wrap">
+                                <table class="isup-table w-100">
+                                    <thead>
+                                        <tr>
+                                            <th class="ps-4">N°</th>
+                                            <th>Type</th>
+                                            <th>Client</th>
+                                            <th>Date</th>
+                                            <th>Échéance</th>
+                                            <th class="text-end">Montant TTC</th>
+                                            <th class="text-end">Payé</th>
+                                            <th>Statut</th>
+                                            <th class="text-end pe-4">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="inv in invoices" :key="inv.id">
+                                            <td class="ps-4 isup-inv-number">{{ inv.number }}</td>
+                                            <td><span class="isup-badge isup-badge-light">{{ typeLabel(inv.type) }}</span></td>
+                                            <td class="isup-inv-client">{{ inv.recipient_name }}</td>
+                                            <td class="isup-inv-date">{{ formatDate(inv.issue_date) }}</td>
+                                            <td class="isup-inv-date">{{ formatDate(inv.due_date) }}</td>
+                                            <td class="text-end isup-inv-amount">{{ formatCurrency(inv.total_ttc) }} F</td>
+                                            <td class="text-end isup-inv-amount">{{ formatCurrency(inv.paid_amount) }} F</td>
+                                            <td>
+                                                <span class="isup-status" :class="statusBadge(inv.computed_status || inv.status)">
+                                                    {{ statusLabel(inv.computed_status || inv.status) }}
+                                                </span>
+                                            </td>
+                                            <td class="text-end pe-4">
+                                                <div class="d-flex gap-1 justify-content-end">
+                                                    <button class="isup-icon-btn" title="Détail" @click="loadInvoiceDetail(inv.id)">
+                                                        <i class="bi-eye" style="color:#00838f;"></i>
+                                                    </button>
+                                                    <button v-if="inv.status === 'draft'" class="isup-icon-btn" title="Marquer envoyée" @click="updateInvoiceStatus(inv.id, 'sent')">
+                                                        <i class="bi-send" style="color:#1565c0;"></i>
+                                                    </button>
+                                                    <button v-if="inv.status === 'draft'" class="isup-icon-btn isup-icon-danger" title="Supprimer" @click="deleteInvoice(inv.id)">
+                                                        <i class="bi-trash"></i>
+                                                    </button>
+                                                    <button v-if="inv.status !== 'paid' && inv.status !== 'cancelled'" class="isup-icon-btn" title="Enregistrer paiement" @click="openPaymentModal(inv)">
+                                                        <i class="bi-cash" style="color:#2e7d32;"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Répartition par statut -->
-                <div class="card border-0 rounded-4 shadow-sm">
-                    <div class="card-header bg-transparent border-0 pt-4 px-4">
-                        <h5 class="fw-bold mb-0 font-heading">Répartition par statut</h5>
-                    </div>
-                    <div class="card-body p-4">
-                        <div class="table-responsive">
-                            <table class="table align-middle">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Statut</th>
-                                        <th class="text-end">Nombre</th>
-                                        <th class="text-end">Montant TTC</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="(data, key) in stats.by_status" :key="key">
-                                        <td>
-                                            <span class="badge rounded-pill" :class="statusBadge(key)">
-                                                {{ statusLabel(key) }}
-                                            </span>
-                                        </td>
-                                        <td class="text-end">{{ data.count }}</td>
-                                        <td class="text-end fw-semibold">{{ formatCurrency(data.total_ttc) }} F</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                <!-- ═══ ONGLET CRÉATION ═══ -->
+                <div v-if="activeTab === 'create'">
+                    <div class="isup-panel">
+                        <div class="isup-panel-header">
+                            <i class="bi-plus-circle me-2" style="color:#FF7900;"></i>Nouvelle facture
+                        </div>
+                        <div class="isup-panel-body">
+                            <form @submit.prevent="submitInvoice">
+                                <div class="row g-2 mb-3">
+                                    <div class="col-md-3">
+                                        <label class="isup-label">Type</label>
+                                        <select class="isup-select" v-model="form.type">
+                                            <option value="invoice">Facture</option>
+                                            <option value="credit_note">Avoir</option>
+                                            <option value="devis">Devis</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="isup-label">Date d'émission</label>
+                                        <input type="date" class="isup-input" v-model="form.issue_date" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="isup-label">Date d'échéance</label>
+                                        <input type="date" class="isup-input" v-model="form.due_date" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="isup-label">Client / Destinataire</label>
+                                        <input type="text" class="isup-input" v-model="form.recipient_name" placeholder="Nom du client" required>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="isup-label">Adresse du destinataire</label>
+                                        <textarea class="isup-input" rows="2" v-model="form.recipient_address" placeholder="Adresse..."></textarea>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="isup-label">Notes</label>
+                                        <textarea class="isup-input" rows="2" v-model="form.notes" placeholder="Notes optionnelles..."></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Lignes -->
+                                <div style="border-top:1px solid #dce3ee;padding-top:14px;">
+                                    <div class="d-flex align-items-center justify-content-between mb-3">
+                                        <span style="font-size:13px;font-weight:700;color:#163A5E;">
+                                            <i class="bi-list-ul me-2" style="color:#FF7900;"></i>Lignes de facture
+                                        </span>
+                                        <button type="button" class="isup-btn-primary" style="padding:4px 12px;font-size:11px;" @click="addLine">
+                                            <i class="bi-plus-lg me-1"></i>Ajouter ligne
+                                        </button>
+                                    </div>
+
+                                    <div class="isup-table-wrap">
+                                        <table class="isup-table isup-table-bordered w-100">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width:32%;">Description</th>
+                                                    <th style="width:12%;">Quantité</th>
+                                                    <th style="width:14%;">Prix unitaire</th>
+                                                    <th style="width:10%;">TVA %</th>
+                                                    <th style="width:13%;">Total HT</th>
+                                                    <th style="width:13%;">Total TTC</th>
+                                                    <th style="width:2%;"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr v-for="(item, index) in form.items" :key="index">
+                                                    <td>
+                                                        <input type="text" class="isup-input" v-model="item.description" placeholder="Description" required>
+                                                    </td>
+                                                    <td>
+                                                        <input type="number" step="0.01" min="0.01" class="isup-input" v-model.number="item.quantity" required>
+                                                    </td>
+                                                    <td>
+                                                        <input type="number" step="0.01" min="0" class="isup-input" v-model.number="item.unit_price" required>
+                                                    </td>
+                                                    <td>
+                                                        <input type="number" step="0.01" min="0" max="100" class="isup-input" v-model.number="item.tax_rate">
+                                                    </td>
+                                                    <td class="isup-inv-amount">{{ formatCurrency(lineTotalHt(item)) }}</td>
+                                                    <td class="isup-inv-amount">{{ formatCurrency(lineTotalTtc(item)) }}</td>
+                                                    <td>
+                                                        <button type="button" class="isup-icon-btn isup-icon-danger" @click="removeLine(index)" :disabled="form.items.length <= 1">
+                                                            <i class="bi-x-lg"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                            <tfoot class="isup-tfoot">
+                                                <tr>
+                                                    <td colspan="4" class="text-end">Totaux :</td>
+                                                    <td class="text-end isup-inv-amount">{{ formatCurrency(formTotalHt) }}</td>
+                                                    <td class="text-end isup-inv-amount">{{ formatCurrency(formTotalTtc) }}</td>
+                                                    <td></td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="4" class="text-end isup-tfoot-sub">TVA :</td>
+                                                    <td colspan="2" class="text-end isup-tfoot-sub">{{ formatCurrency(formTotalTva) }}</td>
+                                                    <td></td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-end gap-2 mt-3">
+                                    <button type="button" class="isup-btn-grey" @click="activeTab = 'list'">Annuler</button>
+                                    <button type="submit" class="isup-btn-primary" :disabled="submitting">
+                                        <span v-if="submitting" class="isup-spinner-sm me-1"></span>
+                                        <i v-else class="bi-check-lg me-1"></i>Créer la facture
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
-            </template>
-        </div>
 
-        <!-- ================================ MODAL DÉTAIL ================================ -->
-        <div class="modal fade" :class="{ show: showDetailModal }" tabindex="-1"
-             :style="{ display: showDetailModal ? 'block' : 'none' }"
-             @click.self="showDetailModal = false">
-            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-                <div class="modal-content border-0 rounded-4">
-                    <div class="modal-header border-0">
-                        <h5 class="modal-title fw-bold font-heading">
-                            Facture {{ selectedInvoice?.number }}
-                        </h5>
-                        <button type="button" class="btn-close" @click="showDetailModal = false"></button>
+                <!-- ═══ ONGLET STATISTIQUES ═══ -->
+                <div v-if="activeTab === 'stats'">
+                    <div v-if="!stats" class="text-center py-5">
+                        <div class="isup-spinner"></div>
                     </div>
-                    <div class="modal-body" v-if="selectedInvoice">
-                        <!-- Infos générales -->
+                    <template v-else>
                         <div class="row g-3 mb-4">
+                            <div class="col-md-3">
+                                <div class="isup-stat-card">
+                                    <div class="isup-stat-icon isup-stat-blue"><i class="bi-receipt"></i></div>
+                                    <div>
+                                        <div class="isup-stat-label">Total factures</div>
+                                        <div class="isup-stat-num">{{ stats.total_invoices }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="isup-stat-card">
+                                    <div class="isup-stat-icon isup-stat-green"><i class="bi-cash-stack"></i></div>
+                                    <div>
+                                        <div class="isup-stat-label">Total TTC</div>
+                                        <div class="isup-stat-num">{{ formatCurrency(stats.total_ttc) }} F</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="isup-stat-card">
+                                    <div class="isup-stat-icon isup-stat-orange"><i class="bi-wallet2"></i></div>
+                                    <div>
+                                        <div class="isup-stat-label">Payé</div>
+                                        <div class="isup-stat-num">{{ formatCurrency(stats.total_paid) }} F</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="isup-stat-card">
+                                    <div class="isup-stat-icon isup-stat-red"><i class="bi-exclamation-triangle"></i></div>
+                                    <div>
+                                        <div class="isup-stat-label">Restant dû</div>
+                                        <div class="isup-stat-num">{{ formatCurrency(stats.total_due) }} F</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="isup-panel">
+                            <div class="isup-panel-header">
+                                <i class="bi-pie-chart me-2" style="color:#FF7900;"></i>Répartition par statut
+                            </div>
+                            <div class="isup-panel-body p-0">
+                                <div class="isup-table-wrap">
+                                    <table class="isup-table w-100">
+                                        <thead>
+                                            <tr>
+                                                <th>Statut</th>
+                                                <th class="text-end">Nombre</th>
+                                                <th class="text-end">Montant TTC</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="(data, key) in stats.by_status" :key="key">
+                                                <td>
+                                                    <span class="isup-status" :class="statusBadge(key)">
+                                                        {{ statusLabel(key) }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-end">{{ data.count }}</td>
+                                                <td class="text-end isup-inv-amount">{{ formatCurrency(data.total_ttc) }} F</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- ═══ MODAL DÉTAIL ═══ -->
+            <div v-if="showDetailModal" class="isup-modal-overlay" @click.self="showDetailModal = false">
+                <div class="isup-modal isup-modal-lg">
+                    <div class="isup-modal-header">
+                        <span>Facture {{ selectedInvoice?.number }}</span>
+                        <button class="isup-modal-close" @click="showDetailModal = false">&times;</button>
+                    </div>
+                    <div class="isup-modal-body" v-if="selectedInvoice">
+                        <div class="row g-2 mb-3">
                             <div class="col-md-4">
-                                <small class="text-muted d-block">Type</small>
-                                <span class="fw-semibold">{{ typeLabel(selectedInvoice.type) }}</span>
+                                <span class="isup-detail-label">Type</span>
+                                <span class="isup-detail-val">{{ typeLabel(selectedInvoice.type) }}</span>
                             </div>
                             <div class="col-md-4">
-                                <small class="text-muted d-block">Statut</small>
-                                <span class="badge rounded-pill" :class="statusBadge(selectedInvoice.computed_status || selectedInvoice.status)">
+                                <span class="isup-detail-label">Statut</span>
+                                <span class="isup-status" :class="statusBadge(selectedInvoice.computed_status || selectedInvoice.status)">
                                     {{ statusLabel(selectedInvoice.computed_status || selectedInvoice.status) }}
                                 </span>
                             </div>
                             <div class="col-md-4">
-                                <small class="text-muted d-block">Créé par</small>
-                                <span class="fw-semibold">{{ selectedInvoice.created_by_name }}</span>
+                                <span class="isup-detail-label">Créé par</span>
+                                <span class="isup-detail-val">{{ selectedInvoice.created_by_name }}</span>
                             </div>
                             <div class="col-md-4">
-                                <small class="text-muted d-block">Destinataire</small>
-                                <span class="fw-semibold">{{ selectedInvoice.recipient_name }}</span>
+                                <span class="isup-detail-label">Destinataire</span>
+                                <span class="isup-detail-val">{{ selectedInvoice.recipient_name }}</span>
                             </div>
                             <div class="col-md-4">
-                                <small class="text-muted d-block">Date d'émission</small>
-                                <span>{{ formatDate(selectedInvoice.issue_date) }}</span>
+                                <span class="isup-detail-label">Date d'émission</span>
+                                <span class="isup-detail-val">{{ formatDate(selectedInvoice.issue_date) }}</span>
                             </div>
                             <div class="col-md-4">
-                                <small class="text-muted d-block">Date d'échéance</small>
-                                <span>{{ formatDate(selectedInvoice.due_date) }}</span>
+                                <span class="isup-detail-label">Date d'échéance</span>
+                                <span class="isup-detail-val">{{ formatDate(selectedInvoice.due_date) }}</span>
                             </div>
                             <div v-if="selectedInvoice.recipient_address" class="col-12">
-                                <small class="text-muted d-block">Adresse</small>
-                                <span>{{ selectedInvoice.recipient_address }}</span>
+                                <span class="isup-detail-label">Adresse</span>
+                                <span class="isup-detail-val">{{ selectedInvoice.recipient_address }}</span>
                             </div>
                             <div v-if="selectedInvoice.notes" class="col-12">
-                                <small class="text-muted d-block">Notes</small>
-                                <span>{{ selectedInvoice.notes }}</span>
+                                <span class="isup-detail-label">Notes</span>
+                                <span class="isup-detail-val">{{ selectedInvoice.notes }}</span>
                             </div>
                         </div>
 
                         <!-- Lignes -->
-                        <h6 class="fw-bold mb-3">Lignes</h6>
-                        <div class="table-responsive">
-                            <table class="table table-sm align-middle">
-                                <thead class="table-light">
+                        <div style="font-size:13px;font-weight:700;color:#163A5E;margin-bottom:10px;">Lignes</div>
+                        <div class="isup-table-wrap">
+                            <table class="isup-table w-100">
+                                <thead>
                                     <tr>
                                         <th>Description</th>
                                         <th class="text-end">Qté</th>
@@ -676,7 +651,7 @@ onMounted(() => {
                                         <td class="text-end">{{ formatCurrency(item.total_ttc) }}</td>
                                     </tr>
                                 </tbody>
-                                <tfoot class="table-light fw-bold">
+                                <tfoot class="isup-tfoot">
                                     <tr>
                                         <td colspan="4" class="text-end">Totaux :</td>
                                         <td class="text-end">{{ formatCurrency(selectedInvoice.total_ht) }}</td>
@@ -687,13 +662,13 @@ onMounted(() => {
                         </div>
 
                         <!-- Paiements -->
-                        <h6 class="fw-bold mb-3 mt-4">Paiements reçus</h6>
-                        <div v-if="!selectedInvoice.payments?.length" class="text-muted small">
+                        <div style="font-size:13px;font-weight:700;color:#163A5E;margin:16px 0 10px;">Paiements reçus</div>
+                        <div v-if="!selectedInvoice.payments?.length" style="font-size:12px;color:#888;">
                             Aucun paiement enregistré.
                         </div>
-                        <div v-else class="table-responsive">
-                            <table class="table table-sm align-middle">
-                                <thead class="table-light">
+                        <div v-else class="isup-table-wrap">
+                            <table class="isup-table w-100">
+                                <thead>
                                     <tr>
                                         <th>Date</th>
                                         <th>Montant</th>
@@ -704,10 +679,8 @@ onMounted(() => {
                                 <tbody>
                                     <tr v-for="p in selectedInvoice.payments" :key="p.id">
                                         <td>{{ formatDate(p.date) }}</td>
-                                        <td class="fw-semibold">{{ formatCurrency(p.amount) }} F</td>
-                                        <td>
-                                            <span class="badge bg-light text-dark text-capitalize">{{ p.method }}</span>
-                                        </td>
+                                        <td class="isup-inv-amount">{{ formatCurrency(p.amount) }} F</td>
+                                        <td><span class="isup-badge isup-badge-light">{{ p.method }}</span></td>
                                         <td>{{ p.reference || '-' }}</td>
                                     </tr>
                                 </tbody>
@@ -715,64 +688,57 @@ onMounted(() => {
                         </div>
 
                         <!-- Récapitulatif -->
-                        <div class="row g-3 mt-3 p-3 bg-light rounded-3">
-                            <div class="col-md-4">
-                                <small class="text-muted d-block">Total HT</small>
-                                <span class="fw-bold fs-5">{{ formatCurrency(selectedInvoice.total_ht) }} F</span>
+                        <div class="isup-inv-summary">
+                            <div>
+                                <span class="isup-detail-label">Total HT</span>
+                                <span class="isup-inv-sum-val">{{ formatCurrency(selectedInvoice.total_ht) }} F</span>
                             </div>
-                            <div class="col-md-4">
-                                <small class="text-muted d-block">Total TTC</small>
-                                <span class="fw-bold fs-5">{{ formatCurrency(selectedInvoice.total_ttc) }} F</span>
+                            <div>
+                                <span class="isup-detail-label">Total TTC</span>
+                                <span class="isup-inv-sum-val">{{ formatCurrency(selectedInvoice.total_ttc) }} F</span>
                             </div>
-                            <div class="col-md-4">
-                                <small class="text-muted d-block">Payé</small>
-                                <span class="fw-bold fs-5" :class="selectedInvoice.paid_amount >= selectedInvoice.total_ttc ? 'text-success' : 'text-warning'">
+                            <div>
+                                <span class="isup-detail-label">Payé</span>
+                                <span class="isup-inv-sum-val" :class="selectedInvoice.paid_amount >= selectedInvoice.total_ttc ? 'isup-sum-paid' : 'isup-sum-due'">
                                     {{ formatCurrency(selectedInvoice.paid_amount) }} F
                                 </span>
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer border-0">
-                        <button type="button" class="btn btn-light rounded-3" @click="showDetailModal = false">Fermer</button>
+                    <div class="isup-modal-footer">
+                        <button class="isup-btn-grey" @click="showDetailModal = false">Fermer</button>
                     </div>
                 </div>
             </div>
-        </div>
-        <div v-if="showDetailModal" class="modal-backdrop fade show"></div>
 
-        <!-- ================================ MODAL PAIEMENT ================================ -->
-        <div class="modal fade" :class="{ show: showPaymentModal }" tabindex="-1"
-             :style="{ display: showPaymentModal ? 'block' : 'none' }"
-             @click.self="showPaymentModal = false">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content border-0 rounded-4">
-                    <div class="modal-header border-0">
-                        <h5 class="modal-title fw-bold font-heading">
-                            <i class="bi-cash me-2"></i>Enregistrer un paiement
-                        </h5>
-                        <button type="button" class="btn-close" @click="showPaymentModal = false"></button>
+            <!-- ═══ MODAL PAIEMENT ═══ -->
+            <div v-if="showPaymentModal" class="isup-modal-overlay" @click.self="showPaymentModal = false">
+                <div class="isup-modal">
+                    <div class="isup-modal-header">
+                        <span><i class="bi-cash me-2" style="color:#2e7d32;"></i>Enregistrer un paiement</span>
+                        <button class="isup-modal-close" @click="showPaymentModal = false">&times;</button>
                     </div>
-                    <div class="modal-body">
-                        <div v-if="selectedInvoice" class="mb-3">
-                            <small class="text-muted">Facture {{ selectedInvoice.number }}</small>
-                            <div class="d-flex justify-content-between fw-semibold">
-                                <span>Total TTC : {{ formatCurrency(selectedInvoice.total_ttc) }} F</span>
-                                <span>Déjà payé : {{ formatCurrency(selectedInvoice.paid_amount) }} F</span>
+                    <div class="isup-modal-body">
+                        <div v-if="selectedInvoice" class="isup-pay-info">
+                            <span style="font-size:12px;color:#888;">Facture {{ selectedInvoice.number }}</span>
+                            <div class="d-flex justify-content-between isup-inv-amount">
+                                <span>Total TTC : <strong>{{ formatCurrency(selectedInvoice.total_ttc) }} F</strong></span>
+                                <span>Déjà payé : <strong>{{ formatCurrency(selectedInvoice.paid_amount) }} F</strong></span>
                             </div>
                         </div>
                         <form @submit.prevent="submitPayment">
-                            <div class="row g-3">
+                            <div class="row g-2">
                                 <div class="col-md-6">
-                                    <label class="form-label fw-semibold small">Date</label>
-                                    <input type="date" class="form-control" v-model="paymentForm.date" required>
+                                    <label class="isup-label">Date</label>
+                                    <input type="date" class="isup-input" v-model="paymentForm.date" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label fw-semibold small">Montant</label>
-                                    <input type="number" step="0.01" min="0.01" class="form-control" v-model.number="paymentForm.amount" required>
+                                    <label class="isup-label">Montant</label>
+                                    <input type="number" step="0.01" min="0.01" class="isup-input" v-model.number="paymentForm.amount" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label fw-semibold small">Moyen de paiement</label>
-                                    <select class="form-select" v-model="paymentForm.method">
+                                    <label class="isup-label">Moyen de paiement</label>
+                                    <select class="isup-select" v-model="paymentForm.method">
                                         <option value="cash">Espèces</option>
                                         <option value="transfer">Virement</option>
                                         <option value="momo">Mobile Money</option>
@@ -780,13 +746,13 @@ onMounted(() => {
                                     </select>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label fw-semibold small">Référence</label>
-                                    <input type="text" class="form-control" v-model="paymentForm.reference" placeholder="N° de référence">
+                                    <label class="isup-label">Référence</label>
+                                    <input type="text" class="isup-input" v-model="paymentForm.reference" placeholder="N° de référence">
                                 </div>
                             </div>
-                            <div class="d-flex justify-content-end gap-2 mt-4">
-                                <button type="button" class="btn btn-light rounded-3" @click="showPaymentModal = false">Annuler</button>
-                                <button type="submit" class="btn btn-success rounded-3">
+                            <div class="d-flex justify-content-end gap-2 mt-3">
+                                <button type="button" class="isup-btn-grey" @click="showPaymentModal = false">Annuler</button>
+                                <button type="submit" class="isup-btn-primary" style="background:#2e7d32;">
                                     <i class="bi-check-lg me-1"></i>Valider le paiement
                                 </button>
                             </div>
@@ -795,6 +761,28 @@ onMounted(() => {
                 </div>
             </div>
         </div>
-        <div v-if="showPaymentModal" class="modal-backdrop fade show"></div>
     </CompanyLayout>
 </template>
+
+<style scoped>
+/* ── Invoice-specific styles ── */
+.isup-table-bordered td { border-left:1px solid #f0f4f8; }
+.isup-table-bordered td:first-child { border-left:none; }
+.isup-tfoot td { background:#f8fafc; font-weight:600; color:#163A5E; font-size:12px; }
+.isup-tfoot-sub { color:#888; font-weight:400; font-size:11px; }
+.isup-inv-number { font-weight:600; color:#163A5E; font-size:12px; }
+.isup-inv-client { font-size:12px; }
+.isup-inv-date { font-size:11px; color:#888; }
+.isup-inv-amount { font-size:12px; font-weight:600; color:#333; }
+.isup-filter-label { font-size:11px; color:#888; white-space:nowrap; }
+.isup-detail-label { display:block; font-size:10px; font-weight:700; color:#163A5E; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:2px; }
+.isup-detail-val { display:block; font-size:13px; color:#333; margin-bottom:8px; }
+.isup-inv-summary { display:flex; gap:24px; background:#f8fafc; border:1px solid #eef2f7; border-radius:4px; padding:14px 18px; }
+.isup-inv-summary > div { flex:1; }
+.isup-inv-sum-val { display:block; font-size:16px; font-weight:800; font-family:'Outfit',sans-serif; color:#163A5E; }
+.isup-sum-paid { color:#2e7d32; }
+.isup-sum-due { color:#e65100; }
+.isup-pay-info { background:#e3f2fd; border:1px solid #bbdefb; border-radius:4px; padding:12px 14px; margin-top:14px; }
+.isup-alert-close { float:right; background:none; border:none; font-size:18px; line-height:1; color:#888; cursor:pointer; opacity:0.7; margin:-6px -4px 0 0; padding:0; }
+.isup-alert-close:hover { opacity:1; }
+</style>

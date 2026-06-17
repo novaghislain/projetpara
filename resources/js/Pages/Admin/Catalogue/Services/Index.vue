@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { ref, reactive } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 
@@ -56,10 +56,10 @@ function openEditCat(cat) {
 async function submitCat() {
     catProcessing.value = true;
     try {
-        const url = editingCat.value 
-            ? `/admin/catalogue/categories/${editingCat.value.id}` 
+        const url = editingCat.value
+            ? `/admin/catalogue/categories/${editingCat.value.id}`
             : '/admin/catalogue/categories';
-        
+
         const method = editingCat.value ? 'PUT' : 'POST';
 
         await fetch(url, {
@@ -161,10 +161,10 @@ function openEditService(service) {
 async function submitService() {
     serviceProcessing.value = true;
     try {
-        const url = editingService.value 
-            ? `/admin/catalogue/services/${editingService.value.id}` 
+        const url = editingService.value
+            ? `/admin/catalogue/services/${editingService.value.id}`
             : '/admin/catalogue/services';
-        
+
         const method = editingService.value ? 'PUT' : 'POST';
 
         await fetch(url, {
@@ -193,231 +193,311 @@ async function deleteService(id) {
 </script>
 
 <template>
-    <GelLayout page-title="Gestion Catalogue">
-        <div class="py-4 px-2">
-            <!-- Navbar -->
-            <div class="d-flex align-items-center justify-content-between mb-4">
+    <GelLayout page-title="Gestion du Catalogue">
+        <div class="isup-shell">
+
+            <!-- ══ HEADER ══ -->
+            <div class="isup-portal-header">
                 <div class="d-flex align-items-center gap-3">
-                    <h1 class="h3 fw-bold mb-0 text-dark font-heading">Gestion du Catalogue de Services</h1>
-                </div>
-                <div class="d-flex align-items-center gap-3">
-                    <a href="/admin/catalogue/orders" class="btn btn-link text-decoration-none">
-                        Kanban Commandes
+                    <div class="isup-portal-logo">
+                        <i class="bi-grid-3x3-gap" style="font-size:20px;"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="isup-portal-company">Gestion du Catalogue de Services</div>
+                        <div class="isup-portal-sub">Catégories et services proposés aux clients</div>
+                    </div>
+                    <a href="/admin/catalogue/orders" class="isup-btn-link flex-shrink-0">
+                        <i class="bi-kanban me-1"></i>Kanban Commandes
                     </a>
-                    <button @click="openNewCat" class="btn btn-primary d-inline-flex align-items-center rounded-3">
-                        <i class="bi-plus-lg me-2"></i> Nouvelle catégorie
+                    <button @click="openNewCat" class="isup-btn-primary flex-shrink-0">
+                        <i class="bi-plus-lg me-1"></i>Nouvelle catégorie
                     </button>
                 </div>
             </div>
 
-            <!-- Contenu -->
-            <div class="row g-4">
-                <div v-for="cat in categories" :key="cat.id" class="col-12">
-                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                        
-                        <!-- En-tête catégorie -->
-                        <div class="card-header bg-light border-0 px-4 py-3 d-flex align-items-center justify-content-between">
-                            <div class="d-flex align-items-center gap-3">
-                                <span v-if="cat.icone" v-html="cat.icone" class="fs-4"></span>
-                                <div>
-                                    <h2 class="h5 fw-bold text-dark mb-0 font-heading">{{ cat.nom }}</h2>
-                                    <p v-if="cat.description" class="text-muted small mb-0">{{ cat.description }}</p>
-                                </div>
-                                <span class="badge rounded-pill ms-2" :class="cat.actif ? 'bg-success' : 'bg-danger'">
-                                    {{ cat.actif ? 'Active' : 'Inactive' }}
-                                </span>
-                            </div>
-                            <div class="d-flex align-items-center gap-2">
-                                <button @click="openEditCat(cat)" class="btn btn-sm btn-outline-primary rounded-3">Modifier</button>
-                                <button @click="deleteCat(cat.id)" class="btn btn-sm btn-outline-danger rounded-3">Supprimer</button>
-                                <button @click="openNewService(cat.id)" class="btn btn-sm btn-primary d-inline-flex align-items-center rounded-3">
-                                    <i class="bi-plus-lg me-1"></i> Ajouter un service
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Grille services -->
-                        <div class="card-body p-4 bg-white">
-                            <div v-if="cat.services.length > 0" class="row g-3">
-                                <div v-for="service in cat.services" :key="service.id" class="col-md-6 col-lg-4">
-                                    <div class="card h-100 border rounded-4 hover-shadow transition-all group-hover-container">
-                                        <div class="card-body p-3">
-                                            <div class="d-flex align-items-start justify-content-between mb-2">
-                                                <h3 class="fw-semibold text-dark h6 mb-0">{{ service.nom }}</h3>
-                                                <span class="badge rounded-pill" :class="service.actif ? 'bg-success bg-opacity-10 text-success' : 'bg-secondary bg-opacity-10 text-secondary'">
-                                                    {{ service.actif ? 'Actif' : 'Inactif' }}
-                                                </span>
-                                            </div>
-                                            <p class="text-muted small mb-3" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ service.description }}</p>
-                                            <div class="d-flex align-items-center justify-content-between text-muted small">
-                                                <span class="fw-semibold text-primary">
-                                                    {{ service.tarif_type === 'fixe' ? `${Number(service.tarif_fcfa).toLocaleString('fr-FR')} FCFA` : 'Sur devis' }}
-                                                </span>
-                                                <span>{{ service.delai_jours || 'Délai N/A' }}</span>
-                                            </div>
-                                            <div class="mt-3 d-flex gap-2">
-                                                <button @click="openEditService(service)" class="btn btn-sm btn-primary flex-grow-1 rounded-3">Modifier</button>
-                                                <button @click="deleteService(service.id)" class="btn btn-sm btn-danger bg-opacity-10 text-danger border-0 flex-grow-1 rounded-3 hover-danger">Supprimer</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div v-else class="text-center py-5 text-muted small fst-italic border border-2 border-dashed rounded-4">
-                                Aucun service. Cliquez sur "Ajouter un service" pour commencer.
-                            </div>
-                        </div>
-                    </div>
+            <!-- ══ CONTENU ══ -->
+            <div class="p-3">
+                <div v-if="!categories.length" class="text-center py-5">
+                    <i class="bi-folder-x" style="font-size:40px; color:#dce3ee; display:block; margin-bottom:12px;"></i>
+                    <div style="font-size:15px; font-weight:600; color:#888; margin-bottom:6px;">Catalogue vide</div>
+                    <p class="text-muted" style="font-size:13px;">Créez votre première catégorie de services.</p>
+                    <button @click="openNewCat" class="isup-btn-primary" style="padding:8px 20px;">
+                        <i class="bi-plus-lg me-1"></i>Nouvelle catégorie
+                    </button>
                 </div>
 
-                <div v-if="!categories.length" class="col-12 text-center py-5">
-                    <i class="bi-folder-x display-1 text-muted opacity-50"></i>
-                    <h3 class="mt-4 h5 fw-medium text-dark">Catalogue vide</h3>
-                    <p class="mt-2 text-muted">Créez votre première catégorie de services.</p>
-                    <button @click="openNewCat" class="mt-3 btn btn-primary px-4 py-2 rounded-3">Nouvelle catégorie</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ── Modal Catégorie ──────────────────────────────────────────────── -->
-        <div v-if="showCatModal" class="modal-backdrop fade show" style="z-index: 1040;"></div>
-        <div v-if="showCatModal" class="modal fade show d-block" tabindex="-1" style="z-index: 1050;">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content rounded-4 border-0 shadow">
-                    <div class="modal-header border-bottom-0 pb-0">
-                        <h5 class="modal-title fw-bold">{{ editingCat ? 'Modifier la catégorie' : 'Nouvelle catégorie' }}</h5>
-                        <button type="button" class="btn-close" @click="showCatModal = false"></button>
-                    </div>
-                    <form @submit.prevent="submitCat" class="modal-body pt-3 pb-4">
-                        <div class="mb-3">
-                            <label class="form-label small fw-medium">Nom *</label>
-                            <input v-model="catForm.nom" type="text" required class="form-control form-control-sm rounded-3">
-                        </div>
-                        <div class="row g-3 mb-3">
-                            <div class="col-6">
-                                <label class="form-label small fw-medium">Icône (emoji ou HTML)</label>
-                                <input v-model="catForm.icone" type="text" class="form-control form-control-sm rounded-3">
+                <div v-for="cat in categories" :key="cat.id" class="mb-4">
+                    <!-- Category header -->
+                    <div class="isup-cat-header">
+                        <div class="d-flex align-items-center gap-3">
+                            <span v-if="cat.icone" v-html="cat.icone" class="isup-cat-icon"></span>
+                            <div>
+                                <div class="isup-cat-title">{{ cat.nom }}</div>
+                                <p v-if="cat.description" class="isup-cat-desc">{{ cat.description }}</p>
                             </div>
-                            <div class="col-6">
-                                <label class="form-label small fw-medium">Ordre d'affichage</label>
-                                <input v-model="catForm.ordre" type="number" class="form-control form-control-sm rounded-3">
-                            </div>
+                            <span class="isup-status" :class="cat.actif ? 'isup-status-green' : 'isup-status-red'">
+                                {{ cat.actif ? 'Active' : 'Inactive' }}
+                            </span>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-medium">Description</label>
-                            <textarea v-model="catForm.description" rows="2" class="form-control form-control-sm rounded-3"></textarea>
-                        </div>
-                        <div class="form-check mb-4">
-                            <input id="cat_actif" v-model="catForm.actif" type="checkbox" class="form-check-input">
-                            <label for="cat_actif" class="form-check-label small">Catégorie active (visible publiquement)</label>
-                        </div>
-                        <div class="d-flex justify-content-end gap-2">
-                            <button type="button" @click="showCatModal = false" class="btn btn-light rounded-3">Annuler</button>
-                            <button type="submit" :disabled="catProcessing" class="btn btn-primary rounded-3">
-                                <span v-if="catProcessing" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                                {{ editingCat ? 'Mettre à jour' : 'Créer' }}
+                        <div class="d-flex align-items-center gap-2">
+                            <button @click="openEditCat(cat)" class="isup-btn-outline btn-sm">
+                                <i class="bi-pencil me-1"></i>Modifier
+                            </button>
+                            <button @click="deleteCat(cat.id)" class="isup-btn-outline-red btn-sm">
+                                <i class="bi-trash me-1"></i>Supprimer
+                            </button>
+                            <button @click="openNewService(cat.id)" class="isup-btn-orange btn-sm">
+                                <i class="bi-plus-lg me-1"></i>Service
                             </button>
                         </div>
-                    </form>
+                    </div>
+
+                    <!-- Services grid -->
+                    <div v-if="cat.services && cat.services.length" class="row g-3 mt-1">
+                        <div v-for="service in cat.services" :key="service.id" class="col-md-6 col-lg-4">
+                            <div class="isup-svc-card">
+                                <div class="d-flex align-items-start justify-content-between mb-2">
+                                    <div class="isup-svc-name">{{ service.nom }}</div>
+                                    <span class="isup-status" :class="service.actif ? 'isup-status-green' : 'isup-status-grey'">
+                                        {{ service.actif ? 'Actif' : 'Inactif' }}
+                                    </span>
+                                </div>
+                                <p class="isup-svc-desc">{{ service.description || 'Aucune description' }}</p>
+                                <div class="isup-svc-meta">
+                                    <span class="isup-svc-price">
+                                        {{ service.tarif_type === 'fixe' ? `${Number(service.tarif_fcfa).toLocaleString('fr-FR')} FCFA` : 'Sur devis' }}
+                                    </span>
+                                    <span class="isup-svc-delai">
+                                        <i class="bi-clock me-1"></i>{{ service.delai_jours || 'Délai N/A' }}
+                                    </span>
+                                </div>
+                                <div class="d-flex gap-2 mt-3">
+                                    <button @click="openEditService(service)" class="isup-btn-primary btn-sm flex-grow-1">
+                                        <i class="bi-pencil me-1"></i>Modifier
+                                    </button>
+                                    <button @click="deleteService(service.id)" class="isup-btn-outline-red btn-sm flex-grow-1">
+                                        <i class="bi-trash me-1"></i>Supprimer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else class="text-center py-4 text-muted" style="font-size:13px; border:1px dashed #dce3ee; border-radius:4px; margin-top:8px;">
+                        <i class="bi-inbox" style="font-size:20px; display:block; margin-bottom:4px;"></i>
+                        Aucun service. Cliquez sur "Ajouter un service" pour commencer.
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- ── Modal Service ──────────────────────────────────────────────────── -->
-        <div v-if="showServiceModal" class="modal-backdrop fade show" style="z-index: 1040;"></div>
-        <div v-if="showServiceModal" class="modal fade show d-block" tabindex="-1" style="z-index: 1050;">
-            <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-                <div class="modal-content rounded-4 border-0 shadow">
-                    <div class="modal-header border-bottom px-4 py-3 bg-light rounded-top-4">
-                        <h5 class="modal-title fw-bold text-dark">{{ editingService ? 'Modifier le service' : 'Nouveau service' }}</h5>
-                        <button type="button" class="btn-close" @click="showServiceModal = false"></button>
+        <!-- ══ MODAL CATÉGORIE ══ -->
+        <div v-if="showCatModal" class="isup-modal-overlay" @click.self="showCatModal = false">
+            <div class="isup-modal">
+                <div class="isup-modal-header">
+                    <span>{{ editingCat ? 'Modifier la catégorie' : 'Nouvelle catégorie' }}</span>
+                    <button class="isup-modal-close" @click="showCatModal = false">&times;</button>
+                </div>
+                <form @submit.prevent="submitCat" class="isup-modal-body">
+                    <div class="mb-3">
+                        <label class="isup-label">Nom *</label>
+                        <input v-model="catForm.nom" type="text" required class="isup-input">
                     </div>
-                    <form @submit.prevent="submitService" class="modal-body p-4">
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label small fw-medium">Nom du service *</label>
-                                <input v-model="serviceForm.nom" type="text" required class="form-control form-control-sm rounded-3">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label small fw-medium">Catégorie *</label>
-                                <select v-model="serviceForm.category_id" required class="form-select form-select-sm rounded-3">
-                                    <option value="">-- Choisir --</option>
-                                    <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.nom }}</option>
-                                </select>
-                            </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="isup-label">Icône (emoji ou HTML)</label>
+                            <input v-model="catForm.icone" type="text" class="isup-input">
                         </div>
-
-                        <div class="mb-3">
-                            <label class="form-label small fw-medium">Description</label>
-                            <textarea v-model="serviceForm.description" rows="3" class="form-control form-control-sm rounded-3"></textarea>
+                        <div class="col-6">
+                            <label class="isup-label">Ordre d'affichage</label>
+                            <input v-model="catForm.ordre" type="number" class="isup-input">
                         </div>
-
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-4">
-                                <label class="form-label small fw-medium">Type de tarif *</label>
-                                <select v-model="serviceForm.tarif_type" class="form-select form-select-sm rounded-3">
-                                    <option value="fixe">Tarif fixe</option>
-                                    <option value="devis">Sur devis</option>
-                                </select>
-                            </div>
-                            <div v-if="serviceForm.tarif_type === 'fixe'" class="col-md-4">
-                                <label class="form-label small fw-medium">Tarif (FCFA)</label>
-                                <input v-model="serviceForm.tarif_fcfa" type="number" class="form-control form-control-sm rounded-3">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label small fw-medium">Délai</label>
-                                <input v-model="serviceForm.delai_jours" type="text" placeholder="ex: 3 à 5 jours" class="form-control form-control-sm rounded-3">
-                            </div>
-                        </div>
-
-                        <!-- Ce qui est inclus -->
-                        <div class="mb-3 p-3 bg-light rounded-3 border">
-                            <label class="form-label small fw-bold text-dark mb-2">Ce qui est inclus</label>
-                            <div class="input-group input-group-sm mb-2">
-                                <input v-model="newInclusItem" type="text" placeholder="Ajouter un élément..." class="form-control rounded-start-3">
-                                <button type="button" @click="addInclusItem" class="btn btn-primary rounded-end-3 px-3">Ajouter</button>
-                            </div>
-                            <ul class="list-group list-group-flush rounded-3 bg-white">
-                                <li v-for="(item, idx) in serviceForm.inclus_json" :key="idx" class="list-group-item d-flex justify-content-between align-items-center py-1 px-2 small">
-                                    {{ item }}
-                                    <button type="button" @click="removeInclusItem(idx)" class="btn btn-link text-danger p-0 text-decoration-none">
-                                        <i class="bi-x-circle-fill"></i>
-                                    </button>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <!-- Documents requis -->
-                        <div class="mb-3 p-3 bg-light rounded-3 border">
-                            <label class="form-label small fw-bold text-dark mb-2">Documents requis du client</label>
-                            <div class="input-group input-group-sm mb-2">
-                                <input v-model="newDocItem" type="text" placeholder="ex: Copie CNI..." class="form-control rounded-start-3">
-                                <button type="button" @click="addDocItem" class="btn btn-warning rounded-end-3 px-3 text-dark fw-medium">Ajouter</button>
-                            </div>
-                            <ul class="list-group list-group-flush rounded-3 bg-white">
-                                <li v-for="(doc, idx) in serviceForm.documents_requis_json" :key="idx" class="list-group-item d-flex justify-content-between align-items-center py-1 px-2 small">
-                                    {{ doc }}
-                                    <button type="button" @click="removeDocItem(idx)" class="btn btn-link text-danger p-0 text-decoration-none">
-                                        <i class="bi-x-circle-fill"></i>
-                                    </button>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <div class="form-check mb-2">
-                            <input id="svc_actif" v-model="serviceForm.actif" type="checkbox" class="form-check-input">
-                            <label for="svc_actif" class="form-check-label small fw-medium text-dark">Service actif (visible publiquement)</label>
-                        </div>
-                    </form>
-                    <div class="modal-footer border-top bg-light rounded-bottom-4 px-4 py-3 d-flex justify-content-end gap-2">
-                        <button type="button" @click="showServiceModal = false" class="btn btn-outline-secondary rounded-3">Annuler</button>
-                        <button type="button" @click="submitService" :disabled="serviceProcessing" class="btn btn-primary rounded-3 px-4">
-                            <span v-if="serviceProcessing" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                            {{ editingService ? 'Mettre à jour' : 'Créer le service' }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="isup-label">Description</label>
+                        <textarea v-model="catForm.description" rows="2" class="isup-input"></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label class="d-flex align-items-center gap-2" style="font-size:12px; cursor:pointer;">
+                            <input v-model="catForm.actif" type="checkbox" class="isup-checkbox">
+                            <span style="font-weight:600; color:#163A5E;">Catégorie active (visible publiquement)</span>
+                        </label>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" @click="showCatModal = false" class="isup-btn-grey">Annuler</button>
+                        <button type="submit" :disabled="catProcessing" class="isup-btn-primary">
+                            <span v-if="catProcessing" class="isup-spinner-sm me-1"></span>
+                            {{ editingCat ? 'Mettre à jour' : 'Créer' }}
                         </button>
                     </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ══ MODAL SERVICE ══ -->
+        <div v-if="showServiceModal" class="isup-modal-overlay" @click.self="showServiceModal = false">
+            <div class="isup-modal isup-modal-lg">
+                <div class="isup-modal-header">
+                    <span>{{ editingService ? 'Modifier le service' : 'Nouveau service' }}</span>
+                    <button class="isup-modal-close" @click="showServiceModal = false">&times;</button>
+                </div>
+                <form @submit.prevent="submitService" class="isup-modal-body">
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="isup-label">Nom du service *</label>
+                            <input v-model="serviceForm.nom" type="text" required class="isup-input">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="isup-label">Catégorie *</label>
+                            <select v-model="serviceForm.category_id" required class="isup-select">
+                                <option value="">-- Choisir --</option>
+                                <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.nom }}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="isup-label">Description</label>
+                        <textarea v-model="serviceForm.description" rows="3" class="isup-input"></textarea>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-4">
+                            <label class="isup-label">Type de tarif *</label>
+                            <select v-model="serviceForm.tarif_type" class="isup-select">
+                                <option value="fixe">Tarif fixe</option>
+                                <option value="devis">Sur devis</option>
+                            </select>
+                        </div>
+                        <div v-if="serviceForm.tarif_type === 'fixe'" class="col-md-4">
+                            <label class="isup-label">Tarif (FCFA)</label>
+                            <input v-model="serviceForm.tarif_fcfa" type="number" class="isup-input">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="isup-label">Délai</label>
+                            <input v-model="serviceForm.delai_jours" type="text" placeholder="ex: 3 à 5 jours" class="isup-input">
+                        </div>
+                    </div>
+
+                    <!-- Ce qui est inclus -->
+                    <div class="mb-3 p-3" style="background:#f8fafc; border:1px solid #dce3ee; border-radius:4px;">
+                        <label class="isup-label mb-2">Ce qui est inclus</label>
+                        <div class="d-flex gap-2 mb-2">
+                            <input v-model="newInclusItem" type="text" placeholder="Ajouter un élément..." class="isup-input">
+                            <button type="button" @click="addInclusItem" class="isup-btn-primary flex-shrink-0">Ajouter</button>
+                        </div>
+                        <ul class="isup-tag-list">
+                            <li v-for="(item, idx) in serviceForm.inclus_json" :key="idx" class="isup-tag">
+                                <span>{{ item }}</span>
+                                <button type="button" @click="removeInclusItem(idx)" class="isup-tag-remove">&times;</button>
+                            </li>
+                            <li v-if="!serviceForm.inclus_json.length" class="small text-muted" style="list-style:none; padding:4px 0;">Aucun élément</li>
+                        </ul>
+                    </div>
+
+                    <!-- Documents requis -->
+                    <div class="mb-3 p-3" style="background:#f8fafc; border:1px solid #dce3ee; border-radius:4px;">
+                        <label class="isup-label mb-2">Documents requis du client</label>
+                        <div class="d-flex gap-2 mb-2">
+                            <input v-model="newDocItem" type="text" placeholder="ex: Copie CNI..." class="isup-input">
+                            <button type="button" @click="addDocItem" class="isup-btn-orange flex-shrink-0">Ajouter</button>
+                        </div>
+                        <ul class="isup-tag-list">
+                            <li v-for="(doc, idx) in serviceForm.documents_requis_json" :key="idx" class="isup-tag isup-tag-doc">
+                                <span>{{ doc }}</span>
+                                <button type="button" @click="removeDocItem(idx)" class="isup-tag-remove">&times;</button>
+                            </li>
+                            <li v-if="!serviceForm.documents_requis_json.length" class="small text-muted" style="list-style:none; padding:4px 0;">Aucun document requis</li>
+                        </ul>
+                    </div>
+
+                    <label class="d-flex align-items-center gap-2" style="font-size:12px; cursor:pointer;">
+                        <input v-model="serviceForm.actif" type="checkbox" class="isup-checkbox">
+                        <span style="font-weight:600; color:#163A5E;">Service actif (visible publiquement)</span>
+                    </label>
+                </form>
+                <div class="isup-modal-footer">
+                    <button type="button" @click="showServiceModal = false" class="isup-btn-grey">Annuler</button>
+                    <button type="button" @click="submitService" :disabled="serviceProcessing" class="isup-btn-primary">
+                        <span v-if="serviceProcessing" class="isup-spinner-sm me-1"></span>
+                        {{ editingService ? 'Mettre à jour' : 'Créer le service' }}
+                    </button>
                 </div>
             </div>
         </div>
     </GelLayout>
 </template>
+
+<style scoped>
+/* ══ Catalogue Services — unique styles ══ */
+
+/* ── Category ─── */
+.isup-cat-header {
+    background:#f8fafc; border:1px solid #dce3ee; border-radius:4px;
+    padding:12px 16px; display:flex; align-items:center; justify-content:space-between; gap:12px;
+    flex-wrap:wrap;
+}
+.isup-cat-icon { font-size:22px; line-height:1; flex-shrink:0; }
+.isup-cat-title { font-family:'Outfit',sans-serif; font-size:16px; font-weight:700; color:#163A5E; }
+.isup-cat-desc { font-size:12px; color:#888; margin:0; }
+
+/* ── Service card ─── */
+.isup-svc-card {
+    border:1px solid #dce3ee; border-radius:4px; padding:14px; background:#fff;
+    transition:box-shadow 0.15s, border-color 0.15s; height:100%;
+    display:flex; flex-direction:column;
+}
+.isup-svc-card:hover { box-shadow:0 4px 14px rgba(22,58,94,.08); border-color:#FF7900; }
+.isup-svc-name { font-size:14px; font-weight:700; color:#163A5E; }
+.isup-svc-desc { font-size:12px; color:#666; margin:6px 0 10px; flex-grow:1; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.isup-svc-meta {
+    display:flex; align-items:center; justify-content:space-between;
+    padding-top:8px; border-top:1px solid #f0f4f8;
+}
+.isup-svc-price { font-size:13px; font-weight:700; color:#FF7900; }
+.isup-svc-delai { font-size:11px; color:#888; display:flex; align-items:center; }
+
+/* ── Tag list ─── */
+.isup-tag-list { list-style:none; padding:0; margin:0; display:flex; flex-wrap:wrap; gap:6px; }
+.isup-tag {
+    display:inline-flex; align-items:center; gap:4px;
+    background:#eef3f9; color:#163A5E; font-size:12px; font-weight:500;
+    padding:4px 10px; border-radius:3px;
+}
+.isup-tag-doc { background:#fff3e0; color:#e65100; }
+.isup-tag-remove { background:none; border:none; color:#888; cursor:pointer; font-size:16px; padding:0; line-height:1; }
+.isup-tag-remove:hover { color:#c62828; }
+
+/* ── Unique buttons ─── */
+.isup-btn-orange {
+    background:rgba(255,121,0,0.1); color:#FF7900; border:1px solid rgba(255,121,0,0.3);
+    border-radius:4px; padding:7px 14px; font-size:12px; font-weight:700; cursor:pointer;
+    display:inline-flex; align-items:center; transition:all 0.15s; white-space:nowrap;
+}
+.isup-btn-orange:hover { background:#FF7900; color:#fff; }
+.isup-btn-outline {
+    background:#fff; color:#163A5E; border:1px solid #dce3ee; border-radius:4px;
+    padding:6px 12px; font-size:11px; font-weight:600; cursor:pointer;
+    display:inline-flex; align-items:center; transition:all 0.15s; white-space:nowrap;
+}
+.isup-btn-outline:hover { background:#f5f7fb; border-color:#bbb; }
+.isup-btn-outline-red {
+    background:#fff; color:#c62828; border:1px solid #f5c6c0; border-radius:4px;
+    padding:6px 12px; font-size:11px; font-weight:600; cursor:pointer;
+    display:inline-flex; align-items:center; transition:all 0.15s; white-space:nowrap;
+}
+.isup-btn-outline-red:hover { background:#fdecea; border-color:#e57373; }
+.isup-btn-link {
+    background:transparent; color:rgba(255,255,255,.8); border:1px solid rgba(255,255,255,.2);
+    border-radius:4px; padding:6px 12px; font-size:11px; font-weight:600; cursor:pointer;
+    display:inline-flex; align-items:center; transition:all 0.15s; text-decoration:none; white-space:nowrap;
+}
+.isup-btn-link:hover { background:rgba(255,255,255,.1); color:#fff; }
+
+/* ── Checkbox ─── */
+.isup-checkbox { width:16px; height:16px; accent-color:#FF7900; }
+
+/* ── Responsive ─── */
+@media (max-width: 767.98px) {
+    .isup-cat-header { flex-direction:column; align-items:stretch; }
+}
+</style>

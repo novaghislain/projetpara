@@ -62,16 +62,41 @@ class AdminOrderController extends Controller
     }
 
     /**
+     * Détail d'une commande (vue admin)
+     */
+    public function show($id)
+    {
+        $order = CatalogueOrder::with([
+            'service', 'category', 'client', 'responsable',
+            'messages.expediteur', 'documents', 'statusHistory'
+        ])->findOrFail($id);
+
+        return view('app', [
+            'page' => 'admin-orders-show',
+            'props' => [
+                'order'   => $order,
+                'team'    => User::whereIn('role', ['admin', 'super_admin', 'collaborateur'])
+                                  ->get(['id', 'name', 'email']),
+                'statuts' => self::STATUTS,
+            ],
+        ]);
+    }
+
+    /**
      * Vue des commandes archivées
      */
     public function archives()
     {
         $orders = CatalogueOrder::with(['service', 'category', 'client', 'responsable'])
-             'props' => [
-                'order'  => $order,
-                'team'   => $team,
-                'statuts' => self::STATUTS,
-            ]
+            ->whereIn('statut', self::ARCHIVED_STATUTS)
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        return view('app', [
+            'page' => 'admin-orders-archives',
+            'props' => [
+                'orders' => $orders,
+            ],
         ]);
     }
 

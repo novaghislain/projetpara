@@ -4,7 +4,7 @@ import GelLayout from '../../../Layouts/GelLayout.vue';
 import { authStore } from '../../../stores/auth';
 
 const props = defineProps({
-    clientId: { type: [Number, String], required: true }
+    clientId: { type: [Number, String], default: null }
 });
 
 const client = ref(null);
@@ -60,6 +60,11 @@ const openEditFolder = (folder) => {
 };
 
 const submitFolder = async () => {
+    const effectiveClientId = props.clientId || authStore.user?.client_id;
+    if (!effectiveClientId) {
+        alert('Aucun client sélectionné. Veuillez d\'abord sélectionner un client.');
+        return;
+    }
     submitting.value = true;
     try {
         const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
@@ -69,9 +74,12 @@ const submitFolder = async () => {
         const res = await fetch(url, {
             method,
             headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ ...folderForm.value, client_id: props.clientId }),
+            body: JSON.stringify({ ...folderForm.value, client_id: effectiveClientId }),
         });
-        if (!res.ok) throw new Error('Erreur');
+        if (!res.ok) {
+            const body = await res.text();
+            throw new Error(body || res.statusText);
+        }
         showFolderModal.value = false;
         await fetchData();
     } catch (e) {

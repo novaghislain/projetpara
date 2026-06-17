@@ -23,6 +23,7 @@ class EventsController extends Controller
                 'updated' => true,
                 'permissions' => $user->getFormattedPermissions(),
                 'modules' => $user->getAccessibleModules(),
+                'permission_ids' => $user->getDirectPermissionIds(),
             ]);
         }
 
