@@ -16,6 +16,7 @@ class NotificationController extends Controller
     {
         return view('company', [
             'page' => 'company-notifications',
+            'clientId' => Auth::user()->client_id,
         ]);
     }
 

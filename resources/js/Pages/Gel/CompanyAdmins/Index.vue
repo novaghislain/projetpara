@@ -57,6 +57,7 @@ const resetForm = () => {
         name: '',
         email: '',
         password: '',
+        password_confirmation: '',
         client_id: '',
     };
 };
@@ -82,6 +83,7 @@ const openEditModal = async (id) => {
             name: data.name || '',
             email: data.email || '',
             password: '',
+            password_confirmation: '',
             client_id: data.client_id || '',
         };
         isEditing.value = true;
@@ -103,6 +105,10 @@ const closeModal = () => {
 };
 
 const submitForm = async () => {
+    if (!isEditing.value && form.value.password !== form.value.password_confirmation) {
+        alert('Les mots de passe ne correspondent pas.');
+        return;
+    }
     submitting.value = true;
     try {
         const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
@@ -110,6 +116,7 @@ const submitForm = async () => {
         const method = isEditing.value ? 'PUT' : 'POST';
 
         const body = { ...form.value };
+        delete body.password_confirmation;
         if (isEditing.value && !body.password) {
             delete body.password;
         }
@@ -184,7 +191,7 @@ onMounted(async () => {
         </div>
 
         <!-- Table -->
-        <div v-else class="card card-dashboard">
+        <div v-else class="bg-white rounded-lg shadow p-6">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="small text-muted">
@@ -247,6 +254,10 @@ onMounted(async () => {
                                         Mot de passe {{ isEditing ? '(laisser vide pour conserver)' : '*' }}
                                     </label>
                                     <input v-model="form.password" type="password" class="form-control form-control-sm" :required="!isEditing" placeholder="Mot de passe">
+                                </div>
+                                <div class="col-12" v-if="!isEditing">
+                                    <label class="form-label small">Confirmer le mot de passe *</label>
+                                    <input v-model="form.password_confirmation" type="password" class="form-control form-control-sm" required placeholder="Confirmer le mot de passe">
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label small">Entreprise *</label>

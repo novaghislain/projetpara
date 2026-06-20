@@ -693,20 +693,8 @@ const tabContent = {
 <style scoped>
 /* ══ Dashboard-specific styles ══ */
 
-.isup-stat-pill {
-    background: rgba(255,255,255,0.12);
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 4px; padding: 6px 14px; text-align: center;
-}
-.isup-stat-num {
-    display: block;
-    font-size: 20px; font-weight: 800; color: #FF7900;
-    font-family: 'Outfit', sans-serif;
-}
-.isup-stat-lbl {
-    display: block;
-    font-size: 10px; color: rgba(255,255,255,0.6);
-}
+/* ── Portal header ─────── */
+/* Styles dans company.css global (isup-portal-header, isup-stat-pill) */
 
 /* ── Tabs bar (dark header tabs) ─────── */
 .isup-tabs-bar {

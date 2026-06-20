@@ -176,96 +176,7 @@
 <body>
 
     <!-- Navbar -->
-    <nav class="gel-navbar" id="gelNavbar">
-        <div class="container-fluid">
-            <a href="/" class="gel-brand">
-                <div class="gel-brand-logo">GEL</div>
-                <div class="gel-brand-text"><span class="gel-brand-name">GEL Cabinet</span><span class="gel-brand-sub">Gestion Multi-Pôles</span></div>
-            </a>
-            <ul class="gel-nav-center">
-                <li class="gel-nav-item">
-                    <a href="/nos-modules" class="gel-nav-link">Nos Modules <i class="bi-chevron-down chevron"></i></a>
-                    <ul class="gel-dropdown">
-                        <li><a href="/nos-modules#module-crm"><span class="drop-icon"><i class="bi-people"></i></span> CRM Clients</a></li>
-                        <li><a href="/nos-modules#module-ged"><span class="drop-icon"><i class="bi-folder2-open"></i></span> GED</a></li>
-                        <li><a href="/nos-modules#module-poles"><span class="drop-icon"><i class="bi-diagram-3"></i></span> Pôles & Missions</a></li>
-                        <li><hr class="gel-dropdown-divider"></li>
-                        <li><a href="/nos-modules#module-compta"><span class="drop-icon"><i class="bi-calculator"></i></span> Comptabilité</a></li>
-                        <li><a href="/nos-modules#module-erp"><span class="drop-icon"><i class="bi-box-seam"></i></span> ERP Intégré</a></li>
-                    </ul>
-                </li>
-                <li class="gel-nav-item">
-                    <a href="/services" class="gel-nav-link active">Services <i class="bi-chevron-down chevron"></i></a>
-                    <ul class="gel-dropdown">
-                        <li><a href="/services/comptabilite"><span class="drop-icon"><i class="bi-calculator"></i></span> Comptabilité</a></li>
-                        <li><a href="/services/juridique"><span class="drop-icon"><i class="bi-bank2"></i></span> Juridique</a></li>
-                        <li><a href="/services/fiscal"><span class="drop-icon"><i class="bi-receipt"></i></span> Fiscal</a></li>
-                        <li><a href="/services/social-paie"><span class="drop-icon"><i class="bi-people"></i></span> Social & Paie</a></li>
-                        <li><a href="/services/commercial" style="background:var(--gel-primary-soft);color:var(--gel-primary);font-weight:600;"><span class="drop-icon"><i class="bi-cart3"></i></span> Commercial</a></li>
-                        <li><a href="/services/erp"><span class="drop-icon"><i class="bi-box-seam"></i></span> ERP Intégré</a></li>
-                    </ul>
-                </li>
-                <li class="gel-nav-item">
-                    <a href="#" class="gel-nav-link">À propos <i class="bi-chevron-down chevron"></i></a>
-                    <ul class="gel-dropdown">
-                        <li><a href="{{ route('notre-cabinet') }}"><span class="drop-icon"><i class="bi-building"></i></span> Notre Cabinet</a></li>
-                        <li><a href="{{ route('notre-equipe') }}"><span class="drop-icon"><i class="bi-people-fill"></i></span> Notre Équipe</a></li>
-                        <li><a href="{{ route('carrieres') }}"><span class="drop-icon"><i class="bi-briefcase-fill"></i></span> Carrières</a></li>
-                    </ul>
-                </li>
-                <li class="gel-nav-item"><a href="#" class="gel-nav-link">Ressources <i class="bi-chevron-down chevron"></i></a>
-                    <ul class="gel-dropdown">
-                        <li><a href="/blogue"><span class="drop-icon"><i class="bi-pencil-square"></i></span> Blogue</a></li>
-                        <li><a href="/documentation"><span class="drop-icon"><i class="bi-file-text"></i></span> Documentation</a></li>
-                        <li><a href="/faq"><span class="drop-icon"><i class="bi-question-circle"></i></span> FAQ</a></li>
-                        <li><hr class="gel-dropdown-divider"></li>
-                        <li><a href="/centre-aide"><span class="drop-icon"><i class="bi-headset"></i></span> Centre d'aide</a></li>
-                    </ul>
-                </li>
-                <li class="gel-nav-item"><a href="#" class="gel-nav-link">Tarifs</a></li>
-                <li class="gel-nav-item"><a href="/" class="gel-nav-link">Contact</a></li>
-            </ul>
-            <div class="gel-nav-right">
-                <a href="tel:+22900000000" class="gel-phone d-none d-lg-flex"><i class="bi-telephone-fill"></i> +229 XX XX XX XX</a>
-                @auth
-                    @if(auth()->user()->role === 'client')
-                        <a href="{{ route('client.orders.index') }}" class="gel-btn-nav gel-btn-nav-outline"><i class="bi-speedometer2"></i> Mon Espace</a>
-                    @elseif(auth()->user()->client_id)
-                        <a href="{{ route('company.dashboard') }}" class="gel-btn-nav gel-btn-nav-outline"><i class="bi-speedometer2"></i> Portail</a>
-                    @else
-                        <a href="{{ route('dashboard') }}" class="gel-btn-nav gel-btn-nav-outline"><i class="bi-speedometer2"></i> Tableau de bord</a>
-                    @endif
-                    <form method="POST" action="{{ route('logout') }}" style="display:inline;">@csrf<button type="submit" class="gel-btn-nav gel-btn-nav-outline" style="color:#dc2626;border-color:#fca5a5;"><i class="bi-box-arrow-right"></i></button></form>
-                @else
-                    <a href="/register" class="gel-btn-nav gel-btn-nav-outline"><i class="bi-person-plus"></i> S'inscrire</a>
-                    <a href="/login" class="gel-btn-nav gel-btn-nav-primary"><i class="bi-box-arrow-in-right"></i> Connexion</a>
-                @endauth
-                <button class="gel-toggler" id="gelToggler" aria-label="Menu"><i class="bi-list" id="togglerIcon"></i></button>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Mobile Menu -->
-    <div class="gel-mobile-menu" id="gelMobileMenu">
-        <a href="/" class="gel-mobile-link"><i class="bi-house text-orange me-2"></i>Accueil</a>
-        <a href="/nos-modules" class="gel-mobile-link"><i class="bi-grid-3x3-gap text-orange me-2"></i>Nos Modules</a>
-        <a href="/services/comptabilite" class="gel-mobile-link"><i class="bi-calculator text-orange me-2"></i>Comptabilité</a>
-        <a href="/services/juridique" class="gel-mobile-link"><i class="bi-bank2 text-orange me-2"></i>Juridique</a>
-        <a href="/services/fiscal" class="gel-mobile-link"><i class="bi-receipt text-orange me-2"></i>Fiscal</a>
-        <a href="/services/social-paie" class="gel-mobile-link"><i class="bi-people text-orange me-2"></i>Social & Paie</a>
-        <a href="/services/commercial" class="gel-mobile-link" style="color:var(--gel-primary);font-weight:600;"><i class="bi-cart3 text-orange me-2"></i>Commercial</a>
-        <a href="/services/erp" class="gel-mobile-link"><i class="bi-box-seam text-orange me-2"></i>ERP Intégré</a>
-        <a href="/blogue" class="gel-mobile-link"><i class="bi-pencil-square text-orange me-2"></i>Blogue</a>
-        <a href="/documentation" class="gel-mobile-link"><i class="bi-file-text text-orange me-2"></i>Documentation</a>
-        <a href="/faq" class="gel-mobile-link"><i class="bi-question-circle text-orange me-2"></i>FAQ</a>
-        <a href="/centre-aide" class="gel-mobile-link"><i class="bi-headset text-orange me-2"></i>Centre d'aide</a>
-        <a href="{{ route('notre-cabinet') }}" class="gel-mobile-link"><i class="bi-building text-orange me-2"></i>Notre Cabinet</a>
-        <a href="#" class="gel-mobile-link"><i class="bi-currency-dollar text-orange me-2"></i>Tarifs</a>
-        <a href="/" class="gel-mobile-link"><i class="bi-envelope text-orange me-2"></i>Contact</a>
-        <a href="/login" class="gel-mobile-link"><i class="bi-box-arrow-in-right text-orange me-2"></i>Connexion</a>
-        <a href="/register" class="gel-mobile-link"><i class="bi-person-plus text-orange me-2"></i>S'inscrire</a>
-    </div>
-
+@include('partials.navbar')
     <!-- Page Header -->
     <div class="gel-page-header">
         <div class="container">
@@ -401,57 +312,7 @@
     </div>
 
     <!-- Footer -->
-    <footer class="gel-footer">
-        <div class="container">
-            <div class="row g-4">
-                <div class="col-lg-4">
-                    <div class="d-flex align-items-center gap-3 mb-2">
-                        <div style="width:36px;height:36px;background:#FF7900;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;font-size:12px;font-weight:900;color:#fff;">GEL</div>
-                        <div><div class="gel-footer-brand">GEL Cabinet</div><div class="gel-footer-sub">Gestion Multi-Pôles</div></div>
-                    </div>
-                    <p class="gel-footer-desc">CRM, GED, Pôles, Missions, Comptabilité — votre cabinet tout-en-un.</p>
-                    <div class="gel-footer-social">
-                        <a href="#" class="gel-social-btn" aria-label="Facebook"><i class="bi-facebook"></i></a>
-                        <a href="#" class="gel-social-btn" aria-label="LinkedIn"><i class="bi-linkedin"></i></a>
-                        <a href="#" class="gel-social-btn" aria-label="Twitter"><i class="bi-twitter-x"></i></a>
-                    </div>
-                </div>
-                <div class="col-lg-2 col-md-4 col-6">
-                    <div class="gel-footer-heading">Services</div>
-                    <ul class="gel-footer-links">
-                        <li><a href="/services/comptabilite">Comptabilité</a></li>
-                        <li><a href="/services/juridique">Juridique</a></li>
-                        <li><a href="/services/fiscal">Fiscal</a></li>
-                        <li><a href="/services/social-paie">Social & Paie</a></li>
-                        <li><a href="/services/commercial">Commercial</a></li>
-                        <li><a href="/services/erp">ERP Intégré</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-2 col-md-4 col-6">
-                    <div class="gel-footer-heading">Modules</div>
-                    <ul class="gel-footer-links">
-                        <li><a href="/nos-modules#module-crm">CRM Clients</a></li>
-                        <li><a href="/nos-modules#module-ged">GED</a></li>
-                        <li><a href="/nos-modules#module-poles">Pôles & Missions</a></li>
-                        <li><a href="/nos-modules#module-compta">Comptabilité</a></li>
-                        <li><a href="/nos-modules#module-erp">ERP</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-2 col-md-4 col-6">
-                    <div class="gel-footer-heading">Contact</div>
-                    <ul class="gel-footer-links" style="font-size:13px;color:rgba(255,255,255,0.4);">
-                        <li><i class="bi-geo-alt" style="color:#FF7900;margin-right:6px;"></i>Cotonou, Bénin</li>
-                        <li><i class="bi-telephone" style="color:#FF7900;margin-right:6px;"></i>+229 XX XX XX XX</li>
-                        <li><i class="bi-envelope" style="color:#FF7900;margin-right:6px;"></i>contact@gelcabinet.com</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="gel-footer-bottom">
-                <p>&copy; {{ date('Y') }} GEL Cabinet. Tous droits réservés.</p>
-            </div>
-        </div>
-    </footer>
-
+@include('partials.footer')
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function openModal() { document.getElementById('authModal').classList.add('open'); document.body.style.overflow = 'hidden'; }

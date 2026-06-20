@@ -6,6 +6,7 @@ import { authStore } from '../../../stores/auth';
 const missions = ref([]);
 const clients = ref([]);
 const poles = ref([]);
+const users = ref([]);
 const loading = ref(true);
 const error = ref(null);
 
@@ -31,29 +32,46 @@ const typeOptions = ['mission', 'tache', 'projet'];
 
 const fetchMissions = async () => {
     loading.value = true;
-    const params = new URLSearchParams();
-    if (filterStatus.value) params.append('status', filterStatus.value);
-    if (filterPriority.value) params.append('priority', filterPriority.value);
-    if (filterPole.value) params.append('pole_id', filterPole.value);
+    error.value = null;
+    const params = {};
+    if (filterStatus.value) params.status = filterStatus.value;
+    if (filterPriority.value) params.priority = filterPriority.value;
+    if (filterPole.value) params.pole_id = filterPole.value;
     try {
-        const res = await fetch('/api/missions?' + params.toString());
-        if (!res.ok) throw new Error('Erreur de chargement');
-        missions.value = await res.json();
+        const res = await window.axios.get('api/missions', { params });
+        missions.value = Array.isArray(res.data) ? res.data : (res.data?.data || []);
     } catch (e) {
-        error.value = e.message;
+        error.value = e.response?.data?.message || e.message;
+        missions.value = [];
     } finally {
         loading.value = false;
     }
 };
 
-const fetchLookups = async () => {
+onMounted(() => {
+    fetchMissions();
+    fetchPoles();
+    fetchClients();
+    fetchUsers();
+});
+
+const fetchPoles = async () => {
     try {
-        const [clientsRes, polesRes] = await Promise.all([
-            fetch('/api/clients'), fetch('/api/poles')
-        ]);
-        if (clientsRes.ok) clients.value = await clientsRes.json();
-        if (polesRes.ok) poles.value = await polesRes.json();
-    } catch (e) { /* non-critique */ }
+        const res = await window.axios.get('api/poles');
+        poles.value = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+    } catch (e) { console.error(e) }
+}
+const fetchClients = async () => {
+    try {
+        const res = await window.axios.get('api/clients');
+        clients.value = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+    } catch (e) { console.error(e) }
+}
+const fetchUsers = async () => {
+    try {
+        const res = await window.axios.get('api/users');
+        users.value = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+    } catch (e) { console.error(e) }
 };
 
 const resetForm = () => {
@@ -78,9 +96,8 @@ const openCreateModal = () => {
 
 const openEditModal = async (id) => {
     try {
-        const res = await fetch('/api/missions/' + id);
-        if (!res.ok) throw new Error('Erreur de chargement');
-        const data = await res.json();
+        const res = await window.axios.get('api/missions/' + id);
+        const data = res.data;
         form.value = {
             title: data.title || '',
             description: data.description || '',
@@ -105,7 +122,7 @@ const openEditModal = async (id) => {
             modalInstance.value?.show();
         });
     } catch (e) {
-        alert('Erreur: ' + e.message);
+        alert('Erreur: ' + (e.response?.data?.message || e.message));
     }
 };
 
@@ -117,24 +134,16 @@ const closeModal = () => {
 const submitForm = async () => {
     submitting.value = true;
     try {
-        const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
-        const url = isEditing.value ? '/missions/' + editingId.value : '/missions';
-        const method = isEditing.value ? 'PUT' : 'POST';
+        const url = isEditing.value ? 'missions/' + editingId.value : 'missions';
+        const method = isEditing.value ? 'put' : 'post';
         const payload = { ...form.value, budget: form.value.budget ? Number(form.value.budget) : null };
 
-        const res = await fetch(url, {
-            method,
-            headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify(payload),
-        });
-        if (!res.ok) {
-            const errData = await res.json();
-            throw new Error(errData.message || Object.values(errData.errors || {}).flat().join(', '));
-        }
+        await window.axios[method](url, payload);
+        
         closeModal();
         await fetchMissions();
     } catch (e) {
-        alert('Erreur: ' + e.message);
+        alert('Erreur: ' + (e.response?.data?.message || e.message));
     } finally {
         submitting.value = false;
     }
@@ -143,31 +152,24 @@ const submitForm = async () => {
 const deleteMission = async (id) => {
     if (!confirm('Confirmer la suppression ?')) return;
     try {
-        const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
-        const res = await fetch('/missions/' + id, {
-            method: 'DELETE',
-            headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
-        });
-        if (!res.ok) throw new Error('Erreur');
+        await window.axios.delete('missions/' + id);
         await fetchMissions();
     } catch (e) {
-        alert('Erreur: ' + e.message);
+        alert('Erreur: ' + (e.response?.data?.message || e.message));
     }
 };
 
 const updateProgress = async (id, progress) => {
     try {
-        const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
-        await fetch('/missions/' + id + '/progress', {
-            method: 'PATCH',
-            headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ progress }),
-        });
-    } catch (e) { /* silencieux */ }
+        await window.axios.patch('missions/' + id + '/progress', { progress });
+        await fetchMissions();
+    } catch (e) {
+        alert('Erreur lors de la mise à jour');
+    }
 };
 
 onMounted(async () => {
-    await Promise.all([fetchMissions(), fetchLookups()]);
+    await Promise.all([fetchMissions()]);
 });
 </script>
 

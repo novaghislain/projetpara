@@ -3,6 +3,7 @@ import '../css/company.css';
 import './bootstrap';
 
 import { createApp } from 'vue';
+import Root from './Root.vue';
 import { initAuth } from './stores/auth';
 
 // Initialize auth state from Blade-embedded JSON before Vue mounts
@@ -30,13 +31,25 @@ import GelAccountingBalance from './Pages/Gel/Accounting/Balance.vue';
 import GelAccountingLedger from './Pages/Gel/Accounting/GeneralLedger.vue';
 import GelAccountingBilan from './Pages/Gel/Accounting/Bilan.vue';
 import GelAccountingResultat from './Pages/Gel/Accounting/Resultat.vue';
+import GelAccountingBudgets from './Pages/Gel/Accounting/Budgets/Index.vue';
+import GelAccountingTaxDeclarations from './Pages/Gel/Accounting/TaxDeclarations/Index.vue';
+import GelAccountingClosing from './Pages/Gel/Accounting/Closing/Index.vue';
+import GelAccountingDashboard from './Pages/Gel/Accounting/Dashboard.vue';
 
 // ERP Components
 import ErpCatalogue from './Pages/Gel/Erp/Catalogue.vue';
 import ErpStock from './Pages/Gel/Erp/Stock.vue';
 import ErpInvoice from './Pages/Gel/Erp/Invoice.vue';
-import ErpHr from './Pages/Gel/Erp/Hr.vue';
 import ErpTreasury from './Pages/Gel/Erp/Treasury.vue';
+
+// Commerce / POS Components
+import CommerceDashboard from './Pages/Commerce/Dashboard.vue';
+import CommerceProducts from './Pages/Commerce/Products.vue';
+import CommerceCategories from './Pages/Commerce/Categories.vue';
+import CommerceSuppliers from './Pages/Commerce/Suppliers.vue';
+import CommercePos from './Pages/Commerce/PosPage.vue';
+import CommerceInventory from './Pages/Commerce/Inventory.vue';
+import CommerceBusinessUsers from './Pages/Commerce/BusinessUsers.vue';
 
 // Licenses, Company Admins, Requests
 import GelLicenses from './Pages/Gel/Licenses/Index.vue';
@@ -44,7 +57,7 @@ import GelCompanyAdmins from './Pages/Gel/CompanyAdmins/Index.vue';
 import GelRequests from './Pages/Gel/Admin/Requests/Index.vue';
 import GelSettings from './Pages/Gel/Settings.vue';
 
-const app = createApp({});
+const app = createApp(Root);
 
 // Global formatting helpers
 app.config.globalProperties.$formatCurrency = (value) => {
@@ -78,12 +91,15 @@ app.component('GelAccountingBalance', GelAccountingBalance);
 app.component('GelAccountingLedger', GelAccountingLedger);
 app.component('GelAccountingBilan', GelAccountingBilan);
 app.component('GelAccountingResultat', GelAccountingResultat);
+app.component('GelAccountingBudgets', GelAccountingBudgets);
+app.component('GelAccountingTaxDeclarations', GelAccountingTaxDeclarations);
+app.component('GelAccountingClosing', GelAccountingClosing);
+app.component('GelAccounting', GelAccountingDashboard);
 
 // ERP
 app.component('ErpCatalogue', ErpCatalogue);
 app.component('ErpStock', ErpStock);
 app.component('ErpInvoice', ErpInvoice);
-app.component('ErpHr', ErpHr);
 app.component('ErpTreasury', ErpTreasury);
 
 // Licenses, Company Admins, Requests
@@ -91,6 +107,15 @@ app.component('GelLicenses', GelLicenses);
 app.component('GelCompanyAdmins', GelCompanyAdmins);
 app.component('GelRequests', GelRequests);
 app.component('GelSettings', GelSettings);
+
+// Commerce / POS
+app.component('commerce-dashboard', CommerceDashboard);
+app.component('commerce-products', CommerceProducts);
+app.component('commerce-categories', CommerceCategories);
+app.component('commerce-suppliers', CommerceSuppliers);
+app.component('commerce-pos', CommercePos);
+app.component('commerce-inventory', CommerceInventory);
+app.component('commerce-business-users', CommerceBusinessUsers);
 
 // Nos Services Components
 import PublicCatalogueIndex from './Pages/Public/Catalogue/Index.vue';
@@ -130,30 +155,303 @@ import CompanyAiAssistant from './Pages/Company/AiAssistant.vue';
 import CompanyAccounting from './Pages/Company/Accounting.vue';
 import CompanyCaisse from './Pages/Company/Caisse.vue';
 
-app.component('CompanyDashboard', CompanyDashboard);
-app.component('CompanyServices', CompanyServices);
-app.component('CompanyProfile', CompanyProfile);
-app.component('CompanyUsers', CompanyUsers);
-app.component('CompanyGed', CompanyGed);
-app.component('CompanyInvoices', CompanyInvoices);
-app.component('CompanyHumanResources', CompanyHumanResources);
-app.component('CompanyNotifications', CompanyNotifications);
-app.component('CompanyLegal', CompanyLegal);
-app.component('CompanyProjects', CompanyProjects);
-app.component('CompanyCrm', CompanyCrm);
-app.component('CompanyAiAssistant', CompanyAiAssistant);
-app.component('CompanyAccounting', CompanyAccounting);
-app.component('CompanyCaisse', CompanyCaisse);
+app.component('company-dashboard', CompanyDashboard);
+app.component('company-services', CompanyServices);
+app.component('company-profile', CompanyProfile);
+app.component('company-users', CompanyUsers);
+app.component('company-ged', CompanyGed);
+app.component('company-invoices', CompanyInvoices);
+app.component('company-human-resources', CompanyHumanResources);
+app.component('company-notifications', CompanyNotifications);
+app.component('company-legal', CompanyLegal);
+app.component('company-projects', CompanyProjects);
+app.component('company-crm', CompanyCrm);
+app.component('company-ai-assistant', CompanyAiAssistant);
+app.component('company-accounting', CompanyAccounting);
+app.component('company-caisse', CompanyCaisse);
 
 // CPA (Crescendo) Dashboard Components
 import CpaDashboard from './Pages/Cpa/Dashboard.vue';
 import CpaLogin from './Pages/Auth/CpaLogin.vue';
 import CpaRegister from './Pages/Auth/CpaRegister.vue';
+import CpaTest from './Pages/Cpa/Test.vue';
 app.component('cpa-dashboard', CpaDashboard);
 app.component('cpa-login', CpaLogin);
 app.component('cpa-register', CpaRegister);
+app.component('cpa-test', CpaTest);
 
-// Only mount Vue on pages that have the #app container
-if (document.getElementById('app')) {
+// ─── DAE Module Components ─────────────────────────────
+import DaeDashboard from './Pages/Modules/Dae/Dashboard.vue';
+import DaeCourriersIndex from './Pages/Modules/Dae/Courriers/Index.vue';
+import DaeCourriersForm from './Pages/Modules/Dae/Courriers/Form.vue';
+import DaeCourriersShow from './Pages/Modules/Dae/Courriers/Show.vue';
+import DaeEmailsIndex from './Pages/Modules/Dae/Emails/Index.vue';
+import DaeAgendaIndex from './Pages/Modules/Dae/Agenda/Index.vue';
+import DaeContratsIndex from './Pages/Modules/Dae/Contrats/Index.vue';
+import DaeContratsForm from './Pages/Modules/Dae/Contrats/Form.vue';
+import DaeContratsShow from './Pages/Modules/Dae/Contrats/Show.vue';
+import DaeDocumentsIndex from './Pages/Modules/Dae/Documents/Index.vue';
+import DaeDocumentsShow from './Pages/Modules/Dae/Documents/Show.vue';
+import DaeConformiteIndex from './Pages/Modules/Dae/Conformite/Index.vue';
+import DaeConformiteShow from './Pages/Modules/Dae/Conformite/Show.vue';
+import DaeRapportsIndex from './Pages/Modules/Dae/Rapports/Index.vue';
+import DaeRapportsShow from './Pages/Modules/Dae/Rapports/Show.vue';
+import DaeTachesIndex from './Pages/Modules/Dae/Taches/Index.vue';
+import DaeModelesIndex from './Pages/Modules/Dae/Modeles/Index.vue';
+import DaePersonnelIndex from './Pages/Modules/Dae/Personnel/Index.vue';
+import DaePersonnelShow from './Pages/Modules/Dae/Personnel/Show.vue';
+
+app.component('dae-dashboard', DaeDashboard);
+app.component('dae-courriers-index', DaeCourriersIndex);
+app.component('dae-courriers-form', DaeCourriersForm);
+app.component('dae-courriers-show', DaeCourriersShow);
+app.component('dae-emails-index', DaeEmailsIndex);
+app.component('dae-agenda-index', DaeAgendaIndex);
+app.component('dae-contrats-index', DaeContratsIndex);
+app.component('dae-contrats-form', DaeContratsForm);
+app.component('dae-contrats-show', DaeContratsShow);
+app.component('dae-documents-index', DaeDocumentsIndex);
+app.component('dae-documents-show', DaeDocumentsShow);
+app.component('dae-conformite-index', DaeConformiteIndex);
+app.component('dae-conformite-show', DaeConformiteShow);
+app.component('dae-rapports-index', DaeRapportsIndex);
+app.component('dae-rapports-show', DaeRapportsShow);
+app.component('dae-taches-index', DaeTachesIndex);
+app.component('dae-modeles-index', DaeModelesIndex);
+app.component('dae-personnel-index', DaePersonnelIndex);
+app.component('dae-personnel-show', DaePersonnelShow);
+
+// Company DAE
+import CompanyDaeDashboard from './Pages/Company/DaeDashboard.vue';
+app.component('company-dae-dashboard', CompanyDaeDashboard);
+
+// ─── Legal Module Components ───────────────────────────
+import LegalDashboard from './Pages/Modules/Legal/Dashboard.vue';
+import LegalSociete from './Pages/Modules/Legal/Societe/Index.vue';
+import LegalAssembleesIndex from './Pages/Modules/Legal/Assemblees/Index.vue';
+import LegalAssembleesForm from './Pages/Modules/Legal/Assemblees/Form.vue';
+import LegalAssembleesShow from './Pages/Modules/Legal/Assemblees/Show.vue';
+import LegalContratsIndex from './Pages/Modules/Legal/Contrats/Index.vue';
+import LegalContratsForm from './Pages/Modules/Legal/Contrats/Form.vue';
+import LegalContratsShow from './Pages/Modules/Legal/Contrats/Show.vue';
+import LegalContentieuxIndex from './Pages/Modules/Legal/Contentieux/Index.vue';
+import LegalContentieuxForm from './Pages/Modules/Legal/Contentieux/Form.vue';
+import LegalContentieuxShow from './Pages/Modules/Legal/Contentieux/Show.vue';
+import LegalConformiteIndex from './Pages/Modules/Legal/Conformite/Index.vue';
+import LegalConformiteForm from './Pages/Modules/Legal/Conformite/Form.vue';
+import LegalConformiteCalendrier from './Pages/Modules/Legal/Conformite/Calendrier.vue';
+import LegalBibliothequeIndex from './Pages/Modules/Legal/Bibliotheque/Index.vue';
+import LegalBibliothequeForm from './Pages/Modules/Legal/Bibliotheque/Form.vue';
+import LegalBibliothequeGenerer from './Pages/Modules/Legal/Bibliotheque/Generer.vue';
+import LegalRegistresShow from './Pages/Modules/Legal/Registres/Show.vue';
+import LegalDossiersIndex from './Pages/Modules/Legal/Dossiers/Index.vue';
+import LegalDossiersForm from './Pages/Modules/Legal/Dossiers/Form.vue';
+import LegalDossiersShow from './Pages/Modules/Legal/Dossiers/Show.vue';
+
+app.component('legal-dashboard', LegalDashboard);
+app.component('legal-societe', LegalSociete);
+app.component('legal-assemblees-index', LegalAssembleesIndex);
+app.component('legal-assemblees-form', LegalAssembleesForm);
+app.component('legal-assemblees-show', LegalAssembleesShow);
+app.component('legal-contrats-index', LegalContratsIndex);
+app.component('legal-contrats-form', LegalContratsForm);
+app.component('legal-contrats-show', LegalContratsShow);
+app.component('legal-contentieux-index', LegalContentieuxIndex);
+app.component('legal-contentieux-form', LegalContentieuxForm);
+app.component('legal-contentieux-show', LegalContentieuxShow);
+app.component('legal-conformite-index', LegalConformiteIndex);
+app.component('legal-conformite-form', LegalConformiteForm);
+app.component('legal-conformite-calendrier', LegalConformiteCalendrier);
+app.component('legal-bibliotheque-index', LegalBibliothequeIndex);
+app.component('legal-bibliotheque-form', LegalBibliothequeForm);
+app.component('legal-bibliotheque-generer', LegalBibliothequeGenerer);
+app.component('legal-registres-show', LegalRegistresShow);
+app.component('legal-dossiers-index', LegalDossiersIndex);
+app.component('legal-dossiers-form', LegalDossiersForm);
+app.component('legal-dossiers-show', LegalDossiersShow);
+
+// ─── RH Module Components ──────────────────────────────
+import RhDashboard from './Pages/Modules/Rh/Dashboard.vue';
+import RhEmployeesIndex from './Pages/Modules/Rh/Employees/Index.vue';
+import RhEmployeesForm from './Pages/Modules/Rh/Employees/Form.vue';
+import RhEmployeesShow from './Pages/Modules/Rh/Employees/Show.vue';
+import RhContractsIndex from './Pages/Modules/Rh/Contracts/Index.vue';
+import RhLeavesIndex from './Pages/Modules/Rh/Leaves/Index.vue';
+import RhExpensesIndex from './Pages/Modules/Rh/Expenses/Index.vue';
+import RhPayrollsIndex from './Pages/Modules/Rh/Payrolls/Index.vue';
+import RhPayrollsShow from './Pages/Modules/Rh/Payrolls/Show.vue';
+import RhAttendanceIndex from './Pages/Modules/Rh/Attendance/Index.vue';
+import RhTrainingsIndex from './Pages/Modules/Rh/Trainings/Index.vue';
+import RhAlertsIndex from './Pages/Modules/Rh/Alerts/Index.vue';
+
+app.component('rh-dashboard', RhDashboard);
+app.component('rh-employees-index', RhEmployeesIndex);
+app.component('rh-employees-form', RhEmployeesForm);
+app.component('rh-employees-show', RhEmployeesShow);
+app.component('rh-contracts-index', RhContractsIndex);
+app.component('rh-leaves-index', RhLeavesIndex);
+app.component('rh-expenses-index', RhExpensesIndex);
+app.component('rh-payrolls-index', RhPayrollsIndex);
+app.component('rh-payrolls-show', RhPayrollsShow);
+app.component('rh-attendance-index', RhAttendanceIndex);
+app.component('rh-trainings-index', RhTrainingsIndex);
+app.component('rh-alerts-index', RhAlertsIndex);
+
+// Company RH
+import CompanyRhDashboard from './Pages/Company/Rh/Dashboard.vue';
+import CompanyRhEmployees from './Pages/Company/Rh/Employees.vue';
+import CompanyRhLeaves from './Pages/Company/Rh/Leaves.vue';
+import CompanyRhExpenses from './Pages/Company/Rh/Expenses.vue';
+import CompanyRhPayrolls from './Pages/Company/Rh/Payrolls.vue';
+import CompanyRhTrainings from './Pages/Company/Rh/Trainings.vue';
+
+app.component('company-rh-dashboard', CompanyRhDashboard);
+app.component('company-rh-employees', CompanyRhEmployees);
+app.component('company-rh-leaves', CompanyRhLeaves);
+app.component('company-rh-expenses', CompanyRhExpenses);
+app.component('company-rh-payrolls', CompanyRhPayrolls);
+app.component('company-rh-trainings', CompanyRhTrainings);
+
+// ─── IT — Helpdesk & Ticketing Components ──────────────────
+import GelItTickets from './Pages/Gel/It/Tickets/Index.vue';
+import GelItTicketsForm from './Pages/Gel/It/Tickets/Form.vue';
+import GelItTicketsShow from './Pages/Gel/It/Tickets/Show.vue';
+import GelItAssets from './Pages/Gel/It/Assets/Index.vue';
+import GelItAssetsForm from './Pages/Gel/It/Assets/Form.vue';
+import GelItAssetsShow from './Pages/Gel/It/Assets/Show.vue';
+import GelItSlaPolicies from './Pages/Gel/It/SlaPolicies/Index.vue';
+import GelItSlaPoliciesForm from './Pages/Gel/It/SlaPolicies/Form.vue';
+import GelItSlaPoliciesShow from './Pages/Gel/It/SlaPolicies/Show.vue';
+import GelItMaintenanceContracts from './Pages/Gel/It/MaintenanceContracts/Index.vue';
+import GelItMaintenanceContractsForm from './Pages/Gel/It/MaintenanceContracts/Form.vue';
+import GelItMaintenanceContractsShow from './Pages/Gel/It/MaintenanceContracts/Show.vue';
+import GelItKnowledgeBase from './Pages/Gel/It/KnowledgeBase/Index.vue';
+import GelItKnowledgeBaseForm from './Pages/Gel/It/KnowledgeBase/Form.vue';
+import GelItKnowledgeBaseShow from './Pages/Gel/It/KnowledgeBase/Show.vue';
+
+app.component('gel-it-tickets', GelItTickets);
+app.component('gel-it-tickets-form', GelItTicketsForm);
+app.component('gel-it-tickets-show', GelItTicketsShow);
+app.component('gel-it-assets', GelItAssets);
+app.component('gel-it-assets-form', GelItAssetsForm);
+app.component('gel-it-assets-show', GelItAssetsShow);
+app.component('gel-it-sla-policies', GelItSlaPolicies);
+app.component('gel-it-sla-policies-form', GelItSlaPoliciesForm);
+app.component('gel-it-sla-policies-show', GelItSlaPoliciesShow);
+app.component('gel-it-maintenance-contracts', GelItMaintenanceContracts);
+app.component('gel-it-maintenance-contracts-form', GelItMaintenanceContractsForm);
+app.component('gel-it-maintenance-contracts-show', GelItMaintenanceContractsShow);
+app.component('gel-it-knowledge-base', GelItKnowledgeBase);
+app.component('gel-it-knowledge-base-form', GelItKnowledgeBaseForm);
+app.component('gel-it-knowledge-base-show', GelItKnowledgeBaseShow);
+
+// ─── Tontines Components ─────────────────────────────────
+import GelTontines from './Pages/Gel/Tontines/Index.vue';
+import GelTontinesForm from './Pages/Gel/Tontines/Form.vue';
+import GelTontinesShow from './Pages/Gel/Tontines/Show.vue';
+
+app.component('gel-tontines', GelTontines);
+app.component('gel-tontines-form', GelTontinesForm);
+app.component('gel-tontines-show', GelTontinesShow);
+
+// ─── Télédéclaration Components ──────────────────────────
+import GelTeleDeclarations from './Pages/Gel/TeleDeclarations/Index.vue';
+import GelTeleDeclarationsForm from './Pages/Gel/TeleDeclarations/Form.vue';
+import GelTeleDeclarationsShow from './Pages/Gel/TeleDeclarations/Show.vue';
+
+app.component('gel-tele-declarations', GelTeleDeclarations);
+app.component('gel-tele-declarations-form', GelTeleDeclarationsForm);
+app.component('gel-tele-declarations-show', GelTeleDeclarationsShow);
+
+// ─── Signatures électroniques Components ────────────────
+import GelDocumentSignatures from './Pages/Gel/DocumentSignatures/Index.vue';
+import GelDocumentSignaturesForm from './Pages/Gel/DocumentSignatures/Form.vue';
+import GelDocumentSignaturesShow from './Pages/Gel/DocumentSignatures/Show.vue';
+import GelDocumentSign from './Pages/Gel/DocumentSignatures/Sign.vue';
+
+app.component('gel-document-signatures', GelDocumentSignatures);
+app.component('gel-document-signatures-form', GelDocumentSignaturesForm);
+app.component('gel-document-signatures-show', GelDocumentSignaturesShow);
+app.component('gel-document-sign', GelDocumentSign);
+
+// ─── Workflows d'approbation Components ─────────────────
+import GelApprovalWorkflows from './Pages/Gel/ApprovalWorkflows/Index.vue';
+import GelApprovalWorkflowsForm from './Pages/Gel/ApprovalWorkflows/Form.vue';
+import GelApprovalWorkflowsShow from './Pages/Gel/ApprovalWorkflows/Show.vue';
+
+app.component('gel-approval-workflows', GelApprovalWorkflows);
+app.component('gel-approval-workflows-form', GelApprovalWorkflowsForm);
+app.component('gel-approval-workflows-show', GelApprovalWorkflowsShow);
+
+// ─── Articles (Blog) Components ──────────────────────────
+import GelArticles from './Pages/Gel/Articles/Index.vue';
+import GelArticlesForm from './Pages/Gel/Articles/Form.vue';
+import GelArticlesShow from './Pages/Gel/Articles/Show.vue';
+
+app.component('gel-articles', GelArticles);
+app.component('gel-articles-form', GelArticlesForm);
+app.component('gel-articles-show', GelArticlesShow);
+
+// ─── Règles de relance Components ──────────────────────
+import GelRelanceRules from './Pages/Gel/RelanceRules/Index.vue';
+import GelRelanceRulesForm from './Pages/Gel/RelanceRules/Form.vue';
+import GelRelanceRulesShow from './Pages/Gel/RelanceRules/Show.vue';
+
+app.component('gel-relance-rules', GelRelanceRules);
+app.component('gel-relance-rules-form', GelRelanceRulesForm);
+app.component('gel-relance-rules-show', GelRelanceRulesShow);
+
+// ─── Centres de coût Components ─────────────────────────
+import GelCostCenters from './Pages/Gel/CostCenters/Index.vue';
+import GelCostCentersForm from './Pages/Gel/CostCenters/Form.vue';
+import GelCostCentersShow from './Pages/Gel/CostCenters/Show.vue';
+
+app.component('gel-cost-centers', GelCostCenters);
+app.component('gel-cost-centers-form', GelCostCentersForm);
+app.component('gel-cost-centers-show', GelCostCentersShow);
+
+// ─── OCR Components ─────────────────────────────────────
+import GelOcr from './Pages/Gel/Ocr/Index.vue';
+import GelOcrForm from './Pages/Gel/Ocr/Form.vue';
+import GelOcrShow from './Pages/Gel/Ocr/Show.vue';
+
+app.component('gel-ocr', GelOcr);
+app.component('gel-ocr-form', GelOcrForm);
+app.component('gel-ocr-show', GelOcrShow);
+
+// ─── Paie — Calculateur IRPP/CNSS ──────────────────────
+import GelPaie from './Pages/Gel/Paie/Index.vue';
+app.component('gel-paie', GelPaie);
+
+// ─── Sécurité — 2FA & Sessions ─────────────────────────
+import GelSecurity from './Pages/Gel/Security/Index.vue';
+app.component('gel-security', GelSecurity);
+
+// ─── Audit — Journal d'Audit ──────────────────────────
+import GelAudit from './Pages/Gel/Audit/Index.vue';
+app.component('gel-audit', GelAudit);
+
+// ─── Multi-Tenant / Permissions Components ────────────
+import SelectContext from './Pages/Company/SelectContext.vue';
+import GelClientModules from './Pages/Gel/Clients/Modules.vue';
+import CompanyUserPermissions from './Pages/Company/UserPermissions.vue';
+
+app.component('select-context', SelectContext);
+app.component('gel-client-modules', GelClientModules);
+app.component('company-user-permissions', CompanyUserPermissions);
+
+// Mount Vue — passes page name and props from Blade data attributes
+const appEl = document.getElementById('app');
+if (appEl) {
+    const page = appEl.dataset.page || '';
+    let props = {};
+    try {
+        const raw = appEl.dataset.props || '{}';
+        props = JSON.parse(raw);
+    } catch (e) {
+        console.warn('Failed to parse page props:', e);
+    }
+    app.provide('page', page);
+    app.provide('pageProps', props);
     app.mount('#app');
 }

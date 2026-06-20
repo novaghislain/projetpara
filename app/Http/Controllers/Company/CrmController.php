@@ -29,8 +29,8 @@ class CrmController extends Controller
      */
     public function index()
     {
-        $this->getClientId();
-        return view('company', ['page' => 'company-crm']);
+        $clientId = $this->getClientId();
+        return view('company', ['page' => 'company-crm', 'clientId' => $clientId]);
     }
 
     // --- CONTACTS ------------------------------------------------------------------

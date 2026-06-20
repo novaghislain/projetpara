@@ -135,8 +135,8 @@ onMounted(fetchPoles);
 
         <div v-else class="row g-3">
             <div v-for="pole in poles" :key="pole.id" class="col-md-6 col-lg-4">
-                <div class="card card-dashboard h-100">
-                    <div class="card-body">
+                <div class="bg-white rounded-lg shadow p-6">
+
                         <div class="d-flex align-items-center gap-3 mb-3">
                             <div class="rounded-2 d-flex align-items-center justify-content-center" :style="{ backgroundColor: (pole.color || '#1a237e') + '20', width: '48px', height: '48px', borderRadius: '12px' }">
                                 <i class="bi-diagram-3" :style="{ color: pole.color || '#1a237e', fontSize: '24px' }"></i>
@@ -158,7 +158,6 @@ onMounted(fetchPoles);
                                 <button class="btn btn-sm btn-outline-danger" @click="deletePole(pole.id)"><i class="bi-trash"></i></button>
                             </div>
                         </div>
-                    </div>
                 </div>
             </div>
         </div>

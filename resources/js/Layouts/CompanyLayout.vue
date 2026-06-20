@@ -15,43 +15,38 @@ const userInitial = computed(() => {
 });
 
 const userRoleLabel = computed(() => {
-    const labels = {
-        super_admin: 'Super Admin',
-        director: 'Directeur',
-        pole_responsible: 'Responsable Pôle',
-        collaborator: 'Collaborateur',
-        client: 'Client',
-        company_admin: 'Admin Entreprise'
-    };
-    return labels[authStore.user?.role] || 'Client';
+    return company.value?.name || 'Mon Espace';
 });
 
 const sidebarOpen = ref(true);
 let stopPermissionPolling = null;
 
-const tabs = [
+// ── Navigation principale ──
+const navItems = [
     { name: 'Accueil',        icon: 'bi-house',          route: '/company/dashboard',    key: 'company-dashboard' },
     { name: 'Commandes',      icon: 'bi-cart-check',     route: '/mes-commandes',        key: 'mes-commandes' },
     { name: 'Finance',        icon: 'bi-cash-stack',     route: '/company/invoices',     key: 'company-invoices',  module: 'facturation' },
     { name: 'Comptabilité',   icon: 'bi-calculator',     route: '/company/accounting',   key: 'company-accounting', module: 'comptabilite' },
-    { name: 'Secrétariat',    icon: 'bi-file-text',      route: '/company/ged',          key: 'company-ged',       module: 'document' },
+    { name: 'GED',            icon: 'bi-folder',          route: '/company/ged',          key: 'company-ged',       module: 'document' },
+    { name: 'Secrétariat',    icon: 'bi-file-text',      route: '/company/dae',          key: 'company-dae',       module: 'dae' },
+    { name: 'RH',             icon: 'bi-people',         route: '/company/rh',           key: 'company-rh',        module: 'rh' },
     { name: 'Administration', icon: 'bi-gear',           route: '/company/profile',      key: 'company-profile' },
 ];
 
-const visibleTabs = computed(() =>
-    tabs.filter(t => !t.module || authStore.hasModule(t.module))
+const filteredNavItems = computed(() =>
+    navItems.filter(t => !t.module || authStore.hasModule(t.module))
 );
 
 /* ── Module requirements for sidebar items ── */
 const sidebarModuleMap = {
-    // clés : href → module requis
     '/company/ged':        'document',
     '/company/caisse':     'caisse',
     '/company/invoices':   'facturation',
-    '/company/hr':         'rh',
+    '/company/rh':         'rh',
     '/company/accounting': 'comptabilite',
     '/company/legal':      'juridique',
     '/company/projects':   'projets',
+    '/company/dae':        'dae',
 };
 
 function hasSidebarAccess(href) {
@@ -59,54 +54,65 @@ function hasSidebarAccess(href) {
     return !mod || authStore.hasModule(mod);
 }
 
+// ── Sous-fonctionnalités contextuelles ──
 const sidebarBySection = {
     'company-dashboard': [
-        { group: 'Actions rapides', items: [
+        { group: '', items: [
             { label: 'Mes commandes',     href: '/mes-commandes',       icon: 'bi-cart-check' },
             { label: 'Catalogue GEL',     href: '/nos-services',       icon: 'bi-shop' },
             { label: 'Notifications',     href: '/company/notifications', icon: 'bi-bell' },
-        ]},
-        { group: 'Consultation', items: [
             { label: 'Services actifs',   href: '/company/services',   icon: 'bi-grid-3x3-gap' },
             { label: 'Documents (GED)',   href: '/company/ged',        icon: 'bi-folder2-open' },
         ]},
     ],
     'mes-commandes': [
-        { group: 'Commandes', items: [
+        { group: '', items: [
             { label: 'Mes commandes',     href: '/mes-commandes',       icon: 'bi-cart-check' },
             { label: 'Catalogue GEL',     href: '/nos-services',       icon: 'bi-shop' },
             { label: 'Suivi des demandes',href: '/company/notifications', icon: 'bi-envelope' },
         ]},
     ],
     'company-invoices': [
-        { group: 'Finance', items: [
+        { group: '', items: [
             { label: 'Facturation',       href: '/company/invoices',   icon: 'bi-receipt' },
             { label: 'Caisse',            href: '/company/caisse',     icon: 'bi-cash-stack' },
         ]},
     ],
     'company-accounting': [
-        { group: 'Comptabilité', items: [
+        { group: '', items: [
             { label: 'Comptabilité',      href: '/company/accounting', icon: 'bi-calculator' },
             { label: 'Facturation',       href: '/company/invoices',   icon: 'bi-receipt' },
         ]},
     ],
     'company-ged': [
-        { group: 'Documents', items: [
-            { label: 'GED — Documents',   href: '/company/ged',        icon: 'bi-folder2-open' },
-        ]},
-        { group: 'Ressources', items: [
-            { label: 'RH',                href: '/company/hr',         icon: 'bi-people' },
-            { label: 'Juridique',         href: '/company/legal',      icon: 'bi-file-earmark-text' },
-            { label: 'Projets',           href: '/company/projects',   icon: 'bi-kanban' },
-            { label: 'CRM',               href: '/company/crm',        icon: 'bi-person-lines-fill' },
-            { label: 'Assistant IA',      href: '/company/ai',         icon: 'bi-robot' },
+        { group: '', items: [
+            { label: 'Documents (GED)',   href: '/company/ged',        icon: 'bi-folder2-open' },
         ]},
     ],
     'company-profile': [
-        { group: 'Administration', items: [
+        { group: '', items: [
             { label: 'Mon Profil',        href: '/company/profile',        icon: 'bi-person-circle' },
             { label: 'Notifications',     href: '/company/notifications',  icon: 'bi-bell' },
             { label: 'Utilisateurs',      href: '/company/users',          icon: 'bi-people-fill' },
+        ]},
+    ],
+    'company-dae': [
+        { group: '', items: [
+            { label: 'Tableau de bord',   href: '/company/dae',            icon: 'bi-speedometer2' },
+            { label: 'Courriers',         href: '/company/dae/courriers',  icon: 'bi-envelope' },
+            { label: 'Documents',         href: '/company/dae/documents',  icon: 'bi-folder' },
+            { label: 'Contrats',          href: '/company/dae/contrats',   icon: 'bi-file-text' },
+            { label: 'Tâches',            href: '/company/dae/taches',     icon: 'bi-list-task' },
+        ]},
+    ],
+    'company-rh': [
+        { group: '', items: [
+            { label: 'Tableau de bord',   href: '/company/rh',              icon: 'bi-speedometer2' },
+            { label: 'Employés',          href: '/company/rh/employees',    icon: 'bi-people' },
+            { label: 'Congés',            href: '/company/rh/leaves',       icon: 'bi-calendar-check' },
+            { label: 'Notes de frais',    href: '/company/rh/expenses',     icon: 'bi-cash-stack' },
+            { label: 'Paie',              href: '/company/rh/payrolls',     icon: 'bi-calculator' },
+            { label: 'Formations',        href: '/company/rh/trainings',    icon: 'bi-book' },
         ]},
     ],
 };
@@ -119,18 +125,20 @@ const sidebarLinks = computed(() => {
     })).filter(group => group.items.length > 0);
 });
 
+const flatLinks = computed(() =>
+    sidebarLinks.value.flatMap(g => g.items)
+);
+
 const sectionTitles = {
     'company-dashboard': 'Accueil',
     'mes-commandes': 'Commandes',
     'company-invoices': 'Finance',
     'company-accounting': 'Comptabilité',
-    'company-ged': 'Secrétariat',
+    'company-ged': 'GED',
+    'company-dae': 'Secrétariat DAE',
+    'company-rh': 'Ressources Humaines',
     'company-profile': 'Administration',
 };
-
-const sectionTitle = computed(() => {
-    return sectionTitles[pageKey.value] || 'Accueil';
-});
 
 const pageKey = computed(() => {
     const path = window.location.pathname;
@@ -142,30 +150,46 @@ const pageKey = computed(() => {
     if (path.startsWith('/company/caisse')) return 'company-dashboard';
     if (path.startsWith('/company/accounting')) return 'company-accounting';
     if (path.startsWith('/company/invoices')) return 'company-invoices';
-    if (path.startsWith('/company/hr')) return 'company-ged';
+    if (path.startsWith('/company/rh')) return 'company-rh';
     if (path.startsWith('/company/legal')) return 'company-ged';
     if (path.startsWith('/company/projects')) return 'company-ged';
     if (path.startsWith('/company/crm')) return 'company-ged';
     if (path.startsWith('/company/ai')) return 'company-ged';
     if (path.startsWith('/company/notifications')) return 'company-profile';
+    if (path.startsWith('/company/dae')) return 'company-dae';
     if (path.startsWith('/mes-commandes')) return 'mes-commandes';
     if (path.startsWith('/nos-services')) return 'mes-commandes';
     return 'company-dashboard';
 });
 
+const getBaseUrl = () => {
+    if (typeof document === 'undefined') return '';
+    const meta = document.querySelector('meta[name="base-url"]');
+    let url = meta ? meta.content : '';
+    return url.endsWith('/') ? url.slice(0, -1) : url;
+};
+
+const buildUrl = (path) => {
+    if (!path) return '#';
+    if (path.startsWith('http')) return path;
+    const base = getBaseUrl();
+    return base + (path.startsWith('/') ? path : '/' + path);
+};
+
 const logout = async () => {
-    const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
     try {
-        const res = await fetch('/logout', {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        });
-        if (res.redirected || res.ok) window.location.href = '/login';
-    } catch {
+        await window.axios.post('/logout');
+        window.location.href = buildUrl('/login');
+    } catch (e) {
+        console.error('Logout failed with Axios, falling back to form submit:', e);
+        const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
         const form = document.getElementById('logout-form');
         const input = document.getElementById('logout-csrf-token');
         if (input && csrfToken) input.value = csrfToken;
-        if (form) form.submit();
+        if (form) {
+            form.action = buildUrl('/logout');
+            form.submit();
+        }
     }
 };
 
@@ -175,7 +199,7 @@ const pageModuleMap = {
     'company-ged': 'document',
     'company-accounting': 'comptabilite',
     'company-invoices': 'facturation',
-    'company-hr': 'rh',
+    'company-rh': 'rh',
     'company-legal': 'juridique',
     'company-projects': 'projets',
 };
@@ -205,11 +229,10 @@ onMounted(async () => {
         loading.value = false;
     }
 
-    // ═══ Détection des changements de permissions (polling 15s) ═══
     stopPermissionPolling = startPermissionPolling();
 });
 
-// ─── Notifications ─────────────────────────────────────────────
+// ─── Notifications ─────────────────────────────
 const notifications = ref([]);
 const unreadCount = ref(0);
 let pollInterval = null;
@@ -280,29 +303,11 @@ onUnmounted(() => {
 <template>
     <div class="g-shell d-flex flex-column" style="min-height:100vh; background:#f0f4f8;">
 
-        <!-- ═══ TOP BAR — Logo + Tabs + User ═══ -->
+        <!-- ═══ TOP BAR — Logo + User ═══ -->
         <header class="g-topbar d-flex align-items-center justify-content-between px-3">
-            <div class="d-flex align-items-center gap-1">
-                <div class="g-logo d-flex align-items-center gap-2 me-3">
-                    <button class="g-toggler d-lg-none me-1" @click="sidebarOpen = !sidebarOpen">
-                        <i class="bi-list"></i>
-                    </button>
-                    <button class="g-toggle-btn d-none d-lg-flex me-1" @click="sidebarOpen = !sidebarOpen" title="Afficher/Masquer le panneau latéral">
-                        <i :class="sidebarOpen ? 'bi-layout-sidebar-inset' : 'bi-layout-sidebar'"></i>
-                    </button>
-                    <div class="g-logo-icon"><i class="bi-gem"></i></div>
-                    <span class="g-logo-text d-none d-sm-inline">Portail Client — GEL</span>
-                </div>
-
-                <nav class="g-tabs d-flex">
-                    <a v-for="tab in visibleTabs" :key="tab.key"
-                       :href="tab.route"
-                       class="g-tab"
-                       :class="{ 'g-tab-active': pageKey === tab.key }">
-                        <i :class="tab.icon"></i>
-                        <span class="d-none d-md-inline">{{ tab.name }}</span>
-                    </a>
-                </nav>
+            <div class="d-flex align-items-center gap-2">
+                <div class="g-logo-icon"><i class="bi-gem"></i></div>
+                <span class="g-logo-text">Portail Client — GEL</span>
             </div>
 
             <div class="d-flex align-items-center gap-2">
@@ -343,6 +348,9 @@ onUnmounted(() => {
                 </div>
 
                 <span class="g-role-badge d-none d-sm-inline">{{ userRoleLabel }}</span>
+                <button class="g-toggle-btn" @click="sidebarOpen = !sidebarOpen" title="Afficher/Masquer le panneau latéral">
+                    <i :class="sidebarOpen ? 'bi-x-lg' : 'bi-list'"></i>
+                </button>
                 <div class="dropdown">
                     <button class="g-user-btn d-flex align-items-center gap-2"
                             data-bs-toggle="dropdown" aria-expanded="false">
@@ -352,46 +360,42 @@ onUnmounted(() => {
                     <ul class="dropdown-menu dropdown-menu-end g-dropdown">
                         <li>
                             <div class="g-dd-user px-3 py-2 border-bottom">
-                                <div class="fw-bold" style="font-size:13px; color:#163A5E;">{{ authStore.user?.name }}</div>
+                                <div class="fw-bold" style="font-size:13px; color:#163A5E;">{{ company?.name }} — {{ authStore.user?.name }}</div>
                                 <div style="font-size:11px; color:#888;">{{ authStore.user?.email }}</div>
                             </div>
-                        </li>
-                        <li><a class="g-dd-item dropdown-item" href="/company/profile">
-                            <i class="bi-person me-2" style="color:#FF7900;"></i>Mon Profil</a></li>
-                        <li><hr class="dropdown-divider my-1"></li>
-                        <li>
-                            <a href="#" class="g-dd-item g-dd-danger dropdown-item" @click.prevent="logout">
-                                <i class="bi-box-arrow-right me-2"></i>Déconnexion
-                            </a>
-                            <form id="logout-form" method="POST" action="/logout" style="display:none;">
-                                <input type="hidden" name="_token" id="logout-csrf-token">
-                            </form>
                         </li>
                     </ul>
                 </div>
             </div>
         </header>
 
-        <!-- ═══ MAIN LAYOUT: Sidebar gauche + Contenu ═══ -->
+        <!-- ═══ MAIN LAYOUT: Sidebar + Contenu ═══ -->
         <div class="g-body d-flex flex-grow-1" style="min-height:0;">
 
-            <!-- Sidebar gauche (contextuelle) -->
+            <!-- Sidebar : Navigation principale -->
             <aside class="g-sidebar d-flex flex-column flex-shrink-0"
                    :class="{ 'g-sidebar-closed': !sidebarOpen }">
-                <div class="g-sb-header">
-                    <i class="bi-layout-sidebar me-1"></i>
-                    <span>{{ sectionTitle }}</span>
+                <div class="gs-nav">
+                    <a v-for="item in filteredNavItems" :key="item.key"
+                       :href="item.route"
+                       class="gs-nav-item"
+                       :class="{ 'gs-nav-active': pageKey === item.key }">
+                        <i :class="item.icon" class="gs-nav-icon"></i>
+                        <span class="gs-nav-label">{{ item.name }}</span>
+                    </a>
                 </div>
-                <div class="g-sb-content">
-                    <div v-for="group in sidebarLinks" :key="group.group" class="g-sb-group">
-                        <div class="g-sb-group-title">{{ group.group }}</div>
-                        <a v-for="link in group.items" :key="link.label"
-                           :href="link.href"
-                           class="g-sb-link">
-                            <i :class="link.icon"></i>
-                            {{ link.label }}
-                        </a>
-                    </div>
+
+                <!-- ══ BAS DE SIDEBAR — Compte ══ -->
+                <div class="gs-sidebar-divider"></div>
+                <div class="gs-sidebar-bottom">
+                    <a href="/company/profile" class="gs-nav-item">
+                        <i class="bi-gear gs-nav-icon"></i>
+                        <span class="gs-nav-label">Paramètres</span>
+                    </a>
+                    <a href="#" class="gs-nav-item gs-nav-logout" @click.prevent="logout">
+                        <i class="bi-box-arrow-right gs-nav-icon"></i>
+                        <span class="gs-nav-label">Déconnexion</span>
+                    </a>
                 </div>
             </aside>
 
@@ -399,17 +403,36 @@ onUnmounted(() => {
             <div v-if="sidebarOpen" class="g-overlay d-lg-none" @click="sidebarOpen = false"></div>
 
             <!-- Contenu principal -->
-            <main class="g-main flex-grow-1 p-4">
-                <slot />
+            <main class="g-main flex-grow-1 d-flex flex-column" style="min-width:0;">
+                <!-- Barre des sous-fonctionnalités -->
+                <div class="gs-subnav" v-if="flatLinks.length">
+                    <div class="gs-subnav-title">{{ sectionTitles[pageKey] || '' }}</div>
+                    <div class="gs-subnav-links">
+                        <a v-for="link in flatLinks" :key="link.label"
+                           :href="link.href"
+                           class="gs-subnav-link">
+                            <i :class="link.icon"></i>
+                            {{ link.label }}
+                        </a>
+                    </div>
+                </div>
+                <!-- Contenu de la page -->
+                <div class="flex-grow-1 p-4" style="min-height:0;">
+                    <slot />
+                </div>
             </main>
         </div>
     </div>
+
+    <form id="logout-form" method="POST" action="/logout" style="display:none;">
+        <input type="hidden" name="_token" id="logout-csrf-token">
+    </form>
 </template>
 
 <style scoped>
-/* ══ PORTAL CLIENT LAYOUT — Top tabs + Left sidebar ══ */
+/* ══ PORTAL CLIENT LAYOUT — Sidebar verticale + Subnav ══ */
 
-/* ── Top bar ─────────────────────────────── */
+/* ── Top bar simplifiée ─────────────────────── */
 .g-topbar {
     background: #163A5E;
     height: 52px;
@@ -429,16 +452,7 @@ onUnmounted(() => {
 }
 .g-logo-text {
     font-family: 'Outfit', sans-serif;
-    font-weight: 800; font-size: 14px; color: #fff;
-}
-.g-toggler {
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.2);
-    color: #fff;
-    border-radius: 4px;
-    width: 30px; height: 30px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; font-size: 15px;
+    font-weight: 800; font-size: 15px; color: #fff;
 }
 .g-toggle-btn {
     background: rgba(255,255,255,0.08);
@@ -454,23 +468,6 @@ onUnmounted(() => {
     background: rgba(255,255,255,0.15);
     color: #fff;
 }
-
-/* ── Tabs ────────────────────────────────── */
-.g-tabs { gap: 2px; }
-.g-tab {
-    display: flex; align-items: center; gap: 5px;
-    padding: 0 14px;
-    height: 50px;
-    font-size: 12px; font-weight: 600;
-    color: rgba(255,255,255,0.7);
-    text-decoration: none;
-    border-bottom: 3px solid transparent;
-    transition: all 0.15s;
-    white-space: nowrap;
-}
-.g-tab:hover { color: #fff; background: rgba(255,255,255,0.06); border-bottom-color: rgba(255,121,0,0.4); }
-.g-tab.g-tab-active { color: #fff; border-bottom-color: #FF7900; background: rgba(255,121,0,0.1); }
-.g-tab i { font-size: 14px; }
 
 /* ── User / Notifs ───────────────────────── */
 .g-icon-btn {
@@ -518,68 +515,139 @@ onUnmounted(() => {
 }
 .g-notif-all:hover { background: #FFE0B2; color: #e06700; }
 
-/* ── Sidebar gauche ───────────────────────── */
+/* ── Sidebar ──────────────────────────────────── */
 .g-body { position: relative; }
 .g-sidebar {
-    width: 210px;
-    background: #fff;
-    border-right: 1px solid #dce3ee;
+    width: 240px;
+    background: #1a2938;
+    border-right: 1px solid #1e3244;
+    display: flex;
+    flex-direction: column;
     overflow-y: auto;
-    transition: width 0.2s ease;
+    transition: width 0.2s ease, opacity 0.2s ease;
+    flex-shrink: 0;
 }
 .g-sidebar-closed {
     width: 0;
     overflow: hidden;
+    opacity: 0;
     border-right: none;
     padding: 0;
 }
-.g-sb-header {
-    padding: 12px 14px;
-    font-size: 11px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: #FF7900;
-    border-bottom: 1px solid #f0f4f8;
-    white-space: nowrap;
+
+/* ── Navigation principale ────────────────────── */
+.gs-nav {
+    padding: 8px 0;
+    flex: 1;
 }
-.g-sb-content { padding: 8px 0; }
-.g-sb-group { padding: 4px 0; }
-.g-sb-group-title {
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: #163A5E;
-    padding: 6px 14px 4px;
-    white-space: nowrap;
-}
-.g-sb-link {
+.gs-nav-item {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 7px 14px;
-    font-size: 12px;
-    font-weight: 500;
-    color: #444;
+    gap: 10px;
+    padding: 10px 16px;
+    margin: 1px 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.75);
     text-decoration: none;
-    border-left: 2px solid transparent;
+    border-radius: 6px;
+    border-left: 3px solid transparent;
     transition: all 0.12s;
     white-space: nowrap;
 }
-.g-sb-link:hover {
-    color: #FF7900;
-    background: #FFF3E0;
+.gs-nav-item:hover {
+    color: #fff;
+    background: rgba(255,255,255,0.08);
+}
+.gs-nav-active {
+    color: #fff !important;
+    background: rgba(255,121,0,0.15);
     border-left-color: #FF7900;
 }
-.g-sb-link i {
-    font-size: 13px;
-    width: 16px;
+.gs-nav-icon {
+    font-size: 16px;
+    width: 20px;
     text-align: center;
-    color: #888;
     flex-shrink: 0;
 }
-.g-sb-link:hover i { color: #FF7900; }
+.gs-nav-active .gs-nav-icon { color: #FF7900; }
+.gs-nav-label { line-height: 1; }
+
+/* ── Bas de sidebar — Compte ─────────────── */
+.gs-sidebar-divider {
+    height: 1px;
+    background: rgba(255,255,255,0.08);
+    margin: 4px 16px 2px;
+}
+.gs-sidebar-bottom {
+    padding: 2px 0 8px;
+}
+.gs-nav-logout {
+    color: rgba(231, 76, 60, 0.7) !important;
+}
+.gs-nav-logout:hover {
+    color: #e74c3c !important;
+    background: rgba(231, 76, 60, 0.12) !important;
+}
+
+/* ── Subnav (sous-fonctionnalités en haut du contenu) ── */
+.gs-subnav {
+    background: #fff;
+    border-bottom: 1px solid #dce3ee;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+.gs-subnav-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #163A5E;
+    white-space: nowrap;
+    margin-right: 8px;
+}
+.gs-subnav-links {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+.gs-subnav-group {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #aaa;
+    margin: 0 4px 0 8px;
+    white-space: nowrap;
+}
+.gs-subnav-link {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    text-decoration: none;
+    border-radius: 5px;
+    border: 1px solid transparent;
+    transition: all 0.12s;
+    white-space: nowrap;
+}
+.gs-subnav-link:hover {
+    color: #FF7900;
+    background: #FFF3E0;
+    border-color: #FFE0B2;
+}
+.gs-subnav-link i {
+    font-size: 12px;
+    color: #999;
+}
+.gs-subnav-link:hover i { color: #FF7900; }
 
 /* ── Main ────────────────────────────────── */
 .g-main { background: #f0f4f8; min-width: 0; }
@@ -632,28 +700,27 @@ onUnmounted(() => {
 /* ══ RESPONSIVE ══ */
 @media (max-width: 991.98px) {
     .g-topbar { padding-left: 10px !important; padding-right: 10px !important; }
-    .g-tab { padding: 0 10px; font-size: 11px; height: 46px; }
-    .g-tab i { font-size: 13px; }
-    .g-main { padding: 12px !important; }
+    .g-main > .p-4 { padding: 12px !important; }
     .g-sidebar {
         position: fixed;
         left: 0;
         top: 52px;
         bottom: 0;
         z-index: 1050;
-        box-shadow: 4px 0 20px rgba(0,0,0,0.15);
-        width: 230px;
+        box-shadow: 4px 0 20px rgba(0,0,0,0.3);
+        width: 260px;
     }
     .g-sidebar-closed {
         width: 0 !important;
         transform: translateX(-100%);
+        opacity: 1;
     }
 }
 @media (max-width: 575.98px) {
     .g-topbar { height: 48px; }
-    .g-tab { padding: 0 8px; font-size: 10px; height: 42px; gap: 3px; }
-    .g-tab i { font-size: 12px; }
-    .g-main { padding: 8px !important; }
+    .g-main > .p-4 { padding: 8px !important; }
     .g-role-badge { display: none; }
+    .gs-subnav { padding: 8px 12px; gap: 8px; }
+    .gs-subnav-title { font-size: 14px; }
 }
 </style>

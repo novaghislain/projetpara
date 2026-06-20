@@ -34,6 +34,16 @@ class Role extends Model
     }
 
     /**
+     * Vérifie si ce rôle a accès à un module (une quelconque action).
+     */
+    public function hasModule(string $module): bool
+    {
+        return $this->permissions()
+            ->where('module', $module)
+            ->exists();
+    }
+
+    /**
      * Vérifie si ce rôle a une permission spécifique.
      */
     public function hasPermission(string $module, string $action): bool

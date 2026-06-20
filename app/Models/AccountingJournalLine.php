@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Traits\Auditable;
 
 class AccountingJournalLine extends Model
 {
+    use Auditable;
     protected $fillable = [
         'journal_id', 'account_id', 'label', 'debit', 'credit',
         'tva_code', 'tva_rate', 'tva_amount', 'tva_type',

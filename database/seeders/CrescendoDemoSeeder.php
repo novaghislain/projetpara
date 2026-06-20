@@ -4,10 +4,12 @@ namespace Database\Seeders;
 
 use App\Models\Client;
 use App\Models\ClientFolder;
+use App\Models\ClientModule;
 use App\Models\Document;
 use App\Models\License;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\UserClient;
 use App\Models\Service;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
@@ -26,6 +28,7 @@ class CrescendoDemoSeeder extends Seeder
                 'role' => 'super_admin',
                 'is_admin' => true,
                 'is_active' => true,
+                'email_verified_at' => Carbon::now(),
             ]
         );
 
@@ -67,6 +70,7 @@ class CrescendoDemoSeeder extends Seeder
                 'role_id' => $particulierRole->id,
                 'is_company_admin' => false,
                 'is_active' => true,
+                'email_verified_at' => Carbon::now(),
                 'fonction' => 'Client particulier',
                 'phone' => '+229 61 23 45 67',
             ]
@@ -161,7 +165,7 @@ class CrescendoDemoSeeder extends Seeder
 
         // Admin entreprise
         $companyAdminRole = Role::where('slug', 'company_admin')->first();
-        User::firstOrCreate(
+        $entrepriseUser = User::firstOrCreate(
             ['email' => 'entreprise@test.com'],
             [
                 'name' => 'Aminata Diallo',
@@ -171,6 +175,7 @@ class CrescendoDemoSeeder extends Seeder
                 'role_id' => $companyAdminRole?->id,
                 'is_company_admin' => true,
                 'is_active' => true,
+                'email_verified_at' => Carbon::now(),
                 'fonction' => 'Directrice Administrative',
             ]
         );
@@ -186,7 +191,7 @@ class CrescendoDemoSeeder extends Seeder
             ]
         );
 
-        User::firstOrCreate(
+        $comptableUser = User::firstOrCreate(
             ['email' => 'comptable@monprojet.com'],
             [
                 'name' => 'Fatoumata Koné',
@@ -196,9 +201,36 @@ class CrescendoDemoSeeder extends Seeder
                 'role_id' => $comptableRole->id,
                 'is_company_admin' => false,
                 'is_active' => true,
+                'email_verified_at' => Carbon::now(),
                 'fonction' => 'Comptable Senior',
             ]
         );
+
+        // ─── Multi-tenant: UserClient records ───────────────────────────
+        $now = Carbon::now();
+        $multiTenantAssignments = [
+            [$clientUser->id, $particulier->id, 'client'],
+            [$entrepriseUser->id ?? null, $entreprise->id, 'company_admin'],
+            [$comptableUser->id, $entreprise->id, 'comptable'],
+        ];
+        foreach ($multiTenantAssignments as [$uid, $cid, $role]) {
+            if (!$uid) continue;
+            UserClient::firstOrCreate(
+                ['user_id' => $uid, 'client_id' => $cid],
+                ['role' => $role, 'is_active' => true, 'joined_at' => $now]
+            );
+        }
+
+        // ─── ClientModule records (activer tous les modules par défaut) ──
+        $allModules = ['comptabilite','facturation','caisse','juridique','rh','projets','document','dae','erp','crm','it_helpdesk','it_assets'];
+        foreach ([$particulier, $entreprise] as $client) {
+            foreach ($allModules as $module) {
+                ClientModule::firstOrCreate(
+                    ['client_id' => $client->id, 'module' => $module],
+                    ['is_active' => true, 'activated_at' => $now, 'activated_by' => 1]
+                );
+            }
+        }
 
         $this->command->info('✅ Comptes démo Crescendo CPA créés avec succès !');
         $this->command->info('   admin@monprojet.com    / Admin2025!       (Super Admin)');

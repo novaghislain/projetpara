@@ -4,7 +4,7 @@ import GelLayout from '../../../Layouts/GelLayout.vue';
 import { authStore } from '../../../stores/auth';
 
 const props = defineProps({
-    clientId: { type: [Number, String], required: true }
+    clientId: { type: [Number, String], default: null }
 });
 
 const accounts = ref([]);
@@ -25,8 +25,10 @@ const accountTypes = ['actif', 'passif', 'charge', 'produit', 'tresorerie'];
 const fetchAccounts = async () => {
     loading.value = true;
     error.value = null;
+    const cid = props.clientId || authStore.user?.client_id;
+    if (!cid) { error.value = 'Aucun client sélectionné.'; loading.value = false; return; }
     try {
-        const res = await fetch('/api/accounting/accounts/' + props.clientId);
+        const res = await fetch('/api/accounting/accounts/' + cid);
         if (!res.ok) throw new Error('Erreur de chargement');
         accounts.value = await res.json();
     } catch (e) {
@@ -64,6 +66,8 @@ const openEditModal = (acc) => {
 const closeModal = () => { showModal.value = false; };
 
 const submitForm = async () => {
+    const cid = props.clientId || authStore.user?.client_id;
+    if (!cid) { alert('Aucun client sélectionné.'); return; }
     submitting.value = true;
     try {
         const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
@@ -73,7 +77,7 @@ const submitForm = async () => {
         const res = await fetch(url, {
             method,
             headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ ...form.value, client_id: props.clientId }),
+            body: JSON.stringify({ ...form.value, client_id: cid }),
         });
         if (!res.ok) {
             const errData = await res.json();
@@ -127,7 +131,7 @@ onMounted(fetchAccounts);
         </div>
         <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
 
-        <div v-else class="card card-dashboard">
+        <div v-else class="bg-white rounded-lg shadow p-6">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="small text-muted">

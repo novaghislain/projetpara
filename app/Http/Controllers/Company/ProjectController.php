@@ -28,8 +28,8 @@ class ProjectController extends Controller
      */
     public function index()
     {
-        $this->getClientId();
-        return view('company', ['page' => 'company-projects']);
+        $clientId = $this->getClientId();
+        return view('company', ['page' => 'company-projects', 'clientId' => $clientId]);
     }
 
     // ─── PROJETS ─────────────────────────────────────────────────────────────

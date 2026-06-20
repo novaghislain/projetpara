@@ -1,10 +1,10 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import GelLayout from '../../../Layouts/GelLayout.vue';
 import { authStore } from '../../../stores/auth';
 
 const props = defineProps({
-    clientId: { type: [Number, String], required: true },
+    clientId: { type: [Number, String], default: null },
     journalId: { type: [Number, String], default: null }
 });
 
@@ -13,8 +13,10 @@ const loading = ref(true);
 const submitting = ref(false);
 const error = ref(null);
 
+const effectiveClientId = computed(() => props.clientId || authStore.user?.client_id || null);
+
 const form = ref({
-    client_id: props.clientId,
+    client_id: effectiveClientId.value,
     date: new Date().toISOString().substring(0, 10),
     label: '',
     reference: '',
@@ -22,8 +24,9 @@ const form = ref({
 });
 
 const fetchAccounts = async () => {
+    if (!effectiveClientId.value) { error.value = 'Aucun client sélectionné.'; loading.value = false; return; }
     try {
-        const res = await fetch('/api/accounting/accounts/' + props.clientId);
+        const res = await fetch('/api/accounting/accounts/' + effectiveClientId.value);
         if (res.ok) accounts.value = await res.json();
     } catch (e) { /* */ }
 };
@@ -58,7 +61,7 @@ const submitForm = async () => {
     try {
         const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
         const payload = {
-            client_id: props.clientId,
+            client_id: effectiveClientId.value,
             date: form.value.date,
             label: form.value.label,
             reference: form.value.reference,
@@ -79,7 +82,7 @@ const submitForm = async () => {
             const errData = await res.json();
             throw new Error(errData.message || Object.values(errData.errors || {}).flat().join(', '));
         }
-        window.location.href = '/accounting/journals/' + props.clientId;
+        window.location.href = '/accounting/journals/' + effectiveClientId.value;
     } catch (e) {
         alert('Erreur: ' + e.message);
     } finally {
@@ -101,7 +104,7 @@ onMounted(async () => {
             <div class="spinner-border text-primary"><span class="visually-hidden">Chargement...</span></div>
         </div>
 
-        <div v-else class="card card-dashboard p-4">
+        <div v-else class="bg-white rounded-lg shadow p-6">
             <form @submit.prevent="submitForm">
                 <div class="row g-3 mb-4">
                     <div class="col-md-4">

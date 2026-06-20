@@ -117,54 +117,11 @@
     @vite(['resources/js/app.js'])
 </head>
 <body>
-    <div id="app">
-        @switch($page)
-            @case('company-dashboard')
-                <company-dashboard></company-dashboard>
-                @break
-            @case('company-services')
-                <company-services></company-services>
-                @break
-            @case('company-profile')
-                <company-profile></company-profile>
-                @break
-            @case('company-users')
-                <company-users></company-users>
-                @break
-            @case('company-caisse')
-                <company-caisse></company-caisse>
-                @break
-            @case('company-ged')
-                <company-ged></company-ged>
-                @break
-            @case('company-accounting')
-                <company-accounting></company-accounting>
-                @break
-            @case('company-invoices')
-                <company-invoices></company-invoices>
-                @break
-            @case('company-hr')
-                <company-human-resources></company-human-resources>
-                @break
-            @case('company-notifications')
-                <company-notifications></company-notifications>
-                @break
-            @case('company-legal')
-                <company-legal></company-legal>
-                @break
-            @case('company-projects')
-                <company-projects></company-projects>
-                @break
-            @case('company-crm')
-                <company-crm></company-crm>
-                @break
-            @case('company-ai')
-                <company-ai-assistant></company-ai-assistant>
-                @break
-            @default
-                <company-dashboard></company-dashboard>
-        @endswitch
+    <!-- DEBUG MARKER: Si ce texte est visible, le HTML est bien servi -->
+    <div style="background:#FF7900;color:#fff;text-align:center;padding:8px;font-weight:bold;">
+        DEBUG: Template company.blade.php chargé — page={{ $page }}
     </div>
+    <div id="app" data-page="{{ $page }}" data-props='@json(['clientId' => $clientId ?? null])'></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 

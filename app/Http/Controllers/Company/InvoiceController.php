@@ -29,8 +29,8 @@ class InvoiceController extends Controller
      */
     public function index()
     {
-        $this->getClientId();
-        return view('company', ['page' => 'company-invoices']);
+        $clientId = $this->getClientId();
+        return view('company', ['page' => 'company-invoices', 'clientId' => $clientId]);
     }
 
     /**

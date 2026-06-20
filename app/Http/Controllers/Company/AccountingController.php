@@ -32,8 +32,8 @@ class AccountingController extends Controller
      */
     public function index()
     {
-        $this->getClientId();
-        return view('company', ['page' => 'company-accounting']);
+        $clientId = $this->getClientId();
+        return view('company', ['page' => 'company-accounting', 'clientId' => $clientId]);
     }
 
     // ─── Plan comptable ─────────────────────────────────────────────

@@ -12,8 +12,9 @@ const statusFilter = ref('');
 
 const showModal = ref(false);
 const form = ref({
-    client_id: '', reference: '', date: new Date().toISOString().substring(0, 10),
-    due_date: '', total_ht: '', total_tva: '', total_ttc: '', notes: '',
+    client_id: '', client_name: '', invoice_number: '', invoice_date: new Date().toISOString().substring(0, 10),
+    due_date: '', total_ht: '', tax_amount: '', total_ttc: '', notes: '',
+    type: 'invoice', items: [{ designation: '', quantity: 1, unit_price: 0, total_price: 0 }],
 });
 
 const fetchData = async () => {
@@ -24,7 +25,8 @@ const fetchData = async () => {
             fetch('/api/erp/invoices'),
             fetch('/api/clients'),
         ]);
-        if (invRes.ok) invoices.value = await invRes.json();
+        const invData = invRes.ok ? await invRes.json() : [];
+        invoices.value = Array.isArray(invData) ? invData : (invData.data ?? []);
         if (cliRes.ok) clients.value = await cliRes.json();
     } catch (e) {
         error.value = e.message;
@@ -47,11 +49,15 @@ const submitForm = async () => {
             headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify(form.value),
         });
-        if (!res.ok) throw new Error('Erreur');
+        if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.errors ? Object.values(errData.errors).flat().join(', ') : 'Erreur');
+        }
         showModal.value = false;
         form.value = {
-            client_id: '', reference: '', date: new Date().toISOString().substring(0, 10),
-            due_date: '', total_ht: '', total_tva: '', total_ttc: '', notes: '',
+            client_id: '', invoice_number: '', invoice_date: new Date().toISOString().substring(0, 10),
+            due_date: '', total_ht: '', tax_amount: '', total_ttc: '', notes: '',
+            type: 'invoice', items: [{ designation: '', quantity: 1, unit_price: 0, total_price: 0 }],
         };
         await fetchData();
     } catch (e) {
@@ -64,6 +70,25 @@ const submitForm = async () => {
 const statusBadgeClass = (status) => {
     const map = { brouillon: 'bg-secondary', emise: 'bg-primary', envoyee: 'bg-info', payee: 'bg-success', impayee: 'bg-danger', annulee: 'bg-dark' };
     return map[status] || 'bg-secondary';
+};
+
+const emitEmecef = async (invoiceId) => {
+    if (!confirm('Émettre cette facture auprès de la DGI (e-MECeF) ?')) return;
+    try {
+        const res = await fetch(`/emecef/emit/${invoiceId}`, {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content, 'Accept': 'application/json' },
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert('Facture émise à la DGI avec succès.');
+            await fetchData();
+        } else {
+            alert('Erreur e-MECeF: ' + (data.error || 'Inconnue'));
+        }
+    } catch (e) {
+        alert('Erreur réseau: ' + e.message);
+    }
 };
 
 onMounted(fetchData);
@@ -89,14 +114,14 @@ onMounted(fetchData);
         </div>
         <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
 
-        <div v-else class="card card-dashboard">
+        <div v-else class="bg-white rounded-lg shadow p-6">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-sm align-middle mb-0">
                     <thead class="small text-muted">
-                        <tr><th>Réf.</th><th>Client</th><th>Date</th><th>Échéance</th><th class="text-end">Montant TTC</th><th>Statut</th></tr>
+                        <tr><th>Réf.</th><th>Client</th><th>Date</th><th>Échéance</th><th class="text-end">Montant TTC</th><th>Statut</th><th>DGI</th></tr>
                     </thead>
                     <tbody>
-                        <tr v-if="!filteredInvoices().length"><td colspan="6" class="text-center py-4 text-muted">Aucune facture.</td></tr>
+                        <tr v-if="!filteredInvoices().length"><td colspan="7" class="text-center py-4 text-muted">Aucune facture.</td></tr>
                         <tr v-for="inv in filteredInvoices()" :key="inv.id">
                             <td class="fw-medium">{{ inv.reference }}</td>
                             <td class="small">{{ inv.client?.company_name || '-' }}</td>
@@ -104,6 +129,12 @@ onMounted(fetchData);
                             <td class="small">{{ inv.due_date ? $formatDate(inv.due_date) : '-' }}</td>
                             <td class="text-end fw-medium">{{ $formatCurrency(inv.total_ttc) }}</td>
                             <td><span class="badge" :class="statusBadgeClass(inv.status)">{{ inv.status }}</span></td>
+                            <td class="text-nowrap">
+                                <button v-if="inv.status === 'emise' || inv.status === 'envoyee'" class="btn btn-outline-warning btn-sm" title="Émettre e-MECeF" @click="emitEmecef(inv.id)">
+                                    <i class="bi-shield-check"></i>
+                                </button>
+                                <span v-if="inv.emecef_statut === 'emise'" class="badge bg-success bg-opacity-10 text-success ms-1 small">DGI</span>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -125,12 +156,12 @@ onMounted(fetchData);
                                 </select>
                             </div>
                             <div class="col-6">
-                                <label class="form-label small">Référence</label>
-                                <input v-model="form.reference" class="form-control form-control-sm" placeholder="FAC-2024-001">
+                                <label class="form-label small">N° Facture</label>
+                                <input v-model="form.invoice_number" class="form-control form-control-sm" placeholder="FAC-2026-001">
                             </div>
                             <div class="col-6">
                                 <label class="form-label small">Date</label>
-                                <input v-model="form.date" type="date" class="form-control form-control-sm">
+                                <input v-model="form.invoice_date" type="date" class="form-control form-control-sm">
                             </div>
                             <div class="col-6">
                                 <label class="form-label small">Échéance</label>
@@ -142,7 +173,7 @@ onMounted(fetchData);
                             </div>
                             <div class="col-4">
                                 <label class="form-label small">TVA</label>
-                                <input v-model="form.total_tva" type="number" step="0.01" class="form-control form-control-sm">
+                                <input v-model="form.tax_amount" type="number" step="0.01" class="form-control form-control-sm">
                             </div>
                             <div class="col-4">
                                 <label class="form-label small">Total TTC</label>

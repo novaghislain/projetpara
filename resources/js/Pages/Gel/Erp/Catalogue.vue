@@ -117,9 +117,9 @@ onMounted(fetchData);
         </div>
         <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
 
-        <div v-else class="card card-dashboard">
+        <div v-else class="bg-white rounded-lg shadow p-6">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-sm align-middle mb-0">
                     <thead class="small text-muted">
                         <tr><th>Réf.</th><th>Désignation</th><th>Catégorie</th><th class="text-end">Prix</th><th>Alerte stock</th></tr>
                     </thead>

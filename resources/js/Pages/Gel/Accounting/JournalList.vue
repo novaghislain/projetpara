@@ -4,7 +4,7 @@ import GelLayout from '../../../Layouts/GelLayout.vue';
 import { authStore } from '../../../stores/auth';
 
 const props = defineProps({
-    clientId: { type: [Number, String], required: true }
+    clientId: { type: [Number, String], default: null }
 });
 
 const journals = ref([]);
@@ -18,11 +18,13 @@ const dateTo = ref('');
 const fetchJournals = async () => {
     loading.value = true;
     error.value = null;
+    const cid = props.clientId || authStore.user?.client_id;
+    if (!cid) { error.value = 'Aucun client sélectionné.'; loading.value = false; return; }
     try {
         const params = new URLSearchParams();
         if (dateFrom.value) params.append('from', dateFrom.value);
         if (dateTo.value) params.append('to', dateTo.value);
-        const url = '/api/accounting/journals/' + props.clientId + (params.toString() ? '?' + params.toString() : '');
+        const url = '/api/accounting/journals/' + cid + (params.toString() ? '?' + params.toString() : '');
         const res = await fetch(url);
         if (!res.ok) throw new Error('Erreur de chargement');
         journals.value = await res.json();
@@ -90,7 +92,7 @@ onMounted(fetchJournals);
         </div>
         <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
 
-        <div v-else class="card card-dashboard">
+        <div v-else class="bg-white rounded-lg shadow p-6">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="small text-muted">
@@ -126,26 +128,24 @@ onMounted(fetchJournals);
         </div>
 
         <!-- Journal Lines Detail -->
-        <div v-if="selectedJournal" class="card card-dashboard mt-3">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <div v-if="selectedJournal" class="bg-white rounded-lg shadow p-6 mt-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
                 <span class="fw-medium small">{{ selectedJournal.label }} - Lignes</span>
                 <button class="btn btn-sm btn-light" @click="selectedJournal = null"><i class="bi-x"></i></button>
             </div>
-            <div class="card-body p-0">
-                <table class="table table-sm mb-0">
-                    <thead class="small text-muted">
-                        <tr><th>Compte</th><th>Libellé</th><th class="text-end">Débit</th><th class="text-end">Crédit</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="line in selectedJournal.lines" :key="line.id">
-                            <td class="small">{{ line.account?.account_number }} - {{ line.account?.name }}</td>
-                            <td class="small">{{ line.label || '-' }}</td>
-                            <td class="text-end small">{{ line.debit ? $formatCurrency(line.debit) : '-' }}</td>
-                            <td class="text-end small">{{ line.credit ? $formatCurrency(line.credit) : '-' }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <table class="table table-sm mb-0">
+                <thead class="small text-muted">
+                    <tr><th>Compte</th><th>Libellé</th><th class="text-end">Débit</th><th class="text-end">Crédit</th></tr>
+                </thead>
+                <tbody>
+                    <tr v-for="line in selectedJournal.lines" :key="line.id">
+                        <td class="small">{{ line.account?.account_number }} - {{ line.account?.name }}</td>
+                        <td class="small">{{ line.label || '-' }}</td>
+                        <td class="text-end small">{{ line.debit ? $formatCurrency(line.debit) : '-' }}</td>
+                        <td class="text-end small">{{ line.credit ? $formatCurrency(line.credit) : '-' }}</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </GelLayout>
 </template>

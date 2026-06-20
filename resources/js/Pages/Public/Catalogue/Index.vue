@@ -217,26 +217,27 @@ const categoryIcon = (name) => {
             <div class="container position-relative" style="z-index:2;">
                 <div class="row justify-content-center text-center">
                     <div class="col-lg-8">
-                        <h1 class="sv-hero-title" style="display:none;">
-                            L'excellence<br>
-                            <span class="sv-hero-accent">à chaque service</span>
+                        <div class="sv-hero-badge" :class="{ 'sv-visible': animated }">Catalogue GEL Cabinet</div>
+                        <h1 class="sv-hero-title" :class="{ 'sv-visible': animated }">
+                            Des services professionnels<br>
+                            <span class="sv-hero-accent">pour votre entreprise</span>
                         </h1>
-                        <p class="sv-hero-text" style="display:none;">
-                            Comptabilité, juridique, fiscal, social — une gamme complète de
-                            services pensés pour accompagner votre cabinet dans toutes ses missions.
+                        <p class="sv-hero-text" :class="{ 'sv-visible': animated }">
+                            Comptabilité, juridique, fiscal, social, GED, ERP — une gamme complète de
+                            services conçus pour accompagner et développer votre cabinet.
                         </p>
                     </div>
                 </div>
                 <div class="row justify-content-center">
                     <div class="col-lg-6">
-                        <div class="sv-search">
+                        <div class="sv-search" :class="{ 'sv-visible': animated }">
                             <i class="bi-search sv-search-icon"></i>
                             <input v-model="searchQuery" type="text" class="sv-search-input" placeholder="Rechercher un service…" />
                             <button v-if="searchQuery" class="sv-search-clear" @click="searchQuery = ''"><i class="bi-x-lg"></i></button>
                         </div>
                     </div>
                 </div>
-                <div class="sv-stats-row" style="display:none;">
+                <div class="sv-stats-row" :class="{ 'sv-visible': animated }">
                     <div class="sv-stat">
                         <span class="sv-stat-value">{{ totalServices }}</span>
                         <span class="sv-stat-label">Services</span>
@@ -289,7 +290,12 @@ const categoryIcon = (name) => {
                     </div>
                     <div class="sv-cat-grid">
                         <div v-for="(svc, si) in cat.services" :key="svc.id" class="sv-card-wrap">
-                            <div class="sv-card sv-anim" :style="{ transitionDelay: (ci * 0.08 + si * 0.05) + 's' }">
+                            <div class="sv-card sv-anim"
+                                 :style="{
+                                     transitionDelay: (ci * 0.08 + si * 0.05) + 's',
+                                     '--card-accent': categoryColor(cat.nom),
+                                     '--card-btn-bg': categoryColor(cat.nom),
+                                 }">
                                 <div class="sv-card-top">
                                     <div class="sv-card-icon" :style="{
                                         background: categoryColor(cat.nom) + '12',
@@ -307,7 +313,7 @@ const categoryIcon = (name) => {
                                     <span><i class="bi-clock"></i> {{ svc.delai_jours || 'Sur mesure' }}</span>
                                     <span v-if="svc.inclus_json?.length"><i class="bi-check-circle"></i> {{ svc.inclus_json.length }} inclus</span>
                                 </div>
-                                <a href="javascript:void(0)" @click.prevent="showAuthModal = true" class="sv-card-btn" :style="{ '--btn-bg': categoryColor(cat.nom) }">
+                                <a :href="'/nos-services/' + cat.id + '/' + svc.id" class="sv-card-btn">
                                     Voir la fiche <i class="bi-arrow-right"></i>
                                 </a>
                             </div>
@@ -585,10 +591,42 @@ const categoryIcon = (name) => {
 }
 .sv-hero-wave svg { display: block; width: 100%; height: 60px; }
 
-.sv-hero-ready .sv-hero-title { animation: svFadeUp 0.6s both; animation-delay: 0.1s; }
-.sv-hero-ready .sv-hero-text { animation: svFadeUp 0.6s both; animation-delay: 0.2s; }
-.sv-hero-ready .sv-search { animation: svFadeUp 0.6s both; animation-delay: 0.3s; }
-.sv-hero-ready .sv-stats-row { animation: svFadeUp 0.6s both; animation-delay: 0.4s; }
+/* Hero elements: start hidden, fade in with sv-visible */
+.sv-hero-badge,
+.sv-hero-title,
+.sv-hero-text,
+.sv-search,
+.sv-stats-row {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s cubic-bezier(0.16, 0.6, 0.2, 1),
+                transform 0.6s cubic-bezier(0.16, 0.6, 0.2, 1);
+}
+.sv-hero-badge { transition-delay: 0.05s; }
+.sv-hero-title { transition-delay: 0.12s; }
+.sv-hero-text { transition-delay: 0.2s; }
+.sv-search { transition-delay: 0.28s; }
+.sv-stats-row { transition-delay: 0.36s; }
+.sv-hero .sv-visible {
+    opacity: 1 !important;
+    transform: none !important;
+}
+
+.sv-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,121,0,0.15);
+    color: #FF7900;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 100px;
+    margin-bottom: 16px;
+    border: 1px solid rgba(255,121,0,0.2);
+}
 
 .sv-hero-title {
     font-family: 'Outfit', sans-serif;
@@ -597,12 +635,12 @@ const categoryIcon = (name) => {
     color: #fff;
     letter-spacing: -1px;
     line-height: 1.15;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 .sv-hero-accent { color: #FF7900; }
 .sv-hero-text {
     font-size: 16px;
-    color: rgba(255,255,255,0.6);
+    color: rgba(255,255,255,0.55);
     line-height: 1.7;
     max-width: 600px;
     margin: 0 auto 32px;
@@ -655,7 +693,7 @@ const categoryIcon = (name) => {
 }
 .sv-stat-label {
     font-size: 13px;
-    color: rgba(255,255,255,0.5);
+    color: rgba(255,255,255,0.45);
     margin-top: 4px;
 }
 @media (max-width: 600px) {
@@ -666,7 +704,7 @@ const categoryIcon = (name) => {
 }
 
 /* ── BODY / CATEGORIES ── */
-.sv-body { padding: 40px 0 60px; }
+.sv-body { padding: 48px 0 80px; background: #F8FAFC; }
 
 /* Search info */
 .sv-search-info {
@@ -702,20 +740,20 @@ const categoryIcon = (name) => {
 .sv-empty-btn:hover { background: var(--sv-orange-hov); }
 
 /* Category */
-.sv-cat { margin-bottom: 48px; }
+.sv-cat { margin-bottom: 56px; }
 .sv-cat-anchor { scroll-margin-top: 90px; }
 .sv-cat-head {
     display: flex;
     align-items: center;
     gap: 14px;
     flex-wrap: wrap;
-    margin-bottom: 20px;
-    padding-bottom: 14px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
     border-bottom: 2px solid var(--sv-border);
 }
 .sv-cat-title {
     font-family: 'Outfit', sans-serif;
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 700;
     color: var(--sv-dark);
     margin: 0;
@@ -737,7 +775,7 @@ const categoryIcon = (name) => {
 .sv-cat-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 16px;
+    gap: 20px;
 }
 .sv-card-wrap { display: flex; }
 .sv-cat-empty {
@@ -754,16 +792,28 @@ const categoryIcon = (name) => {
 .sv-card {
     background: #fff;
     border: 1px solid var(--sv-border);
-    border-radius: 12px;
+    border-radius: 14px;
     display: flex; flex-direction: column;
     width: 100%;
     padding: 24px;
     transition: box-shadow 0.3s, transform 0.3s, border-color 0.3s;
+    position: relative;
+    overflow: hidden;
 }
+.sv-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--card-accent, var(--sv-orange));
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.sv-card:hover::before { opacity: 1; }
 .sv-card:hover {
-    box-shadow: 0 8px 30px rgba(0,0,0,0.06);
-    border-color: rgba(255,121,0,0.15);
-    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.07);
+    border-color: transparent;
+    transform: translateY(-4px);
 }
 
 .sv-card-top {
@@ -774,18 +824,18 @@ const categoryIcon = (name) => {
     margin-bottom: 16px;
 }
 .sv-card-icon {
-    width: 42px; height: 42px;
-    border-radius: 10px;
+    width: 46px; height: 46px;
+    border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 18px; flex-shrink: 0;
+    font-size: 20px; flex-shrink: 0;
     border: 1px solid;
-    transition: transform 0.3s;
+    transition: transform 0.3s, box-shadow 0.3s;
 }
-.sv-card:hover .sv-card-icon { transform: scale(1.05); }
+.sv-card:hover .sv-card-icon { transform: scale(1.08); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
 .sv-card-badge {
-    font-size: 11px; font-weight: 600;
+    font-size: 11px; font-weight: 700;
     background: rgba(16,185,129,0.1); color: #059669;
-    padding: 4px 10px; border-radius: 100px;
+    padding: 4px 12px; border-radius: 100px;
     white-space: nowrap;
 }
 .sv-card-badge--ghost { background: #F1F5F9; color: var(--sv-gray); }
@@ -800,7 +850,7 @@ const categoryIcon = (name) => {
 .sv-card-text {
     font-size: 13px;
     color: var(--sv-gray);
-    line-height: 1.6;
+    line-height: 1.7;
     flex-grow: 1;
     margin: 0 0 16px;
     display: -webkit-box; -webkit-line-clamp: 3;
@@ -812,6 +862,8 @@ const categoryIcon = (name) => {
     font-size: 12px;
     color: var(--sv-gray);
     margin-bottom: 18px;
+    padding-top: 12px;
+    border-top: 1px solid #F1F5F9;
 }
 .sv-card-meta i { margin-right: 5px; font-size: 12px; }
 
@@ -820,19 +872,19 @@ const categoryIcon = (name) => {
     align-items: center;
     justify-content: center;
     gap: 6px;
-    background: var(--btn-bg, var(--sv-orange));
+    background: var(--card-btn-bg, var(--sv-orange));
     color: #fff;
     border: none;
-    border-radius: 8px;
-    padding: 10px 16px;
+    border-radius: 10px;
+    padding: 11px 16px;
     font-size: 13px;
     font-weight: 600;
     text-decoration: none;
     transition: transform 0.2s, box-shadow 0.2s;
 }
-.sv-card-btn:hover { color: #fff; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+.sv-card-btn:hover { color: #fff; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
 .sv-card-btn i { transition: transform 0.2s; }
-.sv-card-btn:hover i { transform: translateX(3px); }
+.sv-card-btn:hover i { transform: translateX(4px); }
 
 @media (max-width: 640px) {
     .sv-cat-grid { grid-template-columns: 1fr; }
@@ -840,12 +892,24 @@ const categoryIcon = (name) => {
 
 /* ── CTA ── */
 .sv-cta {
-    background: var(--sv-dark);
-    padding: 56px 0;
+    background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+    padding: 64px 0;
+    position: relative;
+    overflow: hidden;
+}
+.sv-cta::before {
+    content: '';
+    position: absolute;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(255,121,0,0.08) 0%, transparent 70%);
+    top: -100px;
+    right: -100px;
+    border-radius: 50%;
+    pointer-events: none;
 }
 .sv-cta-title {
     font-family: 'Outfit', sans-serif;
-    font-size: 28px;
+    font-size: 30px;
     font-weight: 800;
     color: #fff;
     margin-bottom: 10px;

@@ -37,8 +37,8 @@ onMounted(fetchService);
 
         <template v-else-if="service">
             <!-- Header -->
-            <div class="card card-dashboard mb-4">
-                <div class="card-body d-flex align-items-center justify-content-between gap-3">
+            <div class="bg-white rounded-lg shadow p-6 mb-4">
+                <div class="d-flex align-items-center justify-content-between gap-3">
                     <div class="d-flex align-items-center gap-3">
                         <div class="rounded-2 d-flex align-items-center justify-content-center"
                              :style="{ backgroundColor: (service.color || '#1a237e') + '20', width: '56px', height: '56px', borderRadius: '14px' }">
@@ -62,7 +62,7 @@ onMounted(fetchService);
 
             <div class="row g-4">
                 <div class="col-lg-4">
-                    <div class="card card-dashboard p-3">
+                    <div class="bg-white rounded-lg shadow p-6">
                         <h6 class="fw-bold mb-3"><i class="bi-info-circle me-2 text-primary"></i>Description</h6>
                         <p class="small mb-0">{{ service.description || 'Aucune description.' }}</p>
                         <hr>
@@ -78,7 +78,7 @@ onMounted(fetchService);
                 </div>
 
                 <div class="col-lg-8">
-                    <div class="card card-dashboard">
+                    <div class="bg-white rounded-lg shadow p-6 mb-4">
                         <div class="card-header bg-white">
                             <h6 class="fw-bold mb-0"><i class="bi-building me-2 text-success"></i>Clients utilisant ce service ({{ service.clients?.length || 0 }})</h6>
                         </div>

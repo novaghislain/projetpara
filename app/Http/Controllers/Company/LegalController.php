@@ -28,8 +28,8 @@ class LegalController extends Controller
      */
     public function index()
     {
-        $this->getClientId();
-        return view('company', ['page' => 'company-legal']);
+        $clientId = $this->getClientId();
+        return view('company', ['page' => 'company-legal', 'clientId' => $clientId]);
     }
 
     // ─── CONTRATS ─────────────────────────────────────────────────────────────

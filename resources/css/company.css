@@ -5,10 +5,26 @@
 
 /* ── Shell / Conteneur principal ───────────────────────── */
 .isup-shell { border:1px solid #dce3ee; border-radius:6px; overflow:hidden; background:#fff; }
-.isup-portal-header { background:linear-gradient(135deg,#163A5E,#1e4d7a); padding:14px 20px; display:flex;align-items:center; border-bottom:3px solid #FF7900; }
-.isup-portal-logo { width:42px;height:42px;background:#FF7900;color:#fff;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
-.isup-portal-company { font-family:'Outfit',sans-serif;font-size:16px;font-weight:800;color:#fff; }
-.isup-portal-sub { font-size:11px;color:rgba(255,255,255,.6);margin-top:2px; }
+.isup-portal-header { background:linear-gradient(135deg,#163A5E,#1e4d7a); padding:16px 20px; display:flex;align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; border-bottom:3px solid #FF7900; }
+.isup-portal-logo { width:42px;height:42px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:#FF7900;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+.isup-portal-company { font-family:'Outfit',sans-serif;font-size:18px;font-weight:800;color:#fff; }
+.isup-portal-sub { font-size:11px;color:rgba(255,255,255,.55);margin-top:2px; }
+
+/* ── Stat pills (dans le header) ───────────────────────── */
+.isup-stat-pill {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 4px; padding: 6px 14px; text-align: center;
+}
+.isup-stat-pill .isup-stat-num {
+    display: block;
+    font-size: 20px; font-weight: 800; color: #FF7900;
+    font-family: 'Outfit', sans-serif;
+}
+.isup-stat-pill .isup-stat-lbl {
+    display: block;
+    font-size: 10px; color: rgba(255,255,255,0.6);
+}
 
 /* ── Tabs ──────────────────────────────────────────────── */
 .isup-tabs { display:flex;gap:4px; }

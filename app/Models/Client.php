@@ -26,6 +26,10 @@ class Client extends Model
         'contract_end',
         'notes',
         'disabled_modules',
+        'require_2fa',
+        'session_timeout_minutes',
+        'allowed_ips',
+        'regime_fiscal',
         'created_by',
     ];
 
@@ -35,6 +39,8 @@ class Client extends Model
             'contract_start' => 'date',
             'contract_end' => 'date',
             'disabled_modules' => 'array',
+            'require_2fa' => 'boolean',
+            'allowed_ips' => 'json',
         ];
     }
 

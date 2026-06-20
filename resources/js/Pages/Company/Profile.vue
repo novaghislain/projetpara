@@ -1,6 +1,7 @@
 ﻿<script setup>
 import { ref, onMounted } from 'vue';
 import CompanyLayout from '../../Layouts/CompanyLayout.vue';
+import UserProfileSettings from '../../Components/UserProfileSettings.vue';
 
 const company = ref(null);
 const loading = ref(true);
@@ -172,6 +173,14 @@ onMounted(loadData);
                         </div>
                     </div>
                 </div>
+
+                <hr class="my-4">
+
+                <h5 class="mb-3" style="font-weight:700; color:#163A5E;">
+                    <i class="bi-person-circle me-2" style="color:#FF7900;"></i>
+                    Mon profil utilisateur
+                </h5>
+                <UserProfileSettings />
             </div>
         </template>
     </CompanyLayout>

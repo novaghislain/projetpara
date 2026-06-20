@@ -63,6 +63,10 @@ class MissionController extends Controller
             $mission->collaborators()->attach($collaboratorsData);
         }
 
+        if ($request->wantsJson()) {
+            return response()->json(['message' => 'Mission créée avec succès', 'mission' => $mission], 201);
+        }
+
         return redirect()->route('missions.show', $mission->id)
             ->with('success', 'Mission créée avec succès');
     }
@@ -123,6 +127,10 @@ class MissionController extends Controller
             $mission->collaborators()->sync($collaboratorsData);
         }
 
+        if ($request->wantsJson()) {
+            return response()->json(['message' => 'Mission mise à jour avec succès', 'mission' => $mission]);
+        }
+
         return redirect()->route('missions.show', $mission->id)
             ->with('success', 'Mission mise à jour avec succès');
     }
@@ -132,8 +140,12 @@ class MissionController extends Controller
      */
     public function destroy($id)
     {
-        $mission = Mission::findOrFail($id);
-        $mission->delete();
+        $client = Mission::findOrFail($id);
+        $client->delete();
+
+        if (request()->wantsJson()) {
+            return response()->json(['message' => 'Mission supprimée avec succès']);
+        }
 
         return redirect()->route('missions.index')
             ->with('success', 'Mission supprimée avec succès');

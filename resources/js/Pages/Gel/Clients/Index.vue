@@ -44,16 +44,15 @@ const legalForms = ['SARL', 'SA', 'SAS', 'SASU', 'EURL', 'SNC', 'SCI', 'Associat
 
 // ── Fetch data ──
 const fetchClients = async () => {
-    const params = new URLSearchParams();
-    if (search.value) params.append('search', search.value);
-    if (filterStatus.value) params.append('status', filterStatus.value);
-    if (filterPole.value) params.append('pole_id', filterPole.value);
+    const params = {};
+    if (search.value) params.search = search.value;
+    if (filterStatus.value) params.status = filterStatus.value;
+    if (filterPole.value) params.pole_id = filterPole.value;
     try {
-        const res = await fetch('/api/clients?' + params.toString());
-        if (!res.ok) throw new Error('Erreur lors du chargement des clients');
-        clients.value = await res.json();
+        const res = await window.axios.get('api/clients', { params });
+        clients.value = Array.isArray(res.data) ? res.data : (res.data?.data || []);
     } catch (e) {
-        error.value = e.message;
+        error.value = e.response?.data?.message || e.message;
     } finally {
         loading.value = false;
     }
@@ -61,16 +60,20 @@ const fetchClients = async () => {
 
 const fetchPoles = async () => {
     try {
-        const res = await fetch('/api/poles');
-        if (res.ok) poles.value = await res.json();
-    } catch (e) { /* non-critique */ }
+        const res = await window.axios.get('api/poles');
+        poles.value = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+    } catch (e) {
+        console.error('fetchPoles error:', e);
+    }
 };
 
 const fetchServices = async () => {
     try {
-        const res = await fetch('/api/services');
-        if (res.ok) services.value = await res.json();
-    } catch (e) { /* non-critique */ }
+        const res = await window.axios.get('api/services');
+        services.value = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+    } catch (e) {
+        console.error('fetchServices error:', e);
+    }
 };
 
 // ── Search with debounce ──
@@ -95,9 +98,8 @@ const openCreateModal = async () => {
 
 const openEditModal = async (id) => {
     try {
-        const res = await fetch('/api/clients/' + id);
-        if (!res.ok) throw new Error('Erreur');
-        const data = await res.json();
+        const res = await window.axios.get('api/clients/' + id);
+        const data = res.data;
         form.value = {
             company_name: data.company_name || '',
             legal_form: data.legal_form || '',
@@ -126,7 +128,7 @@ const openEditModal = async (id) => {
         }
         modalInstance.value?.show();
     } catch (e) {
-        alert('Erreur lors du chargement du client: ' + e.message);
+        alert('Erreur lors du chargement du client: ' + (e.response?.data?.message || e.message));
     }
 };
 
@@ -161,28 +163,17 @@ const toggleService = (serviceId) => {
 const submitForm = async () => {
     submitting.value = true;
     try {
-        const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
-        const url = isEditing.value ? '/clients/' + editingId.value : '/clients';
-        const method = isEditing.value ? 'PUT' : 'POST';
-
-        const res = await fetch(url, {
-            method,
-            headers: {
-                'X-CSRF-TOKEN': csrfToken,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify(form.value),
-        });
-
-        if (!res.ok) {
-            const errData = await res.json();
-            throw new Error(errData.message || Object.values(errData.errors || {}).flat().join(', '));
+        if (isEditing.value) {
+            await window.axios.put('clients/' + editingId.value, form.value);
+        } else {
+            await window.axios.post('clients', form.value);
         }
         closeModal();
         await fetchClients();
     } catch (e) {
-        alert('Erreur: ' + e.message);
+        const errData = e.response?.data;
+        const msg = errData?.message || Object.values(errData?.errors || {}).flat().join(', ') || e.message;
+        alert('Erreur: ' + msg);
     } finally {
         submitting.value = false;
     }
@@ -191,15 +182,10 @@ const submitForm = async () => {
 const deleteClient = async (id) => {
     if (!confirm('Confirmer la suppression de ce client ?')) return;
     try {
-        const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
-        const res = await fetch('/clients/' + id, {
-            method: 'DELETE',
-            headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
-        });
-        if (!res.ok) throw new Error('Erreur lors de la suppression');
+        await window.axios.delete('clients/' + id);
         await fetchClients();
     } catch (e) {
-        alert('Erreur: ' + e.message);
+        alert('Erreur: ' + (e.response?.data?.message || e.message));
     }
 };
 

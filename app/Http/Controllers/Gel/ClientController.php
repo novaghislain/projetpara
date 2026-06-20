@@ -94,6 +94,10 @@ class ClientController extends Controller
             }
         }
 
+        if ($request->wantsJson()) {
+            return response()->json(['message' => 'Client créé avec succès', 'client' => $client], 201);
+        }
+
         return redirect()->route('clients.show', $client->id)
             ->with('success', 'Client créé avec succès');
     }
@@ -172,6 +176,10 @@ class ClientController extends Controller
             $client->services()->sync($serviceData);
         }
 
+        if ($request->wantsJson()) {
+            return response()->json(['message' => 'Client mis à jour avec succès', 'client' => $client]);
+        }
+
         return redirect()->route('clients.show', $client->id)
             ->with('success', 'Client mis à jour avec succès');
     }
@@ -183,6 +191,10 @@ class ClientController extends Controller
     {
         $client = Client::findOrFail($id);
         $client->delete();
+
+        if (request()->wantsJson()) {
+            return response()->json(['message' => 'Client supprimé avec succès']);
+        }
 
         return redirect()->route('clients.index')
             ->with('success', 'Client supprimé avec succès');

@@ -38,6 +38,7 @@
             --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
         }
 
+        html { scroll-behavior: smooth; }
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
@@ -299,13 +300,20 @@
             cursor: pointer;
             display: flex; align-items: center; justify-content: center; gap: 8px;
             margin-top: 2px;
-            transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+            transition: background 0.3s, transform 0.2s, box-shadow 0.3s, opacity 0.3s;
         }
         .gel-submit:hover {
             background: var(--gel-primary-hov);
             transform: translateY(-1px);
             box-shadow: 0 4px 16px rgba(255,121,0,0.35);
         }
+        .gel-submit:active { transform: translateY(0); }
+        .gel-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+        .gel-submit .spinner { display: none; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: gelSpin 0.6s linear infinite; }
+        .gel-submit.loading .spinner { display: inline-block; }
+        .gel-submit.loading .btn-text { display: none; }
+        .gel-submit.loading .btn-icon { display: none; }
+        @keyframes gelSpin { to { transform: rotate(360deg); } }
 
         .gel-divider {
             display: flex; align-items: center; gap: 10px;
@@ -361,104 +369,7 @@
 <body>
 
     <!-- ═══ NAVBAR ═══ -->
-    <nav class="gel-navbar" id="gelNavbar">
-        <div class="container-fluid">
-            <a href="/" class="gel-brand">
-                <div class="gel-brand-logo">GEL</div>
-                <div class="gel-brand-text">
-                    <span class="gel-brand-name">GEL Cabinet</span>
-                    <span class="gel-brand-sub">Gestion Multi-Pôles</span>
-                </div>
-            </a>
-
-            <ul class="gel-nav-center" id="gelNavCenter">
-                <li class="gel-nav-item">
-                    <a href="#" class="gel-nav-link">
-                        Nos Modules
-                        <i class="bi-chevron-down chevron"></i>
-                    </a>
-                    <ul class="gel-dropdown">
-                        <li><a href="/login"><span class="drop-icon"><i class="bi-people"></i></span> CRM Clients</a></li>
-                        <li><a href="/login"><span class="drop-icon"><i class="bi-folder2-open"></i></span> GED — Documents</a></li>
-                        <li><a href="/login"><span class="drop-icon"><i class="bi-diagram-3"></i></span> Pôles & Missions</a></li>
-                        <li><hr class="gel-dropdown-divider"></li>
-                        <li><a href="/login"><span class="drop-icon"><i class="bi-calculator"></i></span> Comptabilité</a></li>
-                        <li><a href="/login"><span class="drop-icon"><i class="bi-box-seam"></i></span> ERP Intégré</a></li>
-                    </ul>
-                </li>
-                <li class="gel-nav-item">
-                    <a href="/login" class="gel-nav-link">
-                        Services
-                        <i class="bi-chevron-down chevron"></i>
-                    </a>
-                    <ul class="gel-dropdown">
-                        <li><a href="/login"><span class="drop-icon"><i class="bi-calculator"></i></span> Comptabilité</a></li>
-                        <li><a href="/login"><span class="drop-icon"><i class="bi-bank2"></i></span> Juridique</a></li>
-                        <li><a href="/login"><span class="drop-icon"><i class="bi-receipt"></i></span> Fiscal</a></li>
-                        <li><a href="/login"><span class="drop-icon"><i class="bi-people"></i></span> Social & Paie</a></li>
-                    </ul>
-                </li>
-                <li class="gel-nav-item">
-                    <a href="#" class="gel-nav-link">
-                        À propos
-                        <i class="bi-chevron-down chevron"></i>
-                    </a>
-                    <ul class="gel-dropdown">
-                        <li><a href="{{ route('notre-cabinet') }}"><span class="drop-icon"><i class="bi-building"></i></span> Notre Cabinet</a></li>
-                        <li><a href="{{ route('notre-equipe') }}"><span class="drop-icon"><i class="bi-people-fill"></i></span> Notre Équipe</a></li>
-                        <li><a href="{{ route('carrieres') }}"><span class="drop-icon"><i class="bi-briefcase-fill"></i></span> Carrières</a></li>
-                    </ul>
-                </li>
-                <li class="gel-nav-item"><a href="/login" class="gel-nav-link">Tarifs</a></li>
-                <li class="gel-nav-item"><a href="/login" class="gel-nav-link">Contact</a></li>
-            </ul>
-
-            <div class="gel-nav-right">
-                @auth
-                    @if(auth()->user()->role === 'client')
-                        <a href="{{ route('client.orders.index') }}" class="gel-btn-nav gel-btn-nav-outline">
-                            <i class="bi-speedometer2"></i> Mon Espace
-                        </a>
-                    @elseif(auth()->user()->client_id)
-                        <a href="{{ route('company.dashboard') }}" class="gel-btn-nav gel-btn-nav-outline">
-                            <i class="bi-speedometer2"></i> Portail
-                        </a>
-                    @else
-                        <a href="{{ route('dashboard') }}" class="gel-btn-nav gel-btn-nav-outline">
-                            <i class="bi-speedometer2"></i> Tableau de bord
-                        </a>
-                    @endif
-                    <form method="POST" action="{{ route('logout') }}" style="display:inline;">
-                        @csrf
-                        <button type="submit" class="gel-btn-nav gel-btn-nav-outline" style="color:#dc2626; border-color:#fca5a5;">
-                            <i class="bi-box-arrow-right"></i>
-                        </button>
-                    </form>
-                @else
-                    <a href="/login" class="gel-btn-nav gel-btn-nav-primary" id="nav-login-btn">
-                        <i class="bi-box-arrow-in-right"></i> Connexion
-                    </a>
-                @endauth
-                <button class="gel-toggler" id="gelToggler" aria-label="Menu">
-                    <i class="bi-list" id="togglerIcon"></i>
-                </button>
-            </div>
-        </div>
-    </nav>
-
-    <!-- ═══ MOBILE MENU ═══ -->
-    <div class="gel-mobile-menu" id="gelMobileMenu">
-        <a href="/" class="gel-mobile-link"><i class="bi-house" style="color:var(--gel-primary);"></i>Accueil</a>
-        <a href="/login" class="gel-mobile-link"><i class="bi-grid-3x3-gap" style="color:var(--gel-primary);"></i>Nos Modules</a>
-        <a href="/login" class="gel-mobile-link"><i class="bi-grid-3x3-gap" style="color:var(--gel-primary);"></i>Services</a>
-        <a href="{{ route('notre-cabinet') }}" class="gel-mobile-link"><i class="bi-building" style="color:var(--gel-primary);"></i>Notre Cabinet</a>
-        <a href="{{ route('notre-equipe') }}" class="gel-mobile-link"><i class="bi-people-fill" style="color:var(--gel-primary);"></i>Notre Équipe</a>
-        <a href="{{ route('carrieres') }}" class="gel-mobile-link"><i class="bi-briefcase-fill" style="color:var(--gel-primary);"></i>Carrières</a>
-        <a href="/login" class="gel-mobile-link"><i class="bi-currency-dollar" style="color:var(--gel-primary);"></i>Tarifs</a>
-        <a href="/login" class="gel-mobile-link"><i class="bi-envelope" style="color:var(--gel-primary);"></i>Contact</a>
-        <a href="/login" class="gel-mobile-link"><i class="bi-box-arrow-in-right" style="color:var(--gel-primary);"></i>Connexion</a>
-    </div>
-
+    @include('partials.navbar')
     <!-- ═══ REGISTER CARD ═══ -->
     <div class="gel-layout">
         <div class="gel-card">
@@ -512,12 +423,16 @@
                     <div class="gel-field-wrap">
                         <input type="password" id="password_confirmation" name="password_confirmation" class="gel-input" required placeholder="Retapez le mot de passe">
                         <i class="bi-shield-lock gel-field-icon"></i>
+                        <button type="button" class="gel-pw-toggle" id="pwConfirmToggle" aria-label="Afficher/Masquer">
+                            <i class="bi-eye" id="pwConfirmIcon"></i>
+                        </button>
                     </div>
                 </div>
 
                 <button type="submit" class="gel-submit">
-                    <i class="bi-person-plus"></i>
-                    Créer mon compte
+                    <i class="bi-person-plus btn-icon"></i>
+                    <span class="spinner"></span>
+                    <span class="btn-text">Créer mon compte</span>
                 </button>
             </form>
 
@@ -593,6 +508,21 @@
         const isPassword = input.type === 'password';
         input.type = isPassword ? 'text' : 'password';
         icon.className = isPassword ? 'bi-eye-slash' : 'bi-eye';
+    });
+
+    // CONFIRMATION TOGGLE
+    document.getElementById('pwConfirmToggle')?.addEventListener('click', () => {
+        const input = document.getElementById('password_confirmation');
+        const icon = document.getElementById('pwConfirmIcon');
+        const isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+        icon.className = isPassword ? 'bi-eye-slash' : 'bi-eye';
+    });
+
+    // SUBMIT PREVENTION
+    document.querySelector('form')?.addEventListener('submit', function() {
+        const btn = this.querySelector('.gel-submit');
+        if (btn) { btn.disabled = true; btn.classList.add('loading'); }
     });
     </script>
 </body>

@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -r 'SetTenantContext' app/Http/Kernel.php bootstrap/app.php)",
+      "Bash(grep -r 'SetTenantContext' routes/)"
+    ]
+  }
+}

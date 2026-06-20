@@ -16,18 +16,19 @@ class SetTenantContext
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Ce middleware est conçu pour PostgreSQL (RLS).
+        // MySQL ne supporte pas la syntaxe SET app.client_id — on saute.
+        if (DB::connection()->getDriverName() !== 'pgsql') {
+            return $next($request);
+        }
+
         if (Auth::check()) {
             $user = Auth::user();
             $clientId = $user->client_id ?? 0;
 
-            // Définir le contexte tenant pour PostgreSQL RLS
-            if (DB::connection()->getDriverName() === 'pgsql') {
-                DB::statement("SET app.client_id = '{$clientId}'");
-            }
+            DB::statement("SET app.client_id = '{$clientId}'");
         } else {
-            if (DB::connection()->getDriverName() === 'pgsql') {
-                DB::statement("SET app.client_id = '0'");
-            }
+            DB::statement("SET app.client_id = '0'");
         }
 
         return $next($request);

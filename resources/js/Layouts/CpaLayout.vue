@@ -27,18 +27,18 @@ const userRoleLabel = computed(() => {
 const isLinkActive = (linkHref) => {
     const currentPath = window.location.pathname;
     const currentSearch = window.location.search;
-    
+
     if (linkHref.includes('?section=')) {
         const linkParams = new URLSearchParams(linkHref.split('?')[1]);
         const urlParams = new URLSearchParams(currentSearch);
         return currentPath === linkHref.split('?')[0] && urlParams.get('section') === linkParams.get('section');
     }
-    
+
     if (linkHref === '/cpa-dashboard') {
         const urlParams = new URLSearchParams(currentSearch);
         return currentPath === '/cpa-dashboard' && !urlParams.has('section');
     }
-    
+
     return currentPath === linkHref;
 };
 
@@ -79,19 +79,47 @@ const sidebarLinks = computed(() => {
         );
     }
 
-    // Assign active status
     return links.map(link => ({
         ...link,
         active: isLinkActive(link.href)
     }));
 });
 
+// Current section label for subnav
+const activeSectionLabel = computed(() => {
+    const active = sidebarLinks.value.find(l => l.active);
+    return active?.label || 'Tableau de bord';
+});
+
+const getBaseUrl = () => {
+    if (typeof document === 'undefined') return '';
+    const meta = document.querySelector('meta[name="base-url"]');
+    let url = meta ? meta.content : '';
+    return url.endsWith('/') ? url.slice(0, -1) : url;
+};
+
+const buildUrl = (path) => {
+    if (!path) return '#';
+    if (path.startsWith('http')) return path;
+    const base = getBaseUrl();
+    return base + (path.startsWith('/') ? path : '/' + path);
+};
+
 const logout = async () => {
-    const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
-    const form = document.getElementById('logout-form');
-    const input = document.getElementById('logout-csrf-token');
-    if (input && csrfToken) input.value = csrfToken;
-    if (form) form.submit();
+    try {
+        await window.axios.post('/logout');
+        window.location.href = buildUrl('/cpa-login');
+    } catch (e) {
+        console.error('Logout failed with Axios, falling back to form submit:', e);
+        const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
+        const form = document.getElementById('logout-form');
+        const input = document.getElementById('logout-csrf-token');
+        if (input && csrfToken) input.value = csrfToken;
+        if (form) {
+            form.action = buildUrl('/logout');
+            form.submit();
+        }
+    }
 };
 
 function handleResize() {
@@ -104,546 +132,433 @@ onUnmounted(() => window.removeEventListener('resize', handleResize));
 </script>
 
 <template>
-    <div class="cpa-shell">
+    <div class="g-shell d-flex flex-column" style="min-height:100vh; background:#f0f4f8;">
+
         <!-- ═══ TOP BAR ═══ -->
-        <header class="cpa-topbar">
-            <div class="cpa-topbar-left">
-                <button class="cpa-menu-btn" @click="sidebarOpen = !sidebarOpen">
-                    <i class="bi-list"></i>
-                </button>
-                <div class="cpa-logo">
-                    <div class="cpa-logo-icon"><i class="bi-gem"></i></div>
-                    <span class="cpa-logo-text">GEL Cabinet</span>
-                </div>
+        <header class="g-topbar d-flex align-items-center justify-content-between px-3">
+            <div class="d-flex align-items-center gap-2">
+                <div class="g-logo-icon"><i class="bi-gem"></i></div>
+                <span class="g-logo-text">GEL Cabinet CPA</span>
             </div>
-            <div class="cpa-topbar-right">
-                <span class="cpa-role-badge">{{ userRoleLabel }}</span>
+
+            <div class="d-flex align-items-center gap-2">
+                <span class="g-role-badge d-none d-sm-inline">{{ userRoleLabel }}</span>
+                <button class="g-toggle-btn" @click="sidebarOpen = !sidebarOpen" title="Afficher/Masquer la sidebar">
+                    <i :class="sidebarOpen ? 'bi-x-lg' : 'bi-list'"></i>
+                </button>
                 <div class="dropdown">
-                    <button class="cpa-user-btn" data-bs-toggle="dropdown">
-                        <div class="cpa-avatar">{{ userInitial }}</div>
-                        <i class="bi-chevron-down cpa-chevron"></i>
+                    <button class="g-user-btn d-flex align-items-center gap-2"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="g-avatar">{{ userInitial }}</div>
+                        <i class="bi-chevron-down" style="font-size:9px; color:rgba(255,255,255,0.6);"></i>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end cpa-dropdown">
+                    <ul class="dropdown-menu dropdown-menu-end g-dropdown">
                         <li>
-                            <div class="cpa-dd-user">
-                                <div class="cpa-dd-name">{{ authStore.user?.name }}</div>
-                                <div class="cpa-dd-email">{{ authStore.user?.email }}</div>
+                            <div class="g-dd-user px-3 py-2 border-bottom">
+                                <div class="fw-bold" style="font-size:13px; color:#163A5E;">{{ authStore.user?.name }}</div>
+                                <div style="font-size:11px; color:#888;">{{ authStore.user?.email }}</div>
                             </div>
                         </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item cpa-dd-item" href="#" @click.prevent="logout">
-                            <i class="bi-box-arrow-right me-2"></i>Déconnexion</a></li>
+                        <li><hr class="dropdown-divider my-1"></li>
                     </ul>
                 </div>
             </div>
         </header>
 
-        <!-- ═══ BODY ═══ -->
-        <div class="cpa-body">
+        <!-- ═══ MAIN LAYOUT: Sidebar + Contenu ═══ -->
+        <div class="g-body d-flex flex-grow-1" style="min-height:0;">
+
             <!-- Sidebar -->
-            <aside class="cpa-sidebar" :class="{ 'cpa-sidebar-open': sidebarOpen }">
-                <nav class="cpa-nav">
+            <aside class="g-sidebar d-flex flex-column flex-shrink-0 justify-content-between"
+                   :class="{ 'g-sidebar-closed': !sidebarOpen }">
+                <div class="gs-nav">
                     <a v-for="link in sidebarLinks" :key="link.label"
                        :href="link.href"
-                       class="cpa-nav-link"
-                       :class="{ 'cpa-nav-active': link.active }">
-                        <i :class="link.icon"></i>
-                        <span>{{ link.label }}</span>
+                       class="gs-nav-item"
+                       :class="{ 'gs-nav-active': link.active }">
+                        <i :class="link.icon" class="gs-nav-icon"></i>
+                        <span class="gs-nav-label">{{ link.label }}</span>
                     </a>
-                </nav>
-                <div class="cpa-sidebar-footer">
-                    <a href="/company/dashboard" class="cpa-nav-link cpa-nav-back">
-                        <i class="bi-arrow-left"></i>
-                        <span>Portail Entreprise</span>
+                </div>
+
+                <!-- ══ BAS DE SIDEBAR — Compte ══ -->
+                <div class="gs-sidebar-divider"></div>
+                <div class="gs-sidebar-bottom">
+                    <a href="/settings" class="gs-nav-item">
+                        <i class="bi-gear gs-nav-icon"></i>
+                        <span class="gs-nav-label">Paramètres</span>
+                    </a>
+                    <a href="#" class="gs-nav-item gs-nav-logout" @click.prevent="logout">
+                        <i class="bi-box-arrow-right gs-nav-icon"></i>
+                        <span class="gs-nav-label">Déconnexion</span>
+                    </a>
+                </div>
+
+                <div class="gs-nav" style="border-top:1px solid rgba(255,255,255,0.06); padding:8px 0;">
+                    <a href="/company/dashboard"
+                       class="gs-nav-item"
+                       title="Retour au portail entreprise">
+                        <i class="bi-arrow-left gs-nav-icon"></i>
+                        <span class="gs-nav-label">Portail Entreprise</span>
                     </a>
                 </div>
             </aside>
 
             <!-- Overlay mobile -->
-            <div v-if="sidebarOpen && isMobile" class="cpa-overlay" @click="sidebarOpen = false"></div>
+            <div v-if="sidebarOpen && isMobile" class="g-overlay" @click="sidebarOpen = false"></div>
 
-            <!-- Main -->
-            <main class="cpa-main">
-                <slot />
+            <!-- Contenu principal -->
+            <main class="g-main flex-grow-1 d-flex flex-column" style="min-width:0;">
+                <!-- Subnav bar -->
+                <div class="gs-subnav">
+                    <div class="gs-subnav-title">{{ activeSectionLabel }}</div>
+                    <div class="gs-subnav-links">
+                        <a v-for="link in sidebarLinks" :key="link.href"
+                           :href="link.href"
+                           class="gs-subnav-link"
+                           :class="{ 'gs-subnav-active': link.active }">
+                            <i :class="link.icon"></i>
+                            {{ link.label }}
+                        </a>
+                    </div>
+                </div>
+                <!-- Page content -->
+                <div class="flex-grow-1 p-4" style="min-height:0;">
+                    <slot />
+                </div>
             </main>
         </div>
 
         <!-- Mobile Bottom Bar -->
-        <nav class="cpa-bottombar d-md-none">
-            <a v-for="link in sidebarLinks" :key="link.label"
+        <nav class="g-bottombar d-md-none">
+            <a v-for="link in sidebarLinks" :key="link.href"
                :href="link.href"
-               class="cpa-bottombar-link"
-               :class="{ 'cpa-bottombar-active': link.active }">
+               class="g-bottombar-link"
+               :class="{ 'g-bottombar-active': link.active }">
                 <i :class="link.icon"></i>
                 <span>{{ link.label }}</span>
             </a>
         </nav>
 
-        <!-- Logout form caché -->
+        <!-- Logout form -->
         <form id="logout-form" method="POST" action="/logout" style="display:none;">
             <input type="hidden" name="_token" id="logout-csrf-token">
         </form>
     </div>
 </template>
 
-<style>
-/* ═══════════════════════════════════════════════════════
-   CPA LAYOUT — Design Crescendo CPA
-   Fond blanc dominant, orange/bleu en accents
-   ═══════════════════════════════════════════════════════ */
+<style scoped>
+/* ══ CPA LAYOUT — Sidebar verticale + Subnav ══ */
 
-/* ── Variables ── */
-:root {
-    --cpa-primary: #FF7900;
-    --cpa-primary-hover: #e06700;
-    --cpa-dark: #163A5E;
-    --cpa-dark-hover: #1e4d7a;
-    --cpa-border: #eef0f4;
-    --cpa-bg: #ffffff;
-    --cpa-bg-alt: #f8f9fc;
-    --cpa-text: #1a1a2e;
-    --cpa-text-muted: #6b7280;
-    --cpa-radius: 10px;
-    --cpa-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-    --cpa-shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.08), 0 4px 10px -6px rgba(0,0,0,0.04);
-    --cpa-topbar-height: 56px;
-    --cpa-sidebar-width: 240px;
-}
-
-/* ── Shell ── */
-.cpa-shell {
-    min-height: 100vh;
-    background: var(--cpa-bg-alt);
-    display: flex;
-    flex-direction: column;
-}
-
-/* ── Topbar glow accent ── */
-.cpa-topbar::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--cpa-primary) 0%, #163A5E 50%, var(--cpa-primary) 100%);
-    z-index: 1;
-}
-
-/* ── Topbar ── */
-.cpa-topbar {
-    height: var(--cpa-topbar-height);
-    background: var(--cpa-bg);
-    border-bottom: 1px solid var(--cpa-border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
+/* ── Top bar ─────────────────────────────── */
+.g-topbar {
+    background: #163A5E;
+    height: 52px;
+    flex-shrink: 0;
+    border-bottom: 2px solid #FF7900;
+    box-shadow: 0 2px 6px rgba(22,58,94,0.12);
     position: sticky;
     top: 0;
-    z-index: 1020;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    z-index: 1030;
 }
-.cpa-topbar-left,
-.cpa-topbar-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+.g-logo-icon {
+    width: 30px; height: 30px;
+    background: #FF7900; color: #fff;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
 }
-.cpa-menu-btn {
-    background: none;
-    border: 1px solid var(--cpa-border);
-    border-radius: 6px;
-    width: 34px;
-    height: 34px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--cpa-text-muted);
-    cursor: pointer;
-    font-size: 18px;
-    transition: all 0.15s;
-}
-.cpa-menu-btn:hover {
-    background: var(--cpa-bg-alt);
-    color: var(--cpa-dark);
-}
-.cpa-logo {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.cpa-logo-icon {
-    width: 30px;
-    height: 30px;
-    background: var(--cpa-primary);
-    color: #fff;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-}
-.cpa-logo-text {
+.g-logo-text {
     font-family: 'Outfit', sans-serif;
-    font-weight: 800;
-    font-size: 15px;
-    color: var(--cpa-dark);
+    font-weight: 800; font-size: 15px; color: #fff;
 }
-.cpa-role-badge {
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--cpa-primary);
-    background: rgba(255,121,0,0.08);
-    padding: 4px 10px;
-    border-radius: 6px;
-}
-.cpa-user-btn {
-    background: none;
-    border: 1px solid var(--cpa-border);
-    border-radius: 6px;
-    padding: 4px 10px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
+.g-toggle-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.7);
+    border-radius: 4px;
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 14px;
     transition: all 0.15s;
 }
-.cpa-user-btn:hover {
-    background: var(--cpa-bg-alt);
-}
-.cpa-avatar {
-    width: 28px;
-    height: 28px;
-    background: var(--cpa-dark);
+.g-toggle-btn:hover {
+    background: rgba(255,255,255,0.15);
     color: #fff;
-    font-weight: 700;
-    font-size: 11px;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.cpa-chevron {
-    font-size: 9px;
-    color: var(--cpa-text-muted);
-}
-.cpa-dropdown {
-    border-radius: 8px !important;
-    border: 1px solid var(--cpa-border) !important;
-    box-shadow: var(--cpa-shadow-lg) !important;
-    margin-top: 8px;
-    min-width: 200px;
-}
-.cpa-dd-user {
-    padding: 10px 14px;
-}
-.cpa-dd-name {
-    font-weight: 700;
-    font-size: 13px;
-    color: var(--cpa-dark);
-}
-.cpa-dd-email {
-    font-size: 11px;
-    color: var(--cpa-text-muted);
-}
-.cpa-dd-item {
-    font-size: 13px;
-    padding: 8px 14px;
-    color: var(--cpa-text);
-}
-.cpa-dd-item:hover {
-    background: rgba(255,121,0,0.06) !important;
-    color: var(--cpa-primary) !important;
 }
 
-/* ── Body layout ── */
-.cpa-body {
-    display: flex;
-    flex-grow: 1;
-    min-height: 0;
-    position: relative;
+/* ── User ───────────────────────────────── */
+.g-user-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 4px; padding: 3px 8px; cursor: pointer;
+    transition: background 0.15s;
 }
+.g-user-btn:hover { background: rgba(255,255,255,0.18); }
+.g-avatar {
+    width: 28px; height: 28px;
+    background: #fff; color: #163A5E;
+    font-weight: 800; font-size: 11px;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+}
+.g-role-badge {
+    font-size: 9px; font-weight: 800; letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: rgba(255,121,0,0.2);
+    color: #FF7900;
+    padding: 3px 8px; border-radius: 3px;
+}
+.g-dropdown { border-radius: 4px !important; min-width: 210px; margin-top: 6px; border: 1px solid #dce3ee !important; box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important; }
+.g-dd-user { background: #f8fbff; }
+.g-dd-item { font-size: 13px; padding: 9px 16px; color: #333; }
+.g-dd-item:hover { background: #FFF3E0 !important; color: #FF7900 !important; }
+.g-dd-danger { color: #e53935 !important; }
+.g-dd-danger:hover { background: #fdecea !important; color: #e53935 !important; }
 
-/* ── Sidebar ── */
-.cpa-sidebar {
-    width: var(--cpa-sidebar-width);
-    min-width: var(--cpa-sidebar-width);
-    background: var(--cpa-bg);
-    border-right: 1px solid var(--cpa-border);
+/* ── Sidebar ──────────────────────────────────── */
+.g-body { position: relative; }
+.g-sidebar {
+    width: 240px;
+    background: #1a2938;
+    border-right: 1px solid #1e3244;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    transition: transform 0.25s ease, width 0.25s ease;
     overflow-y: auto;
+    transition: width 0.2s ease, opacity 0.2s ease;
+    flex-shrink: 0;
 }
-.cpa-sidebar-footer {
-    border-top: 1px solid var(--cpa-border);
-    padding: 8px 0;
+.g-sidebar-closed {
+    width: 0;
+    overflow: hidden;
+    opacity: 0;
+    border-right: none;
+    padding: 0;
 }
-.cpa-nav {
-    padding: 12px 0;
+
+/* ── Navigation ────────────────────────────── */
+.gs-nav {
+    padding: 4px 0;
 }
-.cpa-nav-link {
+.gs-nav-item {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 18px;
+    padding: 10px 16px;
+    margin: 1px 8px;
     font-size: 13px;
-    font-weight: 500;
-    color: var(--cpa-text-muted);
+    font-weight: 600;
+    color: rgba(255,255,255,0.75);
     text-decoration: none;
+    border-radius: 6px;
     border-left: 3px solid transparent;
-    transition: all 0.15s;
+    transition: all 0.12s;
+    white-space: nowrap;
 }
-.cpa-nav-link:hover {
-    color: var(--cpa-dark);
-    background: var(--cpa-bg-alt);
+.gs-nav-item:hover {
+    color: #fff;
+    background: rgba(255,255,255,0.08);
 }
-.cpa-nav-link i {
+.gs-nav-active {
+    color: #fff !important;
+    background: rgba(255,121,0,0.15);
+    border-left-color: #FF7900;
+}
+.gs-nav-icon {
     font-size: 16px;
     width: 20px;
     text-align: center;
     flex-shrink: 0;
 }
-.cpa-nav-active {
-    color: var(--cpa-primary);
-    background: rgba(255,121,0,0.06);
-    border-left-color: var(--cpa-primary);
-    font-weight: 600;
+.gs-nav-active .gs-nav-icon { color: #FF7900; }
+.gs-nav-label { line-height: 1; }
+
+/* ── Bas de sidebar — Compte ─────────────── */
+.gs-sidebar-divider {
+    height: 1px;
+    background: rgba(255,255,255,0.08);
+    margin: 4px 16px 2px;
 }
-.cpa-nav-active i {
-    color: var(--cpa-primary);
+.gs-sidebar-bottom {
+    padding: 2px 0 8px;
 }
-.cpa-nav-back {
-    color: var(--cpa-text-muted);
+.gs-nav-logout {
+    color: rgba(231, 76, 60, 0.7) !important;
+}
+.gs-nav-logout:hover {
+    color: #e74c3c !important;
+    background: rgba(231, 76, 60, 0.12) !important;
+}
+
+/* ── Subnav ──────────────────────────────────── */
+.gs-subnav {
+    background: #fff;
+    border-bottom: 1px solid #dce3ee;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+.gs-subnav-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #163A5E;
+    white-space: nowrap;
+    margin-right: 8px;
+}
+.gs-subnav-links {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+.gs-subnav-link {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
     font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    text-decoration: none;
+    border-radius: 5px;
+    border: 1px solid transparent;
+    transition: all 0.12s;
+    white-space: nowrap;
 }
-.cpa-nav-back:hover {
-    color: var(--cpa-dark);
+.gs-subnav-link:hover {
+    color: #FF7900;
+    background: #FFF3E0;
+    border-color: #FFE0B2;
 }
+.gs-subnav-active {
+    color: #FF7900 !important;
+    background: #FFF3E0;
+    border-color: #FFE0B2;
+}
+.gs-subnav-link i {
+    font-size: 12px;
+    color: #999;
+}
+.gs-subnav-link:hover i,
+.gs-subnav-active i { color: #FF7900; }
 
-/* ── Main ── */
-.cpa-main {
-    flex-grow: 1;
-    padding: 24px;
-    min-width: 0;
-    overflow-y: auto;
-    background: var(--cpa-bg-alt);
-    background-image: radial-gradient(circle, rgba(0,0,0,0.025) 1px, transparent 1px);
-    background-size: 24px 24px;
-}
+/* ── Main ────────────────────────────────── */
+.g-main { background: #f0f4f8; min-width: 0; }
 
-/* ── Overlay mobile ── */
-.cpa-overlay {
+/* ── Mobile overlay ──────────────────────── */
+.g-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.3);
+    background: rgba(0,0,0,0.4);
     z-index: 1040;
 }
 
-/* ── Réutilisables ── */
-.cpa-card {
-    background: var(--cpa-bg);
-    border: 1px solid var(--cpa-border);
-    border-radius: var(--cpa-radius);
-    box-shadow: var(--cpa-shadow);
-    transition: box-shadow 0.2s;
-}
-.cpa-card:hover {
-    box-shadow: var(--cpa-shadow-lg);
-}
-.cpa-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--cpa-border);
-    font-weight: 700;
-    font-size: 14px;
-    color: var(--cpa-dark);
-}
-.cpa-card-body {
-    padding: 20px;
-}
-.cpa-stat-value {
-    font-family: 'Outfit', sans-serif;
-    font-size: 28px;
-    font-weight: 800;
-    color: var(--cpa-dark);
-    line-height: 1.2;
-}
-.cpa-stat-label {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--cpa-text-muted);
-    margin-top: 4px;
-}
-.cpa-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
-}
-.cpa-badge-success {
-    background: #e8f5e9;
-    color: #2e7d32;
-}
-.cpa-badge-warning {
-    background: #fff3e0;
-    color: #e65100;
-}
-.cpa-badge-danger {
-    background: #fdecea;
-    color: #c62828;
-}
-.cpa-badge-info {
-    background: #e3f2fd;
-    color: #1565c0;
-}
-.cpa-badge-neutral {
-    background: #f3f4f6;
-    color: #6b7280;
-}
-.cpa-panel {
-    background: var(--cpa-bg);
-    border: 1px solid var(--cpa-border);
-    border-radius: var(--cpa-radius);
-    box-shadow: var(--cpa-shadow);
-}
-.cpa-panel-title {
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--cpa-text-muted);
-    margin-bottom: 16px;
-}
-
-/* ── Animations ── */
-@keyframes cpa-fadeInUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-.cpa-animate {
-    animation: cpa-fadeInUp 0.4s ease forwards;
-}
-.cpa-animate-d1 { animation-delay: 0.05s; }
-.cpa-animate-d2 { animation-delay: 0.1s; }
-.cpa-animate-d3 { animation-delay: 0.15s; }
-.cpa-animate-d4 { animation-delay: 0.2s; }
-.cpa-animate-d5 { animation-delay: 0.25s; }
-
-/* ── Progress bar ── */
-.cpa-progress {
-    height: 6px;
-    background: #f0f0f0;
-    border-radius: 3px;
-    overflow: hidden;
-}
-.cpa-progress-bar {
-    height: 100%;
-    border-radius: 3px;
-    transition: width 0.6s ease;
-    background: var(--cpa-primary);
-}
-.cpa-progress-bar-green { background: #2e7d32; }
-.cpa-progress-bar-blue { background: #1565c0; }
-
-/* ── Table stylée ── */
-.cpa-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-}
-.cpa-table th {
-    text-align: left;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--cpa-text-muted);
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--cpa-border);
-}
-.cpa-table td {
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--cpa-border);
-    color: var(--cpa-text);
-}
-.cpa-table tr:hover td {
-    background: var(--cpa-bg-alt);
-}
-
-/* ══ RESPONSIVE & MOBILE BOTTOM BAR ══ */
-.cpa-bottombar {
+/* ── Mobile Bottom Bar ──────────────────────── */
+.g-bottombar {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
     height: 60px;
-    background: rgba(255, 255, 255, 0.98);
+    background: rgba(255,255,255,0.98);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border-top: 1px solid var(--cpa-border);
+    border-top: 1px solid #dce3ee;
     display: flex;
     align-items: center;
     justify-content: space-around;
     z-index: 1030;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
     padding-bottom: env(safe-area-inset-bottom);
 }
-.cpa-bottombar-link {
+.g-bottombar-link {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: var(--cpa-text-muted);
+    color: #6b7280;
     text-decoration: none;
     font-size: 10px;
     font-weight: 500;
     flex: 1;
     height: 100%;
     gap: 2px;
-    transition: color 0.15s ease;
+    transition: color 0.15s;
 }
-.cpa-bottombar-link:hover {
-    color: var(--cpa-primary);
-}
-.cpa-bottombar-link i {
-    font-size: 18px;
-}
-.cpa-bottombar-link.cpa-bottombar-active {
-    color: var(--cpa-primary);
+.g-bottombar-link:hover { color: #FF7900; }
+.g-bottombar-link i { font-size: 18px; }
+.g-bottombar-active {
+    color: #FF7900;
     font-weight: 600;
 }
 
-@media (max-width: 767.98px) {
-    .cpa-topbar { padding: 0 12px; }
-    .cpa-logo-text { display: none; }
-    .cpa-main { 
-        padding: 12px;
-        padding-bottom: 80px; /* Leave space for mobile bottom bar */
-    }
-    .cpa-sidebar {
-        display: none; /* Hide sidebar completely on mobile since we have bottom bar */
-    }
-    .cpa-menu-btn {
-        display: none; /* Hide toggle menu button on mobile since we use bottom bar */
-    }
-    .cpa-stat-value { font-size: 22px; }
+/* ── Deep overrides ──────────────────────── */
+:deep(.btn) { border-radius: 4px !important; font-size: 13px; }
+:deep(.btn-primary) {
+    background: #FF7900 !important; border-color: #FF7900 !important;
+    color: #fff !important; font-weight: 700 !important;
 }
-@media (min-width: 768px) and (max-width: 1024px) {
-    .cpa-sidebar { width: 80px; min-width: 80px; }
-    .cpa-sidebar span { display: none; } /* Hide labels on tablet */
-    .cpa-sidebar .cpa-nav-link { justify-content: center; padding: 12px 0; }
-    .cpa-sidebar .cpa-nav-link i { font-size: 20px; margin: 0; }
-    .cpa-main { padding: 16px; }
+:deep(.btn-primary:hover) { background: #e06700 !important; border-color: #e06700 !important; }
+:deep(.btn-outline-primary) { color: #FF7900 !important; border-color: #FF7900 !important; }
+:deep(.btn-outline-primary:hover) { background: #FF7900 !important; color: #fff !important; }
+:deep(.card) { border-radius: 6px !important; border: 1px solid #dce3ee; box-shadow: 0 1px 4px rgba(22,58,94,0.06); }
+:deep(.card-header) {
+    background: linear-gradient(90deg, #163A5E, #1e4d7a);
+    border-bottom: none; font-size: 13px; font-weight: 700;
+    padding: 10px 16px; border-radius: 6px 6px 0 0 !important; color: #fff;
 }
+:deep(.table) { font-size: 13px; }
+:deep(.table thead th) {
+    background: #EEF3F9; color: #163A5E; font-weight: 700;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
+    border-color: #dce3ee; padding: 10px 12px;
+}
+:deep(.table td) { padding: 10px 12px; border-color: #f0f4f8; }
+:deep(.table tbody tr:hover) { background: #f8fbff; }
+:deep(.badge) { border-radius: 4px !important; font-size: 11px; font-weight: 700; }
+:deep(.form-control), :deep(.form-select) {
+    border-radius: 4px !important; font-size: 13px; border: 1px solid #dce3ee;
+}
+:deep(.form-control:focus), :deep(.form-select:focus) {
+    border-color: #FF7900; box-shadow: 0 0 0 2px rgba(255,121,0,0.15);
+}
+:deep(.text-primary) { color: #FF7900 !important; }
+:deep(.bg-primary) { background: #FF7900 !important; }
 
+/* ══ RESPONSIVE ══ */
+@media (max-width: 991.98px) {
+    .g-topbar { padding-left: 10px !important; padding-right: 10px !important; }
+    .g-main > .p-4 { padding: 12px !important; }
+    .g-sidebar {
+        position: fixed;
+        left: 0;
+        top: 52px;
+        bottom: 0;
+        z-index: 1050;
+        box-shadow: 4px 0 20px rgba(0,0,0,0.3);
+        width: 260px;
+    }
+    .g-sidebar-closed {
+        width: 0 !important;
+        transform: translateX(-100%);
+        opacity: 1;
+    }
+}
+@media (max-width: 767.98px) {
+    .g-topbar { height: 48px; }
+    .g-main > .p-4 { padding: 8px !important; padding-bottom: 76px; }
+    .g-role-badge { display: none; }
+    .g-logo-text { font-size: 13px; }
+    .gs-subnav { padding: 8px 12px; gap: 8px; }
+    .gs-subnav-title { font-size: 14px; }
+    .gs-subnav-links { display: none; }
+    .g-bottombar { display: flex; }
+}
+@media (min-width: 768px) {
+    .g-bottombar { display: none !important; }
+}
 </style>

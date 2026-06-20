@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<!-- DIAG: HTML starts rendering -->
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="base-url" content="{{ request()->root() }}">
     <title>GEL Cabinet | Gestion de Cabinet</title>
     <meta name="description" content="CRM, GED, Pôles, Missions, Comptabilité — votre cabinet tout-en-un.">
 
@@ -128,141 +130,13 @@
     @vite(['resources/js/app.js'])
 </head>
 <body>
-    <div id="app">
-        @if (isset($page))
-            @switch($page)
-                @case('gel-dashboard')
-                    <gel-dashboard></gel-dashboard>
-                    @break
-                @case('gel-clients')
-                    <gel-clients></gel-clients>
-                    @break
-                @case('gel-clients-create')
-                @case('gel-clients-edit')
-                    <gel-clients :client-id="{{ $clientId ?? 'null' }}"></gel-clients>
-                    @break
-                @case('gel-clients-show')
-                    <gel-client-show :client-id="{{ $clientId }}"></gel-client-show>
-                    @break
-                @case('gel-poles')
-                    <gel-poles></gel-poles>
-                    @break
-                @case('gel-poles-show')
-                    <gel-pole-show :pole-id="{{ $poleId }}"></gel-pole-show>
-                    @break
-                @case('gel-missions')
-                    <gel-missions></gel-missions>
-                    @break
-                @case('gel-missions-create')
-                @case('gel-missions-edit')
-                    <gel-mission-form :mission-id="{{ $missionId ?? 'null' }}"></gel-mission-form>
-                    @break
-                @case('gel-missions-show')
-                    <gel-mission-form :mission-id="{{ $missionId }}"></gel-mission-form>
-                    @break
-                @case('gel-dossiers')
-                    <gel-dossiers :client-id="{{ $clientId ?? 'null' }}"></gel-dossiers>
-                    @break
-                @case('gel-documents')
-                    <gel-dossiers :client-id="{{ $clientId ?? 'null' }}"></gel-dossiers>
-                    @break
-                @case('gel-services')
-                    <gel-services></gel-services>
-                    @break
-                @case('gel-services-show')
-                    <gel-services-show :service-id="{{ $serviceId }}"></gel-services-show>
-                    @break
-                @case('gel-accounting-accounts')
-                    <gel-accounting-accounts :client-id="{{ $clientId }}"></gel-accounting-accounts>
-                    @break
-                @case('gel-accounting-journals')
-                    <gel-accounting-journals :client-id="{{ $clientId }}"></gel-accounting-journals>
-                    @break
-                @case('gel-accounting-journal-form')
-                    <gel-accounting-journal-form :client-id="{{ $clientId }}"></gel-accounting-journal-form>
-                    @break
-                @case('gel-accounting-balance')
-                    <gel-accounting-balance :client-id="{{ $clientId }}"></gel-accounting-balance>
-                    @break
-                @case('gel-accounting-ledger')
-                    <gel-accounting-ledger :client-id="{{ $clientId }}"></gel-accounting-ledger>
-                    @break
-                @case('gel-accounting-bilan')
-                    <gel-accounting-bilan :client-id="{{ $clientId }}"></gel-accounting-bilan>
-                    @break
-                @case('gel-accounting-resultat')
-                    <gel-accounting-resultat :client-id="{{ $clientId }}"></gel-accounting-resultat>
-                    @break
-                @case('erp-catalogue')
-                    <erp-catalogue></erp-catalogue>
-                    @break
-                @case('erp-stock')
-                    <erp-stock></erp-stock>
-                    @break
-                @case('erp-invoice')
-                    <erp-invoice></erp-invoice>
-                    @break
-                @case('erp-hr')
-                    <erp-hr></erp-hr>
-                    @break
-                @case('erp-treasury')
-                    <erp-treasury></erp-treasury>
-                    @break
-                @case('gel-licenses')
-                    <gel-licenses></gel-licenses>
-                    @break
-                @case('gel-company-admins')
-                    <gel-company-admins></gel-company-admins>
-                    @break
-                @case('gel-requests')
-                    <gel-requests></gel-requests>
-                    @break
-                @case('public-catalogue-index')
-                    <public-catalogue-index :categories='@json($props["categories"] ?? [])'></public-catalogue-index>
-                    @break
-                @case('public-catalogue-show')
-                    <public-catalogue-show :category='@json($props["category"] ?? null)' :service='@json($props["service"] ?? null)'></public-catalogue-show>
-                    @break
-                @case('public-order-wizard')
-                    <public-order-wizard :service='@json($props["service"] ?? null)' :user='@json($props["user"] ?? null)'></public-order-wizard>
-                    @break
-                @case('client-orders-index')
-                    <client-orders-index :orders='@json($props["orders"] ?? [])'></client-orders-index>
-                    @break
-                @case('client-orders-show')
-                    <client-orders-show :order='@json($props["order"] ?? null)'></client-orders-show>
-                    @break
-                @case('admin-orders-kanban')
-                    <admin-orders-kanban :kanban='@json($props["kanban"] ?? [])' :statuts='@json($props["statuts"] ?? [])' :team='@json($props["team"] ?? [])'></admin-orders-kanban>
-                    @break
-                @case('admin-orders-archives')
-                    <admin-orders-archives :orders='@json($props["orders"] ?? [])'></admin-orders-archives>
-                    @break
-                @case('admin-orders-show')
-                    <admin-orders-show :order='@json($props["order"] ?? null)' :team='@json($props["team"] ?? [])' :statuts='@json($props["statuts"] ?? [])'></admin-orders-show>
-                    @break
-                @case('admin-services-index')
-                    <admin-services-index :categories='@json($props["categories"] ?? [])'></admin-services-index>
-                    @break
-                @case('cpa-login')
-                    <cpa-login></cpa-login>
-                    @break
-                @case('cpa-register')
-                    <cpa-register></cpa-register>
-                    @break
-                @case('cpa-dashboard')
-                    <cpa-dashboard></cpa-dashboard>
-                    @break
-                @case('settings')
-                    <gel-settings></gel-settings>
-                    @break
-                @default
-                    <gel-dashboard></gel-dashboard>
-            @endswitch
-        @else
-            @yield('content')
-        @endif
-    </div>
+    @php
+        $_allProps = $props ?? [];
+        foreach (['clientId','poleId','missionId','serviceId','courrierId','contratId','agId','id','categories','service','user','orders','order','kanban','statuts','team','category'] as $_key) {
+            if (isset($$_key)) $_allProps[$_key] = $$_key;
+        }
+    @endphp
+    <div id="app" data-page="{{ $page ?? '' }}" data-props='@json($_allProps)'></div>
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -279,7 +153,17 @@
             'fonction' => Auth::user()->fonction,
             'pole_id' => Auth::user()->pole_id,
             'client_id' => Auth::user()->client_id,
+            'active_client_id' => Auth::user()->active_client_id,
             'is_company_admin' => Auth::user()->is_company_admin,
+            'is_super_admin' => Auth::user()->is_super_admin ?? false,
+            'is_comptable' => method_exists(Auth::user(), 'isComptable') ? Auth::user()->isComptable() : false,
+            'is_client' => method_exists(Auth::user(), 'isClient') ? Auth::user()->isClient() : false,
+            'is_suspended' => Auth::user()->is_suspended ?? false,
+            'must_change_password' => Auth::user()->must_change_password ?? false,
+            'email_verified_at' => Auth::user()->email_verified_at,
+            'role_secretaire' => Auth::user()->role_secretaire ?? false,
+            'is_admin' => Auth::user()->is_admin ?? false,
+            'is_active' => Auth::user()->is_active ?? true,
         ] : null;
     @endphp
     <script id="auth-data" type="application/json">{"user": @json($authUserApp)}</script>

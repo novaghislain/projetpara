@@ -12,6 +12,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="preload" href="/images/hero_slide_1.jpg" as="image" fetchpriority="high">
+    <link rel="preload" href="/images/hero_slide_2.jpg" as="image">
+    <link rel="preload" href="/images/hero_slide_3.jpg" as="image">
 
     <style>
         :root {
@@ -42,6 +45,7 @@
             --transition:      0.25s cubic-bezier(0.4,0,0.2,1);
         }
 
+        html { scroll-behavior: smooth; }
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
@@ -61,6 +65,7 @@
         .anim-fade-right { opacity: 0; transform: translateX(36px); transition: opacity 0.65s var(--transition), transform 0.65s var(--transition); }
         .anim-scale { opacity: 0; transform: scale(0.92); transition: opacity 0.55s var(--transition), transform 0.55s var(--transition); }
         .anim-visible { opacity: 1 !important; transform: none !important; }
+        .anim-preset { opacity: 1; transform: none; }
         .delay-1 { transition-delay: 0.1s !important; }
         .delay-2 { transition-delay: 0.2s !important; }
         .delay-3 { transition-delay: 0.3s !important; }
@@ -167,7 +172,10 @@
         .gel-slides-wrapper { position: relative; width: 100%; height: 100%; }
         .gel-slide { position: absolute; inset: 0; opacity: 0; transition: opacity 1s ease; z-index: 1; }
         .gel-slide.active { opacity: 1; z-index: 2; }
-        .gel-slide-bg { position: absolute; inset: 0; background-size: cover; background-position: center; background-repeat: no-repeat; transform: scale(1.08); transition: transform 6s ease; }
+        .gel-slide-bg { position: absolute; inset: 0; background-size: cover; background-position: center; background-repeat: no-repeat; background-color: #0F172A; transform: scale(1.08); transition: transform 6s ease; }
+        @supports (background-image: image-set(url('x.webp') type('image/webp'))) {
+            .gel-slide-bg { background-image: -webkit-image-set(var(--bg-webp) type('image/webp'), var(--bg-jpg) type('image/jpeg')); background-image: image-set(var(--bg-webp) type('image/webp'), var(--bg-jpg) type('image/jpeg')); }
+        }
         .gel-slide.active .gel-slide-bg { transform: scale(1); }
         .gel-slide-overlay { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(15,23,42,0.75) 0%, rgba(15,23,42,0.40) 100%); }
         .gel-slide-content { position: relative; z-index: 3; height: 100%; display: flex; align-items: center; padding: 0 24px; }
@@ -405,6 +413,20 @@
         .gel-feature-item h6 { font-size: 14px; font-weight: 700; color: var(--gel-dark); margin-bottom: 4px; }
         .gel-feature-item p { font-size: 12.5px; color: var(--gel-muted); margin: 0; line-height: 1.55; }
 
+        .gel-pourqui-card { text-align:center; padding:28px 20px; background:var(--gel-white); border:1px solid var(--gel-border); border-radius:12px; height:100%; transition: all var(--transition); }
+        .gel-pourqui-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+        .gel-pourqui-icon { width:56px; height:56px; background:var(--gel-light); border-radius:16px; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; color:var(--gel-primary); font-size:26px; transition: all var(--transition); }
+        .gel-pourqui-card:hover .gel-pourqui-icon { background: var(--gel-primary); color: #fff; }
+
+        .gel-blog-card { background:var(--gel-white); border:1px solid var(--gel-border); border-radius:12px; overflow:hidden; height:100%; transition: all var(--transition); }
+        .gel-blog-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+        .gel-blog-card-body { padding: 24px; }
+        .gel-blog-tag { font-size:11px; font-weight:600; color:var(--gel-primary); text-transform:uppercase; letter-spacing:0.06em; }
+        .gel-blog-card h5 { font-size:15px; font-weight:700; margin:10px 0 8px; }
+        .gel-blog-card p { font-size:13px; color:var(--gel-muted); line-height:1.7; margin:0; }
+        .gel-blog-link { display:inline-flex; align-items:center; gap:4px; font-size:12.5px; font-weight:600; color:var(--gel-primary); text-decoration:none; margin-top:14px; transition: gap var(--transition); }
+        .gel-blog-link:hover { gap: 8px; }
+
         .gel-process-step { text-align: center; padding: 20px; }
         .gel-process-num {
             width: 52px; height: 52px;
@@ -457,11 +479,18 @@
         .gel-form-control:focus { border-color: var(--gel-primary); box-shadow: 0 0 0 3px rgba(255,121,0,0.1); }
         .gel-form-control::placeholder { color: #c0cbd8; }
         .gel-btn-submit { width: 100%; background: var(--gel-primary); color: #fff; font-size: 14px; font-weight: 700; padding: 13px; border: none; border-radius: var(--radius); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s; margin-top: 8px; }
+
+        .gel-btn-pricing { display:inline-flex; align-items:center; gap:6px; padding:10px 22px; border-radius:var(--radius); font-size:13px; font-weight:700; text-decoration:none; transition:all var(--transition); cursor:pointer; }
+        .gel-btn-pricing-primary { background:var(--gel-primary); color:#fff; }
+        .gel-btn-pricing-primary:hover { background:var(--gel-primary-hov); color:#fff; transform:translateY(-2px); box-shadow:0 6px 20px rgba(255,121,0,0.3); }
+
+        .gel-payment-wrap { display:flex; gap:8px; flex-wrap:wrap; }
+        .gel-payment-badge { display:inline-flex; align-items:center; gap:5px; padding:4px 10px; background:var(--gel-light); border:1px solid var(--gel-border); border-radius:6px; color:var(--gel-muted); }
         .gel-btn-submit:hover { background: var(--gel-primary-hov); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255,121,0,0.35); }
 
         .gel-footer { background: #0A1628; padding: 64px 0 0; border-top: 3px solid var(--gel-primary); }
-        .gel-footer-brand-name { font-family: var(--font-heading); font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 4px; }
-        .gel-footer-brand-sub { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.1em; }
+        .gel-footer-brand, .gel-footer-brand-name { font-family: var(--font-heading); font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+        .gel-footer-sub, .gel-footer-brand-sub { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.1em; }
         .gel-footer-desc { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.7; margin-top: 16px; max-width: 280px; }
         .gel-footer-social { display: flex; gap: 10px; margin-top: 20px; }
         .gel-social-btn { width: 36px; height: 36px; border-radius: 6px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.55); font-size: 15px; text-decoration: none; transition: all var(--transition); }
@@ -495,148 +524,28 @@
 <body>
 
         <!-- navbar -->
-<nav class="gel-navbar" id="gelNavbar">
-        <div class="container-fluid">
-            <a href="/" class="gel-brand">
-                <div class="gel-brand-logo">GEL</div>
-                <div class="gel-brand-text">
-                    <span class="gel-brand-name">GEL Cabinet</span>
-                    <span class="gel-brand-sub">Gestion Multi-Pôles</span>
-                </div>
-            </a>
+@include('partials.navbar')
 
-            <ul class="gel-nav-center" id="gelNavCenter">
-                <li class="gel-nav-item">
-                    <a href="/nos-modules" class="gel-nav-link">
-                        Nos Modules
-                        <i class="bi-chevron-down chevron"></i>
-                    </a>
-                    <ul class="gel-dropdown">
-                        <li><a href="/nos-modules#module-crm"><span class="drop-icon"><i class="bi-people"></i></span> CRM Clients</a></li>
-                        <li><a href="/nos-modules#module-ged"><span class="drop-icon"><i class="bi-folder2-open"></i></span> GED — Documents</a></li>
-                        <li><a href="/nos-modules#module-poles"><span class="drop-icon"><i class="bi-diagram-3"></i></span> Pôles & Missions</a></li>
-                        <li><hr class="gel-dropdown-divider"></li>
-                        <li><a href="/nos-modules#module-compta"><span class="drop-icon"><i class="bi-calculator"></i></span> Comptabilité</a></li>
-                        <li><a href="/nos-modules#module-erp"><span class="drop-icon"><i class="bi-box-seam"></i></span> ERP Intégré</a></li>
-                    </ul>
-                </li>
-                <li class="gel-nav-item">
-                    <a href="/services" class="gel-nav-link">
-                        Services
-                        <i class="bi-chevron-down chevron"></i>
-                    </a>
-                    <ul class="gel-dropdown">
-                        <li><a href="/services/comptabilite"><span class="drop-icon"><i class="bi-calculator"></i></span> Comptabilité</a></li>
-                        <li><a href="/services/juridique"><span class="drop-icon"><i class="bi-bank2"></i></span> Juridique</a></li>
-                        <li><a href="/services/fiscal"><span class="drop-icon"><i class="bi-receipt"></i></span> Fiscal</a></li>
-                        <li><a href="/services/social-paie"><span class="drop-icon"><i class="bi-people"></i></span> Social & Paie</a></li>
-                    </ul>
-                </li>
-                <li class="gel-nav-item">
-                    <a href="#" class="gel-nav-link">
-                        À propos
-                        <i class="bi-chevron-down chevron"></i>
-                    </a>
-                    <ul class="gel-dropdown">
-                        <li><a href="{{ route('notre-cabinet') }}"><span class="drop-icon"><i class="bi-building"></i></span> Notre Cabinet</a></li>
-                        <li><a href="{{ route('notre-equipe') }}"><span class="drop-icon"><i class="bi-people-fill"></i></span> Notre Équipe</a></li>
-                        <li><a href="{{ route('carrieres') }}"><span class="drop-icon"><i class="bi-briefcase-fill"></i></span> Carrières</a></li>
-                    </ul>
-                </li>
-                <li class="gel-nav-item">
-                    <a href="#" class="gel-nav-link">
-                        Ressources
-                        <i class="bi-chevron-down chevron"></i>
-                    </a>
-                    <ul class="gel-dropdown">
-                        <li><a href="/blogue"><span class="drop-icon"><i class="bi-pencil-square"></i></span> Blogue</a></li>
-                        <li><a href="/documentation"><span class="drop-icon"><i class="bi-file-text"></i></span> Documentation</a></li>
-                        <li><a href="/faq"><span class="drop-icon"><i class="bi-question-circle"></i></span> FAQ</a></li>
-                        <li><hr class="gel-dropdown-divider"></li>
-                        <li><a href="/centre-aide"><span class="drop-icon"><i class="bi-headset"></i></span> Centre d'aide</a></li>
-                    </ul>
-                </li>
-                <li class="gel-nav-item"><a href="#" class="gel-nav-link">Tarifs</a></li>
-                <li class="gel-nav-item"><a href="/contact" class="gel-nav-link">Contact</a></li>
-            </ul>
-
-            <div class="gel-nav-right">
-                <a href="tel:+22900000000" class="gel-phone d-none d-lg-flex">
-                    <i class="bi-telephone-fill"></i>
-                    +229 XX XX XX XX
-                </a>
-                @auth
-                    @if(auth()->user()->role === 'client')
-                        <a href="{{ route('client.orders.index') }}" class="gel-btn-nav gel-btn-nav-outline">
-                            <i class="bi-speedometer2"></i> Mon Espace
-                        </a>
-                    @elseif(auth()->user()->client_id)
-                        <a href="{{ route('company.dashboard') }}" class="gel-btn-nav gel-btn-nav-outline">
-                            <i class="bi-speedometer2"></i> Portail
-                        </a>
-                    @else
-                        <a href="{{ route('dashboard') }}" class="gel-btn-nav gel-btn-nav-outline">
-                            <i class="bi-speedometer2"></i> Tableau de bord
-                        </a>
-                    @endif
-                    <form method="POST" action="{{ route('logout') }}" style="display:inline;">
-                        @csrf
-                        <button type="submit" class="gel-btn-nav gel-btn-nav-outline" style="color:#dc2626; border-color:#fca5a5;">
-                            <i class="bi-box-arrow-right"></i>
-                        </button>
-                    </form>
-                @else
-                    <a href="/register" class="gel-btn-nav gel-btn-nav-outline">
-                        <i class="bi-person-plus"></i> S'inscrire
-                    </a>
-                    <a href="/login" class="gel-btn-nav gel-btn-nav-primary" id="nav-login-btn">
-                        <i class="bi-box-arrow-in-right"></i> Connexion
-                    </a>
-                @endauth
-                <button class="gel-toggler" id="gelToggler" aria-label="Menu">
-                    <i class="bi-list" id="togglerIcon"></i>
-                </button>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Mobile Menu -->
-    <div class="gel-mobile-menu" id="gelMobileMenu">
-        <a href="/" class="gel-mobile-link"><i class="bi-house text-orange me-2"></i>Accueil</a>
-        <a href="/nos-modules" class="gel-mobile-link"><i class="bi-grid-3x3-gap text-orange me-2"></i>Nos Modules</a>
-        <a href="/services" class="gel-mobile-link"><i class="bi-grid-3x3-gap text-orange me-2"></i>Services</a>
-        <a href="/blogue" class="gel-mobile-link"><i class="bi-pencil-square text-orange me-2"></i>Blogue</a>
-        <a href="/documentation" class="gel-mobile-link"><i class="bi-file-text text-orange me-2"></i>Documentation</a>
-        <a href="/faq" class="gel-mobile-link"><i class="bi-question-circle text-orange me-2"></i>FAQ</a>
-        <a href="/centre-aide" class="gel-mobile-link"><i class="bi-headset text-orange me-2"></i>Centre d'aide</a>
-        <a href="{{ route('notre-cabinet') }}" class="gel-mobile-link"><i class="bi-building text-orange me-2"></i>Notre Cabinet</a>
-        <a href="{{ route('notre-equipe') }}" class="gel-mobile-link"><i class="bi-people-fill text-orange me-2"></i>Notre Équipe</a>
-        <a href="{{ route('carrieres') }}" class="gel-mobile-link"><i class="bi-briefcase-fill text-orange me-2"></i>Carrières</a>
-        <a href="#" class="gel-mobile-link"><i class="bi-currency-dollar text-orange me-2"></i>Tarifs</a>
-        <a href="/contact" class="gel-mobile-link"><i class="bi-envelope text-orange me-2"></i>Contact</a>
-        <a href="/login" class="gel-mobile-link"><i class="bi-box-arrow-in-right text-orange me-2"></i>Connexion</a>
-        <a href="/register" class="gel-mobile-link"><i class="bi-person-plus text-orange me-2"></i>S'inscrire</a>
-    </div>
-
-    <section class="gel-hero" id="hero">
+    <section class="gel-hero anim-preset" id="hero">
         <div class="gel-slides-wrapper" id="gelSlides">
 
             <!-- Slide 1 -->
             <div class="gel-slide active" id="slide-0">
-                <div class="gel-slide-bg" style="background-image: url('/images/hero_slide_1.png');"></div>
+                <div class="gel-slide-bg" style="background-image: url('/images/hero_slide_1.jpg'); --bg-webp: url('/images/hero_slide_1.webp'); --bg-jpg: url('/images/hero_slide_1.jpg');"></div>
                 <div class="gel-slide-overlay"></div>
                 <div class="gel-slide-content">
                     <div class="container">
                         <div class="row">
                             <div class="col-lg-7">
-                                <h1>Votre cabinet<br>en toute <span>simplicité</span></h1>
-                                <p class="gel-slide-sub">CRM, GED, Pôles, Missions, Comptabilité, ERP — tout ce dont vous avez besoin, dans une seule plateforme.</p>
+                                <span class="gel-slide-badge"><i class="bi-lightning-fill"></i> La gestion de votre cabinet, réinventée</span>
+                                <h1>Gérez votre cabinet.<br><span>Vendez votre expertise.</span></h1>
+                                <p class="gel-slide-sub">CRM, GED, Comptabilité OHADA, ERP, RH — la plateforme SaaS tout-en-un pour les cabinets d'expertise comptable au Bénin.</p>
                                 <div class="gel-slide-actions">
                                     <a href="/register" class="gel-slide-btn gel-slide-btn-primary">
-                                        <i class="bi-person-plus"></i> Créer un compte
+                                        <i class="bi-rocket-takeoff"></i> Démarrer l'essai gratuit
                                     </a>
-                                    <a href="/nos-services" class="gel-slide-btn gel-slide-btn-outline">
-                                        <i class="bi-shop"></i> Nos Services
+                                    <a href="/nos-modules" class="gel-slide-btn gel-slide-btn-outline">
+                                        <i class="bi-grid-3x3-gap"></i> Voir la démo
                                     </a>
                                     <a href="/login" class="gel-slide-btn gel-slide-btn-outline">
                                         <i class="bi-box-arrow-in-right"></i> Espace Client
@@ -650,20 +559,21 @@
 
             <!-- Slide 2 -->
             <div class="gel-slide" id="slide-1">
-                <div class="gel-slide-bg" style="background-image: url('/images/hero_slide_2.png');"></div>
+                <div class="gel-slide-bg" style="background-image: url('/images/hero_slide_2.jpg'); --bg-webp: url('/images/hero_slide_2.webp'); --bg-jpg: url('/images/hero_slide_2.jpg');"></div>
                 <div class="gel-slide-overlay"></div>
                 <div class="gel-slide-content">
                     <div class="container">
                         <div class="row">
                             <div class="col-lg-7">
-                                <h1>Tout votre cabinet<br>à <span>portée de main</span></h1>
-                                <p class="gel-slide-sub">Suivez vos missions, coordonnez vos équipes et partagez vos documents en temps réel.</p>
+                                <span class="gel-slide-badge"><i class="bi-cpu"></i> Logiciel conforme OHADA</span>
+                                <h1>Le logiciel de comptabilité<br><span>pour les pros</span></h1>
+                                <p class="gel-slide-sub">Plan SYSCOA, journaux, bilan, CRP, déclarations fiscales — conforme aux normes OHADA. Licence standalone ou en SaaS.</p>
                                 <div class="gel-slide-actions">
-                                    <a href="/register" class="gel-slide-btn gel-slide-btn-primary">
-                                        <i class="bi-person-plus"></i> Créer un compte
+                                    <a href="/logiciel-comptabilite" class="gel-slide-btn gel-slide-btn-primary">
+                                        <i class="bi-cpu"></i> Découvrir le logiciel
                                     </a>
-                                    <a href="/nos-services" class="gel-slide-btn gel-slide-btn-outline">
-                                        <i class="bi-shop"></i> Nos Services
+                                    <a href="/tarifs" class="gel-slide-btn gel-slide-btn-outline">
+                                        <i class="bi-currency-dollar"></i> Voir les tarifs
                                     </a>
                                     <a href="/login" class="gel-slide-btn gel-slide-btn-outline">
                                         <i class="bi-box-arrow-in-right"></i> Accéder à mon espace
@@ -677,23 +587,24 @@
 
             <!-- Slide 3 -->
             <div class="gel-slide" id="slide-2">
-                <div class="gel-slide-bg" style="background-image: url('/images/hero_slide_3.png');"></div>
+                <div class="gel-slide-bg" style="background-image: url('/images/hero_slide_3.jpg'); --bg-webp: url('/images/hero_slide_3.webp'); --bg-jpg: url('/images/hero_slide_3.jpg');"></div>
                 <div class="gel-slide-overlay"></div>
                 <div class="gel-slide-content">
                     <div class="container">
                         <div class="row">
                             <div class="col-lg-7">
+                                <span class="gel-slide-badge"><i class="bi-shield-check"></i> Sécurité &amp; Conformité</span>
                                 <h1>Des données<br><span>toujours protégées</span></h1>
-                                <p class="gel-slide-sub">Authentification, rôles, permissions, audit : votre cabinet est protégé à chaque niveau.</p>
+                                <p class="gel-slide-sub">Authentification multi-facteurs, rôles personnalisés, chiffrement et audit : votre cabinet est protégé à chaque niveau.</p>
                                 <div class="gel-slide-actions">
                                     <a href="/register" class="gel-slide-btn gel-slide-btn-primary">
-                                        <i class="bi-person-plus"></i> Créer un compte
+                                        <i class="bi-rocket-takeoff"></i> Commencer maintenant
                                     </a>
                                     <a href="/login" class="gel-slide-btn gel-slide-btn-outline">
                                         <i class="bi-box-arrow-in-right"></i> Accéder à mon espace
                                     </a>
-                                    <a href="/nos-services" class="gel-slide-btn gel-slide-btn-outline">
-                                        <i class="bi-info-circle"></i> En savoir plus
+                                    <a href="/contact" class="gel-slide-btn gel-slide-btn-outline">
+                                        <i class="bi-info-circle"></i> Nous contacter
                                     </a>
                                 </div>
                             </div>
@@ -726,55 +637,54 @@
         <div class="container">
             <div class="gel-stats-grid">
                 <div class="gel-stat-item anim-fade-up">
-                    <span class="gel-stat-number" data-target="6">0</span>
-                    <div class="gel-stat-label">Modules</div>
+                    <span class="gel-stat-number" data-target="9">0</span>
+                    <div class="gel-stat-label">Modules intégrés</div>
                 </div>
                 <div class="gel-stat-item anim-fade-up delay-1">
-                    <span class="gel-stat-number" data-target="100" data-suffix="%">0</span>
-                    <div class="gel-stat-label">Sécurité</div>
+                    <span class="gel-stat-number" data-target="1500" data-suffix="+">0</span>
+                    <div class="gel-stat-label">Clients accompagnés</div>
                 </div>
                 <div class="gel-stat-item anim-fade-up delay-2">
-                    <span class="gel-stat-number" data-suffix="/7">24</span>
-                    <div class="gel-stat-label">Dispo 24/7</div>
+                    <span class="gel-stat-number" data-target="99" data-suffix="%">0</span>
+                    <div class="gel-stat-label">Disponibilité</div>
                 </div>
                 <div class="gel-stat-item anim-fade-up delay-3">
-                    <span class="gel-stat-number" data-target="500" data-suffix="+">0</span>
-                    <div class="gel-stat-label">Dossiers</div>
+                    <span class="gel-stat-number" data-target="3">0</span>
+                    <div class="gel-stat-label">Pays couverts</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- valeurs -->
+    <!-- pour qui -->
     <section class="gel-section" style="padding:60px 0 40px;">
         <div class="container">
-            <div class="row g-4">
-                <div class="col-md-3 col-6 anim-fade-up">
-                    <div style="text-align:center; padding:16px;">
-                        <div style="font-family:var(--font-heading); font-size:30px; font-weight:900; color:var(--gel-primary); line-height:1; margin-bottom:8px;">01</div>
-                        <h6 style="font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em;">L'innovation</h6>
-                        <p style="font-size:12px; color:var(--gel-muted); margin:4px 0 0;">La technologie au service de la gestion de cabinet, tout simplement.</p>
+            <div class="row justify-content-center text-center mb-4">
+                <div class="col-lg-7">
+                    <h2 class="gel-section-title anim-fade-up delay-1">Pour qui ?</h2>
+                    <p class="gel-section-sub mx-auto anim-fade-up delay-2">Que vous soyez expert-comptable, dirigeant d'entreprise ou indépendant, nous avons la solution qu'il vous faut.</p>
+                </div>
+            </div>
+            <div class="row g-4 justify-content-center">
+                <div class="col-md-4 anim-fade-up delay-1">
+                    <div class="gel-pourqui-card">
+                        <div class="gel-pourqui-icon"><i class="bi-bank2"></i></div>
+                        <h5 style="font-size:15px;font-weight:700;margin-bottom:8px;">Cabinet comptable</h5>
+                        <p style="font-size:13px;color:var(--gel-muted);margin:0;line-height:1.6;">Vous gérez un cabinet d'expertise comptable, juridique ou fiscal. Centralisez vos missions, vos dossiers et votre équipe sur une seule plateforme.</p>
                     </div>
                 </div>
-                <div class="col-md-3 col-6 anim-fade-up delay-1">
-                    <div style="text-align:center; padding:16px;">
-                        <div style="font-family:var(--font-heading); font-size:30px; font-weight:900; color:var(--gel-primary); line-height:1; margin-bottom:8px;">02</div>
-                        <h6 style="font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em;">La proximité</h6>
-                        <p style="font-size:12px; color:var(--gel-muted); margin:4px 0 0;">Chaque client est unique. On construit ensemble une relation de confiance.</p>
+                <div class="col-md-4 anim-fade-up delay-2">
+                    <div class="gel-pourqui-card">
+                        <div class="gel-pourqui-icon"><i class="bi-building"></i></div>
+                        <h5 style="font-size:15px;font-weight:700;margin-bottom:8px;">Entreprise cliente</h5>
+                        <p style="font-size:13px;color:var(--gel-muted);margin:0;line-height:1.6;">Vous êtes une entreprise cliente de GEL Cabinet. Accédez à votre portail, vos documents comptables, vos factures et votre suivi RH en temps réel.</p>
                     </div>
                 </div>
-                <div class="col-md-3 col-6 anim-fade-up delay-2">
-                    <div style="text-align:center; padding:16px;">
-                        <div style="font-family:var(--font-heading); font-size:30px; font-weight:900; color:var(--gel-primary); line-height:1; margin-bottom:8px;">03</div>
-                        <h6 style="font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em;">L'excellence</h6>
-                        <p style="font-size:12px; color:var(--gel-muted); margin:4px 0 0;">Rigueur et qualité dans tout ce qu'on fait.</p>
-                    </div>
-                </div>
-                <div class="col-md-3 col-6 anim-fade-up delay-3">
-                    <div style="text-align:center; padding:16px;">
-                        <div style="font-family:var(--font-heading); font-size:30px; font-weight:900; color:var(--gel-primary); line-height:1; margin-bottom:8px;">04</div>
-                        <h6 style="font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em;">L'impact</h6>
-                        <p style="font-size:12px; color:var(--gel-muted); margin:4px 0 0;">Changer la façon de travailler, un cabinet à la fois.</p>
+                <div class="col-md-4 anim-fade-up delay-3">
+                    <div class="gel-pourqui-card">
+                        <div class="gel-pourqui-icon"><i class="bi-person"></i></div>
+                        <h5 style="font-size:15px;font-weight:700;margin-bottom:8px;">Particulier</h5>
+                        <p style="font-size:13px;color:var(--gel-muted);margin:0;line-height:1.6;">Suivez vos déclarations fiscales, vos documents personnels et échangez avec votre comptable via notre portail client sécurisé.</p>
                     </div>
                 </div>
             </div>
@@ -1002,27 +912,28 @@
         </div>
     </section>
 
-    <!-- fonctionnalités -->
-    <section id="fonctionnalites" class="gel-features-light">
+    <!-- modules -->
+    <section id="modules" class="gel-features-light">
         <div class="container">
             <div class="row justify-content-center mb-5">
-                <div class="col-lg-7 text-center">
-                    <h2 class="gel-section-title anim-fade-up delay-1">Tout-en-un</h2>
-                    <p class="gel-section-sub mx-auto anim-fade-up delay-2">Tout pour piloter votre cabinet dans un seul outil.</p>
+                <div class="col-lg-8 text-center">
+                    <span class="gel-section-chip anim-fade-up"><i class="bi-grid-3x3-gap"></i> Modules</span>
+                    <h2 class="gel-section-title anim-fade-up delay-1">Tous les modules pour votre cabinet</h2>
+                    <p class="gel-section-sub mx-auto anim-fade-up delay-2">De la gestion client à la comptabilité en passant par les RH et l'ERP, activez les modules selon vos besoins.</p>
                 </div>
             </div>
 
             <div class="row g-3">
                 @foreach([
-                    ['bi-people-fill','CRM Clients','Gestion complète des entreprises, contacts et historique des relations'],
-                    ['bi-diagram-3-fill','Pôles & Missions','Organisation par départements et suivi détaillé des missions'],
-                    ['bi-folder2-open','GED','Gestion électronique de documents avec indexation et recherche'],
-                    ['bi-calculator-fill','Comptabilité','Plan comptable, journaux, bilan, compte de résultat automatisé'],
-                    ['bi-graph-up-arrow','ERP Intégré','Stocks, factures, RH, trésorerie — tout synchronisé'],
-                    ['bi-shield-check','Sécurité Avancée','Authentification, rôles, permissions et audit des accès'],
-                    ['bi-file-earmark-text-fill','Déclarations','Suivi des échéances fiscales et sociales, rappels automatiques'],
-                    ['bi-bell-fill','Notifications','Alertes temps réel, tâches, rappels et tableau de bord'],
-                    ['bi-cloud-arrow-up-fill','Sauvegarde Cloud','Vos données toujours sécurisées et accessibles partout'],
+                    ['bi-people-fill','CRM Clients','Gérez vos entreprises, contacts et relances. Historique complet des échanges et suivi des opportunités.'],
+                    ['bi-diagram-3-fill','Pôles & Missions','Structurez votre cabinet par départements. Suivez les missions en temps réel avec vos équipes.'],
+                    ['bi-folder2-open','GED','Stockez, indexez et retrouvez tous vos documents en un clic. Versionning et partage sécurisé.'],
+                    ['bi-calculator-fill','Comptabilité','Plan comptable SYSCOA/OHADA, journaux, balance, bilan, CRP. Déclarations fiscales intégrées.'],
+                    ['bi-graph-up-arrow','ERP Intégré','Stocks, facturation, RH, paie, trésorerie — un ERP complet synchronisé avec votre comptabilité.'],
+                    ['bi-file-earmark-text','Juridique','Constitution de sociétés, formalités, contrats et veille juridique. Suivi des dossiers contentieux.'],
+                    ['bi-robot','Assistant IA','Analyse automatique de documents, suggestions intelligentes et classification aidée par intelligence artificielle.'],
+                    ['bi-chat-dots','Communication','Messagerie intégrée, notifications temps réel, alerts et rappels automatiques pour votre équipe.'],
+                    ['bi-shield-check','Sécurité & Conformité','Authentification, rôles personnalisés, chiffrement, audit trail. Conforme aux normes en vigueur.'],
                 ] as $f)
                 <div class="col-lg-4 col-md-6 anim-fade-up">
                     <div class="gel-feature-item">
@@ -1037,45 +948,47 @@
                 </div>
                 @endforeach
             </div>
+
+            <div class="text-center mt-5 anim-fade-up">
+                <a href="/nos-modules" class="gel-slide-btn gel-slide-btn-primary" style="display:inline-flex;">
+                    <i class="bi-grid-3x3-gap"></i> Voir tous les modules
+                </a>
+            </div>
         </div>
     </section>
 
-    <!-- engagements -->
-    <section class="gel-section">
+    <!-- logiciel de comptabilité -->
+    <section class="gel-section-alt" style="padding:60px 0;">
         <div class="container">
-            <div class="row justify-content-center mb-5">
-                <div class="col-lg-7 text-center">
-                    <h2 class="gel-section-title anim-fade-up delay-1">Notre cap</h2>
-                    <p class="gel-section-sub mx-auto anim-fade-up delay-2">Des principes simples qui guident notre travail.</p>
-                </div>
-            </div>
-            <div class="row g-4 justify-content-center">
-                <div class="col-md-3 col-6 anim-fade-up delay-1">
-                    <div class="gel-value-card">
-                        <div class="gel-value-icon"><i class="bi-check-circle-fill"></i></div>
-                        <h6>Rigueur</h6>
-                        <p>L'exactitude et la précision au cœur de nos services.</p>
+            <div class="row align-items-center">
+                <div class="col-lg-6 anim-fade-left">
+                    <span class="gel-section-chip"><i class="bi-cpu"></i> Logiciel de Comptabilité</span>
+                    <h2 class="gel-section-title">Conforme <span style="color:var(--gel-primary);">OHADA/SYSCOA</span><br>Licence standalone ou SaaS</h2>
+                    <p style="font-size:14px;color:var(--gel-muted);line-height:1.7;margin-bottom:20px;">Notre logiciel de comptabilité professionnel vous offre tout le nécessaire pour tenir votre comptabilité : plan comptable, saisie des journaux, balance, bilan, compte de résultat et déclarations fiscales.</p>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
+                        <span style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;background:var(--gel-primary-soft);color:var(--gel-primary);border-radius:100px;font-size:12px;font-weight:600;"><i class="bi-check-lg"></i> Plan SYSCOA</span>
+                        <span style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;background:var(--gel-primary-soft);color:var(--gel-primary);border-radius:100px;font-size:12px;font-weight:600;"><i class="bi-check-lg"></i> Journaux</span>
+                        <span style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;background:var(--gel-primary-soft);color:var(--gel-primary);border-radius:100px;font-size:12px;font-weight:600;"><i class="bi-check-lg"></i> Bilan &amp; CRP</span>
+                        <span style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;background:var(--gel-primary-soft);color:var(--gel-primary);border-radius:100px;font-size:12px;font-weight:600;"><i class="bi-check-lg"></i> Déclarations fiscales</span>
+                        <span style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;background:var(--gel-primary-soft);color:var(--gel-primary);border-radius:100px;font-size:12px;font-weight:600;"><i class="bi-check-lg"></i> Multi-utilisateurs</span>
+                    </div>
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                        <a href="/logiciel-comptabilite" class="gel-slide-btn gel-slide-btn-primary" style="display:inline-flex;"><i class="bi-cpu"></i> Découvrir le logiciel</a>
+                        <a href="/tarifs" class="gel-slide-btn" style="display:inline-flex;background:transparent;color:var(--gel-text);border:1.5px solid var(--gel-border);"><i class="bi-currency-dollar"></i> Voir les tarifs</a>
                     </div>
                 </div>
-                <div class="col-md-3 col-6 anim-fade-up delay-2">
-                    <div class="gel-value-card">
-                        <div class="gel-value-icon"><i class="bi-hand-thumbs-up-fill"></i></div>
-                        <h6>Intégrité</h6>
-                        <p>Transparence et éthique dans toutes nos relations.</p>
-                    </div>
-                </div>
-                <div class="col-md-3 col-6 anim-fade-up delay-3">
-                    <div class="gel-value-card">
-                        <div class="gel-value-icon"><i class="bi-arrow-repeat"></i></div>
-                        <h6>Adaptabilité</h6>
-                        <p>Nous évoluons avec les besoins de nos clients.</p>
-                    </div>
-                </div>
-                <div class="col-md-3 col-6 anim-fade-up delay-4">
-                    <div class="gel-value-card">
-                        <div class="gel-value-icon"><i class="bi-people-fill"></i></div>
-                        <h6>Esprit d'équipe</h6>
-                        <p>La collaboration est notre plus grande force.</p>
+                <div class="col-lg-6 mt-5 mt-lg-0 anim-fade-right">
+                    <div style="background:var(--gel-white);border:1px solid var(--gel-border);border-radius:16px;padding:32px;text-align:center;box-shadow:var(--shadow-md);">
+                        <div style="font-size:48px;color:var(--gel-primary);margin-bottom:12px;"><i class="bi-cpu"></i></div>
+                        <h3 style="font-family:var(--font-heading);font-size:24px;font-weight:900;color:var(--gel-dark);">GEL Comptabilité</h3>
+                        <p style="font-size:14px;color:var(--gel-muted);margin:8px 0;">Le logiciel de comptabilité des experts-comptables au Bénin</p>
+                        <div style="font-family:var(--font-heading);font-size:2.6rem;font-weight:900;color:#163A5E;line-height:1;">150 000 <span style="font-size:15px;font-weight:500;color:var(--gel-muted);">FCFA</span></div>
+                        <p style="font-size:12px;color:var(--gel-muted);margin-top:4px;">Licence perpétuelle &mdash; 1 poste</p>
+                        <a href="/catalogue" class="gel-btn-pricing gel-btn-pricing-primary"><i class="bi-cart3"></i> Acheter la licence</a>
+                        <div class="gel-payment-wrap">
+                            <span class="gel-payment-badge"><i class="bi-phone" style="color:var(--gel-primary);"></i> MoMo</span>
+                            <span class="gel-payment-badge"><i class="bi-bank" style="color:var(--gel-primary);"></i> Virement</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1087,32 +1000,89 @@
         <div class="container">
             <div class="row justify-content-center mb-5">
                 <div class="col-lg-7 text-center">
-                    <h2 class="gel-section-title anim-fade-up delay-1">Prêt en 3 étapes</h2>
-                    <p class="gel-section-sub mx-auto anim-fade-up delay-2">On vous accompagne de la demande à la mise en route.</p>
+                    <span class="gel-section-chip anim-fade-up"><i class="bi-skip-forward"></i> Comment ça marche</span>
+                    <h2 class="gel-section-title anim-fade-up delay-1">Prêt en <span style="color:var(--gel-primary);">3 étapes</span></h2>
+                    <p class="gel-section-sub mx-auto anim-fade-up delay-2">Créez votre compte, paramétrez votre espace et pilotez votre cabinet depuis un tableau de bord unifié.</p>
                 </div>
             </div>
             <div class="row g-4 justify-content-center">
                 <div class="col-md-4 anim-fade-up delay-1">
                     <div class="gel-process-step">
+                        <div style="font-size:32px;color:var(--gel-primary);margin-bottom:16px;"><i class="bi-person-plus"></i></div>
                         <div class="gel-process-num">1</div>
-                        <h5>1. Choisissez un logiciel</h5>
-                        <p>Parcourez notre catalogue. Notre équipe vous contacte sous 24h.</p>
+                        <h5>Inscription</h5>
+                        <p>Créez votre compte gratuitement et choisissez la formule adaptée à votre cabinet ou entreprise.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-2">
                     <div class="gel-process-step">
+                        <div style="font-size:32px;color:var(--gel-primary);margin-bottom:16px;"><i class="bi-gear"></i></div>
                         <div class="gel-process-num">2</div>
-                        <h5>2. Configuration</h5>
-                        <p>On configure votre cabinet, vos pôles, vos utilisateurs et on importe vos données.</p>
+                        <h5>Configuration</h5>
+                        <p>Activez vos modules, invitez vos collaborateurs, importez vos données et personnalisez vos espaces.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-3">
                     <div class="gel-process-step">
+                        <div style="font-size:32px;color:var(--gel-primary);margin-bottom:16px;"><i class="bi-rocket-takeoff"></i></div>
                         <div class="gel-process-num">3</div>
-                        <h5>3. C'est parti</h5>
-                        <p>Votre équipe accède à la plateforme. Formation incluse et support dédié.</p>
+                        <h5>Productivité</h5>
+                        <p>Vous êtes opérationnel ! Pilotez votre activité en temps réel avec des tableaux de bord intelligents.</p>
                     </div>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- blog -->
+    <section class="gel-section" style="padding:60px 0;">
+        <div class="container">
+            <div class="row justify-content-center mb-5">
+                <div class="col-lg-7 text-center">
+                    <span class="gel-section-chip anim-fade-up"><i class="bi-pencil-square"></i> Blog & Actualités</span>
+                    <h2 class="gel-section-title anim-fade-up delay-1">Conseils & <span style="color:var(--gel-primary);">actualités</span></h2>
+                    <p class="gel-section-sub mx-auto anim-fade-up delay-2">Retrouvez nos derniers articles sur la gestion de cabinet, la comptabilité OHADA et les innovations du secteur.</p>
+                </div>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4 anim-fade-up delay-1">
+                    <div class="gel-blog-card">
+                        <div style="height:180px;background:linear-gradient(135deg,#1E3A5F,#0F172A);display:flex;align-items:center;justify-content:center;color:var(--gel-primary);font-size:40px;"><i class="bi-cpu"></i></div>
+                        <div class="gel-blog-card-body">
+                            <span class="gel-blog-tag"><i class="bi-tag"></i> Comptabilité</span>
+                            <h5>SYSCOA 2025 : Tout savoir sur le nouveau plan comptable OHADA</h5>
+                            <p>Le plan comptable SYSCOA évolue en 2025. Découvrez les principaux changements et comment adapter votre cabinet.</p>
+                            <a href="/blogue/syscoa-2025" class="gel-blog-link">Lire l'article <i class="bi-arrow-right"></i></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 anim-fade-up delay-2">
+                    <div class="gel-blog-card">
+                        <div style="height:180px;background:linear-gradient(135deg,#FF7900,#ff9a3c);display:flex;align-items:center;justify-content:center;color:#fff;font-size:40px;"><i class="bi-robot"></i></div>
+                        <div class="gel-blog-card-body">
+                            <span class="gel-blog-tag"><i class="bi-tag"></i> Innovation</span>
+                            <h5>Comment l'IA transforme la gestion des cabinets comptables</h5>
+                            <p>Automatisation, classification, analyse prédictive — l'intelligence artificielle révolutionne le métier d'expert-comptable.</p>
+                            <a href="/blogue/ia-cabinets-comptables" class="gel-blog-link">Lire l'article <i class="bi-arrow-right"></i></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 anim-fade-up delay-3">
+                    <div class="gel-blog-card">
+                        <div style="height:180px;background:linear-gradient(135deg,#163A5E,#1E3A5F);display:flex;align-items:center;justify-content:center;color:var(--gel-primary);font-size:40px;"><i class="bi-shield-check"></i></div>
+                        <div class="gel-blog-card-body">
+                            <span class="gel-blog-tag"><i class="bi-tag"></i> Sécurité</span>
+                            <h5>Protection des données : guide pour les cabinets comptables</h5>
+                            <p>RGPD, chiffrement, sauvegarde — les bonnes pratiques pour sécuriser les données sensibles de vos clients.</p>
+                            <a href="/blogue/protection-donnees-cabinet" class="gel-blog-link">Lire l'article <i class="bi-arrow-right"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-5 anim-fade-up">
+                <a href="/blogue" class="gel-slide-btn gel-slide-btn-primary" style="display:inline-flex;">
+                    <i class="bi-pencil-square"></i> Voir tous les articles
+                </a>
             </div>
         </div>
     </section>
@@ -1121,16 +1091,17 @@
     <section class="gel-cta-band">
         <div class="container" style="position:relative; z-index:1;">
             <div class="row align-items-center">
-                <div class="col-lg-7 anim-fade-left">
-                    <h2>Vous voulez essayer ?</h2>
-                    <p>Rejoignez les cabinets qui pilotent déjà leur activité avec GEL Cabinet.</p>
+                <div class="col-lg-8 anim-fade-left">
+                    <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.12);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.15);padding:4px 14px;border-radius:100px;font-size:11px;font-weight:600;color:rgba(255,255,255,0.9);margin-bottom:14px;"><i class="bi-lightning-fill"></i> Prêt à passer à l'action ?</span>
+                    <h2>Prêt à transformer<br>votre cabinet ?</h2>
+                    <p>Rejoignez les cabinets comptables qui pilotent déjà leur activité avec GEL Cabinet. Essayez gratuitement pendant 30 jours.</p>
                 </div>
-                <div class="col-lg-5 text-lg-end mt-4 mt-lg-0 anim-fade-right">
-                    <a href="/nos-services" class="gel-btn-white me-3">
-                        <i class="bi-calendar-check"></i> Prendre un logiciel
+                <div class="col-lg-4 text-lg-end mt-4 mt-lg-0 anim-fade-right">
+                    <a href="/register" class="gel-btn-white me-3" style="margin-bottom:8px;">
+                        <i class="bi-rocket-takeoff"></i> Essai gratuit 30 jours
                     </a>
-                    <a href="/login" class="gel-btn-white" style="background:rgba(255,255,255,0.15); color:#fff; border:2px solid rgba(255,255,255,0.5);">
-                        <i class="bi-box-arrow-in-right"></i> Se connecter
+                    <a href="/tarifs" class="gel-btn-white" style="background:rgba(255,255,255,0.15); color:#fff; border:2px solid rgba(255,255,255,0.5);">
+                        <i class="bi-currency-dollar"></i> Voir les tarifs
                     </a>
                 </div>
             </div>
@@ -1255,93 +1226,7 @@
     </section>
 
     <!-- footer -->
-    <footer class="gel-footer">
-        <div class="container">
-            <div class="row g-5">
-                <div class="col-lg-4">
-                    <div class="d-flex align-items-center gap-3 mb-3">
-                        <div style="width:40px; height:40px; background:#FF7900; border-radius:4px; display:flex; align-items:center; justify-content:center; font-family:'Outfit',sans-serif; font-size:13px; font-weight:900; color:#fff;">GEL</div>
-                        <div>
-                            <div class="gel-footer-brand-name">GEL Cabinet</div>
-                            <div class="gel-footer-brand-sub">Gestion Multi-Pôles</div>
-                        </div>
-                    </div>
-                    <p class="gel-footer-desc">CRM, GED, Pôles, Missions, Comptabilité — votre cabinet dans une seule plateforme.</p>
-                    <div class="gel-footer-social">
-                        <a href="#" class="gel-social-btn" aria-label="Facebook"><i class="bi-facebook"></i></a>
-                        <a href="#" class="gel-social-btn" aria-label="LinkedIn"><i class="bi-linkedin"></i></a>
-                        <a href="#" class="gel-social-btn" aria-label="Twitter"><i class="bi-twitter-x"></i></a>
-                        <a href="#" class="gel-social-btn" aria-label="WhatsApp"><i class="bi-whatsapp"></i></a>
-                    </div>
-                </div>
-
-                <div class="col-lg-2 col-md-4 col-6">
-                    <div class="gel-footer-heading">Modules</div>
-                    <ul class="gel-footer-links">
-                        <li><a href="/login">CRM Clients</a></li>
-                        <li><a href="/login">GED</a></li>
-                        <li><a href="/login">Pôles & Missions</a></li>
-                        <li><a href="/login">Comptabilité</a></li>
-                        <li><a href="/login">ERP</a></li>
-                    </ul>
-                </div>
-
-                <div class="col-lg-2 col-md-4 col-6">
-                    <div class="gel-footer-heading">Services</div>
-                    <ul class="gel-footer-links">
-                        <li><a href="/services/comptabilite">Comptabilité</a></li>
-                        <li><a href="/services/juridique">Juridique</a></li>
-                        <li><a href="/services/fiscal">Fiscal</a></li>
-                        <li><a href="/services/social-paie">Social & Paie</a></li>
-                    </ul>
-                </div>
-
-                <div class="col-lg-2 col-md-4 col-6">
-                    <div class="gel-footer-heading">Cabinet</div>
-                    <ul class="gel-footer-links">
-                        <li><a href="/">Accueil</a></li>
-                        <li><a href="/nos-services">Services</a></li>
-                        <li><a href="/contact">Contact</a></li>
-                        <li><a href="/login">Connexion</a></li>
-                    </ul>
-                </div>
-
-                <div class="col-lg-2 col-md-4 col-6">
-                    <div class="gel-footer-heading">Contact</div>
-                    <ul class="gel-footer-links" style="font-size:13px;">
-                        <li style="margin-bottom:10px;">
-                            <span style="color:rgba(255,255,255,0.4); font-size:13px; display:flex; align-items:center; gap:7px;">
-                                <i class="bi-geo-alt" style="color:#FF7900;"></i> Cotonou, Bénin
-                            </span>
-                        </li>
-                        <li style="margin-bottom:10px;">
-                            <span style="color:rgba(255,255,255,0.4); font-size:13px; display:flex; align-items:center; gap:7px;">
-                                <i class="bi-telephone" style="color:#FF7900;"></i> +229 XX XX XX XX
-                            </span>
-                        </li>
-                        <li>
-                            <span style="color:rgba(255,255,255,0.4); font-size:13px; display:flex; align-items:center; gap:7px;">
-                                <i class="bi-envelope" style="color:#FF7900;"></i> contact@gelcabinet.com
-                            </span>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="gel-footer-bottom">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <p>&copy; {{ date('Y') }} GEL Cabinet. Tous droits réservés.</p>
-                    </div>
-                    <div class="col-md-6 text-md-end mt-2 mt-md-0">
-                        <a href="/login">Connexion</a>
-                        <a href="#">Confidentialité</a>
-                        <a href="#">CGU</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </footer>
+    @include('partials.footer')
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -1418,15 +1303,23 @@
 
     // SCROLL ANIMATIONS
     const animEls = document.querySelectorAll('.anim-fade-up, .anim-fade-left, .anim-fade-right, .anim-scale');
-    const observer = new IntersectionObserver((entries) => {
+    const animObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 entry.target.classList.add('anim-visible');
-                observer.unobserve(entry.target);
+                animObserver.unobserve(entry.target);
             }
         });
-    }, { threshold: 0.12 });
-    animEls.forEach(el => observer.observe(el));
+    }, { threshold: 0.08 });
+    animEls.forEach(el => {
+        // Marquer immédiatement visible si déjà dans le viewport
+        const rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight && rect.bottom > 0) {
+            el.classList.add('anim-visible');
+        } else {
+            animObserver.observe(el);
+        }
+    });
 
     // COUNTER ANIMATION
     const counters = document.querySelectorAll('[data-target]');

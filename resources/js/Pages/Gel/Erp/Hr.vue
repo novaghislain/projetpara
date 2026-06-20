@@ -107,9 +107,9 @@ onMounted(fetchData);
         <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
 
         <!-- Employees -->
-        <div v-else-if="activeTab === 'employees'" class="card card-dashboard">
+        <div v-else-if="activeTab === 'employees'" class="bg-white rounded-lg shadow p-6">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-sm align-middle mb-0">
                     <thead class="small text-muted"><tr><th>Nom</th><th>Email</th><th>Poste</th><th class="text-end">Salaire</th><th>Date embauche</th><th>Statut</th></tr></thead>
                     <tbody>
                         <tr v-if="!employees.length"><td colspan="6" class="text-center py-4 text-muted">Aucun employé.</td></tr>
@@ -127,9 +127,9 @@ onMounted(fetchData);
         </div>
 
         <!-- Payrolls -->
-        <div v-else class="card card-dashboard">
+        <div v-else class="bg-white rounded-lg shadow p-6">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-sm align-middle mb-0">
                     <thead class="small text-muted"><tr><th>Employé</th><th>Période</th><th class="text-end">Base</th><th class="text-end">Primes</th><th class="text-end">Retenues</th><th class="text-end">Net</th></tr></thead>
                     <tbody>
                         <tr v-if="!payrolls.length"><td colspan="6" class="text-center py-4 text-muted">Aucune paie générée.</td></tr>

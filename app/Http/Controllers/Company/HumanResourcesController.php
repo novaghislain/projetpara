@@ -29,8 +29,8 @@ class HumanResourcesController extends Controller
      */
     public function index()
     {
-        $this->getClientId();
-        return view('company', ['page' => 'company-hr']);
+        $clientId = $this->getClientId();
+        return view('company', ['page' => 'company-hr', 'clientId' => $clientId]);
     }
 
     // ─── EMPLOYÉS ─────────────────────────────────────────────────────────────

@@ -139,57 +139,55 @@ onMounted(fetchRequests);
         <!-- Requests List -->
         <div v-else class="row g-3">
             <div v-for="req in requests" :key="req.id" class="col-12">
-                <div class="card card-dashboard">
-                    <div class="card-body">
-                        <div class="d-flex align-items-start justify-content-between">
-                            <div class="flex-grow-1">
-                                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-                                    <h6 class="fw-bold mb-0">{{ req.company_name }}</h6>
-                                    <span class="badge" :class="statusBadgeClass(req.status)">{{ statusLabel(req.status) }}</span>
-                                </div>
-                                <div class="d-flex flex-wrap gap-3 small text-muted">
-                                    <span><i class="bi-person me-1"></i>{{ req.contact_name }}</span>
-                                    <span><i class="bi-envelope me-1"></i>{{ req.email }}</span>
-                                    <span v-if="req.phone"><i class="bi-telephone me-1"></i>{{ req.phone }}</span>
-                                    <span><i class="bi-calendar me-1"></i>{{ formatDate(req.created_at) }}</span>
-                                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <div class="flex-grow-1">
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                                <h6 class="fw-bold mb-0">{{ req.company_name }}</h6>
+                                <span class="badge" :class="statusBadgeClass(req.status)">{{ statusLabel(req.status) }}</span>
                             </div>
-                            <div class="d-flex gap-1 ms-3">
-                                <button class="btn btn-sm btn-outline-info" title="Changer le statut" @click="openStatusModal(req)">
-                                    <i class="bi-tag"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger" title="Supprimer" @click="deleteRequest(req.id)">
-                                    <i class="bi-trash"></i>
-                                </button>
+                            <div class="d-flex flex-wrap gap-3 small text-muted">
+                                <span><i class="bi-person me-1"></i>{{ req.contact_name }}</span>
+                                <span><i class="bi-envelope me-1"></i>{{ req.email }}</span>
+                                <span v-if="req.phone"><i class="bi-telephone me-1"></i>{{ req.phone }}</span>
+                                <span><i class="bi-calendar me-1"></i>{{ formatDate(req.created_at) }}</span>
                             </div>
                         </div>
+                        <div class="d-flex gap-1 ms-3">
+                            <button class="btn btn-sm btn-outline-info" title="Changer le statut" @click="openStatusModal(req)">
+                                <i class="bi-tag"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" title="Supprimer" @click="deleteRequest(req.id)">
+                                <i class="bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
 
-                        <!-- Expand toggle -->
-                        <button class="btn btn-sm btn-link text-decoration-none p-0 mt-2" @click="toggleExpand(req.id)">
-                            <i class="bi" :class="expandedId === req.id ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
-                            {{ expandedId === req.id ? 'Moins de détails' : 'Plus de détails' }}
-                        </button>
+                    <!-- Expand toggle -->
+                    <button class="btn btn-sm btn-link text-decoration-none p-0 mt-2" @click="toggleExpand(req.id)">
+                        <i class="bi" :class="expandedId === req.id ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                        {{ expandedId === req.id ? 'Moins de détails' : 'Plus de détails' }}
+                    </button>
 
-                        <!-- Expanded details -->
-                        <div v-if="expandedId === req.id" class="mt-3 pt-3 border-top">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <h6 class="small fw-bold text-muted text-uppercase">Message</h6>
-                                    <p class="small mb-0">{{ req.message || 'Aucun message.' }}</p>
-                                </div>
-                                <div class="col-md-6">
-                                    <h6 class="small fw-bold text-muted text-uppercase">Notes administrateur</h6>
-                                    <p class="small mb-0" :class="req.admin_notes ? '' : 'fst-italic text-muted'">
-                                        {{ req.admin_notes || 'Aucune note.' }}
-                                    </p>
-                                </div>
-                                <div v-if="req.services?.length" class="col-12">
-                                    <h6 class="small fw-bold text-muted text-uppercase">Services demandés</h6>
-                                    <div class="d-flex flex-wrap gap-1">
-                                        <span v-for="svc in req.services" :key="svc.id" class="badge badge-eden">
-                                            {{ svc.name }}
-                                        </span>
-                                    </div>
+                    <!-- Expanded details -->
+                    <div v-if="expandedId === req.id" class="mt-3 pt-3 border-top">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <h6 class="small fw-bold text-muted text-uppercase">Message</h6>
+                                <p class="small mb-0">{{ req.message || 'Aucun message.' }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="small fw-bold text-muted text-uppercase">Notes administrateur</h6>
+                                <p class="small mb-0" :class="req.admin_notes ? '' : 'fst-italic text-muted'">
+                                    {{ req.admin_notes || 'Aucune note.' }}
+                                </p>
+                            </div>
+                            <div v-if="req.services?.length" class="col-12">
+                                <h6 class="small fw-bold text-muted text-uppercase">Services demandés</h6>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <span v-for="svc in req.services" :key="svc.id" class="badge badge-eden">
+                                        {{ svc.name }}
+                                    </span>
                                 </div>
                             </div>
                         </div>

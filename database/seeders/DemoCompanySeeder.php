@@ -71,6 +71,7 @@ class DemoCompanySeeder extends Seeder
             'client_id' => $client->id,
             'role_id' => $companyAdminRole?->id,
             'is_active' => true,
+            'email_verified_at' => now(),
         ]);
 
         // Créer des utilisateurs de démonstration
@@ -113,6 +114,7 @@ class DemoCompanySeeder extends Seeder
                 'role_id' => $userData['role_id'],
                 'fonction' => $userData['fonction'],
                 'is_active' => true,
+                'email_verified_at' => now(),
             ]);
         }
     }

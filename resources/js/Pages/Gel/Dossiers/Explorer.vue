@@ -29,11 +29,13 @@ const uploadFolderId = ref(null);
 const fetchData = async () => {
     loading.value = true;
     error.value = null;
+    const cid = props.clientId || authStore.user?.client_id;
+    if (!cid) { error.value = 'Aucun client sélectionné.'; loading.value = false; return; }
     try {
         const [foldersRes, docsRes, clientRes] = await Promise.all([
-            fetch('/api/dossiers/' + props.clientId),
-            fetch('/api/documents/' + props.clientId),
-            fetch('/api/clients/' + props.clientId),
+            fetch('/api/dossiers/' + cid),
+            fetch('/api/documents/' + cid),
+            fetch('/api/clients/' + cid),
         ]);
         if (foldersRes.ok) folders.value = await foldersRes.json();
         if (docsRes.ok) documents.value = await docsRes.json();
@@ -113,12 +115,14 @@ const openUpload = (folderId = null) => {
 const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    const cid = props.clientId || authStore.user?.client_id;
+    if (!cid) { alert('Aucun client sélectionné.'); uploading.value = false; return; }
     uploading.value = true;
     try {
         const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('client_id', props.clientId);
+        formData.append('client_id', cid);
         if (uploadFolderId.value) formData.append('folder_id', uploadFolderId.value);
 
         const res = await fetch('/documents/upload', {
@@ -195,39 +199,37 @@ onMounted(fetchData);
 
             <div class="row g-3">
                 <div v-for="folder in folders" :key="folder.id" class="col-md-6 col-lg-4">
-            <div class="card card-dashboard h-100">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <div class="d-flex align-items-center gap-2">
-                                    <i class="bi-folder-fill text-warning" style="font-size:24px;"></i>
-                                    <h6 class="mb-0 fw-medium">{{ folder.name }}</h6>
-                                </div>
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-light" data-bs-toggle="dropdown"><i class="bi-three-dots"></i></button>
-                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
-                                        <li><button class="dropdown-item small" @click="openUpload(folder.id)"><i class="bi-upload me-2"></i>Uploader ici</button></li>
-                                        <li><button class="dropdown-item small" @click="openEditFolder(folder)"><i class="bi-pencil me-2"></i>Renommer</button></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><button class="dropdown-item small text-danger" @click="deleteFolder(folder.id)"><i class="bi-trash me-2"></i>Supprimer</button></li>
-                                    </ul>
-                                </div>
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi-folder-fill text-warning" style="font-size:24px;"></i>
+                                <h6 class="mb-0 fw-medium">{{ folder.name }}</h6>
                             </div>
-                            <div class="small text-muted mb-2">{{ folder.slug }}</div>
-
-                            <!-- Documents in folder -->
-                            <div v-if="getFolderDocuments(folder.id).length">
-                                <div v-for="doc in getFolderDocuments(folder.id)" :key="doc.id" class="d-flex align-items-center justify-content-between py-1 border-top">
-                                    <div class="d-flex align-items-center gap-2 small">
-                                        <i class="bi-file-earmark-text text-primary"></i>
-                                        <a :href="'/documents/download/' + doc.id" class="text-decoration-none">{{ doc.name }}</a>
-                                    </div>
-                                    <button class="btn btn-sm btn-link text-danger p-0" @click="deleteDocument(doc.id)" title="Supprimer">
-                                        <i class="bi-x"></i>
-                                    </button>
-                                </div>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-light" data-bs-toggle="dropdown"><i class="bi-three-dots"></i></button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                                    <li><button class="dropdown-item small" @click="openUpload(folder.id)"><i class="bi-upload me-2"></i>Uploader ici</button></li>
+                                    <li><button class="dropdown-item small" @click="openEditFolder(folder)"><i class="bi-pencil me-2"></i>Renommer</button></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><button class="dropdown-item small text-danger" @click="deleteFolder(folder.id)"><i class="bi-trash me-2"></i>Supprimer</button></li>
+                                </ul>
                             </div>
-                            <div v-else class="small text-muted fst-italic py-2">Dossier vide</div>
                         </div>
+                        <div class="small text-muted mb-2">{{ folder.slug }}</div>
+
+                        <!-- Documents in folder -->
+                        <div v-if="getFolderDocuments(folder.id).length">
+                            <div v-for="doc in getFolderDocuments(folder.id)" :key="doc.id" class="d-flex align-items-center justify-content-between py-1 border-top">
+                                <div class="d-flex align-items-center gap-2 small">
+                                    <i class="bi-file-earmark-text text-primary"></i>
+                                    <a :href="'/documents/download/' + doc.id" class="text-decoration-none">{{ doc.name }}</a>
+                                </div>
+                                <button class="btn btn-sm btn-link text-danger p-0" @click="deleteDocument(doc.id)" title="Supprimer">
+                                    <i class="bi-x"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div v-else class="small text-muted fst-italic py-2">Dossier vide</div>
                     </div>
                 </div>
             </div>
@@ -235,16 +237,14 @@ onMounted(fetchData);
             <!-- Unfiled Documents -->
             <div v-if="getUnfiledDocuments().length" class="mt-4">
                 <h6 class="fw-bold mb-3"><i class="bi-file-earmark me-2"></i>Documents non classés ({{ getUnfiledDocuments().length }})</h6>
-                <div class="card card-dashboard">
-                    <div class="list-group list-group-flush">
-                        <div v-for="doc in getUnfiledDocuments()" :key="doc.id" class="list-group-item d-flex align-items-center justify-content-between">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="bi-file-earmark-text text-primary"></i>
-                                <a :href="'/documents/download/' + doc.id" class="text-decoration-none small">{{ doc.name }}</a>
-                                <span class="small text-muted">{{ Math.round(doc.size/1024) }} Ko</span>
-                            </div>
-                            <button class="btn btn-sm btn-link text-danger p-0" @click="deleteDocument(doc.id)"><i class="bi-trash"></i></button>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div v-for="doc in getUnfiledDocuments()" :key="doc.id" class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi-file-earmark-text text-primary"></i>
+                            <a :href="'/documents/download/' + doc.id" class="text-decoration-none small">{{ doc.name }}</a>
+                            <span class="small text-muted">{{ Math.round(doc.size/1024) }} Ko</span>
                         </div>
+                        <button class="btn btn-sm btn-link text-danger p-0" @click="deleteDocument(doc.id)"><i class="bi-trash"></i></button>
                     </div>
                 </div>
             </div>

@@ -199,97 +199,44 @@
         .gel-modal-divider::before, .gel-modal-divider::after { content: ''; flex: 1; height: 1px; background: var(--gel-border); }
 
         @media (max-width: 991px) { .gel-section { padding: 60px 0; } .gel-page-header { padding: 80px 0 60px; } .gel-stats-row { gap: 24px; } }
+
+        /* Domaines couverts */
+        .gel-domain-group { margin-bottom: 32px; }
+        .gel-domain-header {
+            display: flex; align-items: center; gap: 10px;
+            font-family: var(--font-heading); font-size: 16px; font-weight: 700;
+            color: var(--gel-primary); margin-bottom: 14px;
+            padding: 10px 16px; background: var(--gel-primary-soft);
+            border-radius: 6px; border-left: 3px solid var(--gel-primary);
+        }
+        .gel-domain-header i { font-size: 18px; }
+        .gel-module-tag {
+            display: inline-flex; align-items: center; gap: 5px;
+            background: var(--gel-white); border: 1px solid var(--gel-border);
+            border-radius: 100px; padding: 4px 14px; font-size: 12px;
+            color: var(--gel-text); margin: 0 6px 8px 0;
+            transition: border-color var(--transition), background var(--transition);
+        }
+        .gel-module-tag:hover { border-color: var(--gel-primary); background: var(--gel-primary-soft); }
+        .gel-module-tag i { color: var(--gel-primary); font-size: 10px; }
+        .gel-domain-stats { display: flex; justify-content: center; gap: 28px; flex-wrap: wrap; margin-top: 28px; }
+        .gel-domain-stat-num { font-family: var(--font-heading); font-size: 28px; font-weight: 900; color: #163A5E; display: block; }
+        .gel-domain-stat-lbl { font-size: 11px; color: var(--gel-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+        .gel-domain-stat-item { text-align: center; }
+        .gel-section-sub.wide { max-width: 720px; }
+
+        /* Opportunités */
+        .gel-opp-card { background: var(--gel-white); border: 1px solid var(--gel-border); border-radius: 12px; padding: 24px 18px; height: 100%; transition: all var(--transition); text-align: center; }
+        .gel-opp-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: transparent; }
+        .gel-opp-icon { width: 48px; height: 48px; background: var(--gel-primary-soft); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; color: var(--gel-primary); font-size: 22px; transition: all var(--transition); }
+        .gel-opp-card:hover .gel-opp-icon { background: var(--gel-primary); color: #fff; }
+        .gel-opp-card h5 { font-size: 14px; font-weight: 700; margin-bottom: 8px; color: #163A5E; }
+        .gel-opp-card p { font-size: 12.5px; color: var(--gel-muted); line-height: 1.6; margin: 0; }
     </style>
 </head>
 <body>
 
-    <!-- Navbar -->
-    <nav class="gel-navbar" id="gelNavbar">
-        <div class="container-fluid">
-            <a href="/" class="gel-brand">
-                <div class="gel-brand-logo">GEL</div>
-                <div class="gel-brand-text"><span class="gel-brand-name">GEL Cabinet</span><span class="gel-brand-sub">Gestion Multi-Pôles</span></div>
-            </a>
-            <ul class="gel-nav-center">
-                <li class="gel-nav-item">
-                    <a href="/nos-modules" class="gel-nav-link">Nos Modules <i class="bi-chevron-down chevron"></i></a>
-                    <ul class="gel-dropdown">
-                        <li><a href="/nos-modules#module-crm"><span class="drop-icon"><i class="bi-people"></i></span> CRM Clients</a></li>
-                        <li><a href="/nos-modules#module-ged"><span class="drop-icon"><i class="bi-folder2-open"></i></span> GED</a></li>
-                        <li><a href="/nos-modules#module-poles"><span class="drop-icon"><i class="bi-diagram-3"></i></span> Pôles & Missions</a></li>
-                        <li><hr class="gel-dropdown-divider"></li>
-                        <li><a href="/nos-modules#module-compta"><span class="drop-icon"><i class="bi-calculator"></i></span> Comptabilité</a></li>
-                        <li><a href="/nos-modules#module-erp"><span class="drop-icon"><i class="bi-box-seam"></i></span> ERP Intégré</a></li>
-                    </ul>
-                </li>
-                <li class="gel-nav-item">
-                    <a href="/services" class="gel-nav-link active">Services <i class="bi-chevron-down chevron"></i></a>
-                    <ul class="gel-dropdown">
-                        <li><a href="/services/comptabilite"><span class="drop-icon"><i class="bi-calculator"></i></span> Comptabilité</a></li>
-                        <li><a href="/services/juridique"><span class="drop-icon"><i class="bi-bank2"></i></span> Juridique</a></li>
-                        <li><a href="/services/fiscal"><span class="drop-icon"><i class="bi-receipt"></i></span> Fiscal</a></li>
-                        <li><a href="/services/social-paie"><span class="drop-icon"><i class="bi-people"></i></span> Social & Paie</a></li>
-                    </ul>
-                </li>
-                <li class="gel-nav-item">
-                    <a href="#" class="gel-nav-link">À propos <i class="bi-chevron-down chevron"></i></a>
-                    <ul class="gel-dropdown">
-                        <li><a href="{{ route('notre-cabinet') }}"><span class="drop-icon"><i class="bi-building"></i></span> Notre Cabinet</a></li>
-                        <li><a href="{{ route('notre-equipe') }}"><span class="drop-icon"><i class="bi-people-fill"></i></span> Notre Équipe</a></li>
-                        <li><a href="{{ route('carrieres') }}"><span class="drop-icon"><i class="bi-briefcase-fill"></i></span> Carrières</a></li>
-                    </ul>
-                </li>
-                <li class="gel-nav-item"><a href="#" class="gel-nav-link">Ressources <i class="bi-chevron-down chevron"></i></a>
-                    <ul class="gel-dropdown">
-                        <li><a href="/blogue"><span class="drop-icon"><i class="bi-pencil-square"></i></span> Blogue</a></li>
-                        <li><a href="/documentation"><span class="drop-icon"><i class="bi-file-text"></i></span> Documentation</a></li>
-                        <li><a href="/faq"><span class="drop-icon"><i class="bi-question-circle"></i></span> FAQ</a></li>
-                        <li><hr class="gel-dropdown-divider"></li>
-                        <li><a href="/centre-aide"><span class="drop-icon"><i class="bi-headset"></i></span> Centre d'aide</a></li>
-                    </ul>
-                </li>
-                <li class="gel-nav-item"><a href="#" class="gel-nav-link">Tarifs</a></li>
-                <li class="gel-nav-item"><a href="/" class="gel-nav-link">Contact</a></li>
-            </ul>
-            <div class="gel-nav-right">
-                <a href="tel:+22900000000" class="gel-phone d-none d-lg-flex"><i class="bi-telephone-fill"></i> +229 XX XX XX XX</a>
-                @auth
-                    @if(auth()->user()->role === 'client')
-                        <a href="{{ route('client.orders.index') }}" class="gel-btn-nav gel-btn-nav-outline"><i class="bi-speedometer2"></i> Mon Espace</a>
-                    @elseif(auth()->user()->client_id)
-                        <a href="{{ route('company.dashboard') }}" class="gel-btn-nav gel-btn-nav-outline"><i class="bi-speedometer2"></i> Portail</a>
-                    @else
-                        <a href="{{ route('dashboard') }}" class="gel-btn-nav gel-btn-nav-outline"><i class="bi-speedometer2"></i> Tableau de bord</a>
-                    @endif
-                    <form method="POST" action="{{ route('logout') }}" style="display:inline;">@csrf<button type="submit" class="gel-btn-nav gel-btn-nav-outline" style="color:#dc2626;border-color:#fca5a5;"><i class="bi-box-arrow-right"></i></button></form>
-                @else
-                    <a href="/register" class="gel-btn-nav gel-btn-nav-outline"><i class="bi-person-plus"></i> S'inscrire</a>
-                    <a href="/login" class="gel-btn-nav gel-btn-nav-primary"><i class="bi-box-arrow-in-right"></i> Connexion</a>
-                @endauth
-                <button class="gel-toggler" id="gelToggler" aria-label="Menu"><i class="bi-list" id="togglerIcon"></i></button>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Mobile Menu -->
-    <div class="gel-mobile-menu" id="gelMobileMenu">
-        <a href="/" class="gel-mobile-link"><i class="bi-house text-orange me-2"></i>Accueil</a>
-        <a href="/nos-modules" class="gel-mobile-link"><i class="bi-grid-3x3-gap text-orange me-2"></i>Nos Modules</a>
-        <a href="/services" class="gel-mobile-link" style="color:var(--gel-primary);font-weight:600;"><i class="bi-grid-3x3-gap text-orange me-2"></i>Services</a>
-        <a href="/blogue" class="gel-mobile-link"><i class="bi-pencil-square text-orange me-2"></i>Blogue</a>
-        <a href="/documentation" class="gel-mobile-link"><i class="bi-file-text text-orange me-2"></i>Documentation</a>
-        <a href="/faq" class="gel-mobile-link"><i class="bi-question-circle text-orange me-2"></i>FAQ</a>
-        <a href="/centre-aide" class="gel-mobile-link"><i class="bi-headset text-orange me-2"></i>Centre d'aide</a>
-        <a href="/services/comptabilite" class="gel-mobile-link"><i class="bi-calculator text-orange me-2"></i>Comptabilité</a>
-        <a href="/services/juridique" class="gel-mobile-link"><i class="bi-bank2 text-orange me-2"></i>Juridique</a>
-        <a href="/services/fiscal" class="gel-mobile-link"><i class="bi-receipt text-orange me-2"></i>Fiscal</a>
-        <a href="/services/social-paie" class="gel-mobile-link"><i class="bi-people text-orange me-2"></i>Social & Paie</a>
-        <a href="{{ route('notre-cabinet') }}" class="gel-mobile-link"><i class="bi-building text-orange me-2"></i>Notre Cabinet</a>
-        <a href="#" class="gel-mobile-link"><i class="bi-currency-dollar text-orange me-2"></i>Tarifs</a>
-        <a href="/" class="gel-mobile-link"><i class="bi-envelope text-orange me-2"></i>Contact</a>
-        <a href="/login" class="gel-mobile-link"><i class="bi-box-arrow-in-right text-orange me-2"></i>Connexion</a>
-        <a href="/register" class="gel-mobile-link"><i class="bi-person-plus text-orange me-2"></i>S'inscrire</a>
-    </div>
+    @include('partials.navbar')
 
     <!-- header -->
     <div class="gel-page-header">
@@ -335,7 +282,7 @@
             <div class="row g-4">
 
                 <!-- Comptabilité -->
-                <div class="col-md-6 col-lg-3 anim-fade-up delay-1">
+                <div class="col-md-6 col-lg-4 anim-fade-up delay-1">
                     <a href="/services/comptabilite" class="gel-svc-card" style="--svc-color:#FF7900;--svc-light:rgba(255,121,0,0.08);">
                         <div class="gel-svc-card-icon"><i class="bi-calculator"></i></div>
                         <h4>Comptabilité</h4>
@@ -350,7 +297,7 @@
                 </div>
 
                 <!-- Juridique -->
-                <div class="col-md-6 col-lg-3 anim-fade-up delay-2">
+                <div class="col-md-6 col-lg-4 anim-fade-up delay-2">
                     <a href="/services/juridique" class="gel-svc-card" style="--svc-color:#3B82F6;--svc-light:rgba(59,130,246,0.08);">
                         <div class="gel-svc-card-icon"><i class="bi-bank2"></i></div>
                         <h4>Juridique</h4>
@@ -365,7 +312,7 @@
                 </div>
 
                 <!-- Fiscal -->
-                <div class="col-md-6 col-lg-3 anim-fade-up delay-3">
+                <div class="col-md-6 col-lg-4 anim-fade-up delay-3">
                     <a href="/services/fiscal" class="gel-svc-card" style="--svc-color:#8B5CF6;--svc-light:rgba(139,92,246,0.08);">
                         <div class="gel-svc-card-icon"><i class="bi-receipt"></i></div>
                         <h4>Fiscal</h4>
@@ -380,7 +327,7 @@
                 </div>
 
                 <!-- Social & Paie -->
-                <div class="col-md-6 col-lg-3 anim-fade-up delay-4">
+                <div class="col-md-6 col-lg-4 anim-fade-up delay-4">
                     <a href="/services/social-paie" class="gel-svc-card" style="--svc-color:#10B981;--svc-light:rgba(16,185,129,0.08);">
                         <div class="gel-svc-card-icon"><i class="bi-people"></i></div>
                         <h4>Social & Paie</h4>
@@ -394,6 +341,200 @@
                     </a>
                 </div>
 
+                <!-- Logiciel Comptabilité (ERP) -->
+                <div class="col-md-6 col-lg-4 anim-fade-up delay-4">
+                    <a href="/logiciel-comptabilite" class="gel-svc-card" style="--svc-color:#163A5E;--svc-light:rgba(22,58,94,0.08);">
+                        <div class="gel-svc-card-icon"><i class="bi-cpu"></i></div>
+                        <h4>Logiciel Comptabilité</h4>
+                        <p>ERP complet avec 35+ modules : comptabilité, stock, ventes, paie, caisse, Mobile Money, hôtel, scolaire et plus.</p>
+                        <div class="gel-svc-tags">
+                            <span class="gel-svc-tag">OHADA/SYSCOA</span>
+                            <span class="gel-svc-tag">35+ modules</span>
+                            <span class="gel-svc-tag">Licence</span>
+                        </div>
+                        <div style="margin-top:14px;" class="gel-svc-card-link">Découvrir <i class="bi-arrow-right"></i></div>
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- domaines couverts (Logiciel Comptabilité) -->
+    <section class="gel-section" style="background:linear-gradient(135deg,#F8FAFC 0%,#EFF6FF 100%);">
+        <div class="container">
+            <div class="row justify-content-center text-center mb-5">
+                <div class="col-lg-8">
+                    <span class="gel-section-chip"><i class="bi-cpu"></i> Domaines couverts</span>
+                    <h2 class="gel-section-title">Un ERP complet pour votre cabinet</h2>
+                    <p class="gel-section-sub wide mx-auto">Au-delà de la comptabilité, <strong>GEL Comptabilité</strong> couvre <strong>plus de 35 modules métier</strong> répartis en 7 domaines. Une solution tout-en-un qui centralise l'ensemble des opérations.</p>
+                    <div class="gel-domain-stats">
+                        <div class="gel-domain-stat-item"><span class="gel-domain-stat-num">35+</span><span class="gel-domain-stat-lbl">Modules</span></div>
+                        <div class="gel-domain-stat-item"><span class="gel-domain-stat-num">7</span><span class="gel-domain-stat-lbl">Domaines</span></div>
+                        <div class="gel-domain-stat-item"><span class="gel-domain-stat-num">10</span><span class="gel-domain-stat-lbl">Profils</span></div>
+                        <div class="gel-domain-stat-item"><span class="gel-domain-stat-num">5</span><span class="gel-domain-stat-lbl">Bases dédiées</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Domaine 1 : Comptabilité & Finance -->
+            <div class="gel-domain-group anim-fade-up delay-1">
+                <div class="gel-domain-header"><i class="bi-layout-text-window"></i> Comptabilité &amp; Finance</div>
+                <div>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Plan comptable SYSCOA/OHADA</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Saisie journaux (ACH/VTE/BQ/CAISSE/OD)</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Balance &amp; Grand Livre</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Bilan actif/passif</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Compte de résultat</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Déclarations fiscales (TVA, AIB, TS)</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Gestion exercices (ouverture/clôture)</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Finances &amp; ratios</span>
+                </div>
+            </div>
+
+            <!-- Domaine 2 : Ventes & Facturation -->
+            <div class="gel-domain-group anim-fade-up delay-2">
+                <div class="gel-domain-header"><i class="bi-receipt"></i> Ventes &amp; Facturation</div>
+                <div>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Facture normale &amp; prestation</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Facture rapide (caisse)</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Facture normalisée OHADA</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Commande client &amp; provisoire</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Bordereau de livraison</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Cotation &amp; grille tarifaire</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Livraison totale/partielle</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Impression multi-format (Ticket/A4/A5/A6)</span>
+                </div>
+            </div>
+
+            <!-- Domaine 3 : Stock & Achats -->
+            <div class="gel-domain-group anim-fade-up delay-3">
+                <div class="gel-domain-header"><i class="bi-box-seam"></i> Stock, Achats &amp; Logistique</div>
+                <div>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Gestion des produits &amp; articles</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Familles, catégories, départements</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Arrivage &amp; réception fournisseur</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Inventaire &amp; ajustement</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Stock actuel, détaillé, final</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Tarifs &amp; grilles par client/catégorie</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Code-barres &amp; scan produit</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Pertes, avaries &amp; écarts</span>
+                </div>
+            </div>
+
+            <!-- Domaine 4 : Trésorerie -->
+            <div class="gel-domain-group anim-fade-up delay-1">
+                <div class="gel-domain-header"><i class="bi-cash-stack"></i> Trésorerie &amp; Paiements</div>
+                <div>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Caisse &amp; point caisse</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Billetage (coupures 50 à 10 000 FCFA)</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Situation caisse journalière/principale</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Mobile Money (MTN MoMo, Moov Money)</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Export MCF (formats 31/33/38/C1)</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Virements bancaires</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Transfert d'argent inter-caisse</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Chèques &amp; espèces</span>
+                </div>
+            </div>
+
+            <!-- Domaine 5 : Paie & RH -->
+            <div class="gel-domain-group anim-fade-up delay-2">
+                <div class="gel-domain-header"><i class="bi-people"></i> Paie &amp; Ressources Humaines</div>
+                <div>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Gestion des employés (personnel)</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Paramètres salaire (SMIC, CNSS, IRPP)</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Bulletins de paie individuels</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Charges sociales &amp; allocations</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Édition A4/A5/A6</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Historique des salaires</span>
+                </div>
+            </div>
+
+            <!-- Domaine 6 : Modules spécialisés -->
+            <div class="gel-domain-group anim-fade-up delay-3">
+                <div class="gel-domain-header"><i class="bi-building"></i> Modules spécialisés</div>
+                <div>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> <strong>Hôtel</strong> &mdash; Chambres, réservations, taxe nuitée</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> <strong>Location</strong> &mdash; Biens, locataires, quittances, loyers</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> <strong>Scolaire</strong> &mdash; Classes, élèves, notes, bulletins</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> <strong>Tontine</strong> &mdash; Types, adhérents, cotisations, échéancier</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> <strong>Transport</strong> &mdash; Camions, tournées, charges</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> <strong>Pressing</strong> &mdash; Commandes, bon de livraison</span>
+                </div>
+            </div>
+
+            <!-- Domaine 7 : Administration -->
+            <div class="gel-domain-group anim-fade-up delay-1">
+                <div class="gel-domain-header"><i class="bi-gear"></i> Administration &amp; Sécurité</div>
+                <div>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> 10 profils utilisateurs (PDG à caissier)</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Permissions individuelles &amp; menus</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Sauvegarde &amp; restauration automatique</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Licence &amp; activation (30 jours d'essai)</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Multi-sociétés &amp; dossiers</span>
+                    <span class="gel-module-tag"><i class="bi-check2"></i> Base de données sécurisée</span>
+                </div>
+            </div>
+
+            <div class="text-center mt-4 anim-fade-up delay-2">
+                <a href="/logiciel-comptabilite" class="gel-btn-nav gel-btn-nav-primary" style="padding:12px 32px;font-size:14px;"><i class="bi-cpu"></i> Découvrir tous les modules</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- opportunités par secteur -->
+    <section class="gel-section">
+        <div class="container">
+            <div class="row justify-content-center text-center mb-5">
+                <div class="col-lg-8">
+                    <span class="gel-section-chip"><i class="bi-stars"></i> Opportunités par secteur</span>
+                    <h2 class="gel-section-title">Une solution pour chaque métier</h2>
+                    <p class="gel-section-sub wide mx-auto">Grâce à ses modules spécialisés, GEL Comptabilité s'adapte à une grande variété de secteurs d'activité.</p>
+                </div>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-4 anim-fade-up delay-1">
+                    <div class="gel-opp-card">
+                        <div class="gel-opp-icon"><i class="bi-building"></i></div>
+                        <h5>Hôtels &amp; Résidences</h5>
+                        <p>Gestion complète des chambres, réservations, taxe de nuitée, minibar et facturation clients.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 anim-fade-up delay-2">
+                    <div class="gel-opp-card">
+                        <div class="gel-opp-icon"><i class="bi-mortarboard"></i></div>
+                        <h5>Établissements scolaires</h5>
+                        <p>Années scolaires, classes, matières, saisie des notes, bulletins, frais scolaires et suivi des élèves.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 anim-fade-up delay-3">
+                    <div class="gel-opp-card">
+                        <div class="gel-opp-icon"><i class="bi-house-door"></i></div>
+                        <h5>Agences immobilières</h5>
+                        <p>Gestion des biens, locataires, quittances de loyer, avances/cautions et relevés propriétaires.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 anim-fade-up delay-1">
+                    <div class="gel-opp-card">
+                        <div class="gel-opp-icon"><i class="bi-truck"></i></div>
+                        <h5>Transport &amp; Transit</h5>
+                        <p>Gestion des camions, tournées, charges transport, dossiers de transit et suivi logistique.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 anim-fade-up delay-2">
+                    <div class="gel-opp-card">
+                        <div class="gel-opp-icon"><i class="bi-people"></i></div>
+                        <h5>Associations &amp; Tontines</h5>
+                        <p>Types de tontine, adhérents, comptes, cotisations, échéancier et attribution automatique.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 anim-fade-up delay-3">
+                    <div class="gel-opp-card">
+                        <div class="gel-opp-icon"><i class="bi-shop"></i></div>
+                        <h5>Commerces &amp; Distribution</h5>
+                        <p>Gestion des ventes, facturation, commandes, encaissements Mobile Money et suivi des impayés.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -464,55 +605,7 @@
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="gel-footer">
-        <div class="container">
-            <div class="row g-4">
-                <div class="col-lg-4">
-                    <div class="d-flex align-items-center gap-3 mb-2">
-                        <div style="width:36px;height:36px;background:#FF7900;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;font-size:12px;font-weight:900;color:#fff;">GEL</div>
-                        <div><div class="gel-footer-brand">GEL Cabinet</div><div class="gel-footer-sub">Gestion Multi-Pôles</div></div>
-                    </div>
-                    <p class="gel-footer-desc">CRM, GED, Pôles, Missions, Comptabilité — votre cabinet tout-en-un.</p>
-                    <div class="gel-footer-social">
-                        <a href="#" class="gel-social-btn" aria-label="Facebook"><i class="bi-facebook"></i></a>
-                        <a href="#" class="gel-social-btn" aria-label="LinkedIn"><i class="bi-linkedin"></i></a>
-                        <a href="#" class="gel-social-btn" aria-label="Twitter"><i class="bi-twitter-x"></i></a>
-                    </div>
-                </div>
-                <div class="col-lg-2 col-md-4 col-6">
-                    <div class="gel-footer-heading">Services</div>
-                    <ul class="gel-footer-links">
-                        <li><a href="/services/comptabilite">Comptabilité</a></li>
-                        <li><a href="/services/juridique">Juridique</a></li>
-                        <li><a href="/services/fiscal">Fiscal</a></li>
-                        <li><a href="/services/social-paie">Social & Paie</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-2 col-md-4 col-6">
-                    <div class="gel-footer-heading">Modules</div>
-                    <ul class="gel-footer-links">
-                        <li><a href="/nos-modules#module-crm">CRM Clients</a></li>
-                        <li><a href="/nos-modules#module-ged">GED</a></li>
-                        <li><a href="/nos-modules#module-poles">Pôles & Missions</a></li>
-                        <li><a href="/nos-modules#module-compta">Comptabilité</a></li>
-                        <li><a href="/nos-modules#module-erp">ERP</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-2 col-md-4 col-6">
-                    <div class="gel-footer-heading">Contact</div>
-                    <ul class="gel-footer-links" style="font-size:13px;color:rgba(255,255,255,0.4);">
-                        <li><i class="bi-geo-alt" style="color:#FF7900;margin-right:6px;"></i>Cotonou, Bénin</li>
-                        <li><i class="bi-telephone" style="color:#FF7900;margin-right:6px;"></i>+229 XX XX XX XX</li>
-                        <li><i class="bi-envelope" style="color:#FF7900;margin-right:6px;"></i>contact@gelcabinet.com</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="gel-footer-bottom">
-                <p>&copy; {{ date('Y') }} GEL Cabinet. Tous droits réservés.</p>
-            </div>
-        </div>
-    </footer>
+    @include('partials.footer')
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>

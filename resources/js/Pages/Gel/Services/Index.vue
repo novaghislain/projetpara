@@ -144,8 +144,8 @@ onMounted(fetchServices);
 
         <div v-else class="row g-3">
             <div v-for="svc in services" :key="svc.id" class="col-md-6 col-lg-4">
-                <div class="card card-dashboard h-100">
-                    <div class="card-body">
+                <div class="bg-white rounded-lg shadow p-6 h-100">
+
                         <div class="d-flex align-items-start gap-3 mb-3">
                             <div class="rounded-2 d-flex align-items-center justify-content-center flex-shrink-0"
                                  :style="{ backgroundColor: (svc.color || '#1a237e') + '20', width: '48px', height: '48px', borderRadius: '12px' }">
@@ -170,7 +170,6 @@ onMounted(fetchServices);
                                 <button class="btn btn-sm btn-outline-danger" @click="deleteService(svc.id)"><i class="bi-trash"></i></button>
                             </div>
                         </div>
-                    </div>
                 </div>
             </div>
         </div>

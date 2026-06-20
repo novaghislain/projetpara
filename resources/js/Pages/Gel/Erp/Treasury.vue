@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../Layouts/GelLayout.vue';
 import { authStore } from '../../../stores/auth';
@@ -89,277 +89,235 @@ onMounted(fetchData);
 
 <template>
     <GelLayout page-title="Trésorerie">
-        <div class="isup-shell">
-
-            <!-- Header -->
-            <div class="isup-portal-header">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="isup-portal-logo">
-                        <i class="bi-wallet2" style="font-size:20px;"></i>
-                    </div>
-                    <div>
-                        <div class="isup-portal-company">Trésorerie</div>
-                        <div class="isup-portal-sub">Soldes, transactions et comptes bancaires</div>
-                    </div>
-                </div>
+        <!-- Actions -->
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+            <div>
+                <h5 class="fw-bold mb-1">Trésorerie</h5>
+                <p class="text-muted small mb-0">Soldes, transactions et comptes bancaires</p>
             </div>
-
-            <!-- Tabs bar -->
-            <div class="isup-tabs-bar">
-                <button v-for="t in tabs" :key="t.key"
-                        class="isup-tab"
-                        :class="{ 'isup-tab-active': activeTab === t.key }"
-                        @click="activeTab = t.key">
-                    <i :class="t.icon"></i>
-                    {{ t.label }}
+            <div class="d-flex gap-2">
+                <button v-if="activeTab === 'accounts'" class="btn btn-outline-primary btn-sm" @click="showAccModal = true">
+                    <i class="bi-plus-lg me-1"></i>Compte
                 </button>
-                <div class="ms-auto d-flex align-items-center px-2 gap-2">
-                    <button v-if="activeTab === 'accounts'" class="isup-btn-orange btn-sm" @click="showAccModal = true">
-                        <i class="bi-plus-lg me-1"></i>Compte
-                    </button>
-                    <button class="isup-btn-primary btn-sm" @click="showTxModal = true">
-                        <i class="bi-cash me-1"></i>Transaction
-                    </button>
-                </div>
-            </div>
-
-            <!-- Loading -->
-            <div v-if="loading" class="d-flex align-items-center justify-content-center gap-3 py-5">
-                <div class="isup-spinner"></div>
-                <span style="color:#888; font-size:14px;">Chargement…</span>
-            </div>
-
-            <!-- Error -->
-            <div v-else-if="error" class="isup-alert-error m-3">
-                <i class="bi-exclamation-triangle-fill me-2"></i>{{ error }}
-                <button @click="fetchData" class="isup-btn-primary ms-3" style="padding:4px 12px; font-size:11px;">
-                    <i class="bi-arrow-clockwise me-1"></i>Réessayer
+                <button class="btn btn-primary btn-sm" @click="showTxModal = true">
+                    <i class="bi-cash me-1"></i>Transaction
                 </button>
             </div>
+        </div>
 
-            <!-- ══ BALANCES TAB ══ -->
-            <div v-else-if="activeTab === 'balances'" class="p-3">
-                <div class="row g-3">
-                    <div v-if="!balances.length" class="col-12">
-                        <div class="text-center py-5 text-muted" style="font-size:13px;">
-                            <i class="bi-wallet2" style="font-size:28px; display:block; margin-bottom:8px; color:#dce3ee;"></i>
-                            Aucun compte
-                        </div>
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-4">
+            <li v-for="t in tabs" :key="t.key" class="nav-item">
+                <button class="nav-link" :class="{ active: activeTab === t.key }" @click="activeTab = t.key">
+                    <i :class="t.icon" class="me-1"></i>{{ t.label }}
+                </button>
+            </li>
+        </ul>
+
+        <!-- Loading -->
+        <div v-if="loading" class="d-flex justify-content-center py-5">
+            <div class="spinner-border text-primary"><span class="visually-hidden">Chargement…</span></div>
+        </div>
+
+        <!-- Error -->
+        <div v-else-if="error" class="alert alert-danger">
+            <i class="bi-exclamation-triangle-fill me-2"></i>{{ error }}
+            <button @click="fetchData" class="btn btn-primary btn-sm ms-3">
+                <i class="bi-arrow-clockwise me-1"></i>Réessayer
+            </button>
+        </div>
+
+        <!-- ══ BALANCES TAB ══ -->
+        <div v-else-if="activeTab === 'balances'" class="bg-white rounded-lg shadow p-6">
+            <h6 class="fw-bold mb-3"><i class="bi-wallet2 me-2" style="color:#FF7900;"></i>Soldes</h6>
+            <div class="row g-3">
+                <div v-if="!balances.length" class="col-12">
+                    <div class="text-center py-5 text-muted small">
+                        <i class="bi-wallet2 fs-1 d-block mb-2" style="color:#dce3ee;"></i>
+                        Aucun compte
                     </div>
-                    <div v-for="bal in balances" :key="bal.id" class="col-md-6 col-lg-4">
-                        <div class="isup-bal-card">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <div class="d-flex align-items-center gap-2">
-                                    <div class="isup-bal-icon">
-                                        <i :class="bal.type === 'bank' ? 'bi-bank' : bal.type === 'mobile_money' ? 'bi-phone' : 'bi-cash'"></i>
-                                    </div>
+                </div>
+                <div v-for="bal in balances" :key="bal.id" class="col-md-6 col-lg-4">
+                    <div class="border rounded p-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="rounded p-2" style="background:#f0f4f8;">
+                                    <i :class="bal.type === 'bank' ? 'bi-bank' : bal.type === 'mobile_money' ? 'bi-phone' : 'bi-cash'"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-medium small">{{ bal.name }}</div>
                                     <div>
-                                        <div class="isup-bal-name">{{ bal.name }}</div>
-                                        <div class="isup-bal-type">
-                                            <span class="isup-status" :class="bal.type === 'bank' ? 'isup-status-blue' : bal.type === 'mobile_money' ? 'isup-status-warn' : 'isup-status-green'">
-                                                {{ bal.type === 'bank' ? 'Banque' : bal.type === 'mobile_money' ? 'Mobile Money' : 'Caisse' }}
-                                            </span>
-                                        </div>
+                                        <span class="badge bg-info">{{ bal.type === 'bank' ? 'Banque' : bal.type === 'mobile_money' ? 'Mobile Money' : 'Caisse' }}</span>
                                     </div>
                                 </div>
                             </div>
-                            <div class="isup-bal-number">{{ bal.account_number || '-' }}</div>
-                            <div class="d-flex justify-content-between align-items-end mt-2 pt-2" style="border-top:1px solid #f0f4f8;">
-                                <span class="isup-bal-label">Solde</span>
-                                <span class="isup-bal-amount" :class="bal.balance >= 0 ? 'isup-bal-positive' : 'isup-bal-negative'">
-                                    {{ $formatCurrency(bal.balance) }}
-                                </span>
-                            </div>
+                        </div>
+                        <div class="small text-muted mb-2">{{ bal.account_number || '-' }}</div>
+                        <div class="d-flex justify-content-between align-items-end pt-2" style="border-top:1px solid #f0f4f8;">
+                            <span class="small text-muted">Solde</span>
+                            <span class="fw-bold" :class="bal.balance >= 0 ? 'text-success' : 'text-danger'">
+                                {{ $formatCurrency(bal.balance) }}
+                            </span>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- ══ TRANSACTIONS TAB ══ -->
-            <div v-else-if="activeTab === 'transactions'" class="p-3">
-                <div class="isup-panel">
-                    <div class="isup-panel-header">
-                        <i class="bi-arrow-left-right me-2" style="color:#FF7900;"></i>Transactions
-                    </div>
-                    <div class="isup-panel-body p-0">
-                        <div class="isup-table-wrap">
-                            <table class="isup-table w-100">
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Compte</th>
-                                        <th>Type</th>
-                                        <th>Réf.</th>
-                                        <th class="text-end">Montant</th>
-                                        <th>Description</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-if="!transactions.length">
-                                        <td colspan="6" class="text-center py-4 text-muted" style="font-size:13px;">
-                                            <i class="bi-inbox" style="font-size:22px; display:block; margin-bottom:6px;"></i>Aucune transaction
-                                        </td>
-                                    </tr>
-                                    <tr v-for="tx in transactions" :key="tx.id">
-                                        <td style="font-size:12px; color:#888;">{{ tx.date ? $formatDate(tx.date) : '-' }}</td>
-                                        <td style="font-size:12px;">{{ tx.account?.name || '-' }}</td>
-                                        <td>
-                                            <span class="isup-status" :class="tx.type === 'income' ? 'isup-status-green' : 'isup-status-red'">
-                                                {{ tx.type === 'income' ? 'Entrée' : 'Sortie' }}
-                                            </span>
-                                        </td>
-                                        <td style="font-size:12px; color:#888;">{{ tx.reference || '-' }}</td>
-                                        <td class="text-end fw-bold" :class="tx.type === 'income' ? 'text-success' : 'text-danger'" style="font-size:13px;">
-                                            {{ tx.type === 'income' ? '+' : '-' }}{{ $formatCurrency(tx.amount) }}
-                                        </td>
-                                        <td style="font-size:12px; color:#888;">{{ tx.description || '-' }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+        <!-- ══ TRANSACTIONS TAB ══ -->
+        <div v-else-if="activeTab === 'transactions'" class="bg-white rounded-lg shadow p-6">
+            <h6 class="fw-bold mb-3"><i class="bi-arrow-left-right me-2" style="color:#FF7900;"></i>Transactions</h6>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead class="small text-muted">
+                        <tr><th>Date</th><th>Compte</th><th>Type</th><th>Réf.</th><th class="text-end">Montant</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr v-if="!transactions.length">
+                            <td colspan="6" class="text-center py-4 text-muted small">
+                                <i class="bi-inbox fs-4 d-block mb-1"></i>Aucune transaction
+                            </td>
+                        </tr>
+                        <tr v-for="tx in transactions" :key="tx.id">
+                            <td class="small text-muted">{{ tx.date ? $formatDate(tx.date) : '-' }}</td>
+                            <td class="small">{{ tx.account?.name || '-' }}</td>
+                            <td><span class="badge" :class="tx.type === 'income' ? 'bg-success' : 'bg-danger'">{{ tx.type === 'income' ? 'Entrée' : 'Sortie' }}</span></td>
+                            <td class="small text-muted">{{ tx.reference || '-' }}</td>
+                            <td class="text-end fw-medium" :class="tx.type === 'income' ? 'text-success' : 'text-danger'">
+                                {{ tx.type === 'income' ? '+' : '-' }}{{ $formatCurrency(tx.amount) }}
+                            </td>
+                            <td class="small text-muted">{{ tx.description || '-' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ══ ACCOUNTS TAB ══ -->
+        <div v-else-if="activeTab === 'accounts'" class="bg-white rounded-lg shadow p-6">
+            <h6 class="fw-bold mb-3"><i class="bi-bank me-2" style="color:#FF7900;"></i>Comptes</h6>
+            <div class="row g-3">
+                <div v-if="!accounts.length" class="col-12">
+                    <div class="text-center py-5 text-muted small">
+                        <i class="bi-bank fs-1 d-block mb-2" style="color:#dce3ee;"></i>
+                        Aucun compte créé
                     </div>
                 </div>
-            </div>
-
-            <!-- ══ ACCOUNTS TAB ══ -->
-            <div v-else-if="activeTab === 'accounts'" class="p-3">
-                <div class="row g-3">
-                    <div v-if="!accounts.length" class="col-12">
-                        <div class="text-center py-5 text-muted" style="font-size:13px;">
-                            <i class="bi-bank" style="font-size:28px; display:block; margin-bottom:8px; color:#dce3ee;"></i>
-                            Aucun compte créé
+                <div v-for="acc in accounts" :key="acc.id" class="col-md-4 col-6">
+                    <div class="border rounded p-3">
+                        <div class="rounded p-2 mb-2 d-inline-block" style="background:#f0f4f8;">
+                            <i class="bi-bank"></i>
                         </div>
-                    </div>
-                    <div v-for="acc in accounts" :key="acc.id" class="col-md-4 col-6">
-                        <div class="isup-acc-card">
-                            <div class="isup-acc-icon">
-                                <i class="bi-bank"></i>
-                            </div>
-                            <div class="isup-acc-name">{{ acc.name }}</div>
-                            <div class="isup-acc-detail">{{ acc.bank_name || '' }} <span v-if="acc.bank_name">—</span> {{ acc.type }}</div>
-                            <div class="isup-acc-number">{{ acc.account_number }}</div>
-                        </div>
+                        <div class="fw-medium small">{{ acc.name }}</div>
+                        <div class="small text-muted">{{ acc.bank_name || '' }} <span v-if="acc.bank_name">—</span> {{ acc.type }}</div>
+                        <div class="small text-muted">{{ acc.account_number }}</div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Account Modal -->
-        <div v-if="showAccModal" class="isup-modal-overlay" @click.self="showAccModal = false">
-            <div class="isup-modal">
-                <div class="isup-modal-header">
-                    <span>Nouveau compte</span>
-                    <button class="isup-modal-close" @click="showAccModal = false">&times;</button>
-                </div>
-                <div class="isup-modal-body">
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <label class="isup-label">Nom *</label>
-                            <input v-model="accForm.name" class="isup-input" required>
-                        </div>
-                        <div class="col-6">
-                            <label class="isup-label">Type</label>
-                            <select v-model="accForm.type" class="isup-select">
-                                <option value="current">Courant</option>
-                                <option value="savings">Épargne</option>
-                                <option value="cash">Caisse</option>
-                            </select>
-                        </div>
-                        <div class="col-6">
-                            <label class="isup-label">N° de compte</label>
-                            <input v-model="accForm.account_number" class="isup-input">
-                        </div>
-                        <div class="col-6">
-                            <label class="isup-label">Banque</label>
-                            <input v-model="accForm.bank_name" class="isup-input">
-                        </div>
-                        <div class="col-6">
-                            <label class="isup-label">Solde initial</label>
-                            <input v-model="accForm.initial_balance" type="number" step="0.01" class="isup-input">
-                        </div>
-                        <div class="col-6 d-flex align-items-end">
-                            <label class="d-flex align-items-center gap-2" style="font-size:12px; cursor:pointer;">
-                                <input v-model="accForm.is_active" type="checkbox" class="isup-checkbox">
-                                <span style="font-weight:600; color:#163A5E;">Actif</span>
-                            </label>
+        <div v-if="showAccModal" class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h6 class="modal-title fw-bold">Nouveau compte</h6>
+                        <button type="button" class="btn-close" @click="showAccModal = false"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label small">Nom *</label>
+                                <input v-model="accForm.name" class="form-control form-control-sm" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small">Type</label>
+                                <select v-model="accForm.type" class="form-select form-select-sm">
+                                    <option value="current">Courant</option>
+                                    <option value="savings">Épargne</option>
+                                    <option value="cash">Caisse</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small">N° de compte</label>
+                                <input v-model="accForm.account_number" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small">Banque</label>
+                                <input v-model="accForm.bank_name" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small">Solde initial</label>
+                                <input v-model="accForm.initial_balance" type="number" step="0.01" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-6 d-flex align-items-end">
+                                <label class="d-flex align-items-center gap-2" style="font-size:12px; cursor:pointer;">
+                                    <input v-model="accForm.is_active" type="checkbox" class="form-check-input">
+                                    <span class="fw-medium">Actif</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="isup-modal-footer">
-                    <button class="isup-btn-grey" @click="showAccModal = false">Annuler</button>
-                    <button class="isup-btn-primary" :disabled="submitting" @click="submitAccount">
-                        <span v-if="submitting" class="isup-spinner-sm me-1"></span>Créer
-                    </button>
+                    <div class="modal-footer">
+                        <button class="btn btn-sm btn-secondary" @click="showAccModal = false">Annuler</button>
+                        <button class="btn btn-sm btn-primary" :disabled="submitting" @click="submitAccount">
+                            <span v-if="submitting" class="spinner-border spinner-border-sm me-1"></span>Créer
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Transaction Modal -->
-        <div v-if="showTxModal" class="isup-modal-overlay" @click.self="showTxModal = false">
-            <div class="isup-modal">
-                <div class="isup-modal-header">
-                    <span>Nouvelle transaction</span>
-                    <button class="isup-modal-close" @click="showTxModal = false">&times;</button>
-                </div>
-                <div class="isup-modal-body">
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <label class="isup-label">Compte</label>
-                            <select v-model="txForm.account_id" class="isup-select">
-                                <option value="">Sélectionner</option>
-                                <option v-for="acc in accounts" :key="acc.id" :value="acc.id">{{ acc.name }}</option>
-                            </select>
-                        </div>
-                        <div class="col-6">
-                            <label class="isup-label">Type</label>
-                            <select v-model="txForm.type" class="isup-select">
-                                <option value="income">Entrée</option>
-                                <option value="expense">Sortie</option>
-                            </select>
-                        </div>
-                        <div class="col-6">
-                            <label class="isup-label">Montant</label>
-                            <input v-model="txForm.amount" type="number" step="0.01" class="isup-input">
-                        </div>
-                        <div class="col-6">
-                            <label class="isup-label">Date</label>
-                            <input v-model="txForm.date" type="date" class="isup-input">
-                        </div>
-                        <div class="col-6">
-                            <label class="isup-label">Référence</label>
-                            <input v-model="txForm.reference" class="isup-input">
-                        </div>
-                        <div class="col-12">
-                            <label class="isup-label">Description</label>
-                            <input v-model="txForm.description" class="isup-input">
+        <div v-if="showTxModal" class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h6 class="modal-title fw-bold">Nouvelle transaction</h6>
+                        <button type="button" class="btn-close" @click="showTxModal = false"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label small">Compte</label>
+                                <select v-model="txForm.account_id" class="form-select form-select-sm">
+                                    <option value="">Sélectionner</option>
+                                    <option v-for="acc in accounts" :key="acc.id" :value="acc.id">{{ acc.name }}</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small">Type</label>
+                                <select v-model="txForm.type" class="form-select form-select-sm">
+                                    <option value="income">Entrée</option>
+                                    <option value="expense">Sortie</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small">Montant</label>
+                                <input v-model="txForm.amount" type="number" step="0.01" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small">Date</label>
+                                <input v-model="txForm.date" type="date" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small">Référence</label>
+                                <input v-model="txForm.reference" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small">Description</label>
+                                <input v-model="txForm.description" class="form-control form-control-sm">
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="isup-modal-footer">
-                    <button class="isup-btn-grey" @click="showTxModal = false">Annuler</button>
-                    <button class="isup-btn-primary" :disabled="submitting" @click="submitTransaction">
-                        <span v-if="submitting" class="isup-spinner-sm me-1"></span>Enregistrer
-                    </button>
+                    <div class="modal-footer">
+                        <button class="btn btn-sm btn-secondary" @click="showTxModal = false">Annuler</button>
+                        <button class="btn btn-sm btn-primary" :disabled="submitting" @click="submitTransaction">
+                            <span v-if="submitting" class="spinner-border spinner-border-sm me-1"></span>Enregistrer
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </GelLayout>
 </template>
-
-<style scoped>
-/* ══ ERP Treasury — unique styles ══ */
-
-.isup-tabs-bar { display:flex; background:#f5f7fb; border-bottom:1px solid #dce3ee; align-items:stretch; }
-.isup-tab { background:transparent; border:none; color:#888; font-size:13px; font-weight:600; padding:10px 18px; cursor:pointer; white-space:nowrap; border-bottom:3px solid transparent; transition:all 0.15s; display:flex; align-items:center; gap:6px; }
-.isup-tab:hover { color:#163A5E; background:#eef3f9; }
-.isup-tab.isup-tab-active { color:#163A5E; border-bottom-color:#FF7900; background:#fff; font-weight:700; }
-.isup-tab i { font-size:14px; }
-
-.isup-status-warn { background:#fff8e1; color:#f57f17; }
-.isup-status-blue { background:#e3f2fd; color:#1565c0; }
-
-.isup-bal-card { background:#fff; border:1px solid #dce3ee; border-radius:6px; padding:14px 16px; display:flex; align-items:center; gap:14px; }
-.isup-bal-icon { width:44px; height:44px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
-
-.isup-badge-sm { display:inline-flex; align-items:center; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; padding:2px 9px; border-radius:3px; }
-</style>

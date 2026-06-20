@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             PoleSeeder::class,
             AdminSeeder::class,
             ServiceSeeder::class,
+            SyscohadaChartSeeder::class,
             AccountingAccountSeeder::class,
             ErpCategorySeeder::class,
             ErpItemSeeder::class,
@@ -24,6 +25,16 @@ class DatabaseSeeder extends Seeder
             DemoCompanySeeder::class,
             EdenStoreFolderSeeder::class,
             CrescendoDemoSeeder::class,
+            DaeDemoSeeder::class,
+            LegalDemoSeeder::class,
+            RhDemoSeeder::class,
+            AccountingDemoSeeder::class,
+            DemoItTicketSeeder::class,
+            DemoTontineSeeder::class,
+            DemoRelanceSeeder::class,
+            DemoApprovalWorkflowSeeder::class,
+            DemoCostCenterSeeder::class,
+            UsersSeeder::class, // ← Comptes utilisateurs complets
         ]);
     }
 }
