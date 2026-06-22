@@ -524,20 +524,28 @@ const userInitial = computed(() => authStore.user?.name?.charAt(0).toUpperCase()
 
 const logout = async () => {
     try {
-        const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
+        const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
         const form = document.getElementById('logout-form');
         const input = document.getElementById('logout-csrf-token');
         if (input && csrfToken) input.value = csrfToken;
         if (form) {
-            form.action = buildUrl('/logout');
             form.submit();
-        } else {
+        } else if (window.axios) {
             await window.axios.post('/logout');
-            window.location.href = buildUrl('/login');
+            window.location.href = '/login';
+        } else {
+            const f = document.createElement('form');
+            f.method = 'POST'; f.action = '/logout';
+            const t = document.createElement('input');
+            t.type = 'hidden'; t.name = '_token';
+            t.value = csrfToken || '';
+            f.appendChild(t);
+            document.body.appendChild(f);
+            f.submit();
         }
     } catch (e) {
         console.error('Logout failed:', e);
-        window.location.href = buildUrl('/login');
+        window.location.href = '/login';
     }
 };
 </script>
@@ -555,6 +563,9 @@ const logout = async () => {
             </div>
             <div class="dp-topbar-right">
                 <span class="dp-role-badge">{{ userRoleLabel }}</span>
+                <button class="dp-logout-btn" @click="logout" title="Déconnexion">
+                    <i class="bi-box-arrow-right"></i>
+                </button>
                 <div class="dropdown">
                     <button class="dp-user-btn" data-bs-toggle="dropdown" aria-expanded="false">
                         <div class="dp-avatar">{{ userInitial }}</div>
@@ -776,6 +787,25 @@ const logout = async () => {
 .dp-user-btn:hover {
     background: rgba(0,0,0,0.06);
     border-color: rgba(255,121,0,0.2);
+}
+.dp-logout-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background: transparent;
+    border: 1.5px solid rgba(220,38,38,0.2);
+    border-radius: 8px;
+    color: #dc2626;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.dp-logout-btn:hover {
+    background: rgba(220,38,38,0.08);
+    border-color: #dc2626;
+    color: #b91c1c;
 }
 .dp-avatar {
     width: 28px;

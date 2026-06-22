@@ -14,17 +14,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-class GedController extends Controller
+class GedController extends BaseCompanyController
 {
-    private function getClientId(): int
-    {
-        $user = Auth::user();
-        if (!$user->client_id) {
-            abort(403, 'Aucune entreprise associée.');
-        }
-        return (int) $user->client_id;
-    }
-
     /**
      * Page explorateur GED.
      */

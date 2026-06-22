@@ -1,4 +1,5 @@
 <template>
+<GelLayout>
     <div class="dae-conformite-show">
         <div v-if="loading" class="dae-loading">
             <div class="dae-spinner"></div>
@@ -112,6 +113,7 @@
             </div>
         </div>
     </div>
+</GelLayout>
 </template>
 
 <script>

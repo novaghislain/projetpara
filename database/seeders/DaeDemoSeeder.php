@@ -21,6 +21,7 @@ use App\Models\Dae\{
 };
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class DaeDemoSeeder extends Seeder
@@ -60,6 +61,12 @@ class DaeDemoSeeder extends Seeder
             ]
         );
 
+        // Définir le contexte RLS PostgreSQL pour ce client
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            DB::statement("SET app.client_id = '{$client1->id}'");
+        }
+        try {
+
         // ─── 2. Service DAE ──────────────────────────────────────────────
         $daeService = Service::firstOrCreate(
             ['slug' => 'dae'],
@@ -85,6 +92,11 @@ class DaeDemoSeeder extends Seeder
                 'status' => 'active',
             ]
         );
+
+        // Basculer le contexte RLS pour client2
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            DB::statement("SET app.client_id = '{$client2->id}'");
+        }
 
         License::firstOrCreate(
             ['client_id' => $client2->id, 'service_id' => $daeService->id],
@@ -739,5 +751,10 @@ class DaeDemoSeeder extends Seeder
         foreach ($modeles as $data) {
             DaeModeleCourrier::create($data);
         }
+    } finally {
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            DB::statement("SET app.client_id = '0'");
+        }
     }
+}
 }

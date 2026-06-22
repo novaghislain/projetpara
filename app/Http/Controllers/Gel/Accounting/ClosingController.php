@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers\Gel\Accounting;
 
-use App\Http\Controllers\Controller;
 use App\Models\AccountingClosingEntry;
 use App\Models\FiscalYear;
 use App\Services\Accounting\ClosingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class ClosingController extends Controller
+class ClosingController extends BaseGelAccountingController
 {
     protected ClosingService $closingService;
 
@@ -63,6 +62,14 @@ class ClosingController extends Controller
             'fiscal_year_id' => 'required|exists:fiscal_years,id',
         ]);
 
+        // Vérifier que le client a accès à cet exercice
+        if ($request->filled('client_id')) {
+            $fiscalYear = FiscalYear::findOrFail($validated['fiscal_year_id']);
+            if ((int) $fiscalYear->client_id !== (int) $request->input('client_id')) {
+                abort(403, 'Accès non autorisé à cet exercice.');
+            }
+        }
+
         $result = $this->closingService->cloturerExercice(
             $validated['fiscal_year_id'],
             Auth::id()
@@ -79,6 +86,14 @@ class ClosingController extends Controller
         $validated = $request->validate([
             'fiscal_year_id' => 'required|exists:fiscal_years,id',
         ]);
+
+        // Vérifier que le client a accès à cet exercice
+        if ($request->filled('client_id')) {
+            $fiscalYear = FiscalYear::findOrFail($validated['fiscal_year_id']);
+            if ((int) $fiscalYear->client_id !== (int) $request->input('client_id')) {
+                abort(403, 'Accès non autorisé à cet exercice.');
+            }
+        }
 
         try {
             $fiscalYear = $this->closingService->rouvrirExercice(
@@ -104,6 +119,14 @@ class ClosingController extends Controller
             'entries.*.debit' => 'nullable|numeric|min:0',
             'entries.*.credit' => 'nullable|numeric|min:0',
         ]);
+
+        // Vérifier que le client a accès à cet exercice
+        if ($request->filled('client_id')) {
+            $fiscalYear = FiscalYear::findOrFail($validated['fiscal_year_id']);
+            if ((int) $fiscalYear->client_id !== (int) $request->input('client_id')) {
+                abort(403, 'Accès non autorisé à cet exercice.');
+            }
+        }
 
         try {
             $entry = $this->closingService->ecritureInventaire(

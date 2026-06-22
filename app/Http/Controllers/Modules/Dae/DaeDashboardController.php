@@ -34,7 +34,7 @@ class DaeDashboardController extends Controller
             'courriers_urgents' => $query(DaeCourrier::query())->where('urgence', 'urgent')->where('statut', '!=', 'archive')->count(),
             'emails'        => $query(DaeEmail::query())->count(),
             'emails_non_lus' => $query(DaeEmail::query())->where('statut', 'recu')->count(),
-            'evenements'    => $query(DaeAgendaEvent::query())->whereDate('start', '>=', now()->startOfDay())->count(),
+            'evenements'    => $query(DaeAgendaEvent::query())->whereDate('start_at', '>=', now()->startOfDay())->count(),
             'contrats'      => $query(DaeContrat::query())->count(),
             'contrats_actifs' => $query(DaeContrat::query())->where('statut', 'actif')->count(),
             'documents'     => $query(DaeDocument::query())->count(),
@@ -66,14 +66,14 @@ class DaeDashboardController extends Controller
 
         // Événements du jour
         $eventsDuJour = $query(DaeAgendaEvent::query())
-            ->whereDate('start', now()->today())
-            ->orderBy('start')
+            ->whereDate('start_at', now()->today())
+            ->orderBy('start_at')
             ->get()
             ->map(fn($e) => [
                 'id'    => $e->id,
                 'title' => $e->title,
                 'type'  => $e->type,
-                'time'  => $e->start->format('H:i'),
+                'time'  => $e->start_at->format('H:i'),
                 'color' => $e->couleur,
             ]);
 

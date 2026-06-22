@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers\Modules\Dae;
 
-use App\Http\Controllers\Controller;
 use App\Models\Dae\DaeContrat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
-class DaeContratsController extends Controller
+class DaeContratsController extends BaseDaeController
 {
     public function index(Request $request)
     {
@@ -15,7 +14,7 @@ class DaeContratsController extends Controller
 
         if ($request->filled('statut')) $query->where('statut', $request->statut);
         if ($request->filled('type_contrat')) $query->where('type_contrat', $request->type_contrat);
-        if ($request->filled('client_id')) $query->where('client_id', $request->client_id);
+        $query->where('client_id', $this->getClientId($request));
         if ($request->filled('recherche')) {
             $s = $request->recherche;
             $query->where(function ($q) use ($s) {
@@ -38,7 +37,6 @@ class DaeContratsController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'client_id'     => 'required|exists:clients,id',
             'reference'     => 'nullable|string|max:100',
             'titre'         => 'required|string|max:500',
             'type_contrat'  => 'required|string|max:200',
@@ -57,6 +55,7 @@ class DaeContratsController extends Controller
 
         $validated['reference'] ??= 'CT-' . strtoupper(uniqid());
         $validated['statut'] ??= 'brouillon';
+        $validated['client_id'] = $this->getClientId($request);
 
         if ($request->hasFile('fichier')) {
             $validated['fichier'] = $request->file('fichier')->store('dae/contrats', 'public');

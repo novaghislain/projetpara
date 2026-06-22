@@ -116,6 +116,7 @@ onMounted(fetchContrat);
 </script>
 
 <template>
+<GelLayout>
     <div class="dae-contrats-show">
         <!-- Toast -->
         <div v-if="toast.show"
@@ -408,6 +409,7 @@ onMounted(fetchContrat);
             </div>
         </template>
     </div>
+</GelLayout>
 </template>
 
 <script>

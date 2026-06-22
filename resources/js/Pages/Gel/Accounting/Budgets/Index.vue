@@ -15,6 +15,8 @@ const editing = ref(null);
 const form = ref({ name: '', type: 'depense', fiscal_year_id: '', montant_prevu: 0, notes: '' });
 const fiscalYears = ref([]);
 
+const withCsrf = () => document.querySelector('meta[name=csrf-token]')?.content;
+
 const fetchData = async () => {
     loading.value = true;
     const cid = props.clientId || authStore.user?.client_id;
@@ -55,7 +57,10 @@ const save = async () => {
 const validate = async (id) => {
     const cid = props.clientId || authStore.user?.client_id;
     if (!cid) return;
-    await fetch(`/api/accounting/budgets/${cid}/${id}/valider`, { method: 'POST' });
+    await fetch(`/api/accounting/budgets/${cid}/${id}/valider`, {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': withCsrf() },
+    });
     await fetchData();
 };
 
@@ -63,7 +68,10 @@ const remove = async (id) => {
     if (!confirm('Supprimer ce budget ?')) return;
     const cid = props.clientId || authStore.user?.client_id;
     if (!cid) return;
-    await fetch(`/api/accounting/budgets/${cid}/${id}`, { method: 'DELETE' });
+    await fetch(`/api/accounting/budgets/${cid}/${id}`, {
+        method: 'DELETE',
+        headers: { 'X-CSRF-TOKEN': withCsrf() },
+    });
     await fetchData();
 };
 

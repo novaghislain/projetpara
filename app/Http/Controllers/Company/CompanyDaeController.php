@@ -13,15 +13,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
-class CompanyDaeController extends Controller
+class CompanyDaeController extends BaseCompanyController
 {
-    private function getClientId(): ?int
-    {
-        $user = Auth::user();
-        // Company admin has a client_id directly on their user record
-        return $user?->client_id;
-    }
-
     public function index()
     {
         return view('company', ['page' => 'company-dae-dashboard', 'clientId' => $this->getClientId()]);
@@ -42,7 +35,7 @@ class CompanyDaeController extends Controller
             'contrats_actifs'    => DaeContrat::where('client_id', $clientId)->where('statut', 'actif')->count(),
             'taches'             => DaeTache::where('client_id', $clientId)->whereIn('statut', ['a_faire', 'en_cours'])->count(),
             'taches_terminees'   => DaeTache::where('client_id', $clientId)->where('statut', 'terminee')->count(),
-            'evenements'         => DaeAgendaEvent::where('client_id', $clientId)->whereDate('start', '>=', now()->startOfDay())->count(),
+            'evenements'         => DaeAgendaEvent::where('client_id', $clientId)->whereDate('start_at', '>=', now()->startOfDay())->count(),
         ];
 
         // Activité récente

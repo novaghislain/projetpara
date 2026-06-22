@@ -9,22 +9,13 @@ use App\Services\AiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class AiController extends Controller
+class AiController extends BaseCompanyController
 {
     protected AiService $aiService;
 
     public function __construct(AiService $aiService)
     {
         $this->aiService = $aiService;
-    }
-
-    private function getClientId(): int
-    {
-        $user = Auth::user();
-        if (!$user->client_id) {
-            abort(403, 'Aucune entreprise associée.');
-        }
-        return (int) $user->client_id;
     }
 
     /**

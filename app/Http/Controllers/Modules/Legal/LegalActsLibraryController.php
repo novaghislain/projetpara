@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers\Modules\Legal;
 
-use App\Http\Controllers\Controller;
 use App\Models\Legal\LegalActsLibrary;
 use App\Services\Legal\ActeGeneratorService;
 use Illuminate\Http\Request;
 
-class LegalActsLibraryController extends Controller
+class LegalActsLibraryController extends BaseLegalController
 {
     protected ActeGeneratorService $acteGenerator;
 
@@ -21,7 +20,7 @@ class LegalActsLibraryController extends Controller
         if (!$request->expectsJson()) {
             return view('app', ['page' => 'legal-bibliotheque']);
         }
-        $clientId = $request->get('client_id', auth()->user()->client_id ?? 0);
+        $clientId = $this->getClientId($request);
 
         // Modèles globaux (client_id = NULL) + modèles du client
         $modeles = LegalActsLibrary::whereNull('client_id')
@@ -85,7 +84,7 @@ class LegalActsLibraryController extends Controller
         $html = $this->acteGenerator->generer(
             $id,
             $request->variables ?? [],
-            $request->get('client_id', auth()->user()->client_id ?? 0)
+            $this->getClientId($request)
         );
 
         return response()->json(['html' => $html]);

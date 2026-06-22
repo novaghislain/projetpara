@@ -13,6 +13,7 @@ use App\Models\UserClient;
 use App\Models\Service;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class CrescendoDemoSeeder extends Seeder
@@ -75,6 +76,12 @@ class CrescendoDemoSeeder extends Seeder
                 'phone' => '+229 61 23 45 67',
             ]
         );
+
+        // Définir le contexte RLS PostgreSQL pour ce client
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            DB::statement("SET app.client_id = '{$particulier->id}'");
+        }
+        try {
 
         // Dossiers fiscaux
         $foldersData = [
@@ -147,6 +154,11 @@ class CrescendoDemoSeeder extends Seeder
                 'created_by' => 1,
             ]
         );
+
+        // Définir le contexte RLS PostgreSQL pour ce client
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            DB::statement("SET app.client_id = '{$entreprise->id}'");
+        }
 
         // Licences
         $svcIds = Service::whereIn('id', [1, 2, 3, 4])->pluck('id')->toArray();
@@ -237,5 +249,10 @@ class CrescendoDemoSeeder extends Seeder
         $this->command->info('   client1@test.com       / Client2025!      (Client particulier)');
         $this->command->info('   entreprise@test.com    / Entreprise2025!  (Client entreprise)');
         $this->command->info('   comptable@monprojet.com / Comptable2025!  (Comptable)');
+    } finally {
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            DB::statement("SET app.client_id = '0'");
+        }
     }
+}
 }

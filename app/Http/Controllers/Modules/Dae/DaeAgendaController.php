@@ -2,19 +2,16 @@
 
 namespace App\Http\Controllers\Modules\Dae;
 
-use App\Http\Controllers\Controller;
 use App\Models\Dae\DaeAgendaEvent;
 use Illuminate\Http\Request;
 
-class DaeAgendaController extends Controller
+class DaeAgendaController extends BaseDaeController
 {
     public function index(Request $request)
     {
         $query = DaeAgendaEvent::with('client')->orderBy('start_at');
 
-        if ($request->filled('client_id')) {
-            $query->where('client_id', $request->client_id);
-        }
+        $query->where('client_id', $this->getClientId($request));
         if ($request->filled('type')) {
             $query->where('type', $request->type);
         }
@@ -42,7 +39,6 @@ class DaeAgendaController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'client_id'      => 'required|exists:clients,id',
             'title'          => 'required|string|max:255',
             'description'    => 'nullable|string',
             'type'           => 'required|in:rdv,reunion,appel,echeance,autre',
@@ -59,6 +55,7 @@ class DaeAgendaController extends Controller
         ]);
 
         $validated['statut'] ??= 'planifie';
+        $validated['client_id'] = $this->getClientId($request);
 
         $event = DaeAgendaEvent::create($validated);
 

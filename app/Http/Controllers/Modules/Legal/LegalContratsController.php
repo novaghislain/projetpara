@@ -2,19 +2,18 @@
 
 namespace App\Http\Controllers\Modules\Legal;
 
-use App\Http\Controllers\Controller;
 use App\Models\Legal\LegalContract;
 use App\Models\Legal\LegalContractSignature;
 use Illuminate\Http\Request;
 
-class LegalContratsController extends Controller
+class LegalContratsController extends BaseLegalController
 {
     public function index(Request $request)
     {
         if (!$request->expectsJson()) {
             return view('app', ['page' => 'legal-contrats']);
         }
-        $clientId = $request->get('client_id', auth()->user()->client_id ?? 0);
+        $clientId = $this->getClientId($request);
         $query = LegalContract::byClient($clientId);
 
         if ($request->statut) {
@@ -30,7 +29,6 @@ class LegalContratsController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'client_id' => 'required|integer',
             'titre' => 'required|string|max:255',
             'type' => 'required|string',
             'parties' => 'required|array',
@@ -44,6 +42,7 @@ class LegalContratsController extends Controller
         $data['reference'] = 'CTR-' . date('Y') . '-' . str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
         $data['created_by'] = auth()->id();
         $data['statut'] = 'brouillon';
+        $data['client_id'] = $this->getClientId($request);
 
         $contrat = LegalContract::create($data);
 

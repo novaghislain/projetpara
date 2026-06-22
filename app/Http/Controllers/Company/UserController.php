@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
-class UserController extends Controller
+class UserController extends BaseCompanyController
 {
     private function authorizeAdmin(): void
     {
@@ -20,15 +20,6 @@ class UserController extends Controller
         if (!$user->isCompanyAdmin()) {
             abort(403, 'Seul l\'administrateur de l\'entreprise peut gérer les utilisateurs.');
         }
-    }
-
-    private function getClientId(): int
-    {
-        $user = Auth::user();
-        if (!$user->client_id) {
-            abort(403, 'Aucune entreprise associée.');
-        }
-        return (int) $user->client_id;
     }
 
     /**

@@ -189,11 +189,16 @@ class EdenStoreFolderSeeder extends Seeder
         if (DB::connection()->getDriverName() === 'pgsql') {
             DB::statement("SET app.client_id = '{$clientId}'");
         }
-
-        foreach ($this->edenStructure as $rootData) {
-            $root = $this->createFolder($clientId, null, $rootData, 1, '');
-            if (!empty($rootData['children'])) {
-                $this->createChildren($clientId, $root->id, $rootData['children'], 2, $root->slug);
+        try {
+            foreach ($this->edenStructure as $rootData) {
+                $root = $this->createFolder($clientId, null, $rootData, 1, '');
+                if (!empty($rootData['children'])) {
+                    $this->createChildren($clientId, $root->id, $rootData['children'], 2, $root->slug);
+                }
+            }
+        } finally {
+            if (DB::connection()->getDriverName() === 'pgsql') {
+                DB::statement("SET app.client_id = '0'");
             }
         }
     }

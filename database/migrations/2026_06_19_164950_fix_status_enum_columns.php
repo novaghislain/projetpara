@@ -11,11 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Ajouter 'prospect' à l'enum status de clients
-        DB::statement("ALTER TABLE `clients` CHANGE `status` `status` ENUM('actif','inactif','suspendu','prospect') NOT NULL DEFAULT 'actif'");
+        // PostgreSQL : supprimer l'ancienne contrainte CHECK et en créer une avec les nouvelles valeurs
+        DB::statement("ALTER TABLE clients DROP CONSTRAINT IF EXISTS clients_status_check");
+        DB::statement("ALTER TABLE clients ADD CONSTRAINT clients_status_check CHECK (status IN ('actif','inactif','suspendu','prospect'))");
 
-        // Ajouter 'terminee','annulee','en_attente' à l'enum status de missions
-        DB::statement("ALTER TABLE `missions` CHANGE `status` `status` ENUM('a_faire','en_cours','termine','annule','terminee','annulee','en_attente') NOT NULL DEFAULT 'a_faire'");
+        DB::statement("ALTER TABLE missions DROP CONSTRAINT IF EXISTS missions_status_check");
+        DB::statement("ALTER TABLE missions ADD CONSTRAINT missions_status_check CHECK (status IN ('a_faire','en_cours','termine','annule','terminee','annulee','en_attente'))");
     }
 
     /**
@@ -23,7 +24,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("ALTER TABLE `clients` CHANGE `status` `status` ENUM('actif','inactif','suspendu') NOT NULL DEFAULT 'actif'");
-        DB::statement("ALTER TABLE `missions` CHANGE `status` `status` ENUM('a_faire','en_cours','termine','annule') NOT NULL DEFAULT 'a_faire'");
+        DB::statement("ALTER TABLE clients DROP CONSTRAINT IF EXISTS clients_status_check");
+        DB::statement("ALTER TABLE clients ADD CONSTRAINT clients_status_check CHECK (status IN ('actif','inactif','suspendu'))");
+
+        DB::statement("ALTER TABLE missions DROP CONSTRAINT IF EXISTS missions_status_check");
+        DB::statement("ALTER TABLE missions ADD CONSTRAINT missions_status_check CHECK (status IN ('a_faire','en_cours','termine','annule'))");
     }
 };

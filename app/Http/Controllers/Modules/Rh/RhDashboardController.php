@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Modules\Rh;
 
-use App\Http\Controllers\Controller;
 use App\Models\Rh\RhEmployee;
 use App\Models\Rh\RhAlert;
 use App\Models\Rh\RhContract;
@@ -11,9 +10,8 @@ use App\Models\Rh\RhExpense;
 use App\Models\Rh\RhPayroll;
 use App\Models\Rh\RhTraining;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
-class RhDashboardController extends Controller
+class RhDashboardController extends BaseRhController
 {
     public function index()
     {
@@ -22,7 +20,7 @@ class RhDashboardController extends Controller
 
     public function stats(Request $request)
     {
-        $clientId = $request->input('client_id') ?: Auth::user()?->client_id;
+        $clientId = $this->getClientId($request);
 
         $employees = RhEmployee::byClient($clientId);
         $contracts = RhContract::whereIn('employee_id', $employees->pluck('id'));

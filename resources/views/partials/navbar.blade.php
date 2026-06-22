@@ -83,7 +83,7 @@
                 <form method="POST" action="{{ route('logout') }}" style="display:inline;">
                     @csrf
                     <button type="submit" class="gel-btn-nav gel-btn-nav-outline" style="color:#dc2626; border-color:#fca5a5;">
-                        <i class="bi-box-arrow-right"></i>
+                        <i class="bi-box-arrow-right"></i> Déconnexion
                     </button>
                 </form>
             @else

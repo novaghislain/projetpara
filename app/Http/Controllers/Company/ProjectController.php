@@ -9,20 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-class ProjectController extends Controller
+class ProjectController extends BaseCompanyController
 {
-    /**
-     * Recupere le client_id de l'utilisateur authentifie.
-     */
-    private function getClientId()
-    {
-        $user = Auth::user();
-        if (!$user->client_id) {
-            abort(403, 'Aucune entreprise associee.');
-        }
-        return $user->client_id;
-    }
-
     /**
      * Affiche la page Projets.
      */

@@ -33,11 +33,35 @@ async function selectCompany(clientId) {
         loading.value = false;
     }
 }
+
+function logout() {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/logout';
+    const token = document.querySelector('meta[name=csrf-token]')?.content;
+    if (token) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = '_token';
+        input.value = token;
+        form.appendChild(input);
+    }
+    document.body.appendChild(form);
+    form.submit();
+}
 </script>
 
 <template>
-    <div class="min-vh-100 d-flex align-items-center justify-content-center"
+    <div class="min-vh-100 d-flex align-items-center justify-content-center position-relative"
          style="background: linear-gradient(135deg, #000 0%, #1a1a2e 100%);">
+        <!-- Logout button -->
+        <button class="btn position-absolute top-0 end-0 m-2 p-2 text-white-50 logout-btn"
+                title="Déconnexion"
+                @click="logout"
+                style="font-size: 1.3rem; background: transparent; border: none; z-index: 10;">
+            <i class="bi bi-box-arrow-right fs-4"></i>
+        </button>
+
         <div class="card shadow-lg border-0" style="max-width: 520px; width: 100%; border-radius: 16px;">
             <div class="card-body p-5 text-center">
                 <!-- Logo / Icon -->

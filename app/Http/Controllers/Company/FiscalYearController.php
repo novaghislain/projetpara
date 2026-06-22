@@ -8,15 +8,8 @@ use App\Services\AuditTrailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class FiscalYearController extends Controller
+class FiscalYearController extends BaseCompanyController
 {
-    private function getClientId()
-    {
-        $user = Auth::user();
-        if (!$user->client_id) abort(403, 'Aucune entreprise associée.');
-        return $user->client_id;
-    }
-
     /**
      * Liste des exercices.
      */

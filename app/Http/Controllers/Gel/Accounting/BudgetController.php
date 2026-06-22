@@ -2,13 +2,12 @@
 
 namespace App\Http\Controllers\Gel\Accounting;
 
-use App\Http\Controllers\Controller;
 use App\Models\AccountingBudget;
 use App\Models\AccountingBudgetLine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class BudgetController extends Controller
+class BudgetController extends BaseGelAccountingController
 {
     /**
      * Page liste des budgets.
@@ -51,8 +50,8 @@ class BudgetController extends Controller
      */
     public function store(Request $request)
     {
+        $clientId = $this->getClientId($request);
         $validated = $request->validate([
-            'client_id' => 'required|exists:clients,id',
             'fiscal_year_id' => 'required|exists:fiscal_years,id',
             'name' => 'required|string|max:255',
             'type' => 'required|in:recette,depense,tresorerie,investissement',
@@ -62,6 +61,7 @@ class BudgetController extends Controller
             'notes' => 'nullable|string',
         ]);
 
+        $validated['client_id'] = $clientId;
         $validated['status'] = 'brouillon';
         $validated['created_by'] = Auth::id();
 

@@ -1,4 +1,5 @@
 <template>
+<GelLayout>
     <div class="dae-courriers-form">
         <!-- ═══ LOADING ═══ -->
         <div v-if="loading" class="dae-loading">
@@ -272,6 +273,7 @@
             </form>
         </div>
     </div>
+</GelLayout>
 </template>
 
 <script>

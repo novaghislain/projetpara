@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers\Modules\Dae;
 
-use App\Http\Controllers\Controller;
 use App\Models\Dae\DaeEmail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class DaeEmailsController extends Controller
+class DaeEmailsController extends BaseDaeController
 {
     public function index(Request $request)
     {
@@ -27,9 +26,7 @@ class DaeEmailsController extends Controller
         if ($request->filled('statut')) {
             $query->where('statut', $request->statut);
         }
-        if ($request->filled('client_id')) {
-            $query->where('client_id', $request->client_id);
-        }
+        $query->where('client_id', $this->getClientId($request));
         $search = $request->input('search') ?? $request->input('recherche');
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -52,7 +49,6 @@ class DaeEmailsController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'client_id'     => 'required|exists:clients,id',
             'from_address'  => 'required|email|max:255',
             'to_addresses'  => 'required|json',
             'cc_addresses'  => 'nullable|json',
@@ -66,6 +62,7 @@ class DaeEmailsController extends Controller
 
         $validated['statut'] = 'brouillon';
         $validated['reference_message'] = 'EM-' . strtoupper(uniqid());
+        $validated['client_id'] = $this->getClientId($request);
 
         $email = DaeEmail::create($validated);
 
@@ -106,14 +103,13 @@ class DaeEmailsController extends Controller
         $original = DaeEmail::findOrFail($id);
 
         $validated = $request->validate([
-            'client_id'    => 'required|exists:clients,id',
             'corps_html'   => 'nullable|string',
             'corps_texte'  => 'nullable|string',
             'pieces_jointes' => 'nullable|json',
         ]);
 
         $reponse = DaeEmail::create([
-            'client_id'    => $validated['client_id'],
+            'client_id'    => $this->getClientId($request),
             'from_address' => Auth::user()->email,
             'to_addresses' => json_encode([$original->from_address]),
             'objet'        => 'Re: ' . $original->objet,
@@ -157,10 +153,7 @@ class DaeEmailsController extends Controller
 
     public function stats(Request $request)
     {
-        $query = DaeEmail::query();
-        if ($request->filled('client_id')) {
-            $query->where('client_id', $request->client_id);
-        }
+        $query = DaeEmail::where('client_id', $this->getClientId($request));
 
         return response()->json([
             'total'     => $query->count(),

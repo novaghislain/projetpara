@@ -73,59 +73,69 @@ class SyscohadaChartSeeder extends Seeder
      */
     public static function createForClient(int $clientId): void
     {
-        $accounts = AccountingAccount::where('client_id', 0)
-            ->where('is_syscohada', true)
-            ->orderBy('id')
-            ->get();
-
-        if ($accounts->isEmpty()) {
-            // Fallback : charger depuis le JSON si la table est vide
-            $seeder = new self();
-            $seeder->run();
+        // Contexte RLS : se mettre en super admin (client_id = 0) pour lire le plan de base
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            DB::statement("SET app.client_id = '0'");
+        }
+        try {
             $accounts = AccountingAccount::where('client_id', 0)
                 ->where('is_syscohada', true)
                 ->orderBy('id')
                 ->get();
-        }
 
-        // Index des comptes de référence par code
-        $refIndex = [];
-        foreach ($accounts as $acc) {
-            $refIndex[$acc->code] = $acc;
-        }
-
-        DB::transaction(function () use ($clientId, $accounts, $refIndex) {
-            // Carte des IDs : refId => newId
-            $idMap = [];
-
-            // 1. Créer les comptes sans relations parent-enfant
-            foreach ($accounts as $acc) {
-                $new = AccountingAccount::firstOrCreate(
-                    ['client_id' => $clientId, 'code' => $acc->code],
-                    [
-                        'name'            => $acc->name,
-                        'type'            => $acc->type,
-                        'syscohada_class' => $acc->syscohada_class,
-                        'is_syscohada'    => true,
-                        'is_active'       => true,
-                        'tva_rate'        => $acc->tva_rate,
-                        'has_tva'         => $acc->has_tva,
-                    ]
-                );
-                $idMap[$acc->id] = $new->id;
+            if ($accounts->isEmpty()) {
+                // Fallback : charger depuis le JSON si la table est vide
+                $seeder = new self();
+                $seeder->run();
+                $accounts = AccountingAccount::where('client_id', 0)
+                    ->where('is_syscohada', true)
+                    ->orderBy('id')
+                    ->get();
             }
 
-            // 2. Définir les relations parent-enfant
+            // Index des comptes de référence par code
+            $refIndex = [];
             foreach ($accounts as $acc) {
-                if ($acc->parent_id && isset($idMap[$acc->parent_id])) {
-                    $child = AccountingAccount::find($idMap[$acc->id]);
-                    if ($child) {
-                        $child->parent_id = $idMap[$acc->parent_id];
-                        $child->saveQuietly();
+                $refIndex[$acc->code] = $acc;
+            }
+
+            DB::transaction(function () use ($clientId, $accounts, $refIndex) {
+                // Carte des IDs : refId => newId
+                $idMap = [];
+
+                // 1. Créer les comptes sans relations parent-enfant
+                foreach ($accounts as $acc) {
+                    $new = AccountingAccount::firstOrCreate(
+                        ['client_id' => $clientId, 'code' => $acc->code],
+                        [
+                            'name'            => $acc->name,
+                            'type'            => $acc->type,
+                            'syscohada_class' => $acc->syscohada_class,
+                            'is_syscohada'    => true,
+                            'is_active'       => true,
+                            'tva_rate'        => $acc->tva_rate,
+                            'has_tva'         => $acc->has_tva,
+                        ]
+                    );
+                    $idMap[$acc->id] = $new->id;
+                }
+
+                // 2. Définir les relations parent-enfant
+                foreach ($accounts as $acc) {
+                    if ($acc->parent_id && isset($idMap[$acc->parent_id])) {
+                        $child = AccountingAccount::find($idMap[$acc->id]);
+                        if ($child) {
+                            $child->parent_id = $idMap[$acc->parent_id];
+                            $child->saveQuietly();
+                        }
                     }
                 }
+            });
+        } finally {
+            if (DB::connection()->getDriverName() === 'pgsql') {
+                DB::statement("SET app.client_id = '0'");
             }
-        });
+        }
     }
 
     /**

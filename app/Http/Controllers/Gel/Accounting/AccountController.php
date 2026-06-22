@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers\Gel\Accounting;
 
-use App\Http\Controllers\Controller;
 use App\Models\AccountingAccount;
 use Illuminate\Http\Request;
 
-class AccountController extends Controller
+class AccountController extends BaseGelAccountingController
 {
     /**
      * API: Liste des comptes comptables pour un client.
@@ -26,8 +25,8 @@ class AccountController extends Controller
      */
     public function store(Request $request)
     {
+        $clientId = $this->getClientId($request);
         $validated = $request->validate([
-            'client_id' => 'required|exists:clients,id',
             'code' => 'required|string|max:20',
             'name' => 'required|string|max:255',
             'type' => 'required|string|in:actif,passif,charge,produit,tresorerie',
@@ -35,7 +34,7 @@ class AccountController extends Controller
         ]);
 
         // Vérifier unicité du code pour ce client
-        $exists = AccountingAccount::where('client_id', $validated['client_id'])
+        $exists = AccountingAccount::where('client_id', $clientId)
             ->where('code', $validated['code'])
             ->exists();
 
@@ -43,7 +42,7 @@ class AccountController extends Controller
             return response()->json(['message' => 'Un compte avec ce code existe déjà pour ce client'], 409);
         }
 
-        $account = AccountingAccount::create($validated);
+        $account = AccountingAccount::create(array_merge($validated, ['client_id' => $clientId]));
 
         return response()->json($account, 201);
     }

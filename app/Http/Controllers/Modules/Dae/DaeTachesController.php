@@ -2,12 +2,10 @@
 
 namespace App\Http\Controllers\Modules\Dae;
 
-use App\Http\Controllers\Controller;
 use App\Models\Dae\DaeTache;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
-class DaeTachesController extends Controller
+class DaeTachesController extends BaseDaeController
 {
     public function index(Request $request)
     {
@@ -15,7 +13,7 @@ class DaeTachesController extends Controller
 
         if ($request->filled('statut')) $query->where('statut', $request->statut);
         if ($request->filled('priorite')) $query->where('priorite', $request->priorite);
-        if ($request->filled('client_id')) $query->where('client_id', $request->client_id);
+        $query->where('client_id', $this->getClientId($request));
         if ($request->filled('assigned_to')) $query->where('assigned_to', $request->assigned_to);
         if ($request->filled('recherche')) {
             $s = $request->recherche;
@@ -38,7 +36,6 @@ class DaeTachesController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'client_id'   => 'required|exists:clients,id',
             'titre'       => 'required|string|max:500',
             'description' => 'nullable|string',
             'priorite'    => 'nullable|in:basse,moyenne,haute,critique',
@@ -51,6 +48,7 @@ class DaeTachesController extends Controller
 
         $validated['priorite'] ??= 'moyenne';
         $validated['statut'] ??= 'a_faire';
+        $validated['client_id'] = $this->getClientId($request);
 
         $tache = DaeTache::create($validated);
 
@@ -93,9 +91,7 @@ class DaeTachesController extends Controller
 
     public function kanban(Request $request)
     {
-        $query = DaeTache::with(['client', 'assignedTo']);
-
-        if ($request->filled('client_id')) $query->where('client_id', $request->client_id);
+        $query = DaeTache::with(['client', 'assignedTo'])->where('client_id', $this->getClientId($request));
 
         $taches = $query->get();
 

@@ -2,15 +2,13 @@
 
 namespace App\Http\Controllers\Gel\Accounting;
 
-use App\Http\Controllers\Controller;
 use App\Models\AccountingJournal;
 use App\Models\AccountingJournalLine;
-use App\Models\AccountingAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-class JournalController extends Controller
+class JournalController extends BaseGelAccountingController
 {
     /**
      * Page formulaire de création d'écriture.
@@ -55,8 +53,8 @@ class JournalController extends Controller
      */
     public function store(Request $request)
     {
+        $clientId = $this->getClientId($request);
         $validated = $request->validate([
-            'client_id' => 'required|exists:clients,id',
             'journal_type' => 'required|string|in:recette,depense,banque,od,achat,vente',
             'entry_date' => 'required|date',
             'reference' => 'nullable|string|max:255',
@@ -78,9 +76,9 @@ class JournalController extends Controller
             ], 422);
         }
 
-        $journal = DB::transaction(function () use ($validated) {
+        $journal = DB::transaction(function () use ($validated, $clientId) {
             $journal = AccountingJournal::create([
-                'client_id' => $validated['client_id'],
+                'client_id' => $clientId,
                 'journal_type' => $validated['journal_type'],
                 'entry_date' => $validated['entry_date'],
                 'reference' => $validated['reference'],
@@ -108,9 +106,14 @@ class JournalController extends Controller
     /**
      * API: Valider (poster) une écriture comptable.
      */
-    public function post($id)
+    public function post(Request $request, $id)
     {
         $journal = AccountingJournal::findOrFail($id);
+
+        // Vérifier que le client_id correspond si fourni dans la requête
+        if ($request->filled('client_id') && (int) $journal->client_id !== (int) $request->input('client_id')) {
+            abort(403, 'Accès non autorisé à cette écriture.');
+        }
 
         if ($journal->status === 'posted') {
             return response()->json(['message' => 'Cette écriture est déjà validée'], 409);
@@ -129,9 +132,14 @@ class JournalController extends Controller
     /**
      * API: Supprimer une écriture comptable.
      */
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $journal = AccountingJournal::findOrFail($id);
+
+        // Vérifier que le client_id correspond si fourni dans la requête
+        if ($request->filled('client_id') && (int) $journal->client_id !== (int) $request->input('client_id')) {
+            abort(403, 'Accès non autorisé à cette écriture.');
+        }
 
         if ($journal->status === 'posted') {
             return response()->json(['message' => 'Impossible de supprimer une écriture validée'], 409);

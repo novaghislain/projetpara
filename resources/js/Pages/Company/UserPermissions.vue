@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { authStore } from '../../stores/auth';
+import CompanyLayout from '../../Layouts/CompanyLayout.vue';
 
 const props = defineProps({
     userId: { type: [Number, String], default: null },
@@ -153,6 +154,7 @@ onMounted(loadData);
 </script>
 
 <template>
+<CompanyLayout>
     <div class="container-fluid py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
@@ -222,6 +224,7 @@ onMounted(loadData);
             <p>Aucun utilisateur sélectionné.</p>
         </div>
     </div>
+</CompanyLayout>
 </template>
 
 <style scoped>

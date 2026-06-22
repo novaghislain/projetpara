@@ -179,15 +179,14 @@ const buildUrl = (path) => {
 const logout = async () => {
     try {
         await window.axios.post('/logout');
-        window.location.href = buildUrl('/login');
+        window.location.href = '/login';
     } catch (e) {
         console.error('Logout failed with Axios, falling back to form submit:', e);
-        const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
+        const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
         const form = document.getElementById('logout-form');
         const input = document.getElementById('logout-csrf-token');
         if (input && csrfToken) input.value = csrfToken;
         if (form) {
-            form.action = buildUrl('/logout');
             form.submit();
         }
     }
