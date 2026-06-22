@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { authStore } from '../stores/auth';
+import Omnisearch from '../Components/Omnisearch.vue';
 
 const props = defineProps({
     pageTitle: { type: String, default: 'Portail Client' }
@@ -70,13 +71,39 @@ const sidebarLinks = computed(() => {
             { label: 'Échéances', icon: 'bi-calendar-event', href: '/cpa-dashboard?section=echeances' },
         );
     }
-    if (role === 'comptable') {
-        links.push(
-            { label: 'Dossiers clients', icon: 'bi-briefcase', href: '/cpa-dashboard?section=dossiers' },
-            { label: 'Tâches', icon: 'bi-check2-square', href: '/cpa-dashboard?section=taches' },
-            { label: 'Calendrier fiscal', icon: 'bi-calendar3', href: '/cpa-dashboard?section=calendrier' },
-            { label: 'Messagerie', icon: 'bi-envelope', href: '/cpa-dashboard?section=messages' },
-        );
+    if (role === 'comptable' || role === 'client' || role === 'collaborator') {
+        // Liens de base pour le rôle comptable
+        if (role === 'comptable') {
+            links.push(
+                { label: 'Dossiers clients', icon: 'bi-briefcase', href: '/cpa-dashboard?section=dossiers' },
+                { label: 'Tâches', icon: 'bi-check2-square', href: '/cpa-dashboard?section=taches' },
+                { label: 'Calendrier fiscal', icon: 'bi-calendar3', href: '/cpa-dashboard?section=calendrier' },
+                { label: 'Messagerie', icon: 'bi-envelope', href: '/cpa-dashboard?section=messages' },
+            );
+        }
+
+        // Liens dynamiques en fonction des modules activés
+        if (authStore.hasModule('comptabilite') || authStore.hasModule('compta')) {
+            links.push({ label: 'Comptabilité', icon: 'bi-calculator', href: '/accounting' });
+        }
+        if (authStore.hasModule('facturation')) {
+            links.push({ label: 'Facturation', icon: 'bi-receipt-cutoff', href: '/company/invoices' });
+        }
+        if (authStore.hasModule('caisse')) {
+            links.push({ label: 'Caisse', icon: 'bi-cash-coin', href: '/caisse' });
+        }
+        if (authStore.hasModule('ged') || authStore.hasModule('document')) {
+            links.push({ label: 'GED', icon: 'bi-folder2-open', href: '/company/ged' });
+        }
+        if (authStore.hasModule('erp')) {
+            links.push({ label: 'ERP', icon: 'bi-boxes', href: '/erp/stocks' });
+        }
+        if (authStore.hasModule('rh')) {
+            links.push({ label: 'RH & Paie', icon: 'bi-people', href: '/company/hr' });
+        }
+        if (authStore.hasModule('crm')) {
+            links.push({ label: 'CRM', icon: 'bi-person-lines-fill', href: '/clients' });
+        }
     }
 
     return links.map(link => ({
@@ -139,6 +166,10 @@ onUnmounted(() => window.removeEventListener('resize', handleResize));
             <div class="d-flex align-items-center gap-2">
                 <div class="g-logo-icon"><i class="bi-gem"></i></div>
                 <span class="g-logo-text">GEL Cabinet CPA</span>
+            </div>
+
+            <div class="d-none d-md-flex flex-grow-1 justify-content-center px-4">
+                <Omnisearch @navigate="route => window.location.href = route" />
             </div>
 
             <div class="d-flex align-items-center gap-2">

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { authStore, startPermissionPolling } from '../stores/auth';
+import Omnisearch from '../Components/Omnisearch.vue';
 
 const props = defineProps({
     pageTitle: { type: String, default: 'Mon Espace' }
@@ -26,10 +27,15 @@ const navItems = [
     { name: 'Accueil',        icon: 'bi-house',          route: '/company/dashboard',    key: 'company-dashboard' },
     { name: 'Commandes',      icon: 'bi-cart-check',     route: '/mes-commandes',        key: 'mes-commandes' },
     { name: 'Finance',        icon: 'bi-cash-stack',     route: '/company/invoices',     key: 'company-invoices',  module: 'facturation' },
+    { name: 'Caisse',         icon: 'bi-cash-coin',      route: '/company/caisse',       key: 'company-caisse',    module: 'caisse' },
     { name: 'Comptabilité',   icon: 'bi-calculator',     route: '/company/accounting',   key: 'company-accounting', module: 'comptabilite' },
+    { name: 'CRM',            icon: 'bi-people',         route: '/company/crm',          key: 'company-crm',       module: 'crm' },
     { name: 'GED',            icon: 'bi-folder',          route: '/company/ged',          key: 'company-ged',       module: 'document' },
     { name: 'Secrétariat',    icon: 'bi-file-text',      route: '/company/dae',          key: 'company-dae',       module: 'dae' },
+    { name: 'Juridique',      icon: 'bi-briefcase',      route: '/company/legal',        key: 'company-legal',     module: 'juridique' },
+    { name: 'Projets',        icon: 'bi-kanban',         route: '/company/projects',     key: 'company-projects',  module: 'projets' },
     { name: 'RH',             icon: 'bi-people',         route: '/company/rh',           key: 'company-rh',        module: 'rh' },
+    { name: 'e-MECeF',        icon: 'bi-shield-check',   route: '/company/emecef',       key: 'company-emecef' },
     { name: 'Administration', icon: 'bi-gear',           route: '/company/profile',      key: 'company-profile' },
 ];
 
@@ -46,6 +52,7 @@ const sidebarModuleMap = {
     '/company/accounting': 'comptabilite',
     '/company/legal':      'juridique',
     '/company/projects':   'projets',
+    '/company/crm':        'crm',
     '/company/dae':        'dae',
 };
 
@@ -72,6 +79,16 @@ const sidebarBySection = {
             { label: 'Suivi des demandes',href: '/company/notifications', icon: 'bi-envelope' },
         ]},
     ],
+    'company-caisse': [
+        { group: '', items: [
+            { label: 'Caisse',            href: '/company/caisse',         icon: 'bi-cash-stack' },
+        ]},
+    ],
+    'company-crm': [
+        { group: '', items: [
+            { label: 'CRM',               href: '/company/crm',            icon: 'bi-people' },
+        ]},
+    ],
     'company-invoices': [
         { group: '', items: [
             { label: 'Facturation',       href: '/company/invoices',   icon: 'bi-receipt' },
@@ -81,7 +98,6 @@ const sidebarBySection = {
     'company-accounting': [
         { group: '', items: [
             { label: 'Comptabilité',      href: '/company/accounting', icon: 'bi-calculator' },
-            { label: 'Facturation',       href: '/company/invoices',   icon: 'bi-receipt' },
         ]},
     ],
     'company-ged': [
@@ -115,6 +131,20 @@ const sidebarBySection = {
             { label: 'Formations',        href: '/company/rh/trainings',    icon: 'bi-book' },
         ]},
     ],
+    'company-legal': [
+        { group: '', items: [
+            { label: 'Tableau de bord',   href: '/company/legal',            icon: 'bi-speedometer2' },
+            { label: 'Contrats',          href: '/company/legal/contracts',  icon: 'bi-file-text' },
+            { label: 'Contentieux',       href: '/company/legal/cases',      icon: 'bi-exclamation-triangle' },
+        ]},
+    ],
+    'company-projects': [
+        { group: '', items: [
+            { label: 'Tableau de bord',   href: '/company/projects',         icon: 'bi-speedometer2' },
+            { label: 'Projets',           href: '/company/projects',         icon: 'bi-kanban' },
+            { label: 'Tâches',            href: '/company/projects/tasks',   icon: 'bi-list-check' },
+        ]},
+    ],
 };
 
 const sidebarLinks = computed(() => {
@@ -125,6 +155,14 @@ const sidebarLinks = computed(() => {
     })).filter(group => group.items.length > 0);
 });
 
+/**
+ * Construit dynamiquement la sidebar comptabilité selon les modules
+ * actifs pour le domaine d'activité du client.
+ */
+function buildAccountingSidebar() {
+    return []; // Déplacé dans les onglets de la page Comptabilité
+}
+
 const flatLinks = computed(() =>
     sidebarLinks.value.flatMap(g => g.items)
 );
@@ -133,10 +171,15 @@ const sectionTitles = {
     'company-dashboard': 'Accueil',
     'mes-commandes': 'Commandes',
     'company-invoices': 'Finance',
+    'company-caisse': 'Caisse',
     'company-accounting': 'Comptabilité',
+    'company-crm': 'CRM',
     'company-ged': 'GED',
     'company-dae': 'Secrétariat DAE',
+    'company-legal': 'Juridique',
+    'company-projects': 'Projets',
     'company-rh': 'Ressources Humaines',
+    'company-emecef': 'e-MECeF (DGI)',
     'company-profile': 'Administration',
 };
 
@@ -146,17 +189,18 @@ const pageKey = computed(() => {
     if (path.startsWith('/company/services')) return 'company-dashboard';
     if (path.startsWith('/company/users')) return 'company-profile';
     if (path.startsWith('/company/profile')) return 'company-profile';
-    if (path.startsWith('/company/ged')) return 'company-ged';
-    if (path.startsWith('/company/caisse')) return 'company-dashboard';
+    if (path.startsWith('/company/caisse')) return 'company-caisse';
     if (path.startsWith('/company/accounting')) return 'company-accounting';
     if (path.startsWith('/company/invoices')) return 'company-invoices';
+    if (path.startsWith('/company/crm')) return 'company-crm';
     if (path.startsWith('/company/rh')) return 'company-rh';
-    if (path.startsWith('/company/legal')) return 'company-ged';
-    if (path.startsWith('/company/projects')) return 'company-ged';
-    if (path.startsWith('/company/crm')) return 'company-ged';
-    if (path.startsWith('/company/ai')) return 'company-ged';
+    if (path.startsWith('/company/legal')) return 'company-legal';
+    if (path.startsWith('/company/projects')) return 'company-projects';
+    if (path.startsWith('/company/ai')) return 'company-dashboard';
     if (path.startsWith('/company/notifications')) return 'company-profile';
+    if (path.startsWith('/company/ged')) return 'company-ged';
     if (path.startsWith('/company/dae')) return 'company-dae';
+    if (path.startsWith('/company/emecef')) return 'company-emecef';
     if (path.startsWith('/mes-commandes')) return 'mes-commandes';
     if (path.startsWith('/nos-services')) return 'mes-commandes';
     return 'company-dashboard';
@@ -202,6 +246,8 @@ const pageModuleMap = {
     'company-rh': 'rh',
     'company-legal': 'juridique',
     'company-projects': 'projets',
+    'company-crm': 'crm',
+    'company-dae': 'dae',
 };
 
 onMounted(async () => {
@@ -308,6 +354,10 @@ onUnmounted(() => {
             <div class="d-flex align-items-center gap-2">
                 <div class="g-logo-icon"><i class="bi-gem"></i></div>
                 <span class="g-logo-text">Portail Client — GEL</span>
+            </div>
+
+            <div class="d-none d-md-flex flex-grow-1 justify-content-center px-4">
+                <Omnisearch @navigate="route => window.location.href = route" />
             </div>
 
             <div class="d-flex align-items-center gap-2">
