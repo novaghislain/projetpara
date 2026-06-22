@@ -242,6 +242,7 @@ const navItems = [
     { name: 'Validations',    icon: 'bi-check-all',           route: '/approval-workflows',        key: 'gel-approval-workflows', group: 'logiciel_compta', module: 'document' },
 
     // ── IA & Automatisation ──
+    { name: 'Agents IA',          icon: 'bi-robot',            route: '/ai/agents',                 key: 'ai-agents',          group: 'ia_automation' },
     { name: 'Fil IA',             icon: 'bi-robot',            route: '/ai/feed',                   key: 'gel-ai-feed',        group: 'ia_automation' },
     { name: 'Rapprochement',      icon: 'bi-arrow-left-right', route: '/ai/reconciliation',         key: 'gel-ai-reconciliation', group: 'ia_automation' },
     { name: 'Relances IA',        icon: 'bi-send-check',       route: '/ai/relances',               key: 'gel-ai-relances',    group: 'ia_automation' },

@@ -241,6 +241,10 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client']
         Route::get('/summary', [\App\Http\Controllers\Api\FiscalAgentController::class, 'summary']);
     });
 
+    // Agents IA — dashboard + exécution
+    Route::get('/api/ai/agents/dashboard', [\App\Http\Controllers\Ai\AgentController::class, 'dashboard']);
+    Route::post('/api/ai/agents/run/{agent}', [\App\Http\Controllers\Ai\AgentController::class, 'runAgent']);
+
     Route::middleware('module:crm')->group(function () {
         Route::get('/api/clients', [ClientController::class, 'listAll']);
         Route::get('/api/clients/{id}', [ClientController::class, 'getClient']);
@@ -946,6 +950,7 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client']
     // ─── IA & Automatisation ─────────────────────────────────────────────
     Route::prefix('ai')->name('ai.')->group(function () {
         Route::get('/feed', fn() => view('app', ['page' => 'gel-ai-feed']))->name('feed');
+        Route::get('/agents', fn() => view('company', ['page' => 'ai-agents', 'clientId' => auth()->user()?->client_id]))->name('agents');
         Route::get('/reconciliation', fn() => view('app', ['page' => 'gel-ai-reconciliation']))->name('reconciliation');
         Route::get('/relances', fn() => view('app', ['page' => 'gel-ai-relances']))->name('relances');
         Route::get('/ocr', fn() => view('app', ['page' => 'gel-ai-ocr']))->name('ocr');

@@ -39,6 +39,7 @@ const pageComponent = computed(() => {
         'erp-invoice': 'erp-invoice',
         'erp-treasury': 'erp-treasury',
         'gel-licenses': 'gel-licenses',
+        'gel-personnel': 'gel-personnel',
         'gel-company-admins': 'gel-company-admins',
         'gel-requests': 'gel-requests',
         'settings': 'gel-settings',
@@ -69,7 +70,12 @@ const pageComponent = computed(() => {
         'company-ai-assistant': 'company-ai-assistant',
         'company-accounting': 'company-accounting',
         'company-caisse': 'company-caisse',
+        'company-emecef': 'company-emecef',
         'company-dae-dashboard': 'company-dae-dashboard',
+        'company-dae-courriers': 'company-dae-courriers',
+        'company-dae-contrats': 'company-dae-contrats',
+        'company-dae-documents': 'company-dae-documents',
+        'company-dae-taches': 'company-dae-taches',
         'dae-dashboard': 'dae-dashboard',
         'dae-courriers': 'dae-courriers-index',
         'dae-courriers-create': 'dae-courriers-form',
@@ -129,7 +135,6 @@ const pageComponent = computed(() => {
         'rh-payrolls-show': 'rh-payrolls-show',
         'rh-attendance': 'rh-attendance-index',
         'rh-trainings': 'rh-trainings-index',
-        'rh-alerts': 'rh-alerts-index',
         'rh-alerts': 'rh-alerts-index',
         'company-rh-dashboard': 'company-rh-dashboard',
         'company-rh-employees': 'company-rh-employees',
@@ -207,6 +212,14 @@ const pageComponent = computed(() => {
         // ─── Audit — Journal d'Audit ────────────────────
         'gel-audit': 'gel-audit',
 
+        // ─── IA & Automatisation ─────────────────────────
+        'ai-agents': 'ai-agents',
+        'gel-ai-feed': 'gel-ai-feed',
+        'gel-ai-reconciliation': 'gel-ai-reconciliation',
+        'gel-ai-relances': 'gel-ai-relances',
+        'gel-ai-ocr': 'gel-ai-ocr',
+        'gel-ai-cashflow': 'gel-ai-cashflow',
+
         // ─── Multi-Tenant / Permissions ─────────────────
         'select-context': 'select-context',
         'gel-client-modules': 'gel-client-modules',
@@ -220,6 +233,13 @@ const pageComponent = computed(() => {
         'commerce-pos': 'commerce-pos',
         'commerce-inventory': 'commerce-inventory',
         'commerce-business-users': 'commerce-business-users',
+
+        // ─── Onboarding / Inscription entreprise ──────────────
+        'register-step1': 'onboarding-step1',
+        'register-step2': 'onboarding-step2',
+        'register-step3': 'onboarding-step3',
+        'register-step4': 'onboarding-step4',
+        'register-step5': 'onboarding-step5',
     }
 
     return map[page] || null
