@@ -29,12 +29,14 @@
                     <i class="bi-chevron-down chevron"></i>
                 </a>
                 <ul class="gel-dropdown">
-                    <li><a href="/services/comptabilite"><span class="drop-icon"><i class="bi-calculator"></i></span> Comptabilité</a></li>
-                    <li><a href="/services/juridique"><span class="drop-icon"><i class="bi-bank2"></i></span> Juridique</a></li>
+                    <li><a href="/services/administration"><span class="drop-icon"><i class="bi-shield-lock"></i></span> Administration</a></li>
+                    <li><a href="/services/consultation"><span class="drop-icon"><i class="bi-chat-dots"></i></span> Consultation</a></li>
                     <li><a href="/services/fiscal"><span class="drop-icon"><i class="bi-receipt"></i></span> Fiscal</a></li>
+                    <li><a href="/services/it"><span class="drop-icon"><i class="bi-laptop"></i></span> IT</a></li>
                     <li><a href="/services/social-paie"><span class="drop-icon"><i class="bi-people"></i></span> Social & Paie</a></li>
+                    <li><a href="/services/juridique"><span class="drop-icon"><i class="bi-bank2"></i></span> Juridique</a></li>
                     <li><hr class="gel-dropdown-divider"></li>
-                    <li><a href="/services"><span class="drop-icon"><i class="bi-cpu"></i></span> Logiciel Comptabilité</a></li>
+                    <li><a href="/services/erp"><span class="drop-icon"><i class="bi-cpu"></i></span> Logiciel Comptabilité</a></li>
                 </ul>
             </li>
             <li class="gel-nav-item">
@@ -106,6 +108,15 @@
     <a href="/" class="gel-mobile-link"><i class="bi-house text-orange me-2"></i>Accueil</a>
     <a href="/nos-modules" class="gel-mobile-link"><i class="bi-grid-3x3-gap text-orange me-2"></i>Nos Modules</a>
     <a href="/services" class="gel-mobile-link"><i class="bi-grid-3x3-gap text-orange me-2"></i>Services</a>
+    <div style="padding-left:36px;font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:4px;">
+        <a href="/services/administration" style="color:inherit;text-decoration:none;display:block;padding:4px 0;">Administration</a>
+        <a href="/services/consultation" style="color:inherit;text-decoration:none;display:block;padding:4px 0;">Consultation</a>
+        <a href="/services/fiscal" style="color:inherit;text-decoration:none;display:block;padding:4px 0;">Fiscal</a>
+        <a href="/services/it" style="color:inherit;text-decoration:none;display:block;padding:4px 0;">IT</a>
+        <a href="/services/social-paie" style="color:inherit;text-decoration:none;display:block;padding:4px 0;">Social & Paie</a>
+        <a href="/services/juridique" style="color:inherit;text-decoration:none;display:block;padding:4px 0;">Juridique</a>
+        <a href="/services/erp" style="color:inherit;text-decoration:none;display:block;padding:4px 0;">Logiciel Comptabilité</a>
+    </div>
     <a href="/blogue" class="gel-mobile-link"><i class="bi-pencil-square text-orange me-2"></i>Blogue</a>
     <a href="/documentation" class="gel-mobile-link"><i class="bi-file-text text-orange me-2"></i>Documentation</a>
     <a href="/faq" class="gel-mobile-link"><i class="bi-question-circle text-orange me-2"></i>FAQ</a>

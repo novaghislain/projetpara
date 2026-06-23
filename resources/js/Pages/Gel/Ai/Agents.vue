@@ -7,17 +7,42 @@ const totalPending = ref(0);
 const loading = ref(true);
 const runningAgent = ref(null);
 const error = ref(null);
+const flashMessage = ref('');
+const noContext = ref(false);
+const availableClients = ref([]);
+const selectingClient = ref(false);
 
 const agentsList = computed(() => Object.values(agents.value));
+
+async function selectClient(clientId) {
+    selectingClient.value = true;
+    try {
+        await window.axios.post('/api/me/switch-context', { client_id: clientId });
+        window.location.reload();
+    } catch (e) {
+        error.value = 'Impossible de sélectionner cette entreprise.';
+        selectingClient.value = false;
+    }
+}
 
 async function loadDashboard() {
     loading.value = true;
     error.value = null;
+    noContext.value = false;
     try {
         const resp = await window.axios.get('/api/ai/agents/dashboard');
-        agents.value = resp.data.agents || {};
-        recentSuggestions.value = resp.data.recent || [];
-        totalPending.value = resp.data.total_pending || 0;
+        const data = resp.data;
+        if (data.no_context) {
+            noContext.value = true;
+            availableClients.value = data.clients || [];
+            agents.value = {};
+            recentSuggestions.value = [];
+            totalPending.value = 0;
+        } else {
+            agents.value = data.agents || {};
+            recentSuggestions.value = data.recent || [];
+            totalPending.value = data.total_pending || 0;
+        }
     } catch (e) {
         error.value = 'Erreur de chargement du dashboard IA';
         console.error(e);
@@ -27,11 +52,19 @@ async function loadDashboard() {
 
 async function runAgent(agentKey) {
     runningAgent.value = agentKey;
+    flashMessage.value = '';
+    error.value = null;
     try {
-        await window.axios.post(`/api/ai/agents/run/${agentKey}`);
+        const resp = await window.axios.post(`/api/ai/agents/run/${agentKey}`);
+        const msg = resp.data?.message || 'Agent exécuté avec succès';
+        flashMessage.value = msg;
         await loadDashboard();
+        setTimeout(() => flashMessage.value = '', 4000);
     } catch (e) {
-        console.error(e);
+        const detail = e?.response?.data?.message || e?.message || 'Erreur inconnue';
+        error.value = `Échec: ${detail}`;
+        console.error('Agent run error:', detail);
+        setTimeout(() => error.value = '', 6000);
     }
     runningAgent.value = null;
 }
@@ -59,6 +92,11 @@ onMounted(loadDashboard);
             </button>
         </div>
 
+        <!-- Flash message -->
+        <div v-if="flashMessage" class="alert alert-success d-flex align-items-center gap-2" style="border:none;border-radius:10px;background:#dcfce7;color:#166534;font-size:13px;padding:10px 14px;">
+            <i class="bi-check-circle-fill"></i> {{ flashMessage }}
+        </div>
+
         <!-- Loading -->
         <div v-if="loading && !Object.keys(agents).length" class="text-center py-5">
             <div class="spinner-border" style="color:#FF7900;" role="status"></div>
@@ -67,6 +105,33 @@ onMounted(loadDashboard);
 
         <!-- Error -->
         <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
+
+        <!-- No context -->
+        <div v-else-if="noContext" class="text-center py-5">
+            <div style="font-size:48px;color:#FF7900;opacity:0.5;margin-bottom:16px;">
+                <i class="bi-building"></i>
+            </div>
+            <h5 style="color:#1e293b;font-weight:600;">Aucune entreprise sélectionnée</h5>
+            <p class="text-muted" style="font-size:14px;max-width:400px;margin:8px auto 16px;">
+                Sélectionnez une entreprise pour utiliser les agents IA.
+            </p>
+
+            <!-- Liste des entreprises disponibles -->
+            <div v-if="availableClients.length" class="d-flex flex-wrap gap-2 justify-content-center" style="max-width:500px;margin:0 auto;">
+                <button
+                    v-for="c in availableClients"
+                    :key="c.id"
+                    class="btn d-flex align-items-center gap-2 px-4 py-3"
+                    style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;font-size:14px;color:#1e293b;font-weight:500;transition:all 0.15s;min-width:200px;"
+                    :disabled="selectingClient"
+                    @click="selectClient(c.id)"
+                >
+                    <i class="bi-building" style="color:#FF7900;"></i>
+                    {{ c.company_name || c.name || 'Entreprise #' + c.id }}
+                    <span v-if="c.domain_code" class="badge ms-auto" style="background:#f1f5f9;color:#64748b;font-weight:400;font-size:10px;">{{ c.domain_code }}</span>
+                </button>
+            </div>
+        </div>
 
         <!-- Agent Cards Grid -->
         <div v-else class="row g-3">

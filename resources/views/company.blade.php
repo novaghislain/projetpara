@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="base-url" content="{{ request()->root() }}">
     <title>Mon Espace | GEL Cabinet</title>
     <meta name="description" content="Espace client GEL Cabinet">
 
@@ -117,10 +118,6 @@
     @vite(['resources/js/app.js'])
 </head>
 <body>
-    <!-- DEBUG MARKER: Si ce texte est visible, le HTML est bien servi -->
-    <div style="background:#FF7900;color:#fff;text-align:center;padding:8px;font-weight:bold;">
-        DEBUG: Template company.blade.php chargé — page={{ $page }}
-    </div>
     <div id="app" data-page="{{ $page }}" data-props='@json(['clientId' => $clientId ?? null])'></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -145,6 +142,8 @@
 
     <script>
         window.__CLIENT_ID__ = {{ Auth::check() && Auth::user()->client_id ? Auth::user()->client_id : 'null' }};
+        window.__ACCOUNTING_MODULES__ = {!! $accountingModulesJson ?? '[]' !!};
+        window.__ACCOUNTING_SIDEBAR__ = {!! $accountingSidebarJson ?? '[]' !!};
     </script>
 </body>
 </html>

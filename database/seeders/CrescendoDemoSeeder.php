@@ -29,6 +29,7 @@ class CrescendoDemoSeeder extends Seeder
                 'is_admin' => true,
                 'is_active' => true,
                 'email_verified_at' => Carbon::now(),
+                'must_change_password' => true,
             ]
         );
 
@@ -71,6 +72,7 @@ class CrescendoDemoSeeder extends Seeder
                 'is_company_admin' => false,
                 'is_active' => true,
                 'email_verified_at' => Carbon::now(),
+                'must_change_password' => true,
                 'fonction' => 'Client particulier',
                 'phone' => '+229 61 23 45 67',
             ]
@@ -176,6 +178,7 @@ class CrescendoDemoSeeder extends Seeder
                 'is_company_admin' => true,
                 'is_active' => true,
                 'email_verified_at' => Carbon::now(),
+                'must_change_password' => true,
                 'fonction' => 'Directrice Administrative',
             ]
         );
@@ -202,6 +205,7 @@ class CrescendoDemoSeeder extends Seeder
                 'is_company_admin' => false,
                 'is_active' => true,
                 'email_verified_at' => Carbon::now(),
+                'must_change_password' => true,
                 'fonction' => 'Comptable Senior',
             ]
         );

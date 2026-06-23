@@ -1,4 +1,16 @@
 <?php
+// =============================================================================
+// FICHIER : DaeSecretaireAccess.php
+// RÔLE    : Middleware — Vérifie l'accès au module DAE (secrétaire)
+// ÉQUIPE  : GEL Cabinet — Équipe Dev Backend
+// =============================================================================
+// Middleware pour le module DAE (Digital Asset Exchange / Gestion de courriers).
+// Vérifie deux conditions :
+//   1. L'utilisateur a le statut secrétaire (role_secretaire = true)
+//   2. L'utilisateur a l'accès au module "dae"
+//
+// Super admin : bypass (toujours autorisé).
+// =============================================================================
 
 namespace App\Http\Middleware;
 

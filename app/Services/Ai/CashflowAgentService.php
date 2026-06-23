@@ -57,7 +57,7 @@ class CashflowAgentService
         $cashBalance = AccountingJournalLine::whereHas('journal', function ($q) use ($clientId) {
             $q->where('client_id', $clientId);
         })
-        ->whereIn('account_code', ['512', '531', '571'])
+        ->whereHas('account', fn($q) => $q->whereIn('code', ['512', '531', '571']))
         ->select(DB::raw('SUM(debit) - SUM(credit) as balance'))
         ->value('balance') ?? 0;
 
@@ -140,7 +140,7 @@ class CashflowAgentService
         $balance = AccountingJournalLine::whereHas('journal', function ($q) use ($clientId) {
             $q->where('client_id', $clientId);
         })
-        ->whereIn('account_code', ['512', '531', '571'])
+        ->whereHas('account', fn($q) => $q->whereIn('code', ['512', '531', '571']))
         ->select(DB::raw('SUM(debit) - SUM(credit) as balance'))
         ->value('balance') ?? 0;
 

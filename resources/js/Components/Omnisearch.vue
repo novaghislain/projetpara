@@ -1,5 +1,6 @@
 <script setup>
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
+import { sanitizeHtml } from '../utils/sanitize.js';
 
 const emit = defineEmits(['navigate']);
 const props = defineProps({
@@ -205,8 +206,8 @@ defineExpose({ open, close });
                                     <i :class="item.icon || categoryIcons[group.category] || 'bi-file'"></i>
                                 </div>
                                 <div class="omni-item-content">
-                                    <div class="omni-item-title" v-html="item.title"></div>
-                                    <div v-if="item.subtitle" class="omni-item-sub" v-html="item.subtitle"></div>
+                                    <div class="omni-item-title" v-html="sanitizeHtml(item.title)"></div>
+                                    <div v-if="item.subtitle" class="omni-item-sub" v-html="sanitizeHtml(item.subtitle)"></div>
                                 </div>
                                 <div v-if="item.badge" class="omni-item-badge">{{ item.badge }}</div>
                             </div>

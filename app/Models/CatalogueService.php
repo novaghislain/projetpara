@@ -22,4 +22,14 @@ class CatalogueService extends Model
     {
         return $this->belongsTo(CatalogueCategory::class, 'category_id');
     }
+
+    public function scopeServices($query)
+    {
+        return $query->where('type', 'service');
+    }
+
+    public function scopeModeles($query)
+    {
+        return $query->where('type', 'modele');
+    }
 }

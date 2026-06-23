@@ -3,6 +3,25 @@
 </template>
 
 <script setup>
+// =============================================================================
+// FICHIER : Root.vue
+// RÔLE    : Routeur dynamique — Point d'entrée du SPA Vue 3
+// ÉQUIPE  : GEL Cabinet — Équipe Dev Frontend
+// =============================================================================
+// Ce composant est le point d'entrée unique de l'application Vue.
+// Il reçoit depuis Laravel (via @inertia ou injection manuelle) :
+//   - page       : le nom de la page à afficher (ex: 'gel-dashboard')
+//   - pageProps  : les propriétés injectées par le contrôleur Laravel
+//
+// Le mapping page → composant est défini dans pageComponent.
+// Si une page n'est pas trouvée → composant fallback 404.
+//
+// ⚠️  Pour ajouter une nouvelle page :
+//     1. Importe le composant Vue ici
+//     2. Ajoute une entrée dans le map
+//     3. Ajoute l'entrée dans la vue Blade (company.blade.php, etc.)
+// =============================================================================
+
 import { inject, computed } from 'vue';
 
 const page = inject('page', '');

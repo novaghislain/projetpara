@@ -53,6 +53,7 @@ class ClientController extends Controller
             'pole_ids.*' => 'exists:poles,id',
             'service_ids' => 'nullable|array',
             'service_ids.*' => 'exists:services,id',
+            'domain_code' => 'nullable|string|max:50|exists:business_domains,code',
             'contacts' => 'nullable|array',
             'contacts.*.name' => 'required|string|max:255',
             'contacts.*.position' => 'nullable|string|max:255',
@@ -63,6 +64,16 @@ class ClientController extends Controller
 
         $validated['status'] = $validated['status'] ?? 'actif';
         $validated['created_by'] = Auth::id();
+
+        // Résoudre domain_id à partir du domain_code
+        if (!empty($validated['domain_code'])) {
+            $domain = \App\Models\BusinessDomain::where('code', $validated['domain_code'])->first();
+            if ($domain) {
+                $validated['domain_id'] = $domain->id;
+                $validated['domain_confirmed'] = true;
+                $validated['domain_confirmed_at'] = now();
+            }
+        }
 
         $client = Client::create($validated);
 
@@ -151,7 +162,22 @@ class ClientController extends Controller
             'pole_ids.*' => 'exists:poles,id',
             'service_ids' => 'nullable|array',
             'service_ids.*' => 'exists:services,id',
+            'domain_code' => 'nullable|string|max:50|exists:business_domains,code',
         ]);
+
+        // Résoudre domain_id à partir du domain_code
+        if (!empty($validated['domain_code'])) {
+            $domain = \App\Models\BusinessDomain::where('code', $validated['domain_code'])->first();
+            if ($domain) {
+                $validated['domain_id'] = $domain->id;
+                $validated['domain_confirmed'] = true;
+                $validated['domain_confirmed_at'] = now();
+            }
+        } elseif (array_key_exists('domain_code', $validated)) {
+            $validated['domain_id'] = null;
+            $validated['domain_confirmed'] = false;
+            $validated['domain_confirmed_at'] = null;
+        }
 
         $client->update($validated);
 
@@ -326,6 +352,26 @@ class ClientController extends Controller
         return response()->json([
             'message' => 'Module mis à jour.',
             'disabled_modules' => $client->fresh()->disabled_modules,
+        ]);
+    }
+
+    /**
+     * API: Mettre à jour les identifiants e-MECeF d'un client.
+     */
+    public function updateEmecef(Request $request, $id)
+    {
+        $client = Client::findOrFail($id);
+
+        $validated = $request->validate([
+            'emecef_nim' => 'nullable|string|max:50',
+            'emecef_is_active' => 'required|boolean',
+        ]);
+
+        $client->update($validated);
+
+        return response()->json([
+            'message' => 'Configuration e-MECeF mise à jour.',
+            'client' => $client->fresh(),
         ]);
     }
 }

@@ -38,8 +38,13 @@ const allTabs = [
     { key: 'accueil',       label: "Accueil",          icon: 'bi-house' },
     { key: 'commandes',     label: "Commandes",        icon: 'bi-cart-check' },
     { key: 'finance',       label: "Finance",          icon: 'bi-receipt',          module: 'facturation' },
+    { key: 'caisse',        label: "Caisse",           icon: 'bi-cash-coin',       module: 'caisse' },
     { key: 'comptabilite',  label: "Comptabilité",     icon: 'bi-calculator',       module: 'comptabilite' },
+    { key: 'crm',           label: "CRM",              icon: 'bi-people',           module: 'crm' },
     { key: 'secretariat',   label: "Secrétariat",      icon: 'bi-briefcase',        module: 'document' },
+    { key: 'juridique',     label: "Juridique",        icon: 'bi-briefcase',        module: 'juridique' },
+    { key: 'projets',       label: "Projets",          icon: 'bi-kanban',           module: 'projets' },
+    { key: 'rh',            label: "RH",               icon: 'bi-people',           module: 'rh' },
     { key: 'administration',label: "Administration",   icon: 'bi-gear' },
 ];
 const tabs = computed(() =>
@@ -64,7 +69,7 @@ const qlModuleMap = {
     '/company/projects':   'projets',
     '/company/services':   'document',
     '/company/ai':         null,
-    '/company/crm':        null,
+    '/company/crm':        'crm',
 };
 
 function qlVisible(href) {
@@ -134,6 +139,21 @@ const quickLinks = {
             { label: 'Social & Paie',        href: '/company/hr',           icon: 'bi-people' },
         ]},
     ],
+    caisse: [
+        { group: 'Caisse', links: [
+            { label: 'Tableau de bord',       href: '/company/caisse',          icon: 'bi-cash-stack' },
+            { label: 'Encaissements',          href: '/company/caisse',          icon: 'bi-arrow-down-circle' },
+            { label: 'Décaissements',          href: '/company/caisse',          icon: 'bi-arrow-up-circle' },
+            { label: 'Rapports',               href: '/company/caisse',          icon: 'bi-bar-chart' },
+        ]},
+    ],
+    crm: [
+        { group: 'CRM', links: [
+            { label: 'Contacts',              href: '/company/crm',             icon: 'bi-people' },
+            { label: 'Affaires',              href: '/company/crm',             icon: 'bi-briefcase' },
+            { label: 'Interactions',          href: '/company/crm',             icon: 'bi-chat-dots' },
+        ]},
+    ],
     secretariat: [
         { group: 'Secrétariat', links: [
             { label: 'Dossiers clients',     href: '/company/legal',        icon: 'bi-folder' },
@@ -146,6 +166,29 @@ const quickLinks = {
         { group: 'RH', links: [
             { label: 'Contrats de travail',  href: '/company/hr',           icon: 'bi-file-person' },
             { label: 'Paie & Déclarations',  href: '/company/hr',           icon: 'bi-cash' },
+        ]},
+    ],
+    juridique: [
+        { group: 'Juridique', links: [
+            { label: 'Tableau de bord',      href: '/company/legal',         icon: 'bi-speedometer2' },
+            { label: 'Contrats',             href: '/company/legal',         icon: 'bi-file-text' },
+            { label: 'Contentieux',          href: '/company/legal',         icon: 'bi-exclamation-triangle' },
+        ]},
+    ],
+    projets: [
+        { group: 'Projets', links: [
+            { label: 'Tableau de bord',      href: '/company/projects',      icon: 'bi-speedometer2' },
+            { label: 'Projets en cours',     href: '/company/projects',      icon: 'bi-kanban' },
+            { label: 'Tâches',               href: '/company/projects',      icon: 'bi-list-check' },
+        ]},
+    ],
+    rh: [
+        { group: 'RH', links: [
+            { label: 'Tableau de bord',      href: '/company/rh',             icon: 'bi-speedometer2' },
+            { label: 'Employés',             href: '/company/rh',             icon: 'bi-people' },
+            { label: 'Congés',               href: '/company/rh',             icon: 'bi-calendar-check' },
+            { label: 'Notes de frais',       href: '/company/rh',             icon: 'bi-cash-stack' },
+            { label: 'Paie',                 href: '/company/rh',             icon: 'bi-calculator' },
         ]},
     ],
     administration: [
@@ -552,6 +595,132 @@ const tabContent = {
                                     <a href="/company/legal" class="isup-module-card">
                                         <div class="isup-mc-icon" style="background:#e8f5e9; color:#2e7d32;"><i class="bi-file-earmark-check"></i></div>
                                         <div class="isup-mc-label">Déclarations fiscales</div>
+                                    </a>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- ── CAISSE ──────────────────────────────────── -->
+                        <template v-else-if="activeTab === 'caisse'">
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-4 col-6">
+                                    <a href="/company/caisse" class="isup-module-card">
+                                        <div class="isup-mc-icon" style="background:#e3f2fd; color:#1565c0;"><i class="bi-cash-stack"></i></div>
+                                        <div class="isup-mc-label">Caisse</div>
+                                    </a>
+                                </div>
+                                <div class="col-md-4 col-6">
+                                    <a href="/company/caisse" class="isup-module-card">
+                                        <div class="isup-mc-icon" style="background:#e8f5e9; color:#2e7d32;"><i class="bi-arrow-down-circle"></i></div>
+                                        <div class="isup-mc-label">Encaissements</div>
+                                    </a>
+                                </div>
+                                <div class="col-md-4 col-6">
+                                    <a href="/company/caisse" class="isup-module-card">
+                                        <div class="isup-mc-icon" style="background:#fce4ec; color:#c62828;"><i class="bi-arrow-up-circle"></i></div>
+                                        <div class="isup-mc-label">Décaissements</div>
+                                    </a>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- ── CRM ──────────────────────────────────────── -->
+                        <template v-else-if="activeTab === 'crm'">
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-4 col-6">
+                                    <a href="/company/crm" class="isup-module-card">
+                                        <div class="isup-mc-icon" style="background:#e3f2fd; color:#1565c0;"><i class="bi-people"></i></div>
+                                        <div class="isup-mc-label">Contacts</div>
+                                    </a>
+                                </div>
+                                <div class="col-md-4 col-6">
+                                    <a href="/company/crm" class="isup-module-card">
+                                        <div class="isup-mc-icon" style="background:#f3e5f5; color:#6a1b9a;"><i class="bi-briefcase"></i></div>
+                                        <div class="isup-mc-label">Affaires</div>
+                                    </a>
+                                </div>
+                                <div class="col-md-4 col-6">
+                                    <a href="/company/crm" class="isup-module-card">
+                                        <div class="isup-mc-icon" style="background:#fff3e0; color:#FF7900;"><i class="bi-chat-dots"></i></div>
+                                        <div class="isup-mc-label">Interactions</div>
+                                    </a>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- ── JURIDIQUE ────────────────────────────────── -->
+                        <template v-else-if="activeTab === 'juridique'">
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-4 col-6">
+                                    <a href="/company/legal" class="isup-module-card">
+                                        <div class="isup-mc-icon" style="background:#e3f2fd; color:#1565c0;"><i class="bi-file-text"></i></div>
+                                        <div class="isup-mc-label">Contrats</div>
+                                    </a>
+                                </div>
+                                <div class="col-md-4 col-6">
+                                    <a href="/company/legal" class="isup-module-card">
+                                        <div class="isup-mc-icon" style="background:#fce4ec; color:#c62828;"><i class="bi-exclamation-triangle"></i></div>
+                                        <div class="isup-mc-label">Contentieux</div>
+                                    </a>
+                                </div>
+                                <div class="col-md-4 col-6">
+                                    <a href="/company/legal" class="isup-module-card">
+                                        <div class="isup-mc-icon" style="background:#e8f5e9; color:#2e7d32;"><i class="bi-clipboard-check"></i></div>
+                                        <div class="isup-mc-label">Conformité</div>
+                                    </a>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- ── PROJETS ──────────────────────────────────── -->
+                        <template v-else-if="activeTab === 'projets'">
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-4 col-6">
+                                    <a href="/company/projects" class="isup-module-card">
+                                        <div class="isup-mc-icon" style="background:#e3f2fd; color:#1565c0;"><i class="bi-kanban"></i></div>
+                                        <div class="isup-mc-label">Projets en cours</div>
+                                    </a>
+                                </div>
+                                <div class="col-md-4 col-6">
+                                    <a href="/company/projects" class="isup-module-card">
+                                        <div class="isup-mc-icon" style="background:#e8f5e9; color:#2e7d32;"><i class="bi-check-circle"></i></div>
+                                        <div class="isup-mc-label">Projets terminés</div>
+                                    </a>
+                                </div>
+                                <div class="col-md-4 col-6">
+                                    <a href="/company/projects" class="isup-module-card">
+                                        <div class="isup-mc-icon" style="background:#fff3e0; color:#FF7900;"><i class="bi-list-check"></i></div>
+                                        <div class="isup-mc-label">Tâches</div>
+                                    </a>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- ── RH ─────────────────────────────────────────── -->
+                        <template v-else-if="activeTab === 'rh'">
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-3 col-6">
+                                    <a href="/company/rh" class="isup-module-card">
+                                        <div class="isup-mc-icon" style="background:#e3f2fd; color:#1565c0;"><i class="bi-people"></i></div>
+                                        <div class="isup-mc-label">Employés</div>
+                                    </a>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <a href="/company/rh" class="isup-module-card">
+                                        <div class="isup-mc-icon" style="background:#e8f5e9; color:#2e7d32;"><i class="bi-calendar-check"></i></div>
+                                        <div class="isup-mc-label">Congés</div>
+                                    </a>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <a href="/company/rh" class="isup-module-card">
+                                        <div class="isup-mc-icon" style="background:#fff3e0; color:#FF7900;"><i class="bi-cash-stack"></i></div>
+                                        <div class="isup-mc-label">Notes de frais</div>
+                                    </a>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <a href="/company/rh" class="isup-module-card">
+                                        <div class="isup-mc-icon" style="background:#fce4ec; color:#c62828;"><i class="bi-calculator"></i></div>
+                                        <div class="isup-mc-label">Paie</div>
                                     </a>
                                 </div>
                             </div>

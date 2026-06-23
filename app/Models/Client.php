@@ -30,7 +30,14 @@ class Client extends Model
         'session_timeout_minutes',
         'allowed_ips',
         'regime_fiscal',
+        'emecef_nim',
+        'emecef_is_active',
+        'emecef_password',
         'created_by',
+        'domain_code',
+        'domain_id',
+        'domain_confirmed',
+        'domain_confirmed_at',
     ];
 
     protected function casts(): array
@@ -40,8 +47,27 @@ class Client extends Model
             'contract_end' => 'date',
             'disabled_modules' => 'array',
             'require_2fa' => 'boolean',
+            'emecef_is_active' => 'boolean',
+            'emecef_password' => 'encrypted',
             'allowed_ips' => 'json',
+            'domain_confirmed' => 'boolean',
+            'domain_confirmed_at' => 'datetime',
         ];
+    }
+
+    public function domain()
+    {
+        return $this->belongsTo(BusinessDomain::class, 'domain_id');
+    }
+
+    public function accountingModules()
+    {
+        return $this->hasMany(ClientAccountingModule::class, 'client_id');
+    }
+
+    public function activeAccountingModules()
+    {
+        return $this->hasMany(ClientAccountingModule::class, 'client_id')->where('is_active', true);
     }
 
     public function contacts()

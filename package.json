@@ -25,6 +25,7 @@
     "dependencies": {
         "@motionone/vue": "^10.16.4",
         "bootstrap": "^5.3.8",
+        "dompurify": "^3.4.11",
         "lucide-vue-next": "^0.577.0",
         "sharp": "^0.35.1"
     }

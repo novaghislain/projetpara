@@ -1,3 +1,24 @@
+// =============================================================================
+// FICHIER : app.js
+// RÔLE    : Point d'entrée du bundle JavaScript — Initialise Vue 3
+// ÉQUIPE  : GEL Cabinet — Équipe Dev Frontend
+// =============================================================================
+// Ce fichier est compilé par Vite (via resources/js/app.js → vite.config.js).
+// Il importe tous les composants Vue 3, les layouts, et les stores, puis
+// monte l'application sur l'élément #app du DOM.
+//
+// Architecture des imports :
+//   1. CSS (Tailwind + Bootstrap personnalisé)
+//   2. Bootstrap JS (Sidebar, Offcanvas, etc.)
+//   3. Stores (Authentication)
+//   4. Layouts (GelLayout, CompanyLayout, CpaLayout, ClientLayout)
+//   5. Pages (Gel/, Company/, Client/, Modules/, Auth/)
+//   6. Composants (Omnisearch, Modals, etc.)
+//
+// ⚠️  Ne JAMAIS importer de fichier qui n'est pas utilisé — Vite tree-shake
+//     les imports, mais l'import lui-même peut avoir des side effects.
+// =============================================================================
+
 import '../css/app.css';
 import '../css/company.css';
 import './bootstrap';
@@ -6,7 +27,8 @@ import { createApp } from 'vue';
 import Root from './Root.vue';
 import { initAuth } from './stores/auth';
 
-// Initialize auth state from Blade-embedded JSON before Vue mounts
+// Initialise l'état d'authentification depuis les données JSON injectées
+// par Laravel dans Blade (avant que Vue ne monte)
 initAuth();
 
 import GelLayout from './Layouts/GelLayout.vue';

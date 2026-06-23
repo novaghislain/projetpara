@@ -1,4 +1,23 @@
 <?php
+// =============================================================================
+// FICHIER : CheckModuleAccess.php
+// RÔLE    : Middleware — Vérifie l'accès à un module spécifique
+// ÉQUIPE  : GEL Cabinet — Équipe Dev Backend
+// =============================================================================
+// Middleware paramétrable utilisé sur les routes protégées par module.
+//
+// Utilisation dans les routes :
+//   Route::middleware('module:comptabilite')
+//   Route::middleware('module:comptabilite,creer')
+//
+// Paramètres :
+//   1. module (obligatoire) : le slug du module (ex: comptabilite, caisse, rh)
+//   2. action (optionnelle) : permission spécifique (ex: creer, modifier, supprimer)
+//
+// Comportement :
+//   - Super admin : toujours autorisé (bypass)
+//   - Utilisateur normal : vérifié via User::hasModuleAccess() + User::canModule()
+// =============================================================================
 
 namespace App\Http\Middleware;
 

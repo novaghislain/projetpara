@@ -1,4 +1,15 @@
 <?php
+// =============================================================================
+// FICHIER : RedirectIfClient.php
+// RÔLE    : Middleware — Redirige les clients vers leur espace personnel
+// ÉQUIPE  : GEL Cabinet — Équipe Dev Backend
+// =============================================================================
+// Empêche les clients (role=client) d'accéder aux routes du cabinet ou
+// du portail entreprise. Ils sont redirigés vers /mes-commandes.
+//
+// Utilisation :
+//   Route::middleware('redirect.client') → protège les routes non-client
+// =============================================================================
 
 namespace App\Http\Middleware;
 

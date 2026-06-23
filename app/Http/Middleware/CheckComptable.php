@@ -1,4 +1,13 @@
 <?php
+// =============================================================================
+// FICHIER : CheckComptable.php
+// RÔLE    : Middleware — Vérifie que l'utilisateur est un comptable du cabinet
+// ÉQUIPE  : GEL Cabinet — Équipe Dev Backend
+// =============================================================================
+// Protège les routes du module comptabilité réservées aux comptables GEL.
+// Les comptables ont un accès transversal à toutes les entreprises clientes
+// pour la saisie, la révision et la clôture des comptes.
+// =============================================================================
 
 namespace App\Http\Middleware;
 
@@ -11,6 +20,7 @@ class CheckComptable
 {
     /**
      * Vérifie que l'utilisateur est un comptable du cabinet.
+     * Sinon, retourne 401 ou 403.
      */
     public function handle(Request $request, Closure $next): Response
     {

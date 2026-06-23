@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 import { ref, computed, onMounted } from 'vue';
 import CompanyLayout from '../../Layouts/CompanyLayout.vue';
 import { authStore } from '../../stores/auth';
@@ -270,11 +270,11 @@ function formatBytes(bytes) {
 
 function fileBadge(type) {
     const c = {
-        pdf: 'isup-file-pdf', doc: 'isup-file-doc', docx: 'isup-file-doc',
-        xls: 'isup-file-xls', xlsx: 'isup-file-xls',
-        png: 'isup-file-img', jpg: 'isup-file-img', jpeg: 'isup-file-img',
+        pdf: 'badge-pdf', doc: 'badge-doc', docx: 'badge-doc',
+        xls: 'badge-xls', xlsx: 'badge-xls',
+        png: 'badge-img', jpg: 'badge-img', jpeg: 'badge-img',
     };
-    return c[type] || 'isup-file-other';
+    return c[type] || 'badge-other';
 }
 
 // ─── Init ───────────────────────────────────────────────────────
@@ -287,235 +287,223 @@ onMounted(() => {
 
 <template>
     <CompanyLayout page-title="GED — Gestion Documentaire">
-        <div class="isup-shell ged-shell">
+        <div class="ged-container">
             <!-- ══ HEADER ══ -->
-            <div class="isup-portal-header">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="isup-portal-logo">
-                        <i class="bi-folder2-open" style="font-size:20px;"></i>
+            <div class="ged-header">
+                <div>
+                    <h1 class="ged-title"><i class="bi-folder2-open me-2 ged-title-icon"></i>Gestion documentaire</h1>
+                    <p class="ged-subtitle">Documents, dossiers et archivage</p>
+                </div>
+            </div>
+
+            <!-- ══ STATS CARDS ══ -->
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-md-3">
+                    <div class="ged-stat">
+                        <div class="ged-stat-icon ged-stat-blue"><i class="bi-file-earmark-text"></i></div>
+                        <div class="ged-stat-body">
+                            <div class="ged-stat-label">Documents</div>
+                            <div class="ged-stat-value">{{ stats.total_documents }}</div>
+                        </div>
                     </div>
-                    <div>
-                        <div class="isup-portal-company">GED — Gestion Documentaire</div>
-                        <div class="isup-portal-sub">Documents, dossiers et archivage</div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="ged-stat">
+                        <div class="ged-stat-icon ged-stat-orange"><i class="bi-folder2"></i></div>
+                        <div class="ged-stat-body">
+                            <div class="ged-stat-label">Dossiers</div>
+                            <div class="ged-stat-value">{{ stats.total_folders }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="ged-stat">
+                        <div class="ged-stat-icon ged-stat-green"><i class="bi-database"></i></div>
+                        <div class="ged-stat-body">
+                            <div class="ged-stat-label">Stockage</div>
+                            <div class="ged-stat-value">{{ totalSizeFormatted }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="ged-stat">
+                        <div class="ged-stat-icon ged-stat-cyan"><i class="bi-arrow-up-circle"></i></div>
+                        <div class="ged-stat-body">
+                            <div class="ged-stat-label">Dernier ajout</div>
+                            <div class="ged-stat-value text-truncate" style="font-size:13px;">{{ stats.recent?.[0]?.name || '—' }}</div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="p-3">
-                <!-- ══ STATS CARDS ══ -->
-                <div class="row g-3 mb-4">
-                    <div class="col-md-3">
-                        <div class="isup-stat-card">
-                            <div class="isup-stat-icon isup-stat-blue"><i class="bi-file-earmark-text"></i></div>
-                            <div>
-                                <div class="isup-stat-label">Documents</div>
-                                <div class="isup-stat-value">{{ stats.total_documents }}</div>
-                            </div>
+            <!-- ══ MAIN LAYOUT ══ -->
+            <div class="ged-layout">
+                <!-- LEFT: Folder tree -->
+                <div class="ged-sidebar">
+                    <div class="ged-sidebar-header">
+                        <span class="ged-sidebar-title"><i class="bi-folder2 me-2" style="color:#FF7900;"></i>Dossiers</span>
+                        <div class="ged-sidebar-actions">
+                            <button class="ged-btn-icon" @click="loadFolders()" title="Rafraîchir"><i class="bi-arrow-clockwise"></i></button>
+                            <button class="ged-btn-icon" @click="openCreateFolder(null)" title="Nouveau dossier"><i class="bi-plus-lg"></i></button>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="isup-stat-card">
-                            <div class="isup-stat-icon isup-stat-orange"><i class="bi-folder2"></i></div>
-                            <div>
-                                <div class="isup-stat-label">Dossiers</div>
-                                <div class="isup-stat-value">{{ stats.total_folders }}</div>
-                            </div>
+                    <div class="ged-folder-list">
+                        <div class="ged-folder-item" :class="{ active: !currentFolder }" @click="goToRoot()">
+                            <i class="bi-house-door-fill ged-folder-icon-home"></i>
+                            <span class="ged-folder-name">Tous les documents</span>
+                            <span class="ged-folder-badge">{{ documents.length }}</span>
                         </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="isup-stat-card">
-                            <div class="isup-stat-icon isup-stat-cyan"><i class="bi-database"></i></div>
-                            <div>
-                                <div class="isup-stat-label">Stockage</div>
-                                <div class="isup-stat-value">{{ totalSizeFormatted }}</div>
-                            </div>
+                        <div v-if="loading.folders" class="ged-loading-center"><div class="ged-spinner"></div></div>
+                        <div v-else-if="!folders.length" class="ged-empty-folder">
+                            <i class="bi-folder-plus"></i>
+                            <p>Aucun dossier</p>
+                            <button class="ged-btn ged-btn-sm ged-btn-primary" @click="openCreateFolder(null)">Créer</button>
                         </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="isup-stat-card">
-                            <div class="isup-stat-icon isup-stat-green"><i class="bi-arrow-up-circle"></i></div>
-                            <div>
-                                <div class="isup-stat-label">Dernier upload</div>
-                                <div class="isup-stat-subvalue text-truncate">{{ stats.recent?.[0]?.name || '—' }}</div>
+                        <div v-else>
+                            <div v-for="folder in folders" :key="folder.id">
+                                <div class="ged-folder-item" :class="{ active: currentFolder?.id === folder.id }"
+                                     @click="selectFolder(folder)"
+                                     @contextmenu.prevent="openRenameFolder(folder)">
+                                    <i class="bi-chevron-right ged-folder-chevron" v-if="folder.has_children"></i>
+                                    <i class="bi-folder2-fill ged-folder-icon"></i>
+                                    <span class="ged-folder-name text-truncate">{{ folder.name }}</span>
+                                    <span class="ged-folder-badge" v-if="folder.documents_count">{{ folder.documents_count }}</span>
+                                </div>
+                                <div v-if="folder.children?.length" class="ged-folder-children">
+                                    <div v-for="child in folder.children" :key="child.id"
+                                         class="ged-folder-item" :class="{ active: currentFolder?.id === child.id }"
+                                         @click="selectFolder(child)"
+                                         @contextmenu.prevent="openRenameFolder(child)">
+                                        <i class="bi-folder2-fill ged-folder-icon" style="font-size:14px;margin-left:16px;"></i>
+                                        <span class="ged-folder-name text-truncate">{{ child.name }}</span>
+                                        <span class="ged-folder-badge" v-if="child.documents_count">{{ child.documents_count }}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- ══ MAIN LAYOUT ══ -->
-                <div class="row g-3">
-                    <!-- LEFT: Folder tree -->
-                    <div class="col-lg-3">
-                        <div class="isup-panel">
-                            <div class="isup-panel-header d-flex align-items-center justify-content-between">
-                                <span><i class="bi-folder2 me-2" style="color:#FF7900;"></i>Dossiers</span>
-                                <div class="d-flex gap-1">
-                                    <button class="isup-panel-icon-btn" @click="loadFolders()" title="Rafraîchir"><i class="bi-arrow-clockwise"></i></button>
-                                    <button class="isup-panel-icon-btn" @click="openCreateFolder(null)" title="Nouveau dossier"><i class="bi-plus-lg"></i></button>
-                                </div>
-                            </div>
-                            <div class="isup-folder-scroll">
-                                <!-- Root -->
-                                <div class="isup-folder-row" :class="{ active: !currentFolder }" @click="goToRoot()">
-                                    <i class="bi-house-door-fill isup-folder-icon-home"></i>
-                                    <span class="isup-folder-name">Tous les documents</span>
-                                    <span class="isup-folder-count">{{ documents.length }}</span>
-                                </div>
-                                <div v-if="loading.folders" class="text-center py-4"><div class="isup-spinner-sm"></div></div>
-                                <div v-else-if="!folders.length" class="text-center py-5 px-3">
-                                    <i class="bi-folder-plus d-block mb-2" style="font-size:2rem;color:#dce3ee;"></i>
-                                    <p class="small" style="color:#888;">Aucun dossier</p>
-                                    <button class="isup-btn-primary" style="padding:4px 12px;font-size:11px;" @click="openCreateFolder(null)">
-                                        <i class="bi-plus-lg me-1"></i>Créer
-                                    </button>
-                                </div>
-                                <div v-else class="py-1">
-                                    <template v-for="folder in folders" :key="folder.id">
-                                        <div class="isup-folder-row" :class="{ active: currentFolder?.id === folder.id }"
-                                             @click="selectFolder(folder)">
-                                            <i class="bi-chevron-right" style="font-size:10px;color:#aaa;width:12px;" v-if="folder.has_children"></i>
-                                            <i style="font-size:10px;width:12px;" v-else></i>
-                                            <i class="bi-folder2-fill isup-folder-icon"></i>
-                                            <span class="isup-folder-name text-truncate">{{ folder.name }}</span>
-                                            <span class="isup-folder-count" v-if="folder.documents_count">{{ folder.documents_count }}</span>
-                                        </div>
-                                        <div v-if="folder.children?.length" class="ms-3 border-start ps-1" style="border-color:#dce3ee !important;">
-                                            <div v-for="child in folder.children" :key="child.id"
-                                                 class="isup-folder-row" :class="{ active: currentFolder?.id === child.id }"
-                                                 @click="selectFolder(child)">
-                                                <i class="bi-chevron-right" style="font-size:10px;color:#aaa;width:12px;" v-if="child.has_children"></i>
-                                                <i style="font-size:10px;width:12px;" v-else></i>
-                                                <i class="bi-folder2-fill isup-folder-icon" style="font-size:14px;"></i>
-                                                <span class="isup-folder-name text-truncate">{{ child.name }}</span>
-                                                <span class="isup-folder-count" v-if="child.documents_count">{{ child.documents_count }}</span>
-                                            </div>
-                                        </div>
-                                    </template>
-                                </div>
-                            </div>
+                <!-- RIGHT: Documents area -->
+                <div class="ged-main">
+                    <!-- Toolbar -->
+                    <div class="ged-toolbar">
+                        <nav class="ged-breadcrumb">
+                            <span class="ged-bcrumb-item" :class="{ 'ged-bcrumb-active': !currentFolder }" @click="goToRoot()">
+                                <i class="bi-house-door me-1"></i> Racine
+                            </span>
+                            <i class="bi-chevron-right ged-bcrumb-sep"></i>
+                            <span v-if="currentFolder" class="ged-bcrumb-item ged-bcrumb-active">{{ currentFolder.name }}</span>
+                        </nav>
+                        <div class="ged-toolbar-actions">
+                            <button class="ged-btn ged-btn-sm ged-btn-outline" @click="openCreateFolder(currentFolder?.id || null)">
+                                <i class="bi-folder-plus me-1"></i> Dossier
+                            </button>
+                            <button class="ged-btn ged-btn-sm ged-btn-primary" @click="openUpload(null)">
+                                <i class="bi-upload me-1"></i> Upload
+                            </button>
                         </div>
                     </div>
 
-                    <!-- RIGHT: Documents -->
-                    <div class="col-lg-9">
-                        <!-- Toolbar -->
-                        <div class="isup-ged-toolbar">
-                            <div class="d-flex align-items-center gap-2 flex-wrap">
-                                <nav class="isup-breadcrumb">
-                                    <span class="isup-bcrumb-item" :class="{ active: !currentFolder }" @click="goToRoot()">
-                                        <i class="bi-house-door me-1"></i> Racine
-                                    </span>
-                                    <i class="bi-chevron-right isup-bcrumb-sep"></i>
-                                    <span v-if="currentFolder" class="isup-bcrumb-item active">{{ currentFolder.name }}</span>
-                                </nav>
-                                <div class="d-flex gap-1 ms-auto">
-                                    <button class="isup-btn-outline" @click="openCreateFolder(currentFolder?.id || null)">
-                                        <i class="bi-folder-plus me-1"></i> Dossier
-                                    </button>
-                                    <button class="isup-btn-primary" @click="openUpload(null)">
-                                        <i class="bi-upload me-1"></i> Upload
-                                    </button>
-                                </div>
+                    <!-- Search & Filters -->
+                    <div class="ged-toolbar ged-toolbar-secondary">
+                        <div class="ged-toolbar-group">
+                            <div class="ged-search">
+                                <i class="bi-search ged-search-icon"></i>
+                                <input type="text" placeholder="Rechercher..." v-model="searchQuery"
+                                       @input="loadDocuments(currentFolder?.id || null)">
                             </div>
+                            <select class="ged-select" v-model="fileTypeFilter" @change="loadDocuments(currentFolder?.id || null)">
+                                <option value="">Tous les types</option>
+                                <option v-for="t in fileTypes" :key="t" :value="t">{{ t.toUpperCase() }}</option>
+                            </select>
                         </div>
-
-                        <!-- Search & Filters -->
-                        <div class="isup-ged-toolbar">
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="isup-search-box">
-                                    <i class="bi-search"></i>
-                                    <input type="text" placeholder="Rechercher..." v-model="searchQuery"
-                                           @input="loadDocuments(currentFolder?.id || null)">
-                                </div>
-                                <select class="isup-select" style="max-width:130px;" v-model="fileTypeFilter"
-                                        @change="loadDocuments(currentFolder?.id || null)">
-                                    <option value="">Tous</option>
-                                    <option v-for="t in fileTypes" :key="t" :value="t">{{ t.toUpperCase() }}</option>
-                                </select>
-                                <div class="isup-ged-view-toggle">
-                                    <button class="isup-view-btn" :class="{ active: viewMode === 'list' }" @click="viewMode = 'list'" title="Liste"><i class="bi-list-ul"></i></button>
-                                    <button class="isup-view-btn" :class="{ active: viewMode === 'grid' }" @click="viewMode = 'grid'" title="Grille"><i class="bi-grid-3x3-gap"></i></button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Loading -->
-                        <div v-if="loading.documents" class="text-center py-5">
-                            <div class="isup-spinner"></div>
-                        </div>
-
-                        <!-- Empty -->
-                        <div v-else-if="!filteredDocuments.length" class="isup-ged-empty">
-                            <i class="bi-file-earmark-plus"></i>
-                            <h5>{{ searchQuery ? 'Aucun résultat' : 'Aucun document' }}</h5>
-                            <p>{{ searchQuery ? `Aucun résultat pour "${searchQuery}"` : 'Commencez par uploader un document.' }}</p>
-                            <button v-if="!searchQuery" class="isup-btn-primary" @click="openUpload(null)">
-                                <i class="bi-upload me-2"></i>Uploader
+                        <div class="ged-view-toggle">
+                            <button class="ged-view-btn" :class="{ active: viewMode === 'list' }" @click="viewMode = 'list'" title="Liste">
+                                <i class="bi-list-ul"></i>
+                            </button>
+                            <button class="ged-view-btn" :class="{ active: viewMode === 'grid' }" @click="viewMode = 'grid'" title="Grille">
+                                <i class="bi-grid-3x3-gap"></i>
                             </button>
                         </div>
+                    </div>
 
-                        <!-- List View -->
-                        <div v-else-if="viewMode === 'list'" class="isup-panel">
-                            <div class="isup-table-wrap">
-                                <table class="isup-table w-100">
-                                    <thead>
-                                        <tr>
-                                            <th style="width:36px;"></th>
-                                            <th>Nom</th>
-                                            <th style="width:70px;">Type</th>
-                                            <th style="width:80px;">Taille</th>
-                                            <th style="width:55px;">Ver.</th>
-                                            <th style="width:100px;">Date</th>
-                                            <th style="width:120px;" class="text-end">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-for="doc in filteredDocuments" :key="doc.id"
-                                            :class="{ 'isup-row-active': selectedDoc?.id === doc.id }">
-                                            <td @click="showPreviewInfo(doc)" class="text-center">
-                                                <i :class="getFileIcon(doc.file_type)" style="font-size:1.4rem;"></i>
-                                            </td>
-                                            <td @click="showPreviewInfo(doc)">
-                                                <div class="isup-doc-name">{{ doc.name }}</div>
-                                                <div v-if="doc.description" class="isup-doc-desc">{{ doc.description }}</div>
-                                            </td>
-                                            <td @click="showPreviewInfo(doc)"><span class="isup-file-badge" :class="fileBadge(doc.file_type)">{{ doc.file_type || '?' }}</span></td>
-                                            <td @click="showPreviewInfo(doc)" class="isup-doc-meta">{{ formatBytes(doc.file_size) }}</td>
-                                            <td @click="showPreviewInfo(doc)"><span class="isup-version-badge">v{{ doc.version }}</span></td>
-                                            <td @click="showPreviewInfo(doc)" class="isup-doc-meta">{{ formatDate(doc.created_at) }}</td>
-                                            <td>
-                                                <div class="d-flex gap-1 justify-content-end">
-                                                    <button class="isup-icon-btn" @click.stop="downloadFile(doc)" title="Télécharger"><i class="bi-download" style="color:#1565c0;"></i></button>
-                                                    <button class="isup-icon-btn" @click.stop="showPreviewInfo(doc)" title="Détails"><i class="bi-info-circle" style="color:#00838f;"></i></button>
-                                                    <button class="isup-icon-btn isup-icon-danger" @click.stop="confirmDelete(doc)" title="Supprimer"><i class="bi-trash3"></i></button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="isup-panel-footer text-end">
-                                {{ filteredDocuments.length }} document(s)
-                            </div>
-                        </div>
+                    <!-- Loading -->
+                    <div v-if="loading.documents" class="ged-loading-lg">
+                        <div class="ged-spinner-lg"></div>
+                    </div>
 
-                        <!-- Grid View -->
-                        <div v-else class="row g-3">
-                            <div v-for="doc in filteredDocuments" :key="doc.id" class="col-6 col-sm-4 col-md-3 col-xl-2">
-                                <div class="isup-grid-card" @click="showPreviewInfo(doc)">
-                                    <div class="text-center py-3">
-                                        <i :class="getFileIcon(doc.file_type)" style="font-size:2.8rem;"></i>
-                                        <div class="isup-grid-name text-truncate mt-2">{{ doc.name }}</div>
-                                        <div class="d-flex justify-content-center gap-1 mt-1">
-                                            <span class="isup-file-badge" :class="fileBadge(doc.file_type)">{{ doc.file_type }}</span>
-                                            <span class="isup-version-badge">v{{ doc.version }}</span>
+                    <!-- Empty -->
+                    <div v-else-if="!filteredDocuments.length" class="ged-empty">
+                        <i class="bi-file-earmark-plus"></i>
+                        <h4>{{ searchQuery ? 'Aucun résultat' : 'Aucun document' }}</h4>
+                        <p>{{ searchQuery ? `Aucun résultat pour "${searchQuery}"` : 'Commencez par uploader un document.' }}</p>
+                        <button v-if="!searchQuery" class="ged-btn ged-btn-primary" @click="openUpload(null)">
+                            <i class="bi-upload me-2"></i>Uploader
+                        </button>
+                    </div>
+
+                    <!-- List View -->
+                    <div v-else-if="viewMode === 'list'" class="ged-table-card">
+                        <table class="ged-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:40px;"></th>
+                                    <th>Nom</th>
+                                    <th style="width:80px;">Type</th>
+                                    <th style="width:90px;">Taille</th>
+                                    <th style="width:60px;">Version</th>
+                                    <th style="width:110px;">Date</th>
+                                    <th style="width:120px;" class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="doc in filteredDocuments" :key="doc.id"
+                                    :class="{ 'ged-row-active': selectedDoc?.id === doc.id }"
+                                    @dblclick="showPreviewInfo(doc)">
+                                    <td>
+                                        <i :class="getFileIcon(doc.file_type)" class="ged-file-icon"></i>
+                                    </td>
+                                    <td>
+                                        <div class="ged-doc-name">{{ doc.name }}</div>
+                                        <div v-if="doc.description" class="ged-doc-desc">{{ doc.description }}</div>
+                                    </td>
+                                    <td><span class="ged-badge" :class="fileBadge(doc.file_type)">{{ doc.file_type || '?' }}</span></td>
+                                    <td class="ged-doc-meta">{{ formatBytes(doc.file_size) }}</td>
+                                    <td><span class="ged-version">v{{ doc.version }}</span></td>
+                                    <td class="ged-doc-meta">{{ formatDate(doc.created_at) }}</td>
+                                    <td>
+                                        <div class="ged-action-group">
+                                            <button class="ged-btn-icon-sm" @click.stop="downloadFile(doc)" title="Télécharger"><i class="bi-download"></i></button>
+                                            <button class="ged-btn-icon-sm" @click.stop="showPreviewInfo(doc)" title="Infos"><i class="bi-info-circle"></i></button>
+                                            <button class="ged-btn-icon-sm ged-btn-icon-danger" @click.stop="confirmDelete(doc)" title="Supprimer"><i class="bi-trash3"></i></button>
                                         </div>
-                                        <div class="isup-doc-meta mt-1">{{ formatBytes(doc.file_size) }}</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="ged-table-footer">
+                            {{ filteredDocuments.length }} document(s)
+                        </div>
+                    </div>
+
+                    <!-- Grid View -->
+                    <div v-else class="row g-3">
+                        <div v-for="doc in filteredDocuments" :key="doc.id" class="col-6 col-sm-4 col-md-3 col-xl-2">
+                            <div class="ged-file-card" @click="showPreviewInfo(doc)">
+                                <div class="ged-file-card-header">
+                                    <i :class="getFileIcon(doc.file_type)"></i>
+                                </div>
+                                <div class="ged-file-card-body">
+                                    <div class="ged-file-card-name text-truncate">{{ doc.name }}</div>
+                                    <div class="ged-file-card-meta">
+                                        <span class="ged-badge" :class="fileBadge(doc.file_type)">{{ doc.file_type }}</span>
+                                        <span class="ged-version">v{{ doc.version }}</span>
                                     </div>
-                                    <div class="text-center pb-2">
-                                        <button class="isup-icon-btn" @click.stop="downloadFile(doc)" title="Télécharger"><i class="bi-download" style="color:#1565c0;"></i></button>
-                                        <button class="isup-icon-btn isup-icon-danger ms-1" @click.stop="confirmDelete(doc)" title="Supprimer"><i class="bi-trash3"></i></button>
-                                    </div>
+                                </div>
+                                <div class="ged-file-card-actions">
+                                    <button class="ged-btn-icon-sm" @click.stop="downloadFile(doc)" title="Télécharger"><i class="bi-download"></i></button>
+                                    <button class="ged-btn-icon-sm ged-btn-icon-danger" @click.stop="confirmDelete(doc)" title="Supprimer"><i class="bi-trash3"></i></button>
                                 </div>
                             </div>
                         </div>
@@ -525,87 +513,87 @@ onMounted(() => {
 
             <!-- ═══ MODALS ═══ -->
 
-            <!-- Create Folder -->
-            <div v-if="showCreateFolder" class="isup-modal-overlay" @click.self="showCreateFolder = false">
-                <div class="isup-modal isup-modal-sm">
-                    <div class="isup-modal-header">
-                        <span><i class="bi-folder-plus me-2"></i>Nouveau dossier</span>
-                        <button class="isup-modal-close" @click="showCreateFolder = false">&times;</button>
+            <!-- Create Folder Modal -->
+            <div v-if="showCreateFolder" class="ged-modal-overlay" @click.self="showCreateFolder = false">
+                <div class="ged-modal ged-modal-sm">
+                    <div class="ged-modal-header">
+                        <span><i class="bi-folder-plus me-2" style="color:#FF7900;"></i>Nouveau dossier</span>
+                        <button class="ged-modal-close" @click="showCreateFolder = false">&times;</button>
                     </div>
-                    <div class="isup-modal-body">
-                        <label class="isup-label">Nom du dossier</label>
-                        <input id="folder-name-input" type="text" class="isup-input"
+                    <div class="ged-modal-body">
+                        <label class="ged-label">Nom du dossier</label>
+                        <input id="folder-name-input" type="text" class="ged-input"
                                v-model="newFolder.name" @keyup.enter="createFolder" placeholder="Ex: Factures 2026">
-                        <div v-if="currentFolder" class="mt-2 isup-folder-context">
+                        <div v-if="currentFolder" class="ged-folder-context mt-2">
                             <i class="bi-folder me-1"></i> Dans : <strong>{{ currentFolder.name }}</strong>
                         </div>
                     </div>
-                    <div class="isup-modal-footer">
-                        <button class="isup-btn-grey" @click="showCreateFolder = false">Annuler</button>
-                        <button class="isup-btn-primary" @click="createFolder" :disabled="!newFolder.name.trim()">
+                    <div class="ged-modal-footer">
+                        <button class="ged-btn ged-btn-sm ged-btn-ghost" @click="showCreateFolder = false">Annuler</button>
+                        <button class="ged-btn ged-btn-sm ged-btn-primary" @click="createFolder" :disabled="!newFolder.name.trim()">
                             <i class="bi-check-lg me-1"></i> Créer
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Rename Folder -->
-            <div v-if="showRenameFolder" class="isup-modal-overlay" @click.self="showRenameFolder = false">
-                <div class="isup-modal isup-modal-sm">
-                    <div class="isup-modal-header">
-                        <span><i class="bi-pencil me-2"></i>Renommer</span>
-                        <button class="isup-modal-close" @click="showRenameFolder = false">&times;</button>
+            <!-- Rename Folder Modal -->
+            <div v-if="showRenameFolder" class="ged-modal-overlay" @click.self="showRenameFolder = false">
+                <div class="ged-modal ged-modal-sm">
+                    <div class="ged-modal-header">
+                        <span><i class="bi-pencil me-2" style="color:#FF7900;"></i>Renommer</span>
+                        <button class="ged-modal-close" @click="showRenameFolder = false">&times;</button>
                     </div>
-                    <div class="isup-modal-body">
-                        <input type="text" class="isup-input" v-model="renameForm.name" @keyup.enter="renameFolder">
+                    <div class="ged-modal-body">
+                        <input type="text" class="ged-input" v-model="renameForm.name" @keyup.enter="renameFolder">
                     </div>
-                    <div class="isup-modal-footer">
-                        <button class="isup-btn-grey" @click="showRenameFolder = false">Annuler</button>
-                        <button class="isup-btn-primary" @click="renameFolder" :disabled="!renameForm.name.trim()">
+                    <div class="ged-modal-footer">
+                        <button class="ged-btn ged-btn-sm ged-btn-ghost" @click="showRenameFolder = false">Annuler</button>
+                        <button class="ged-btn ged-btn-sm ged-btn-primary" @click="renameFolder" :disabled="!renameForm.name.trim()">
                             <i class="bi-check-lg me-1"></i> Renommer
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Upload -->
-            <div v-if="showUpload" class="isup-modal-overlay" @click.self="showUpload = false">
-                <div class="isup-modal">
-                    <div class="isup-modal-header">
-                        <span><i class="bi-upload me-2"></i>Uploader un document</span>
-                        <button class="isup-modal-close" @click="showUpload = false">&times;</button>
+            <!-- Upload Modal -->
+            <div v-if="showUpload" class="ged-modal-overlay" @click.self="showUpload = false">
+                <div class="ged-modal">
+                    <div class="ged-modal-header">
+                        <span><i class="bi-upload me-2" style="color:#FF7900;"></i>Uploader un document</span>
+                        <button class="ged-modal-close" @click="showUpload = false">&times;</button>
                     </div>
-                    <div class="isup-modal-body">
+                    <div class="ged-modal-body">
                         <div class="mb-3">
-                            <label class="isup-label">Fichier</label>
-                            <div class="isup-upload-zone"
-                                 @dragover.prevent="e => e.currentTarget.classList.add('isup-zone-active')"
-                                 @dragleave.prevent="e => e.currentTarget.classList.remove('isup-zone-active')"
-                                 @drop.prevent="e => { e.currentTarget.classList.remove('isup-zone-active'); uploadForm.file = e.dataTransfer.files[0]; }">
-                                <i class="bi-cloud-arrow-up" style="font-size:2.5rem;color:#FF7900;"></i>
-                                <p class="small" style="color:#888;">Glissez-déposez ou</p>
+                            <label class="ged-label">Fichier</label>
+                            <div class="ged-dropzone"
+                                 @dragover.prevent="e => e.currentTarget.classList.add('ged-dropzone-active')"
+                                 @dragleave.prevent="e => e.currentTarget.classList.remove('ged-dropzone-active')"
+                                 @drop.prevent="e => { e.currentTarget.classList.remove('ged-dropzone-active'); uploadForm.file = e.dataTransfer.files[0]; }">
+                                <i class="bi-cloud-arrow-up ged-dropzone-icon"></i>
+                                <p class="ged-dropzone-text">Glissez-déposez ou</p>
                                 <input type="file" id="file-upload-input" class="d-none" @change="e => uploadForm.file = e.target.files[0]">
-                                <button class="isup-btn-outline" type="button" @click="document.getElementById('file-upload-input').click()">
+                                <button class="ged-btn ged-btn-sm ged-btn-outline" type="button" @click="document.getElementById('file-upload-input').click()">
                                     <i class="bi-folder2-open me-1"></i> Parcourir
                                 </button>
-                                <div v-if="uploadForm.file" class="mt-2 isup-file-selected">
-                                    <i class="bi-check-circle me-1"></i> {{ uploadForm.file.name }}
-                                    <span style="color:#888;">({{ formatBytes(uploadForm.file.size) }})</span>
+                                <div v-if="uploadForm.file" class="ged-file-selected">
+                                    <i class="bi-check-circle-fill me-1" style="color:#10b981;"></i> {{ uploadForm.file.name }}
+                                    <span class="ged-doc-meta">({{ formatBytes(uploadForm.file.size) }})</span>
                                 </div>
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label class="isup-label">Description</label>
-                            <textarea class="isup-input" rows="2" v-model="uploadForm.description" placeholder="Décrivez brièvement ce document..."></textarea>
+                            <label class="ged-label">Description</label>
+                            <textarea class="ged-input ged-textarea" rows="2" v-model="uploadForm.description" placeholder="Décrivez brièvement ce document..."></textarea>
                         </div>
-                        <div v-if="currentFolder" class="isup-folder-context">
+                        <div v-if="currentFolder" class="ged-folder-context">
                             <i class="bi-folder me-1"></i> Destination : <strong>{{ currentFolder.name }}</strong>
                         </div>
                     </div>
-                    <div class="isup-modal-footer">
-                        <button class="isup-btn-grey" @click="showUpload = false">Annuler</button>
-                        <button class="isup-btn-primary" @click="uploadFile" :disabled="!uploadForm.file || loading.upload">
-                            <span v-if="loading.upload" class="isup-spinner-sm me-1"></span>
+                    <div class="ged-modal-footer">
+                        <button class="ged-btn ged-btn-sm ged-btn-ghost" @click="showUpload = false">Annuler</button>
+                        <button class="ged-btn ged-btn-sm ged-btn-primary" @click="uploadFile" :disabled="!uploadForm.file || loading.upload">
+                            <span v-if="loading.upload" class="ged-spinner-sm me-1"></span>
                             <i v-else class="bi-cloud-arrow-up me-1"></i>
                             Uploader
                         </button>
@@ -613,37 +601,41 @@ onMounted(() => {
                 </div>
             </div>
 
-            <!-- Preview -->
-            <div v-if="showPreview && selectedDoc" class="isup-modal-overlay" @click.self="showPreview = false">
-                <div class="isup-modal isup-modal-lg">
-                    <div class="isup-modal-header">
+            <!-- Preview Modal -->
+            <div v-if="showPreview && selectedDoc" class="ged-modal-overlay" @click.self="showPreview = false">
+                <div class="ged-modal ged-modal-lg">
+                    <div class="ged-modal-header">
                         <span class="text-truncate"><i :class="getFileIcon(selectedDoc.file_type)" class="me-2"></i>{{ selectedDoc.name }}</span>
-                        <button class="isup-modal-close" @click="showPreview = false">&times;</button>
+                        <button class="ged-modal-close" @click="showPreview = false">&times;</button>
                     </div>
-                    <div class="isup-modal-body">
+                    <div class="ged-modal-body">
                         <div class="row g-4">
                             <div class="col-md-7">
-                                <div class="isup-preview-box">
-                                    <div class="text-center p-4">
-                                        <i :class="getFileIcon(selectedDoc.file_type)" style="font-size:5rem;"></i>
-                                        <p class="small" style="color:#888;margin-top:8px;">
-                                            <template v-if="['jpg','jpeg','png','gif','webp','svg'].includes(selectedDoc.file_type)">Aperçu image disponible</template>
-                                            <template v-else-if="selectedDoc.file_type === 'pdf'">Aperçu PDF disponible</template>
-                                            <template v-else>Aperçu non disponible</template>
-                                        </p>
-                                    </div>
+                                <div class="ged-preview-box">
+                                    <i :class="getFileIcon(selectedDoc.file_type)" class="ged-preview-icon"></i>
+                                    <p class="ged-preview-text">
+                                        <template v-if="['jpg','jpeg','png','gif','webp','svg'].includes(selectedDoc.file_type)">
+                                            <i class="bi-image me-1"></i> Aperçu image
+                                        </template>
+                                        <template v-else-if="selectedDoc.file_type === 'pdf'">
+                                            <i class="bi-filetype-pdf me-1"></i> Document PDF
+                                        </template>
+                                        <template v-else>
+                                            <i class="bi-file-earmark me-1"></i> Aperçu non disponible
+                                        </template>
+                                    </p>
                                 </div>
                             </div>
                             <div class="col-md-5">
-                                <div class="isup-preview-info">
-                                    <div class="isup-info-title"><i class="bi-info-circle me-1"></i> Informations</div>
-                                    <dl class="isup-info-grid">
+                                <div class="ged-info-card">
+                                    <div class="ged-info-title"><i class="bi-info-circle me-1"></i> Informations</div>
+                                    <dl class="ged-info-grid">
                                         <dt>Type</dt>
-                                        <dd><span class="isup-file-badge" :class="fileBadge(selectedDoc.file_type)">{{ selectedDoc.file_type || '—' }}</span></dd>
+                                        <dd><span class="ged-badge" :class="fileBadge(selectedDoc.file_type)">{{ selectedDoc.file_type || '—' }}</span></dd>
                                         <dt>Taille</dt>
                                         <dd>{{ formatBytes(selectedDoc.file_size) }}</dd>
                                         <dt>Version</dt>
-                                        <dd><span class="isup-version-badge">v{{ selectedDoc.version }}</span></dd>
+                                        <dd><span class="ged-version">v{{ selectedDoc.version }}</span></dd>
                                         <dt>Uploadé par</dt>
                                         <dd>{{ selectedDoc.uploaded_by || '—' }}</dd>
                                         <dt>Date</dt>
@@ -651,19 +643,21 @@ onMounted(() => {
                                         <dt>Dossier</dt>
                                         <dd class="text-truncate">{{ selectedDoc.folder_name || 'Racine' }}</dd>
                                     </dl>
-                                    <div v-if="selectedDoc.description" class="mt-3 pt-2" style="border-top:1px solid #dce3ee;">
-                                        <span style="font-size:12px;font-weight:700;color:#163A5E;">Description</span>
-                                        <p class="small mt-1" style="color:#888;">{{ selectedDoc.description }}</p>
+                                    <div v-if="selectedDoc.description" class="ged-info-desc">
+                                        <strong>Description</strong>
+                                        <p>{{ selectedDoc.description }}</p>
                                     </div>
                                 </div>
                                 <div class="d-grid gap-2 mt-3">
-                                    <button class="isup-btn-primary w-100" @click="downloadFile(selectedDoc)"><i class="bi-download me-2"></i> Télécharger</button>
+                                    <button class="ged-btn ged-btn-primary w-100" @click="downloadFile(selectedDoc)">
+                                        <i class="bi-download me-2"></i> Télécharger
+                                    </button>
                                     <div class="d-flex gap-2">
-                                        <button class="isup-btn-outline flex-grow-1" @click="toggleArchive(selectedDoc)">
+                                        <button class="ged-btn ged-btn-sm ged-btn-outline flex-grow-1" @click="toggleArchive(selectedDoc)">
                                             <i :class="selectedDoc.is_archived ? 'bi-arrow-counterclockwise' : 'bi-archive'"></i>
                                             {{ selectedDoc.is_archived ? ' Restaurer' : ' Archiver' }}
                                         </button>
-                                        <button class="isup-btn-outline-red flex-grow-1" @click="confirmDelete(selectedDoc); showPreview = false;">
+                                        <button class="ged-btn ged-btn-sm ged-btn-danger flex-grow-1" @click="confirmDelete(selectedDoc); showPreview = false;">
                                             <i class="bi-trash3"></i> Supprimer
                                         </button>
                                     </div>
@@ -674,21 +668,21 @@ onMounted(() => {
                 </div>
             </div>
 
-            <!-- Delete Confirm -->
-            <div v-if="showDeleteConfirm" class="isup-modal-overlay" @click.self="showDeleteConfirm = false">
-                <div class="isup-modal isup-modal-sm">
-                    <div class="isup-modal-header" style="color:#c62828;">
+            <!-- Delete Confirm Modal -->
+            <div v-if="showDeleteConfirm" class="ged-modal-overlay" @click.self="showDeleteConfirm = false">
+                <div class="ged-modal ged-modal-sm">
+                    <div class="ged-modal-header ged-modal-header-danger">
                         <span><i class="bi-exclamation-triangle me-2"></i>Confirmer</span>
-                        <button class="isup-modal-close" @click="showDeleteConfirm = false">&times;</button>
+                        <button class="ged-modal-close" @click="showDeleteConfirm = false">&times;</button>
                     </div>
-                    <div class="isup-modal-body text-center py-4" v-if="deleteTarget">
-                        <i class="bi-trash3" style="font-size:3rem;color:#e53935;display:block;margin-bottom:12px;"></i>
+                    <div class="ged-modal-body text-center py-4" v-if="deleteTarget">
+                        <i class="bi-trash3 ged-delete-icon"></i>
                         <p class="mb-1">Supprimer <strong>{{ deleteTarget.name }}</strong> ?</p>
-                        <p class="small" style="color:#888;">Le fichier sera placé dans la corbeille.</p>
+                        <p class="ged-doc-meta">Le fichier sera placé dans la corbeille.</p>
                     </div>
-                    <div class="isup-modal-footer justify-content-center">
-                        <button class="isup-btn-grey px-4" @click="showDeleteConfirm = false">Annuler</button>
-                        <button class="isup-btn-danger px-4" @click="deleteDocument"><i class="bi-trash3 me-1"></i> Supprimer</button>
+                    <div class="ged-modal-footer justify-content-center">
+                        <button class="ged-btn ged-btn-sm ged-btn-ghost px-4" @click="showDeleteConfirm = false">Annuler</button>
+                        <button class="ged-btn ged-btn-sm ged-btn-danger px-4" @click="deleteDocument"><i class="bi-trash3 me-1"></i> Supprimer</button>
                     </div>
                 </div>
             </div>
@@ -697,70 +691,362 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* ── GED-specific styles ── */
-.ged-shell { border:1px solid #dce3ee; border-radius:6px; overflow:hidden; background:#fff; }
-.isup-panel-footer { background:linear-gradient(90deg,#eef2f7,#f5f7fb); border-top:1px solid #dce3ee; padding:8px 14px; font-size:11px; color:#888; }
-.isup-panel-icon-btn { background:none; border:none; color:#fff; font-size:15px; cursor:pointer; padding:0 4px; line-height:1; opacity:0.8; transition:opacity .15s; }
-.isup-panel-icon-btn:hover { background:rgba(255,255,255,0.3); }
-.isup-folder-scroll { max-height:calc(100vh - 420px); overflow-y:auto; }
-.isup-folder-scroll::-webkit-scrollbar { width:4px; }
-.isup-folder-scroll::-webkit-scrollbar-thumb { background:#ccc; border-radius:4px; }
-.isup-folder-row { display:flex; align-items:center; gap:8px; padding:6px 12px; cursor:pointer; font-size:13px; border-bottom:1px solid #f0f4f8; }
-.isup-folder-row:hover { background:#f8fbff; }
-.isup-folder-row.active { background:rgba(22,58,94,0.06); }
-.isup-folder-icon-home { color:#1565c0; font-size:14px; width:16px; }
-.isup-folder-icon { color:#f9a825; font-size:16px; width:16px; }
-.isup-folder-name { flex-grow:1; font-size:12px; color:#444; }
-.isup-folder-count { font-size:11px; color:#aaa; background:#f0f4f8; padding:0 6px; border-radius:3px; font-weight:600; }
-.isup-ged-toolbar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-.isup-breadcrumb { display:flex; align-items:center; gap:4px; }
-.isup-bcrumb-item { font-size:12px; color:#888; cursor:pointer; }
-.isup-bcrumb-item:hover { color:#163A5E; }
-.isup-bcrumb-item.active { color:#163A5E; font-weight:600; }
-.isup-bcrumb-sep { font-size:10px; color:#ccc; }
-.isup-search-box { display:flex; align-items:center; gap:6px; background:#fff; border:1px solid #dce3ee; border-radius:4px; padding:4px 10px; }
-.isup-search-box i { color:#aaa; font-size:13px; }
-.isup-search-box input { border:none; outline:none; font-size:12px; padding:3px 0; width:160px; }
-.isup-ged-view-toggle { display:flex; border:1px solid #dce3ee; border-radius:4px; overflow:hidden; }
-.isup-view-btn { background:#fff; border:none; padding:6px 12px; font-size:12px; color:#555; cursor:pointer; border-right:1px solid #dce3ee; }
-.isup-view-btn.active { background:#163A5E; color:#fff; }
-.isup-view-btn:hover:not(.active) { background:#f5f5f5; }
-.isup-table tbody tr.isup-row-active { background:rgba(22,58,94,0.04); }
-.isup-doc-name { font-size:13px; font-weight:500; color:#333; max-width:280px; overflow:hidden; text-overflow:ellipsis; }
-.isup-doc-desc { font-size:11px; color:#888; max-width:280px; overflow:hidden; text-overflow:ellipsis; }
-.isup-doc-meta { font-size:12px; color:#888; }
-.isup-file-badge { display:inline-block; font-size:10px; font-weight:600; padding:1px 6px; border-radius:3px; text-transform:uppercase; }
-.isup-file-pdf { background:#fdecea; color:#c62828; }
-.isup-file-doc { background:#e3f2fd; color:#1565c0; }
-.isup-file-xls { background:#e8f5e9; color:#2e7d32; }
-.isup-file-img { background:#e0f7fa; color:#00838f; }
-.isup-file-other { background:#f5f5f5; color:#757575; }
-.isup-version-badge { display:inline-block; font-size:10px; font-weight:600; padding:0 5px; border-radius:3px; background:#f0f4f8; color:#888; line-height:18px; }
-.isup-btn-danger { background:#c62828; color:#fff; border:none; border-radius:4px; padding:7px 14px; font-size:12px; font-weight:600; cursor:pointer; }
-.isup-btn-danger:hover { background:#c62828; }
-.isup-btn-outline { background:#fff; border:1px solid #dce3ee; border-radius:4px; padding:7px 14px; font-size:12px; font-weight:600; color:#555; cursor:pointer; }
-.isup-btn-outline:hover { border-color:#FF7900; color:#FF7900; }
-.isup-btn-outline-red { background:#fff; border:1px solid #f5c6c0; border-radius:4px; padding:7px 14px; font-size:12px; font-weight:600; color:#c62828; cursor:pointer; }
-.isup-btn-outline-red:hover { background:#fdecea; }
-.isup-select-sm { padding:4px 8px; font-size:11px; max-width:130px; border:1px solid #dce3ee; border-radius:4px; }
-.isup-grid-card { display:flex; flex-direction:column; align-items:center; gap:6px; background:#fff; border:1px solid #dce3ee; border-radius:6px; padding:18px 10px; text-align:center; cursor:pointer; text-decoration:none; transition:box-shadow .15s, transform .12s; }
-.isup-grid-card:hover { box-shadow:0 3px 12px rgba(0,0,0,0.08); transform:translateY(-2px); }
-.isup-grid-name { font-size:12px; font-weight:500; color:#333; }
-.isup-ged-empty { text-align:center; padding:50px 20px; color:#888; }
-.isup-ged-empty i { font-size:48px; color:#dce3ee; display:block; margin-bottom:12px; }
-.isup-ged-empty h5 { font-size:16px; font-weight:600; margin-bottom:4px; }
-.isup-ged-empty p { font-size:13px; margin-bottom:16px; }
-.isup-modal-sm { max-width:400px; }
-.isup-modal-footer.justify-content-center { justify-content:center; }
-.isup-upload-zone { border:2px dashed #dce3ee; border-radius:4px; padding:32px 16px; text-align:center; cursor:pointer; transition:border-color .15s, background .15s; }
-.isup-upload-zone:hover, .isup-zone-active { border-color:#FF7900; background:rgba(255,121,0,0.03); }
-.isup-file-selected { color:#2e7d32; font-size:12px; }
-.isup-folder-context { display:flex; align-items:center; gap:10px; background:#f8fafc; border:1px solid #eef2f7; border-radius:4px; padding:10px 14px; flex-wrap:wrap; }
-.isup-preview-box { background:#f5f7fb; border:1px solid #eef2f7; border-radius:4px; padding:20px; text-align:center; min-height:180px; display:flex; align-items:center; justify-content:center; }
-.isup-preview-info { background:#fff; border:1px solid #dce3ee; border-radius:4px; padding:14px; }
-.isup-info-title { font-size:14px; font-weight:700; color:#163A5E; margin-bottom:10px; }
-.isup-info-grid { display:grid; grid-template-columns:auto 1fr; gap:6px 12px; font-size:12px; margin:0; }
-.isup-info-grid dt { color:#888; font-weight:400; }
-.isup-info-grid dd { margin:0; color:#333; }
-.isup-stat-subvalue { font-size:12px; font-weight:500; color:#555; max-width:120px; }
+/* ── Variables ── */
+.ged-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    font-family: 'Inter', -apple-system, sans-serif;
+}
+
+/* ── Header ── */
+.ged-header {
+    margin-bottom: 24px;
+}
+.ged-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #111;
+    margin: 0 0 4px;
+    display: flex;
+    align-items: center;
+}
+.ged-title-icon { color: #FF7900; }
+.ged-subtitle { font-size: 14px; color: #6b7280; margin: 0; }
+
+/* ── Stats Cards ── */
+.ged-stat {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px 20px;
+    transition: box-shadow 0.2s;
+}
+.ged-stat:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.ged-stat-icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+}
+.ged-stat-blue { background: #eff6ff; color: #2563eb; }
+.ged-stat-orange { background: #fff7ed; color: #ea580c; }
+.ged-stat-green { background: #ecfdf5; color: #10b981; }
+.ged-stat-cyan { background: #ecfeff; color: #0891b2; }
+.ged-stat-body { min-width: 0; }
+.ged-stat-label { font-size: 12px; color: #6b7280; font-weight: 500; margin-bottom: 2px; }
+.ged-stat-value { font-size: 20px; font-weight: 700; color: #111; }
+
+/* ── Main Layout ── */
+.ged-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+.ged-sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+}
+.ged-main {
+    flex: 1;
+    min-width: 0;
+}
+
+/* ── Sidebar ── */
+.ged-sidebar-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid #f3f4f6;
+}
+.ged-sidebar-title { font-size: 13px; font-weight: 600; color: #374151; }
+.ged-sidebar-actions { display: flex; gap: 2px; }
+.ged-btn-icon {
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    border: none; background: transparent; border-radius: 6px;
+    color: #6b7280; cursor: pointer; font-size: 14px;
+    transition: all 0.15s;
+}
+.ged-btn-icon:hover { background: #f3f4f6; color: #111; }
+
+.ged-folder-list {
+    max-height: calc(100vh - 480px);
+    overflow-y: auto;
+    padding: 6px 0;
+}
+.ged-folder-list::-webkit-scrollbar { width: 4px; }
+.ged-folder-list::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+
+.ged-folder-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 16px; cursor: pointer;
+    font-size: 13px; color: #374151;
+    border-left: 3px solid transparent;
+    transition: all 0.12s;
+}
+.ged-folder-item:hover { background: #f9fafb; }
+.ged-folder-item.active {
+    background: #fff7ed;
+    border-left-color: #FF7900;
+    color: #c2410c;
+}
+.ged-folder-icon-home { color: #2563eb; font-size: 14px; width: 16px; }
+.ged-folder-icon { color: #f59e0b; font-size: 16px; width: 16px; }
+.ged-folder-chevron { font-size: 10px; color: #9ca3af; width: 12px; }
+.ged-folder-name { flex: 1; font-size: 12px; }
+.ged-folder-badge {
+    font-size: 10px; font-weight: 600;
+    color: #6b7280; background: #f3f4f6;
+    padding: 0 6px; border-radius: 4px; line-height: 18px;
+}
+.ged-folder-children {
+    border-left: 2px solid #f3f4f6; margin-left: 16px;
+}
+.ged-loading-center { padding: 24px; text-align: center; }
+.ged-empty-folder { text-align: center; padding: 24px 16px; color: #9ca3af; }
+.ged-empty-folder i { font-size: 28px; display: block; margin-bottom: 8px; }
+.ged-empty-folder p { font-size: 12px; margin-bottom: 10px; }
+.ged-folder-context {
+    display: flex; align-items: center; gap: 10px;
+    background: #f9fafb; border: 1px solid #f3f4f6;
+    border-radius: 8px; padding: 10px 14px;
+    font-size: 12px; color: #374151;
+}
+
+/* ── Toolbar ── */
+.ged-toolbar {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    margin-bottom: 12px; flex-wrap: wrap;
+}
+.ged-toolbar-secondary {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: 10px 16px; margin-bottom: 16px;
+}
+.ged-toolbar-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ged-toolbar-actions { display: flex; align-items: center; gap: 8px; }
+
+.ged-breadcrumb { display: flex; align-items: center; gap: 6px; }
+.ged-bcrumb-item { font-size: 13px; color: #6b7280; cursor: pointer; transition: color 0.12s; }
+.ged-bcrumb-item:hover { color: #111; }
+.ged-bcrumb-active { color: #111; font-weight: 600; }
+.ged-bcrumb-sep { font-size: 10px; color: #d1d5db; }
+
+.ged-search {
+    display: flex; align-items: center; gap: 8px;
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 8px;
+    padding: 6px 12px; transition: border-color 0.15s;
+}
+.ged-search:focus-within { border-color: #FF7900; box-shadow: 0 0 0 3px rgba(255,121,0,0.1); }
+.ged-search-icon { color: #9ca3af; font-size: 14px; }
+.ged-search input { border: none; outline: none; font-size: 13px; padding: 2px 0; width: 180px; background: transparent; }
+
+.ged-select {
+    padding: 6px 10px; font-size: 12px; border: 1px solid #e5e7eb;
+    border-radius: 8px; background: #fff; color: #374151;
+    outline: none; cursor: pointer;
+}
+.ged-select:focus { border-color: #FF7900; }
+
+.ged-view-toggle {
+    display: flex; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;
+}
+.ged-view-btn {
+    padding: 6px 12px; border: none; background: #fff; color: #6b7280;
+    font-size: 14px; cursor: pointer; transition: all 0.12s;
+}
+.ged-view-btn.active { background: #FF7900; color: #fff; }
+.ged-view-btn:hover:not(.active) { background: #f3f4f6; }
+
+/* ── Table ── */
+.ged-table-card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;
+}
+.ged-table { width: 100%; border-collapse: collapse; }
+.ged-table th {
+    font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 10px 14px; background: #f9fafb; border-bottom: 1px solid #e5e7eb;
+}
+.ged-table td { padding: 10px 14px; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #374151; }
+.ged-table tbody tr:hover { background: #f9fafb; }
+.ged-table tbody tr:last-child td { border-bottom: none; }
+.ged-row-active { background: #fff7ed !important; }
+.ged-file-icon { font-size: 20px; vertical-align: middle; }
+.ged-doc-name { font-weight: 500; color: #111; max-width: 280px; overflow: hidden; text-overflow: ellipsis; }
+.ged-doc-desc { font-size: 11px; color: #9ca3af; max-width: 280px; overflow: hidden; text-overflow: ellipsis; }
+.ged-doc-meta { font-size: 12px; color: #6b7280; }
+
+.ged-table-footer {
+    background: #f9fafb; border-top: 1px solid #e5e7eb;
+    padding: 8px 16px; font-size: 12px; color: #6b7280; text-align: right;
+}
+
+/* ── Badges ── */
+.ged-badge {
+    display: inline-block; font-size: 10px; font-weight: 600;
+    padding: 2px 8px; border-radius: 4px; text-transform: uppercase;
+}
+.badge-pdf { background: #fef2f2; color: #dc2626; }
+.badge-doc { background: #eff6ff; color: #2563eb; }
+.badge-xls { background: #f0fdf4; color: #16a34a; }
+.badge-img { background: #ecfeff; color: #0891b2; }
+.badge-other { background: #f3f4f6; color: #6b7280; }
+
+.ged-version {
+    display: inline-block; font-size: 10px; font-weight: 600;
+    padding: 0 6px; border-radius: 4px;
+    background: #f3f4f6; color: #6b7280; line-height: 20px;
+}
+
+/* ── Action Group ── */
+.ged-action-group { display: flex; gap: 4px; justify-content: flex-end; }
+.ged-btn-icon-sm {
+    width: 30px; height: 30px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: none; background: transparent; border-radius: 6px;
+    color: #6b7280; cursor: pointer; font-size: 14px;
+    transition: all 0.12s;
+}
+.ged-btn-icon-sm:hover { background: #f3f4f6; color: #111; }
+.ged-btn-icon-danger:hover { background: #fef2f2; color: #dc2626; }
+
+/* ── File Cards (Grid View) ── */
+.ged-file-card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    cursor: pointer; transition: all 0.2s; overflow: hidden;
+}
+.ged-file-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border-color: #d1d5db; transform: translateY(-2px);
+}
+.ged-file-card-header {
+    padding: 20px 12px 8px; text-align: center;
+}
+.ged-file-card-header i { font-size: 36px; }
+.ged-file-card-body { padding: 0 12px 8px; text-align: center; }
+.ged-file-card-name { font-size: 12px; font-weight: 500; color: #111; }
+.ged-file-card-meta { display: flex; justify-content: center; gap: 4px; margin-top: 4px; align-items: center; }
+.ged-file-card-actions {
+    display: flex; justify-content: center; gap: 4px;
+    padding: 6px; border-top: 1px solid #f3f4f6; background: #fafafa;
+}
+
+/* ── Empty State ── */
+.ged-empty { text-align: center; padding: 60px 20px; color: #6b7280; }
+.ged-empty i { font-size: 48px; color: #d1d5db; display: block; margin-bottom: 12px; }
+.ged-empty h4 { font-size: 16px; font-weight: 600; margin: 0 0 4px; color: #111; }
+.ged-empty p { font-size: 13px; margin: 0 0 16px; }
+
+/* ── Loading ── */
+.ged-loading-lg { text-align: center; padding: 60px 20px; }
+.ged-spinner { width: 24px; height: 24px; border: 3px solid #e5e7eb; border-top-color: #FF7900; border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; }
+.ged-spinner-lg { width: 36px; height: 36px; border: 3px solid #e5e7eb; border-top-color: #FF7900; border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; }
+.ged-spinner-sm { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Buttons ── */
+.ged-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    border: none; border-radius: 8px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s; text-decoration: none;
+    font-size: 13px; padding: 8px 16px;
+}
+.ged-btn-sm { font-size: 12px; padding: 6px 14px; }
+.ged-btn-primary { background: #111; color: #fff; }
+.ged-btn-primary:hover { background: #000; }
+.ged-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.ged-btn-outline { background: #fff; border: 1px solid #e5e7eb; color: #374151; }
+.ged-btn-outline:hover { border-color: #d1d5db; background: #f9fafb; }
+.ged-btn-ghost { background: transparent; color: #6b7280; }
+.ged-btn-ghost:hover { background: #f3f4f6; color: #111; }
+.ged-btn-danger { background: #dc2626; color: #fff; }
+.ged-btn-danger:hover { background: #b91c1c; }
+
+/* ── Dropzone ── */
+.ged-dropzone {
+    border: 2px dashed #d1d5db; border-radius: 10px;
+    padding: 28px 16px; text-align: center; cursor: pointer;
+    transition: all 0.15s;
+}
+.ged-dropzone:hover, .ged-dropzone-active { border-color: #FF7900; background: rgba(255,121,0,0.03); }
+.ged-dropzone-icon { font-size: 32px; color: #FF7900; display: block; margin-bottom: 8px; }
+.ged-dropzone-text { font-size: 13px; color: #6b7280; margin: 0 0 10px; }
+.ged-file-selected { margin-top: 10px; font-size: 12px; color: #111; }
+
+/* ── Modals ── */
+.ged-modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000; padding: 20px;
+}
+.ged-modal {
+    background: #fff; border-radius: 16px; width: 100%;
+    max-width: 520px; max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+.ged-modal-sm { max-width: 400px; }
+.ged-modal-lg { max-width: 760px; }
+.ged-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid #f3f4f6;
+    font-size: 14px; font-weight: 600; color: #111;
+}
+.ged-modal-header-danger { color: #dc2626; }
+.ged-modal-close {
+    border: none; background: none; font-size: 24px;
+    color: #9ca3af; cursor: pointer; line-height: 1; padding: 0;
+}
+.ged-modal-close:hover { color: #111; }
+.ged-modal-body { padding: 20px; }
+.ged-modal-footer {
+    display: flex; align-items: center; justify-content: flex-end; gap: 8px;
+    padding: 14px 20px; border-top: 1px solid #f3f4f6;
+}
+
+/* ── Form Elements ── */
+.ged-label { font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 6px; display: block; }
+.ged-input {
+    width: 100%; padding: 8px 12px; font-size: 13px;
+    border: 1px solid #e5e7eb; border-radius: 8px; outline: none;
+    transition: border-color 0.15s; box-sizing: border-box;
+}
+.ged-input:focus { border-color: #FF7900; box-shadow: 0 0 0 3px rgba(255,121,0,0.1); }
+.ged-textarea { resize: vertical; min-height: 60px; font-family: inherit; }
+
+/* ── Preview ── */
+.ged-preview-box {
+    background: #f9fafb; border: 1px solid #e5e7eb;
+    border-radius: 12px; padding: 40px 20px;
+    text-align: center; min-height: 200px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.ged-preview-icon { font-size: 64px; margin-bottom: 12px; }
+.ged-preview-text { font-size: 13px; color: #6b7280; margin: 0; }
+
+.ged-info-card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px;
+}
+.ged-info-title { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; }
+.ged-info-grid {
+    display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 12px; margin: 0;
+}
+.ged-info-grid dt { color: #6b7280; font-weight: 400; }
+.ged-info-grid dd { margin: 0; color: #111; }
+.ged-info-desc { margin-top: 12px; padding-top: 12px; border-top: 1px solid #f3f4f6; }
+.ged-info-desc strong { font-size: 12px; color: #374151; }
+.ged-info-desc p { font-size: 12px; color: #6b7280; margin: 4px 0 0; }
+
+/* ── Delete Icon ── */
+.ged-delete-icon { font-size: 48px; color: #dc2626; display: block; margin-bottom: 12px; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .ged-sidebar { display: none; }
+    .ged-layout { flex-direction: column; }
+}
 </style>

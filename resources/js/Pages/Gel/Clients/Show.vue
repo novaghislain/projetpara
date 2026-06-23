@@ -169,6 +169,41 @@ async function deleteContact(id) {
 }
 
 /* ══════════════════════════════════════════
+   e-MECeF Configuration
+   ══════════════════════════════════════════ */
+const editingEmecef = ref(false)
+const savingEmecef = ref(false)
+const emecefForm = ref({ nim: '', is_active: false })
+
+function startEditEmecef() {
+    emecefForm.value = {
+        nim: client.value?.emecef_nim || '',
+        is_active: client.value?.emecef_is_active || false,
+    }
+    editingEmecef.value = true
+}
+
+async function saveEmecef() {
+    const cid = effectiveClientId.value
+    if (!cid) return
+    savingEmecef.value = true
+    try {
+        const res = await window.axios.put(`/api/clients/${cid}/emecef`, {
+            emecef_nim: emecefForm.value.nim || null,
+            emecef_is_active: emecefForm.value.is_active,
+        })
+        client.value = res.data.client
+        editingEmecef.value = false
+        showToast('Configuration e-MECeF mise à jour.')
+    } catch (err) {
+        const msg = err.response?.data?.message || err.message || 'Erreur'
+        showToast(msg, 'error')
+    } finally {
+        savingEmecef.value = false
+    }
+}
+
+/* ══════════════════════════════════════════
    Helpers
    ══════════════════════════════════════════ */
 function statusBadgeClass(status) {
@@ -324,6 +359,63 @@ onMounted(fetchClient)
                     <div v-if="client.notes" class="sc-info-notes">
                         <span class="sc-info-label">Notes</span>
                         <p class="sc-info-value">{{ client.notes }}</p>
+                    </div>
+
+                    <!-- e-MECeF Configuration -->
+                    <div class="sc-emecef-section mt-4">
+                        <div class="sc-emecef-header">
+                            <i class="bi bi-shield-check sc-title-icon"></i>
+                            <span style="font-size:0.85rem;font-weight:700;color:#212529;">e-MECeF (DGI)</span>
+                            <span v-if="client.emecef_is_active" class="sc-badge sc-badge--success" style="margin-left:8px;">Actif</span>
+                            <span v-else class="sc-badge sc-badge--muted" style="margin-left:8px;">Inactif</span>
+                        </div>
+                        <div class="sc-emecef-body">
+                            <div class="sc-info-grid">
+                                <div class="sc-info-group">
+                                    <div class="sc-info-item">
+                                        <span class="sc-info-label">NIM e-MECeF</span>
+                                        <span class="sc-info-value">
+                                            <template v-if="editingEmecef">
+                                                <input v-model="emecefForm.nim" class="sc-input sc-input-sm" placeholder="NIM fourni par la DGI" maxlength="50" />
+                                            </template>
+                                            <template v-else>
+                                                {{ client.emecef_nim || '—' }}
+                                            </template>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="sc-info-group">
+                                    <div class="sc-info-item">
+                                        <span class="sc-info-label">Activer e-MECeF</span>
+                                        <span class="sc-info-value">
+                                            <template v-if="editingEmecef">
+                                                <label class="sc-switch">
+                                                    <input type="checkbox" v-model="emecefForm.is_active" />
+                                                    <span class="sc-slider"></span>
+                                                </label>
+                                            </template>
+                                            <template v-else>
+                                                {{ client.emecef_is_active ? 'Oui' : 'Non' }}
+                                            </template>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-if="editingEmecef" class="d-flex gap-2 mt-2">
+                                <button class="sc-btn sc-btn-primary sc-btn-sm" :disabled="savingEmecef" @click="saveEmecef">
+                                    <span v-if="savingEmecef" class="sc-spinner-sm"></span>
+                                    <i v-else class="bi bi-check-lg me-1"></i>Enregistrer
+                                </button>
+                                <button class="sc-btn sc-btn-secondary sc-btn-sm" @click="editingEmecef = false">
+                                    Annuler
+                                </button>
+                            </div>
+                            <div v-else class="mt-2">
+                                <button class="sc-btn sc-btn-outline sc-btn-sm" @click="startEditEmecef">
+                                    <i class="bi bi-pencil me-1"></i>Modifier
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -932,6 +1024,17 @@ onMounted(fetchClient)
     border-radius: 50%; animation: sc-spin 0.6s linear infinite;
     margin-right: 0.35rem;
 }
+
+/* ─── e-MECeF section ─── */
+.sc-emecef-section {
+    background:#fff; border:1px solid #e9ecef; border-radius:12px; overflow:hidden;
+}
+.sc-emecef-header {
+    display:flex; align-items:center; padding:0.85rem 1.25rem;
+    border-bottom:1px solid #e9ecef; background:#fafbfc;
+}
+.sc-emecef-body { padding:1.25rem; }
+.sc-input-sm { padding:0.4rem 0.6rem; font-size:0.78rem; max-width:300px; }
 
 /* ─── Print ─── */
 @media print {

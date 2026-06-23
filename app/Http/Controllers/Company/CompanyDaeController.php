@@ -70,8 +70,11 @@ class CompanyDaeController extends Controller
     public function courriers(Request $request)
     {
         $clientId = $this->getClientId();
-        $query = DaeCourrier::where('client_id', $clientId)->orderBy('created_at', 'desc');
+        if (!$request->expectsJson()) {
+            return view('company', ['page' => 'company-dae-courriers', 'clientId' => $clientId]);
+        }
 
+        $query = DaeCourrier::where('client_id', $clientId)->orderBy('created_at', 'desc');
         if ($request->filled('statut')) $query->where('statut', $request->statut);
 
         return response()->json($query->paginate(20));
@@ -124,6 +127,10 @@ class CompanyDaeController extends Controller
     public function documents(Request $request)
     {
         $clientId = $this->getClientId();
+        if (!$request->expectsJson()) {
+            return view('company', ['page' => 'company-dae-documents', 'clientId' => $clientId]);
+        }
+
         $query = DaeDocument::where('client_id', $clientId)->orderBy('created_at', 'desc');
 
         if ($request->filled('type_document')) $query->where('type_document', $request->type_document);
@@ -178,6 +185,10 @@ class CompanyDaeController extends Controller
     public function contrats(Request $request)
     {
         $clientId = $this->getClientId();
+        if (!$request->expectsJson()) {
+            return view('company', ['page' => 'company-dae-contrats', 'clientId' => $clientId]);
+        }
+
         $query = DaeContrat::where('client_id', $clientId)->orderBy('created_at', 'desc');
 
         if ($request->filled('statut')) $query->where('statut', $request->statut);
@@ -197,6 +208,10 @@ class CompanyDaeController extends Controller
     public function taches(Request $request)
     {
         $clientId = $this->getClientId();
+        if (!$request->expectsJson()) {
+            return view('company', ['page' => 'company-dae-taches', 'clientId' => $clientId]);
+        }
+
         $query = DaeTache::where('client_id', $clientId)->with('assignedTo')->orderBy('created_at', 'desc');
 
         if ($request->filled('statut')) $query->where('statut', $request->statut);

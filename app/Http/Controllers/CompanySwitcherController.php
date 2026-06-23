@@ -26,6 +26,14 @@ class CompanySwitcherController extends Controller
             ->filter();
 
         if ($companies->isEmpty()) {
+            // Éviter la boucle infinie : si l'utilisateur est company_admin,
+            // le middleware CheckCompanyAccess (GEL) le renverrait vers company.dashboard.
+            // On le redirige vers l'accueil avec un message d'erreur clair.
+            if ($user->isCompanyAdmin() || $user->isCompanyManager()) {
+                Auth::logout();
+                return redirect()->route('home')
+                    ->withErrors(['Votre compte entreprise n\'est pas correctement configuré. Contactez l\'administrateur.']);
+            }
             return redirect()->route('dashboard')
                 ->withErrors(['Aucune entreprise associée à votre compte.']);
         }

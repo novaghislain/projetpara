@@ -206,16 +206,6 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client']
         return view('app', ['page' => 'settings']);
     })->name('settings');
 
-    // Diagnostic
-    Route::get('/api/debug-clients', function() {
-        $clients = \App\Models\Client::latest()->get();
-        return response()->json([
-            'count' => $clients->count(),
-            'user' => ['id' => Auth::id(), 'name' => Auth::user()->name, 'role' => Auth::user()->role],
-            'clients' => $clients->map(fn($c) => ['id' => $c->id, 'name' => $c->company_name, 'email' => $c->email, 'phone' => $c->phone, 'status' => $c->status]),
-        ]);
-    });
-
     // API endpoints (donnÃ©es JSON pour Vue)
     Route::get('/api/stats', [DashboardController::class, 'stats']);
     Route::get('/api/search', [\App\Http\Controllers\Api\SearchController::class, 'search']);
@@ -1333,7 +1323,6 @@ Route::middleware(['auth', 'not_suspended'])->prefix('context')->name('select.')
 });
 
 require __DIR__.'/auth.php';
-require __DIR__.'/debug.php';
 
 // Routes publiques
 Route::post('/demande', [\App\Http\Controllers\Gel\PublicController::class, 'storeDemande'])->name('demande.store');

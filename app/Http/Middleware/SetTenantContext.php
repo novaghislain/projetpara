@@ -1,4 +1,17 @@
 <?php
+// =============================================================================
+// FICHIER : SetTenantContext.php
+// RÔLE    : Middleware — Injecte le client_id dans la session BDD (RLS)
+// ÉQUIPE  : GEL Cabinet — Équipe Dev Backend
+// =============================================================================
+// Ce middleware prépare le contexte multi-tenant au niveau base de données.
+// Fonctionnement :
+//   - PostgreSQL : exécute SET app.client_id = '<id>' pour le Row-Level Security
+//   - MySQL/SQLite : ignoré (pas de RLS natif)
+//
+// Cela garantit que les requêtes BDD sont automatiquement filtrées
+// par l'entreprise active de l'utilisateur connecté.
+// =============================================================================
 
 namespace App\Http\Middleware;
 
@@ -12,7 +25,9 @@ class SetTenantContext
 {
     /**
      * Injecte le client_id de l'utilisateur authentifié
-     * dans la session PostgreSQL pour le RLS.
+     * dans la session PostgreSQL pour le Row-Level Security (RLS).
+     *
+     * MySQL/SQLite : ignoré silencieusement.
      */
     public function handle(Request $request, Closure $next): Response
     {

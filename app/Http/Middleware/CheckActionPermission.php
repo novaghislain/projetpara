@@ -1,4 +1,21 @@
 <?php
+// =============================================================================
+// FICHIER : CheckActionPermission.php
+// RÔLE    : Middleware — Vérifie une permission spécifique (module:action)
+// ÉQUIPE  : GEL Cabinet — Équipe Dev Backend
+// =============================================================================
+// Middleware paramétrable pour les permissions granulaires.
+//
+// Utilisation dans les routes :
+//   Route::middleware('can.action:comptabilite,lire')
+//   Route::middleware('can.action:facturation,creer')
+//
+// Paramètres :
+//   1. module (obligatoire) : le slug du module
+//   2. action (obligatoire) : l'action à vérifier (lire, creer, modifier, supprimer)
+//
+// Bypass : super admin ET company admin sont toujours autorisés.
+// =============================================================================
 
 namespace App\Http\Middleware;
 

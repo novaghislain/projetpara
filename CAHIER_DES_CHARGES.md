@@ -1,8 +1,8 @@
 # Cahier des Charges — GEL Cabinet
 
 > **Projet :** Plateforme multi-portail de gestion de cabinet
-> **Version :** 2.1.0
-> **Date :** 20 juin 2026
+> **Version :** 2.1.1
+> **Date :** 21 juin 2026
 > **Contexte :** Bénin — conformité fiscale et comptable OHADA
 
 ---
@@ -42,6 +42,13 @@
    - [4.19 Tontine / Microfinance](#419-tontine--microfinance)
    - [4.20 Signature électronique](#420-signature-électronique)
    - [4.21 Workflows d'approbation](#421-workflows-dapprobation)
+   - [4.22 Gestion Commerciale et POS](#422-gestion-commerciale-et-point-de-vente-pos)
+   - [4.23 GEL Intelligence — Système Multi-Agents IA](#423-gel-intelligence--système-multi-agents-ia)
+   - [4.24 Fil d'Activité IA — Activity Feed](#424-fil-dactivité-ia--activity-feed)
+   - [4.25 Omnisearch — Recherche Globale](#425-omnisearch--recherche-globale)
+   - [4.26 Workpapers — Dossiers de Travail](#426-workpapers--dossiers-de-travail)
+   - [4.27 Magic Links — Demandes de documents sans login](#427-magic-links--demandes-de-documents-sans-login)
+   - [4.28 Transactions Récurrentes](#428-transactions-récurrentes)
 5. [Système d'authentification et de rôles](#5-système-dauthentification-et-de-rôles)
 6. [Base de données](#6-base-de-données)
 7. [Seeders et données de démonstration](#7-seeders-et-données-de-démonstration)
@@ -425,7 +432,7 @@ La plateforme propose **4 portails distincts** :
   - Services IT (helpdesk, ITAM, maintenance, base de connaissances)
   - Caisse (encaissements, décaissements)
   - Projets (suivi budgétaire, jalons)
-  - Juridique (dossiers, veille)
+  - Juridique (société, assemblées, contrats, contentieux, conformité, bibliothèque d'actes, dossiers, registres, veille)
   - Modules IA (assistant, scraping, prédictions)
   - Automatisation (OCR, rapprochement bancaire, relances)
   - Paiements mobiles (MTN MoMo, Moov Money)
@@ -559,6 +566,14 @@ Chaîne comptable complète conforme au plan comptable OHADA.
 
 **Modèles :** `Account`, `JournalEntry`, `JournalLine`, `Balance`, `FiscalYear`
 
+#### Outils comptables en masse
+
+| Outil | Description |
+|-------|-------------|
+| **Reclassification en masse** | Sélection multiple de transactions → changement de compte comptable en un clic. Filtre par période, compte source, montant. Prévisualisation avant validation. Log d'audit automatique. |
+| **Annulation de réconciliation** | Défaire un rapprochement bancaire erroné. Remet les transactions à l'état "non rapproché". Accessible uniquement aux super_admin et comptables. |
+| **Verrouillage de période** | Après clôture, verrouillage de la période comptable. Aucune écriture ne peut être ajoutée/modifiée dans une période verrouillée. Seul le super_admin peut déverrouiller (motif obligatoire + audit log). Champ sur `fiscal_years` : `locked_at TIMESTAMP NULL`, `locked_by BIGINT NULL`. |
+
 ### 4.5 ERP Intégré (`/erp/*`)
 
 Gestion des stocks, factures et abonnements.
@@ -628,15 +643,68 @@ Suivi de projets avec budget et jalons.
 
 ### 4.10 Juridique (`/juridique/*`)
 
-Veille et dossiers juridiques.
+Module complet de gestion juridique avec 8 sous-modules opérationnels, un tableau de bord central et un système de filtrage multi-tenant via `LegalBaseModel::scopeByClient()`.
 
-| Fonctionnalité | Description |
-|----------------|-------------|
-| Dossiers | Suivi des dossiers juridiques |
-| Veille | Actualités juridiques |
-| Formalités | Constitution, modifications |
+| Sous-module | URL | Description |
+|-------------|-----|-------------|
+| **Dashboard** | `/juridique` | Tableau de bord avec KPI (contrats actifs, contentieux, conformité, AG, dossiers) |
+| **Fiche Société** | `/juridique/societe` | Informations légales de l'entreprise (RCCM, IFU, capital, siège social, etc.) |
+| **Assemblées** | `/juridique/assemblees` | Planification et suivi des AG (ordinaire, extraordinaire, conseil d'administration) |
+| **Contrats** | `/juridique/contrats` | Gestion complète des contrats avec signature, expiration, parties, renouvellement |
+| **Contentieux** | `/juridique/contentieux` | Suivi des litiges avec référence, tribunal, montant, prochaine audience, statut |
+| **Conformité** | `/juridique/conformite` | Obligations réglementaires avec échéances, organismes, statuts (conforme/en retard/à venir) |
+| **Bibliothèque d'Actes** | `/juridique/bibliotheque` | Modèles d'actes juridiques avec variables dynamiques, génération et versioning |
+| **Registres** | `/juridique/registres` | Registres obligatoires (registre des délibérations, registre de présence, etc.) |
+| **Dossiers** | `/juridique/dossiers` | Dossiers juridiques transverses par client |
 
-**Modèle :** `LegalCase`
+**Fonctionnalités clés :**
+- **Génération d'actes** : Modèles avec variables (`{nom_client}`, `{date}`, `{capital}`) → remplacement automatique → HTML prêt à imprimer
+- **Validateur de conformité** : Calcul automatique des échéances, statuts et alertes par obligation
+- **Contentieux filtré** : Filtres par statut (en_cours/clos) avec compteurs, montant formaté en FCFA
+- **Filtrage multi-tenant** : Les super admins voient toutes les données ; les comptables voient uniquement les données de leurs clients
+- **Scoped queries** : `byClient()`, `enCours()`, `planifiees()`, `expireBientot()`, `echeantes()`
+
+**Modèles (11 tables) :**
+- `LegalBaseModel` (abstract) — Base avec `scopeByClient()` pour le filtrage multi-tenant
+- `LegalCompanyInfo` — Informations légales de l'entreprise cliente
+- `LegalAssembly` — Assemblées générales (type, date, lieu, statut, résolutions)
+- `LegalContract` — Contrats (titre, parties, date_début, date_fin, statut, montant)
+- `LegalContractSignature` — Signatures électroniques liées aux contrats
+- `LegalLitigation` — Contentieux (référence, titre, type, nature, tribunal, montant_litige, prochaine_audience)
+- `LegalCompliance` — Obligations de conformité (intitulé, organisme, type, date_échéance, statut)
+- `LegalActsLibrary` — Bibliothèque d'actes (titre, catégorie, contenu avec variables, version)
+- `LegalRegistre` — Registres obligatoires (type, contenu, période)
+- `LegalDossier` — Dossiers juridiques (titre, description, client_id, statut)
+- `LegalVeille` — Veille juridique (actualités, textes de loi, jurisprudence)
+- `LegalAuditLog` — Journal d'audit des actions juridiques
+
+**Contrôleurs (9) :**
+- `LegalDashboardController` — Stats pour le dashboard juridique
+- `LegalCompanyInfoController` — Gestion fiche société
+- `LegalAssembliesController` — CRUD assemblées
+- `LegalContratsController` — Gestion contrats
+- `LegalLitigationsController` — Gestion contentieux
+- `LegalComplianceController` — Gestion conformité
+- `LegalActsLibraryController` — Bibliothèque d'actes + génération via `ActeGeneratorService`
+- `LegalDossiersController` — Gestion dossiers
+- `LegalRegistresController` — Gestion registres
+
+**Pages Vue (21 pages) :**
+- `Dashboard.vue` — KPI, listes récentes, accès rapides
+- `Societe/Index.vue` — Fiche d'identification
+- `Assemblees/Index.vue`, `Show.vue`, `Form.vue` — CRUD assemblées
+- `Contrats/Index.vue`, `Show.vue`, `Form.vue` — CRUD contrats
+- `Contentieux/Index.vue`, `Show.vue`, `Form.vue` — CRUD contentieux
+- `Conformite/Index.vue`, `Form.vue`, `Calendrier.vue` — Conformité + calendrier des échéances
+- `Bibliotheque/Index.vue`, `Form.vue`, `Generer.vue` — Actes + générateur
+- `Dossiers/Index.vue`, `Show.vue`, `Form.vue` — Dossiers
+- `Registres/Show.vue` — Registres
+
+**Architecture technique :**
+- `LegalBaseModel` gère le scope multi-tenant : les super admins voient toutes les données, les comptables voient uniquement `client_id = X`
+- `ActeGeneratorService` : remplace les variables `{...}` dans les modèles d'actes par les valeurs dynamiques
+- Contrôleurs avec double rendu : `expectsJson()` → JSON API / sinon → `view('app', ['page' => ...])`
+- Seeders : `LegalDemoSeeder` peuple 50+ enregistrements démo pour tous les sous-modules
 
 ### 4.11 IA & Automatisation (`/ia/*`)
 
@@ -694,6 +762,101 @@ Gestion des courriers, contrats et tâches de secrétariat pour les entreprises 
 
 ### 4.15 Comptabilité avancée & Conformité Bénin
 
+### 4.7.1 Flux détaillé — Création de facture → Normalisation e-MECeF → Portail client
+
+Le système de facturation repose sur **deux modèles distincts** qui communiquent via le processus e-MECeF :
+
+| Modèle | Portail | Usage | e-MECeF |
+|--------|---------|-------|----------|
+| `ErpInvoice` | GEL Cabinet (backoffice) | Facture créée par le comptable pour le client | Oui — émission DGI |
+| `CompanyInvoice` | Portail Entreprise | Facture créée par l'entreprise elle-même | Non (hors scope) |
+
+**Flux complet :**
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  PORTAL GEL CABINET (Comptable)                                         │
+│                                                                         │
+│  1. Création facture                                                    │
+│     POST /erp/invoices                                                  │
+│     → ErpInvoiceController::store()                                     │
+│     → Création ErpInvoice + ErpInvoiceItems                             │
+│     → Status: "brouillon"                                               │
+│                                                                         │
+│  2. Clic "DGI" (bouton shield dans la liste)                           │
+│     POST /emecef/emit/{invoice}                                         │
+│     → EmecefController::emitInvoice(ErpInvoice $invoice)                │
+│                                                                         │
+│  3. EmecefService::emettreFactureNormalisee()                           │
+│     ├── Vérifie : client->emecef_is_active && client->emecef_nim       │
+│     ├── Construit le payload DGI (IFU, type, montants, items)          │
+│     ├── Appelle l'API Sygmef (ou simule en test mode)                  │
+│     ├── Stocke la réponse : emecef_nim, emecef_compteur,               │
+│     │   emecef_hash, emecef_qr, emecef_statut='emise'                  │
+│     └── Retourne le résultat au contrôleur                             │
+│                                                                         │
+│  4. EmecefController::createEmissionNotifications()                     │
+│     ├── Notification → Admin entreprise (type: emecef_emise)           │
+│     │   title: "Facture émise à la DGI"                                │
+│     │   message: "La facture {num} a été transmise à la DGI."          │
+│     │   data: { invoice_id, url: '/company/invoices' }                 │
+│     └── Notification → Comptable émetteur (copie)                      │
+│         title: "Facture transmise — copie disponible"                   │
+│         message: "La facture {num} a été transmise à la DGI..."        │
+│         data: { invoice_id, url: '/gel/erp/invoices' }                 │
+│                                                                         │
+│  5. La facture est maintenant visible sur le portail entreprise         │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  PORTAL ENTREPRISE (Company Admin)                                      │
+│                                                                         │
+│  6. API /api/company/invoices (GET)                                     │
+│     → CompanyInvoiceController::listAll()                               │
+│     ├── Récupère CompanyInvoice où client_id = X                        │
+│     └── Récupère ErpInvoice où client_id = X ET emecef_statut = 'emise'│
+│         └── Fusionne + tri par date (les plus récents d'abord)         │
+│                                                                         │
+│  7. Affichage dans Company/Invoices.vue                                 │
+│     ├── Badge "ERP" pour les factures du comptable                      │
+│     ├── Badge vert "DGI ✓" pour les factures certifiées                │
+│     ├── Ligne de fond alternée (isup-row-erp)                           │
+│     └── Détail avec QR code e-MECeF (NIM, compteur, date, statut)      │
+│                                                                         │
+│  8. Notification reçue → clic → redirection vers /company/invoices      │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**Contrôleurs impliqués :**
+- `app/Http/Controllers/Gel/Erp/InvoiceController.php` — Création facture backoffice
+- `app/Http/Controllers/Gel/EmecefController.php` — Émission, annulation, vérification e-MECeF
+- `app/Http/Controllers/Company/InvoiceController.php` — Liste, CRUD, stats portail entreprise
+
+**Service :** `app/Services/EmecefService.php`
+- `emettreFactureNormalisee(ErpInvoice $invoice): array` — Émission DGI
+- `annulerFacture(ErpInvoice $invoice): array` — Annulation DGI
+- `verifierFacture(string $nim, string $compteur): array` — Vérification statut
+- `certifyInvoice(ErpInvoice $invoice): ErpInvoice` — Certification PDF (statique, sans API)
+
+**Modèle ErpInvoice — Champs e-MECeF :**
+```
+emecef_nim, emecef_compteur (int), emecef_hash, emecef_qr (TEXT),
+emecef_statut (enum: non_emise/emise/annulee), emecef_datetime (datetime)
+```
+
+**QR Code :** Format URL de vérification DGI :
+```
+https://portail.impots.bj/portail/facture/?nim={nim}&compteur={compteur}&dateHeure={date}&signature={signature}
+```
+
+**Notifications créées (table `notifications`) :**
+| Type | Destinataire | Contenu |
+|------|-------------|---------|
+| `emecef_emise` | Admin entreprise | Facture émise à la DGI + lien vers /company/invoices |
+| `emecef_emise` | Comptable émetteur | Copie disponible + lien vers /gel/erp/invoices |
+
+---
+
 #### 4.15.1 Intégration e-MECeF / Sygmef (OBLIGATOIRE LÉGALEMENT)
 
 La DGI Bénin impose à toutes les entreprises l'utilisation du **Système de Gestion des Machines Électroniques Certifiées de Facturation (Sygmef)**. Toute facture doit être une **Facture Normalisée** transmise et validée par l'API e-MECeF (`sygmef.impots.bj`). GEL Cabinet doit devenir un **SFE (Système de Facturation d'Entreprise) certifié DGI**.
@@ -710,19 +873,71 @@ return [
 ];
 ```
 
-**Service :** `App\Services\EmecefService` — `emettreFactureNormalisee(Invoice $invoice)`
-- Construit le payload DGI (IFU, type FV/FA/AV/EA, AIB, client, items, paiement)
-- Appelle l'API e-MECeF
-- Enregistre NIU, compteur, hash, QR code sur la facture
-- Calcule l'AIB (Acompte sur Impôt sur les Bénéfices) : 1% DGE/DME, 5% CSI
+**Service :** `App\Services\EmecefService`
+- `emettreFactureNormalisee(ErpInvoice $invoice): array` — Émet la facture à la DGI
+  - Vérifie la configuration du client : `$client->emecef_is_active`, `$client->emecef_nim`, `$client->emecef_password`
+  - Construit le payload DGI (IFU emetteur/récepteur, type FV/FA/AV/EA, AIB, client, items, paiement)
+  - En test mode : simulation sans appel API réel
+  - Appelle l'API Sygmef
+  - Enregistre NIU, compteur, hash, QR code sur la facture
+  - Calcule l'AIB (Acompte sur Impôt sur les Bénéfices) : 1% DGE/DME, 5% CSI
+- `annulerFacture(ErpInvoice $invoice): array` — Annule une facture émise
+- `verifierFacture(string $nim, string $compteur): array` — Vérifie le statut auprès de la DGI
+- `certifyInvoice(ErpInvoice $invoice): ErpInvoice` — Certifie pour PDF (statique, sans API)
 
-**Migrations sur `invoices` :**
+**Per-client NIM (pas de NIM global) :**
+Le NIM et le mot de passe e-MECeF sont stockés **sur le modèle Client**, pas dans `.env` :
 ```
-emecef_nim, emecef_compteur, emecef_hash, emecef_qr (TEXT),
-emecef_statut (enum: non_emise/emise/annulee), emecef_datetime
+clients.emecef_nim (string, nullable)       — NIM fourni par la DGI pour ce client
+clients.emecef_is_active (boolean, false)   — Active/désactive e-MECeF pour ce client
+clients.emecef_password (encrypted, nullable) — Mot de passe e-MECeF du client
 ```
 
-**PDF :** QR code e-MECeF vérifiable sur `sygmef.impots.bj/verification` via `chillerlan/php-qrcode`
+**Configuration minimale du client pour e-MECeF :**
+| Champ | Description | Obligatoire |
+|-------|-------------|-------------|
+| `ifu` | IFU de l'entreprise (9 chiffres) | Oui |
+| `emecef_nim` | NIM attribué par la DGI | Oui |
+| `emecef_password` | Mot de passe e-MECeF | Oui |
+| `emecef_is_active` | Active l'envoi DGI | Oui (true) |
+| `regime_fiscal` | Régime fiscal (réel_simplifié/réel_normal) | Recommandé |
+
+**Notifications à l'émission :**
+Après une émission réussie, `EmecefController::createEmissionNotifications()` crée deux notifications :
+1. **Admin entreprise** — "La facture X a été transmise à la DGI avec succès." (url: /company/invoices)
+2. **Comptable émetteur** — "La facture X a été transmise à la DGI. Copie disponible dans votre tableau de bord."
+
+**Champs e-MECeF sur ErpInvoice :**
+```
+emecef_nim, emecef_compteur (int), emecef_hash, emecef_qr (TEXT),
+emecef_statut (enum: non_emise/emise/annulee), emecef_datetime (datetime)
+```
+
+**QR Code :**
+```
+https://portail.impots.bj/portail/facture/?nim={nim}&compteur={compteur}&dateHeure={date}&signature={signature}
+```
+Généré via `chillerlan/php-qrcode`. Affiché dans le détail de la facture côté entreprise (modale avec QR + infos).
+
+**Portail entreprise — Détail e-MECeF dans la modale :**
+```
+┌──────────────────────────────────────┐
+│  Certification DGI (e-MECeF)         │
+│  ┌──────────┐  NIM:    XX-XXXXXXX   │
+│  │ QR Code  │  Compteur: 12345       │
+│  │          │  Émis le: 21/06/2026   │
+│  │          │  Statut: Certifiée ✓   │
+│  └──────────┘  QR URL: https://...   │
+└──────────────────────────────────────┘
+```
+
+**Configuration .env :**
+```env
+EMECEF_API_TOKEN=token_dgi
+EMECEF_NIM=XX-XXXXXXX           # NIM global par défaut (déprécié — utiliser per-client)
+EMECEF_TEST_MODE=true            # true = simulation sans API réelle
+EMECEF_API_URL=https://sygmef.impots.bj/emcf/api
+```
 
 #### 4.15.2 Module Télédéclaration (Interface e-services DGI)
 
@@ -854,7 +1069,7 @@ Suggestions automatiques d'articles KB lors de la rédaction d'un ticket (recher
 
 Scan ou photo de facture → lecture automatique des informations → pré-remplissage de l'écriture comptable.
 
-**Stack :** `spatie/pdf-to-text` + API Claude (Anthropic) pour OCR sur images
+**Stack :** `spatie/pdf-to-text` + API IA (Gemini) pour OCR sur images
 
 **Service :** `OcrInvoiceService` — extrait fournisseur, numéro, date, montants, TVA, mode de paiement
 
@@ -1195,6 +1410,307 @@ Exigences critiques pour un module manipulant des flux financiers et des stocks.
 - Compatible e-MECeF Bénin pour la facture fiscalisée
 - Compatible MTN MoMo Bénin et Moov Money pour les paiements mobiles
 
+### 4.23 GEL Intelligence — Système Multi-Agents IA
+
+Système multi-agents IA dédié à l'automatisation des tâches comptables, fiscales et de gestion. Chaque agent est spécialisé dans un domaine métier. Toutes les suggestions et actions sont centralisées dans le **Fil d'Activité IA** (Activity Feed) où le comptable est décisionnaire final : il examine, approuve ou rejette chaque suggestion.
+
+**Architecture globale :**
+- 6 agents spécialisés communiquant via une base de suggestions centralisée (`ai_suggestions`)
+- Apprentissage continu via `ai_learning_log` (les corrections manuelles améliorent les futures suggestions)
+- Score de confiance (0–100%) sur chaque suggestion
+- Actions exécutables en un clic depuis le fil d'activité
+- Notifications push pour les suggestions critiques
+
+#### 4.23.1 Agent OHADA — Comptabilité Intelligente
+
+| Fonctionnalité | Description |
+|----------------|-------------|
+| Catégorisation automatique | Classification des transactions selon le plan comptable SYSCOHADA basée sur le libellé et l'historique (ML) |
+| Détection d'anomalies | Flag des transactions inhabituelles (>200% moyenne, catégorie incohérente, doublons, écarts de réconciliation) |
+| Suggestions de régularisation | Propositions d'écritures de fin de mois basées sur les patterns historiques |
+| Cohérence SYSCOHADA | Vérification des comptes autorisés par journal et par classe |
+| Balance | Alerte automatique en cas de déséquilibre |
+| Apprentissage continu | Les corrections du comptable améliorent les suggestions futures (feedback loop) |
+
+#### 4.23.2 Agent Fiscal Bénin
+
+| Fonctionnalité | Description |
+|----------------|-------------|
+| Calcul TVA automatique | TVA collectée vs TVA déductible depuis les journaux comptables |
+| Pré-remplissage déclarations | Génération automatique des déclarations TVA, IRPP, CNSS, IS, AIB |
+| Alertes d'échéances | Notifications J-15, J-7, J-3, J-1 avant chaque deadline fiscale |
+| Détection risques fiscaux | TVA non déclarée, dépassement de seuils, incohérences |
+| Simulation e-MECeF | Prévisualisation de la facture normalisée avant émission DGI (dry-run) |
+| Calendrier fiscal interactif | Toutes les échéances par client avec compteurs et alertes |
+
+#### 4.23.3 Agent Rapprochement Bancaire
+
+| Fonctionnalité | Description |
+|----------------|-------------|
+| Import multi-format | CSV (BOA, Ecobank, UBA, BCEAO), OFX, MT940, PDF (OCR) |
+| Matching intelligent | Correspondance par montant (±1 FCFA), date (±3 jours), libellé (fuzzy Levenshtein) |
+| Score de confiance | Chaque correspondance suggérée a un score de 0 à 100% |
+| Matching complexe | One-to-many et many-to-one |
+| Résolution guidée | Suggestions d'action pour les non-matchés (créer écriture, demander justificatif) |
+| Ready-to-Post | Transactions pré-matchées haute confiance → validation en masse en 1 clic |
+| Reconcile Companion | Upload PDF → extraction IA → comparaison auto → écarts en évidence |
+
+#### 4.23.4 Agent Relance Intelligente
+
+| Fonctionnalité | Description |
+|----------------|-------------|
+| Canal optimal | Choix automatique du meilleur canal (SMS > email) basé sur les stats par client |
+| Moment optimal | Envoi au meilleur horaire/jour basé sur l'analyse comportementale |
+| Escalade progressive | Ton progressif : rappel amical (J+7) → formel (J+14) → mise en demeure (J+30) |
+| Prédiction de paiement | Probabilité de paiement dans X jours (ML régression) |
+| Rapport d'efficacité | Taux de recouvrement par canal, par type de client |
+| Templates d'escalade | Modèles par niveau avec variables dynamiques |
+
+#### 4.23.5 Agent OCR Factures
+
+| Fonctionnalité | Description |
+|----------------|-------------|
+| Capture multi-source | Photo mobile, upload web, email forwarding |
+| Extraction IA | Fournisseur, date, numéro, montants HT/TVA/TTC (API IA (Gemini) + spatie/pdf-to-text) |
+| Pré-comptabilisation | Écriture SYSCOHADA pré-remplie prête à valider (mapping compte ← fournisseur) |
+| Matching auto | Correspondance avec commandes/bons de livraison existants |
+| Archive légale | Stockage avec horodatage et hash SHA256 (valeur probante) |
+| Précision cible | 90%+ sur les champs clés |
+
+#### 4.23.6 Agent Prédiction Trésorerie
+
+| Fonctionnalité | Description |
+|----------------|-------------|
+| Projection cash flow | 3 à 6 mois basée sur factures impayées, fournisseurs, paie, historique bancaire, échéances fiscales |
+| Alertes proactives | "Attention, tension de trésorerie prévue semaine 28" |
+| Scénarios what-if | Simulation paramétrique ("Et si le client X ne paie pas ?") |
+| Détection saisonnalité | Identification des patterns récurrents par mois |
+| Graphique interactif | Zones critiques colorées (vert/orange/rouge) |
+
+#### 4.23.7 Tables du système IA
+
+```sql
+CREATE TABLE ai_suggestions (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    client_id BIGINT UNSIGNED NOT NULL,
+    agent VARCHAR(50) NOT NULL,            -- 'ohada', 'fiscal', 'rapprochement', 'relance', 'ocr', 'tresorerie'
+    type VARCHAR(50) NOT NULL,             -- 'anomalie', 'suggestion', 'alerte', 'action_auto', 'prevision'
+    priority ENUM('critical','high','normal','low') DEFAULT 'normal',
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    data JSON,                             -- Données structurées spécifiques à l'agent
+    confidence DECIMAL(5,2),               -- Score de confiance 0.00 → 100.00
+    status ENUM('pending','approved','rejected','expired') DEFAULT 'pending',
+    action_type VARCHAR(100) NULL,         -- 'categorize_transaction', 'create_entry', 'send_relance'...
+    action_payload JSON NULL,              -- Données pour exécuter l'action si approuvée
+    reviewed_by BIGINT UNSIGNED NULL,
+    reviewed_at TIMESTAMP NULL,
+    expires_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_client_status (client_id, status),
+    INDEX idx_agent_priority (agent, priority),
+    INDEX idx_created (created_at DESC),
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
+    FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE TABLE ai_learning_log (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    agent VARCHAR(50) NOT NULL,
+    action VARCHAR(50) NOT NULL,           -- 'categorize', 'match', 'flag', 'predict'
+    input_data JSON NOT NULL,
+    suggested_output JSON NOT NULL,
+    actual_output JSON NULL,               -- Ce que l'humain a choisi
+    was_correct BOOLEAN NULL,
+    client_id BIGINT UNSIGNED NULL,
+    user_id BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_agent_action (agent, action),
+    INDEX idx_correct (was_correct),
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+```
+
+**Service :** `App\Services\IA\GelIntelligenceService` — Orchestrateur des 6 agents
+**Contrôleur :** `App\Http\Controllers\Gel\Ia\AiFeedController` — API du fil d'activité
+**Composant Vue :** `resources/js/Pages/Gel/Ia/AiFeed.vue` — Fil d'activité IA
+
+**Routes API :**
+```
+GET    /api/ia/feed                    → Liste paginée des suggestions (filtrable par agent, priority, status)
+GET    /api/ia/feed/stats              → Compteurs par agent et par statut
+POST   /api/ia/suggestions/{id}/approve → Approuver une suggestion et exécuter l'action
+POST   /api/ia/suggestions/{id}/reject  → Rejeter une suggestion
+POST   /api/ia/suggestions/{id}/modify  → Modifier puis approuver
+DELETE /api/ia/suggestions/{id}         → Supprimer une suggestion expirée
+```
+
+---
+
+### 4.24 Fil d'Activité IA — Activity Feed
+
+Hub central de GEL Intelligence. Toutes les suggestions/actions des 6 agents IA sont affichées ici dans un fil chronologique. Le comptable consulte ce fil et approuve ou rejette chaque suggestion.
+
+**Fonctionnalités :**
+- Affichage chronologique inversé (plus récent en haut)
+- Filtrable par : agent (6 filtres), priorité (critical/high/normal/low), statut (pending/approved/rejected), client, période
+- Compteurs en haut : suggestions en attente par priorité (🔴 critiques, 🟡 hautes, 🟢 normales)
+- Actions par suggestion : ✅ Approuver (exécute l'action), ❌ Rejeter, ✏️ Modifier puis approuver
+- Notifications push pour les suggestions critiques
+- Badge dans la sidebar GelLayout avec le nombre de suggestions en attente
+- Design : Cards empilées avec code couleur par priorité
+
+---
+
+### 4.25 Omnisearch — Recherche Globale
+
+Barre de recherche globale accessible depuis tous les portails via Ctrl+K (Cmd+K).
+
+**Fonctionnalités :**
+- Recherche unifiée sur : clients, transactions comptables, contacts, factures, employés, documents, pages de navigation, aide/documentation
+- Résultats groupés par catégorie avec icônes
+- Navigation au clavier (↑↓ pour sélectionner, Enter pour ouvrir)
+- Résultats en temps réel (debounce 300ms)
+- Historique des recherches récentes (5 dernières)
+- Affichage en modal overlay (type Command Palette)
+
+**Composant Vue :** `resources/js/Components/Omnisearch.vue`
+**Contrôleur :** `App\Http\Controllers\Api\SearchController`
+**Route :** `GET /api/search?q={query}&type={type}` → résultats groupés JSON
+
+**Intégration :** Ajouté dans GelLayout.vue, CompanyLayout.vue et CpaLayout.vue (topbar). Event listener global Ctrl+K.
+
+---
+
+### 4.26 Workpapers — Dossiers de Travail
+
+Système de révision structurée des comptes avant clôture comptable.
+
+**Fonctionnalités :**
+- Vue "balance de vérification" avec tous les comptes du plan comptable SYSCOHADA
+- Statut de révision par compte : ✅ Révisé / ⏳ En cours / ❌ Non révisé
+- Création d'écritures d'ajustement (OD) directement depuis les workpapers
+- Comparaison côte à côte : N vs N-1 (2 colonnes)
+- Notes internes par compte (visibles uniquement par l'équipe cabinet)
+- Attachement de pièces justificatives par compte
+- Progression globale : "72% des comptes révisés" avec barre de progression
+- Verrouillage : possibilité de verrouiller la période une fois tous les comptes révisés
+
+**Table :**
+```sql
+CREATE TABLE workpapers (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    client_id BIGINT UNSIGNED NOT NULL,
+    fiscal_year_id BIGINT UNSIGNED NOT NULL,
+    period VARCHAR(20) NOT NULL,
+    account_id BIGINT UNSIGNED NOT NULL,
+    status ENUM('not_reviewed','in_progress','reviewed') DEFAULT 'not_reviewed',
+    reviewer_id BIGINT UNSIGNED NULL,
+    reviewed_at TIMESTAMP NULL,
+    notes TEXT NULL,
+    adjustments JSON NULL,
+    attachments JSON NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_client_year_account (client_id, fiscal_year_id, account_id),
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
+    FOREIGN KEY (fiscal_year_id) REFERENCES fiscal_years(id) ON DELETE CASCADE,
+    FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE,
+    FOREIGN KEY (reviewer_id) REFERENCES users(id) ON DELETE SET NULL
+);
+```
+
+**Contrôleur :** `App\Http\Controllers\Gel\Comptabilite\WorkpaperController`
+**Composant Vue :** `resources/js/Pages/Gel/Accounting/Workpapers.vue`
+**Route :** `/comptabilite/workpapers`
+
+---
+
+### 4.27 Magic Links — Demandes de documents sans login
+
+Permet au comptable d'envoyer un lien sécurisé à un client pour uploader un document sans connexion.
+
+**Fonctionnalités :**
+- Création d'une "demande de document" : titre, description, client, deadline, documents attendus
+- Lien unique signé (token UUID + expiration) envoyé par email, SMS ou WhatsApp
+- Page publique sécurisée pour uploader sans authentification
+- Rattachement automatique des documents au dossier client dans la GED
+- Notification au comptable quand le client répond
+- Suivi : envoyé / lu / répondu / expiré
+
+**Table :**
+```sql
+CREATE TABLE magic_link_requests (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    client_id BIGINT UNSIGNED NOT NULL,
+    created_by BIGINT UNSIGNED NOT NULL,
+    token VARCHAR(64) NOT NULL UNIQUE,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NULL,
+    requested_documents JSON NULL,
+    channel ENUM('email','sms','whatsapp','all') DEFAULT 'email',
+    status ENUM('sent','viewed','responded','expired') DEFAULT 'sent',
+    viewed_at TIMESTAMP NULL,
+    responded_at TIMESTAMP NULL,
+    expires_at TIMESTAMP NOT NULL,
+    response_files JSON NULL,
+    response_message TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_token (token),
+    INDEX idx_client_status (client_id, status),
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+);
+```
+
+**Route publique :** `GET /documents/request/{token}` → page upload publique
+**Contrôleur :** `App\Http\Controllers\Public\MagicLinkController`
+**Composant Vue :** `resources/js/Pages/Public/MagicLinkUpload.vue`
+
+---
+
+### 4.28 Transactions Récurrentes
+
+Automatisation des écritures comptables récurrentes avec 3 types :
+
+| Type | Description |
+|------|-------------|
+| **Programmée (scheduled)** | Écriture créée automatiquement à la date prévue (ex: loyer le 1er du mois) |
+| **Rappel (reminder)** | Notification au comptable pour créer l'écriture manuellement (ex: facture variable) |
+| **Template** | Modèle sauvegardé pour usage ponctuel (ex: écriture exceptionnelle) |
+
+Applicable à : Écritures de journal, factures, dépenses, notes de crédit
+
+**Table :**
+```sql
+CREATE TABLE recurring_transactions (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    client_id BIGINT UNSIGNED NOT NULL,
+    created_by BIGINT UNSIGNED NOT NULL,
+    type ENUM('scheduled','reminder','template') NOT NULL,
+    transaction_type VARCHAR(50) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    template_data JSON NOT NULL,
+    frequency ENUM('daily','weekly','biweekly','monthly','quarterly','yearly') NULL,
+    next_occurrence DATE NULL,
+    last_occurrence DATE NULL,
+    end_date DATE NULL,
+    occurrences_count INT DEFAULT 0,
+    max_occurrences INT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_client_type (client_id, type),
+    INDEX idx_next (next_occurrence, is_active),
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+);
+```
+
+**Commande artisan :** `ProcessRecurringTransactions` — quotidienne à 06:00 — crée les écritures programmées et envoie les rappels
+
 ## 5. Système d'authentification et de rôles
 
 ### 5.1 Middleware disponibles
@@ -1341,6 +1857,78 @@ Le store `authStore` (reactive, singleton) expose :
 caisse, comptabilite, crm, dae, document, erp,
 facturation, it_assets, it_helpdesk, juridique, projets, rh
 ```
+
+#### Hiérarchie des rôles (par niveau)
+
+| Niveau | Rôle | Slug | Accès |
+|--------|------|------|-------|
+| **100** | Super Administrateur | `super_admin` | Total — voit toutes les entreprises, toutes les données |
+| **50** | Comptable Cabinet | `comptable` | Comptabilité + facturation des clients assignés |
+| **40** | Administrateur Entreprise | `company_admin` | Son entreprise uniquement — tous les modules |
+| **30** | Manager Entreprise | `company_manager` | Son entreprise — opérations courantes (pas validation) |
+| **20** | Employé Entreprise | `company_employee` | Son entreprise — lecture seule |
+| **20** | Caissier | `caissier` | Module caisse uniquement |
+| **20** | Juriste | `juriste` | Module juridique uniquement |
+| **20** | Gestionnaire RH | `rh` | Module RH uniquement |
+| **20** | Gestionnaire Projet | `gestionnaire_projet` | Module projets uniquement |
+| **20** | Secrétaire | `secretaire` | Module DAE uniquement |
+| **10** | Client | `client` | Portail CPA — consultation documents et factures |
+
+#### Matrice des permissions par rôle
+
+| Module | Action | super_admin | company_admin | company_manager | company_employee | Roles spécialisés |
+|--------|--------|-------------|---------------|-----------------|------------------|-------------------|
+| **comptabilite** | lire | ✅ | ✅ | ✅ | ✅ | — |
+| | creer | ✅ | ✅ | ✅ | — | — |
+| | modifier | ✅ | ✅ | ✅ | — | — |
+| | supprimer | ✅ | ✅ | — | — | — |
+| | valider | ✅ | ✅ | — | — | — |
+| | saisir | ✅ | ✅ | ✅ | — | — |
+| | exporter | ✅ | ✅ | ✅ | — | — |
+| | rapports | ✅ | ✅ | ✅ | ✅ (lecture) | — |
+| **facturation** | lire | ✅ | ✅ | ✅ | ✅ | — |
+| | creer_facture | ✅ | ✅ | ✅ | — | — |
+| | modifier_facture | ✅ | ✅ | ✅ | — | — |
+| | annuler_facture | ✅ | ✅ | — | — | — |
+| | imprimer_facture | ✅ | ✅ | ✅ | — | — |
+| | regler | ✅ | ✅ | ✅ | — | — |
+| | parametres | ✅ | ✅ | — | — | — |
+| **caisse** | toutes (6) | ✅ | ✅ | toutes sauf clôture | lecture/historique | ✅ (caissier) |
+| **juridique** | toutes (5) | ✅ | ✅ | toutes sauf archivage/suppression | consultation | ✅ (juriste) |
+| **rh** | toutes (10) | ✅ | ✅ | toutes sauf paie/validation | lecture | ✅ (rh) |
+| **projets** | toutes (6) | ✅ | ✅ | toutes sauf achèvement | lecture | ✅ (gestionnaire_projet) |
+| **document** | toutes (6) | ✅ | ✅ | toutes sauf suppression | lecture/upload | — |
+| **dae** | toutes (10) | ✅ | ✅ | toutes sauf validation | lecture | ✅ (secretaire) |
+| **erp** | toutes (9) | ✅ | ✅ | toutes sauf paramètres | — | — |
+| **crm** | toutes (8) | ✅ | ✅ | toutes | — | — |
+| **it_helpdesk** | toutes (6) | ✅ | ✅ | toutes | — | — |
+| **it_assets** | toutes (6) | ✅ | ✅ | toutes | — | — |
+| **commerce** | toutes (17) | ✅ | ✅ | — | — | — |
+
+#### 5.5.1 Permissions directes (user_permissions)
+
+En complément des permissions de rôle, des permissions directes peuvent être attribuées à des utilisateurs spécifiques via `user_permissions` :
+
+```sql
+user_permissions (user_id, permission_id, granted_by, granted_at, client_id, expires_at)
+```
+
+Priorité : **permissions directes > permissions de rôle**.
+Si un utilisateur a des permissions directes, les permissions de son rôle sont ignorées pour les modules concernés.
+
+#### 5.5.2 Restrictions de champs (PermissionFieldRestriction)
+
+```sql
+permission_field_restrictions (module, action, role_slug, hidden_fields JSON, is_active)
+```
+
+**Exemple :**
+| module | action | role_slug | hidden_fields |
+|--------|--------|-----------|---------------|
+| rh | lire | company_employee | `["salary", "bank_account"]` |
+| commerce | voir | caissier | `["price_purchase", "margin"]` |
+
+**Side client :** `authStore.isFieldHidden(module, field)` → masque le champ dans l'UI.
 
 **Polling :**
 | Fonction | Description |
@@ -1510,7 +2098,18 @@ La base de données `gel_cabinet` contient **90+ tables** organisées par domain
 
 | Table | Description |
 |-------|-------------|
-| `legal_cases` | Dossiers juridiques |
+| `legal_company_infos` | Informations légales entreprise (RCCM, IFU, capital) |
+| `legal_assemblies` | Assemblées générales et conseils |
+| `legal_contracts` | Contrats avec parties, dates, montant |
+| `legal_contract_signatures` | Signatures électroniques liées aux contrats |
+| `legal_litigations` | Contentieux et litiges (référence, tribunal, montant) |
+| `legal_compliance` | Obligations réglementaires (échéances, statuts) |
+| `legal_acts_library` | Bibliothèque d'actes juridiques avec variables |
+| `legal_registres` | Registres obligatoires |
+| `legal_dossiers` | Dossiers juridiques transverses |
+| `legal_veille` | Veille juridique et actualités |
+| `legal_audit_log` | Journal d'audit des actions juridiques |
+| `legal_cases` | (Legacy) Dossiers juridiques — remplacé par `legal_dossiers` |
 | `articles` | Articles de blog |
 
 #### Conformité Fiscale (e-MECeF)
@@ -1592,8 +2191,11 @@ Toutes les migrations suivent le pattern Laravel standard et sont exécutées vi
 |--------|-------------|
 | `DatabaseSeeder` | Orchestrateur principal |
 | `AdminSeeder` | Compte super admin principal |
+| `UsersSeeder` | 30+ utilisateurs multi-rôles (admin GEL, company_admin, comptables, managers, employés, clients) |
 | `ClientSeeder` | Clients de démonstration |
 | `CrescendoDemoSeeder` | 4 comptes démo pour portail CPA |
+| `RoleAndPermissionSeeder` | 11 rôles, 89 permissions, 12 modules |
+| `LegalDemoSeeder` | 50+ enregistrements juridiques (contrats, contentieux, conformité, actes, assemblées, registres) |
 | `PoleSeeder` | Pôles de démonstration |
 | `MissionSeeder` | Missions de démonstration |
 | Comptabilité | Plan comptable, journaux, écritures |
@@ -1722,6 +2324,57 @@ Les classes `isup-*` dans `resources/css/company.css` fournissent un design syst
 | 768-1024px (Tablette) | Sidebar rétractable, grille 2 colonnes |
 | > 1024px (Desktop) | Sidebar fixe 240px, grille 3-4 colonnes |
 
+### 8.9 Sidebar avec sous-menus dépliants
+
+Regrouper les ~30 items de navigation en catégories repliables avec chevrons :
+
+| Catégorie | Items inclus |
+|-----------|-------------|
+| 🏠 Accueil | Dashboard |
+| 👥 CRM | Clients, Missions, Pôles |
+| 📂 Documents | GED, Dossiers |
+| 🧮 Comptabilité | Plan comptable, Journaux, Balance, Bilan, Résultat, Télédécl., Workpapers |
+| 💼 Gestion | ERP, Facturation, Caisse, Commerce |
+| 👔 RH & Paie | Employés, Contrats, Paie, Congés |
+| ⚖️ Juridique | Tous les sous-modules juridiques |
+| 🔧 IT Support | Helpdesk, ITAM, Maintenance |
+| 📊 Projets | Tâches, jalons, budget |
+| 🤖 IA & Automatisation | Fil IA, OCR, Relances, Rapprochement |
+| ⚙️ Administration | Audit, Sécurité, Utilisateurs, Articles |
+
+- Animation 0.2s sur le déploiement/repli
+- État mémorisé dans localStorage
+- Badge de notification par catégorie (ex: "CRM (3)")
+
+### 8.10 Bouton "+ Nouveau" rapide
+
+Bouton flottant en haut de la sidebar (sous le logo) avec dropdown d'actions rapides :
+- Nouveau client, Nouvelle facture, Nouvelle écriture, Nouveau document
+- Nouveau ticket IT, Nouvelle mission, Nouveau contrat juridique
+- Raccourci clavier : `N` (quand pas dans un input)
+
+### 8.11 Filtres en chips supprimables
+
+Dans TOUS les tableaux du projet, afficher les filtres actifs sous forme de chips/tags avec bouton × pour les retirer.
+
+**Composant réutilisable :** `resources/js/Components/FilterChips.vue`
+**Props :** `filters` (array d'objets `{label, value, key}`)
+**Emit :** `@remove(key)` pour retirer un filtre
+
+### 8.12 Signets / Favoris personnalisables
+
+Section "SIGNETS" dans la sidebar avec bouton ✏️ pour éditer. L'utilisateur peut ajouter/retirer des pages en favoris.
+
+**Table :** `user_bookmarks` (user_id, label, url, icon, sort_order) — max 10 signets par utilisateur
+
+### 8.13 Dashboard widgetisable
+
+Le dashboard principal (GEL et Company) affiche des widgets réarrangeables par drag & drop.
+
+**Widgets disponibles :** Stats clients, Échéances fiscales, Suggestions IA en attente, Factures impayées, Alertes connexions, CA du mois, Tâches à compléter, Anomalies détectées
+
+**Table :** `user_dashboard_config` (user_id, widget_order JSON, hidden_widgets JSON)
+
 ---
 
 ## 9. Fonctionnalités transverses
@@ -1822,6 +2475,22 @@ require_2fa (BOOLEAN), session_timeout_minutes (INT, DEFAULT 120), allowed_ips (
 
 Traçabilité complète via `audit_logs` (voir 9.5.3) pour la conformité RGPD et les obligations comptables. Toutes les actions sur les données sensibles sont horodatées avec IP et identité de l'utilisateur.
 
+### 9.7 Requêtes Client In-App
+
+Le comptable crée une "requête" depuis n'importe quelle page (bouton "Demander au client") :
+- La requête apparaît dans l'espace du client (portail Company) dans un onglet "Demandes"
+- Le client peut répondre, uploader des documents, poser des questions
+- Suivi : envoyée / lue / répondue / complétée
+- Vue centralisée "Mes requêtes" côté comptable
+
+### 9.8 Notes Internes vs Partagées
+
+Sur chaque transaction, document, facture : possibilité d'ajouter des notes.
+- **Toggle** "Interne" (visible uniquement par l'équipe cabinet) vs "Partagée" (visible aussi par le client)
+- Icône 🔒 pour les notes internes, 👁️ pour les notes partagées
+
+**Table :** `entity_notes` (notable_type, notable_id, user_id, content, is_internal BOOLEAN, created_at)
+
 ---
 
 ## 10. Structure des fichiers
@@ -1846,6 +2515,17 @@ app/
 │   │   │   ├── Projets/
 │   │   │   ├── Juridique/
 │   │   │   └── Ia/
+│   │   ├── Modules/            # Modules spécialisés
+│   │   │   └── Legal/          # Module juridique (9 contrôleurs)
+│   │   │       ├── LegalDashboardController
+│   │   │       ├── LegalCompanyInfoController
+│   │   │       ├── LegalAssembliesController
+│   │   │       ├── LegalContratsController
+│   │   │       ├── LegalLitigationsController
+│   │   │       ├── LegalComplianceController
+│   │   │       ├── LegalActsLibraryController
+│   │   │       ├── LegalDossiersController
+│   │   │       └── LegalRegistresController
 │   │   ├── Cpa/               # Portail CPA
 │   │   │   └── DashboardController
 │   │   ├── Company/           # Portail entreprise
@@ -1877,6 +2557,19 @@ app/
 │   ├── Employee.php, Contract.php, Payslip.php, LeaveRequest.php
 │   ├── Project.php, ProjectTask.php, ProjectMilestone.php
 │   ├── LegalCase.php, Article.php
+│   ├── Legal/                            # Module juridique (11 modèles)
+│   │   ├── LegalBaseModel.php            # Abstract avec scopeByClient() multi-tenant
+│   │   ├── LegalCompanyInfo.php          # Fiche société
+│   │   ├── LegalAssembly.php             # Assemblées
+│   │   ├── LegalContract.php             # Contrats
+│   │   ├── LegalContractSignature.php    # Signatures de contrats
+│   │   ├── LegalLitigation.php           # Contentieux
+│   │   ├── LegalCompliance.php           # Conformité
+│   │   ├── LegalActsLibrary.php          # Bibliothèque d'actes
+│   │   ├── LegalRegistre.php             # Registres
+│   │   ├── LegalDossier.php              # Dossiers
+│   │   ├── LegalVeille.php               # Veille juridique
+│   │   └── LegalAuditLog.php             # Journal d'audit juridique
 │   ├── Caisse.php, CaisseTransaction.php
 │   ├── ClientFolder.php, Document.php, DocumentVersion.php
 │   ├── DossierDae.php, CourrierDae.php, TacheDae.php
@@ -1889,6 +2582,108 @@ app/
 │   └── Services/ (EmecefService, IrppCalculator, CnssCalculator, ...)
 └── Providers/                 # Service providers
 ```
+
+### 10.1.1 Comportement serveur détaillé
+
+#### Double rendu Controllers (SPA + JSON)
+
+Les contrôleurs suivent un **pattern de double rendu** basé sur `$request->expectsJson()` :
+
+```php
+// Pattern standard
+public function index(Request $request)
+{
+    $data = Model::where(...)->get();
+
+    if ($request->expectsJson()) {
+        return response()->json($data);  // Appel API → JSON
+    }
+
+    return view('app', [                 // Navigation → SPA
+        'page' => 'ma-page',
+        'props' => ['data' => $data],
+    ]);
+}
+```
+
+Deux patterns existent :
+1. **Rendu mixte** (view pour page + JSON pour API) — utilisé dans les contrôleurs GEL existants
+2. **Pure API** (toujours JSON) — utilisé dans les contrôleurs Company pour `fetch()` côté client
+
+#### Middleware chain complète
+
+L'ordre d'exécution des middlewares sur une route protégée typique :
+
+```
+1. SetTenantContext (global)     → SET app.client_id (PostgreSQL RLS only)
+2. EncryptCookies                → Standard Laravel
+3. StartSession                  → Standard Laravel
+4. Authenticate                  → Vérifie session valide
+5. EnsureEmailVerified           → Vérifie email (pass-through pour super_admin)
+6. CheckNotSuspended             → Vérifie que le compte n'est pas suspendu
+7. CheckCompanyAccess            → Redirige company_admin vers /company/*
+8. EnsureCompanyAccess           → Vérifie active_client_id valide dans user_clients
+9. CheckModuleAccess             → Vérifie accès au module (module:rh, module:dae, etc.)
+10. Controller                   → Exécute la logique métier
+```
+
+#### Services pattern
+
+Les services sont des classes PHP dédiées, injectées par constructeur (Laravel auto-resolve) :
+
+```php
+class EmecefController extends Controller
+{
+    public function __construct(
+        private readonly EmecefService $emecef
+    ) {}
+}
+```
+
+Services clés :
+| Service | Localisation | Responsabilité |
+|---------|-------------|----------------|
+| `EmecefService` | `app/Services/EmecefService.php` | API e-MECeF DGI (émettre, annuler, vérifier, certifier) |
+| `MobileMoneyService` | `app/Services/MobileMoneyService.php` | Paiements MTN MoMo, Moov Money |
+| `SmsService` | `app/Services/SmsService.php` | Envoi SMS (Africa's Talking) |
+| `WhatsAppService` | `app/Services/WhatsAppService.php` | Meta WABA v18.0 |
+| `IrppCalculator` | `app/Services/Paie/IrppCalculator.php` | Calcul IRPP Bénin (7 tranches) |
+| `CnssCalculator` | `app/Services/Paie/CnssCalculator.php` | Calcul CNSS (employeur 15,4%, salarié 3,36%) |
+| `OcrInvoiceService` | `app/Services/OcrInvoiceService.php` | OCR factures fournisseurs |
+| `BankReconciliationService` | `app/Services/BankReconciliationService.php` | Rapprochement bancaire |
+| `ActeGeneratorService` | `app/Services/ActeGeneratorService.php` | Génération d'actes juridiques |
+
+#### Scopes Eloquent
+
+Les modèles utilisent des **scopes Eloquent** pour le filtrage multi-tenant :
+
+```php
+// Client scope (User, CompanyInvoice)
+scopeByClient($query, int $clientId)
+
+// LegalBaseModel abstract — scope multi-tenant pour le module juridique
+scopeByClient() {
+    if (auth()->user()?->isSuperAdmin()) return;  // Super admin → tout voir
+    $query->where('client_id', clientId());        // Comptable → filtré
+}
+
+// Autres scopes fréquents
+scopeActive()       // is_active = true
+scopeNotSuspended() // is_suspended = false | null
+scopeUnread()       // read_at IS NULL
+```
+
+#### Notifications
+
+**Modèle :** `App\Models\Notification`
+- `user_id` → destinataire
+- `type` → catégorie (ex: `emecef_emise`)
+- `title`, `message` → contenu affiché
+- `data` → payload JSON (`{invoice_id, url}`)
+- `read_at` → nullable, marquée lue quand non-null
+- **Scope :** `unread()` → `WHERE read_at IS NULL`
+
+---
 
 ### 10.2 Frontend (Vue 3 SPA + Blade)
 
@@ -1936,7 +2731,7 @@ resources/
 │   │   │   │   ├── Treasury.vue, TreasuryForecast.vue
 │   │   │   │   └── PreBill.vue
 │   │   │   ├── Rh/                # RH & Paie
-│   │   │   ├── Legal/             # Juridique
+│   │   │   ├── Legal/             # (Lien vers Modules/Legal)
 │   │   │   ├── Projects/          # Projets
 │   │   │   ├── Caisse/            # Caisse
 │   │   │   ├── Dae/               # Secrétariat DAE
@@ -1958,6 +2753,25 @@ resources/
 │   │   │       └── OrderShow.vue
 │   │   ├── Commerce/              # Dashboard commerce/POS
 │   │   │   └── Dashboard.vue
+│   │   ├── Modules/               # Modules spécialisés
+│   │   │   └── Legal/             # Module juridique (21 pages)
+│   │   │       ├── Dashboard.vue                          # KPI + listes récentes
+│   │   │       ├── Societe/
+│   │   │       │   └── Index.vue                          # Fiche société
+│   │   │       ├── Assemblees/
+│   │   │       │   ├── Index.vue, Show.vue, Form.vue      # CRUD assemblées
+│   │   │       ├── Contrats/
+│   │   │       │   ├── Index.vue, Show.vue, Form.vue      # CRUD contrats
+│   │   │       ├── Contentieux/
+│   │   │       │   ├── Index.vue, Show.vue, Form.vue      # CRUD contentieux
+│   │   │       ├── Conformite/
+│   │   │       │   ├── Index.vue, Form.vue, Calendrier.vue # Conformité
+│   │   │       ├── Bibliotheque/
+│   │   │       │   ├── Index.vue, Form.vue, Generer.vue   # Bibliothèque d'actes
+│   │   │       ├── Dossiers/
+│   │   │       │   ├── Index.vue, Show.vue, Form.vue      # Dossiers juridiques
+│   │   │       └── Registres/
+│   │   │           └── Show.vue                           # Registres
 │   │   ├── Public/
 │   │   │   └── Catalogue/         # Catalogue e-commerce public
 │   │   │       ├── Index.vue, Show.vue, OrderWizard.vue
@@ -1972,7 +2786,117 @@ resources/
 │       └── company.css            # Classes partagées isup-* (portail entreprise)
 ```
 
-### 10.3 Routes (`routes/web.php` + `routes/auth.php` — ~1300+ lignes)
+### 10.3 Comportement client (Vue SPA)
+
+#### Initialisation de l'application
+
+```
+1. Blade template (app.blade.php / company.blade.php)
+   ├── <div id="app" data-page="company-invoices" data-props='{...}'>
+   └── <script id="auth-data">{"user": {...}}</script>
+
+2. app.js (Vue entry point)
+   ├── Crée l'app Vue (createApp)
+   ├── Injecte 'page' et 'pageProps' via provide()
+   ├── Enregistre tous les composants (app.component('nom', Component))
+   └── Monte sur #app
+
+3. Root.vue
+   ├── inject('page') → 'company-invoices'
+   ├── inject('pageProps') → { clientId: 2 }
+   ├── Map() résout le composant → 'company-invoices' → Company/Invoices.vue
+   └── <component :is="pageComponent" v-bind="pageProps" />
+
+4. Layout wrapper (CompanyLayout.vue)
+   ├── Topbar + Sidebar + Slot
+   ├── AuthStore initialisation
+   ├── Permission polling démarre
+   └── Composant page rendu dans le slot
+```
+
+#### AuthStore (stores/auth.js)
+
+**Initialisation :**
+1. `initAuth()` parse `<script id="auth-data">` au chargement
+2. `authStore.initFromApi()` appelle `GET /api/me/profile` pour charger :
+   - `user` (profil complet)
+   - `permissions` (format `module:action`)
+   - `modules` (liste déduite des permissions)
+   - `companies` (entreprises accessibles)
+   - `activeCompany` (entreprise sélectionnée)
+
+**Vérifications d'accès côté client :**
+```javascript
+// Vérifier l'accès à un module
+authStore.hasModule('facturation')  // → true/false
+
+// Vérifier une action spécifique
+authStore.can('facturation', 'lire')  // → true/false
+
+// Super Admin et Company Admin bypassent toujours
+authStore.isSuperAdmin → true → tout accès autorisé
+authStore.isCompanyAdmin → true → tout accès autorisé dans son scope
+```
+
+**Polling des permissions (toutes les 15 secondes) :**
+```javascript
+// startPermissionPolling() → setInterval toutes les 15s
+// Appelle GET /api/company/events/check
+// Si updated === true → window.location.reload()
+// Utilisé dans CompanyLayout.vue
+
+// Mécanisme :
+// 1. CompanyLayout monte → startPermissionPolling()
+// 2. Toutes les 15s : GET /api/company/events/check
+// 3. Compare permissions avec le cache
+// 4. Si changées → reload pour appliquer les nouveaux droits
+// 5. Composant démonté → stopPermissionPolling()
+```
+
+**Restrictions de champs :**
+```javascript
+// Chargement des champs cachés pour un module
+await authStore.loadFieldRestrictions('rh')
+// Vérification si un champ est caché
+if (authStore.isFieldHidden('rh', 'salary')) {
+    // Masquer le champ salaire
+}
+```
+
+**Changement de contexte entreprise :**
+```javascript
+// Bascule vers une autre entreprise
+await authStore.switchToCompany(clientId)
+// → POST /api/me/switch-context
+// → Met à jour active_client_id
+// → Recharge les permissions
+// → window.location.reload()
+```
+
+#### Composants Vue — Pages Factures
+
+**Page GEL (Gel/Erp/Invoice.vue) :**
+- Affiche la liste des `ErpInvoice`
+- Bouton DGI (`emitEmecef(invoiceId)`) :
+  ```javascript
+  const emitEmecef = async (invoiceId) => {
+      const res = await fetch(`/emecef/emit/${invoiceId}`, { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+          alert('Facture émise à la DGI avec succès.')
+          await fetchData() // Recharge la liste
+      }
+  }
+  ```
+- Badge "DGI" vert sur les factures déjà émises
+- Statuts : brouillon, émise, envoyée, payée, impayée, annulée
+
+**Page Company (Company/Invoices.vue) :**
+- Affiche les `CompanyInvoice` + les `ErpInvoice` émises (fusionnées)
+- Colonne "DGI" avec badge `[DGI ✓]` pour les factures certifiées
+- Badge "ERP" pour les factures créées par le comptable
+- Détail avec QR code e-MECeF (NIM, compteur, date, statut, QR URL)
+- Modal paiement avec 4 méthodes (cash, transfer, momo, cheque)
 
 ```
 PUBLIC (sans authentification) :
@@ -2105,6 +3029,135 @@ npm run build
 npx vite
 ```
 
+### 11.4 Configuration post-installation
+
+Après `php artisan migrate --seed`, plusieurs étapes de configuration sont nécessaires :
+
+#### 11.4.1 Fichier .env
+
+```env
+# Base de données
+DB_DATABASE=gel_cabinet
+DB_USERNAME=root
+DB_PASSWORD=
+
+# Session
+SESSION_DRIVER=file
+SESSION_LIFETIME=120
+
+# e-MECeF / Sygmef (DGI Bénin)
+EMECEF_API_TOKEN=token_dgi
+EMECEF_NIM=XX-XXXXXXX           # NIM global par défaut
+EMECEF_TEST_MODE=true            # true = simulation sans API réelle
+EMECEF_API_URL=https://sygmef.impots.bj/emcf/api
+
+# 2FA
+GOOGLE2FA_VIEW_PACKAGE= Blade  # ou "tailwind" selon le thème
+
+# Mail (pour notifications, relances, envoi factures)
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=votre@email.com
+MAIL_PASSWORD=mdp_app
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=noreply@gel.cabinet
+MAIL_FROM_NAME="GEL Cabinet"
+
+# Mobile Money
+MOMO_API_KEY=
+MOMO_API_SECRET=
+MOMO_ENVIRONMENT= sandbox     # sandbox → production
+```
+
+#### 11.4.2 Activation des modules par client
+
+Chaque entreprise cliente doit avoir ses modules activés :
+
+```sql
+-- Via la table client_modules (créée par le super_admin dans l'UI)
+INSERT INTO client_modules (client_id, module, is_active, activated_at, activated_by)
+VALUES (2, 'rh', true, NOW(), 1),
+       (2, 'dae', true, NOW(), 1),
+       (2, 'facturation', true, NOW(), 1);
+
+-- Ou via la colonne disabled_modules sur clients
+UPDATE clients SET disabled_modules = '["commerce"]' WHERE id = 2;
+-- Les modules non listés dans disabled_modules sont accessibles par défaut
+```
+
+**Modules disponibles (12) :**
+```
+caisse, comptabilite, crm, dae, document, erp,
+facturation, it_assets, it_helpdesk, juridique, projets, rh
+```
+
+#### 11.4.3 Configuration e-MECeF par client
+
+Pour activer e-MECeF sur un client :
+
+1. **Renseigner l'IFU** du client sur sa fiche (obligatoire pour la DGI)
+2. **Renseigner le NIM** fourni par la DGI pour ce client
+3. **Renseigner le mot de passe** e-MECeF du client (chiffré en base)
+4. **Activer le toggle** `emecef_is_active`
+5. **Configurer le régime fiscal** (réel_simplifié / réel_normal)
+
+Ces champs sont modifiables uniquement par les super_admin / comptables, dans la fiche client (section paramètres).
+
+#### 11.4.4 Création des utilisateurs entreprise
+
+Les utilisateurs du portail entreprise sont créés via la table `user_clients` :
+
+```php
+// Liaison d'un utilisateur à une entreprise
+UserClient::create([
+    'user_id' => $user->id,
+    'client_id' => $client->id,
+    'role' => 'company_admin',  // ou company_manager, company_employee, client
+    'is_active' => true,
+    'joined_at' => now(),
+]);
+
+// Sélection du contexte actif
+$user->switchToClient($clientId);
+// → Met à jour active_client_id
+// → Met à jour last_accessed_at dans user_clients
+```
+
+#### 11.4.5 Configuration des pôles et missions
+
+Les pôles (départements) et missions sont créés par le super_admin :
+
+```bash
+# Seeders disponibles
+php artisan db:seed --class=PoleSeeder        # Pôles de démonstration
+php artisan db:seed --class=MissionSeeder      # Missions de démonstration
+php artisan db:seed --class=LegalDemoSeeder    # Données juridiques (50+ enregistrements)
+```
+
+Chaque pôle peut être assigné à un ou plusieurs clients via `client_pole`.
+
+#### 11.4.6 Vérification après installation
+
+```bash
+# 1. Vérifier les migrations
+php artisan migrate:status
+
+# 2. Vérifier les seeders
+php artisan db:seed --class=DatabaseSeeder
+
+# 3. Tester la connexion
+#    admin@gel.cabinet / admin123 → Dashboard GEL
+#    jean@techinnov.bj / admin123 → Dashboard entreprise TechInnov
+
+# 4. Tester e-MECeF (en test mode)
+#    EMECEF_TEST_MODE=true → pas d'appel API réel
+#    → La facture reçoit de vraies données simulées
+
+# 5. Vérifier npm build
+npm run build
+```
+
 ---
 
 ## 12. Roadmap et évolutions
@@ -2155,6 +3208,35 @@ npx vite
   - [x] Icônes sidebar 18px avec opacité progressive, avatar user en bas
   - [x] Transitions 0.2s, scrollbar stylisée, responsive < 992px overlay
 
+### ✅ Version 2.1 — Services & Navigation (achevée)
+
+- [x] **7 sections de services** — Réorganisation de la navigation en 7 catégories (Administration, Consultation, Fiscal, IT, Social & Paie, Juridique, Logiciel Comptabilité)
+- [x] **Pages dédiées** — Pages publiques pour chaque service avec contenu détaillé
+- [x] **Sidebar GEL dynamique** — Navigation par groupes avec icônes et badges
+- [x] **Module Commerce/POS** — Gestion commerciale complète avec point de vente, stocks et catalogue
+
+### 🔥 Version 2.2 — GEL Intelligence (en cours)
+
+- [ ] **Omnisearch (Ctrl+K)** — Recherche globale type Command Palette
+- [ ] **Filtres en chips** — Composant FilterChips.vue pour tous les tableaux
+- [ ] **Sidebar dépliante** — Regroupement en catégories repliables + état mémorisé
+- [ ] **Bouton "+ Nouveau"** — Actions rapides dans la sidebar
+- [ ] **Système Multi-Agents IA** — 6 agents spécialisés (OHADA, Fiscal, Rapprochement, Relance, OCR, Trésorerie)
+- [ ] **Fil d'Activité IA** — AiFeed.vue avec approbation/rejet des suggestions
+- [ ] **Agent Fiscal Bénin** — Alertes échéances + pré-remplissage TVA + calendrier fiscal
+- [ ] **Agent Rapprochement Bancaire** — Import multi-format + matching intelligent + ready-to-post
+- [ ] **Magic Links** — Demandes de documents sans login par lien sécurisé
+- [ ] **Workpapers** — Dossiers de travail avec révision structurée des comptes
+- [ ] **Agent Relance Intelligente** — Canal optimal + escalade progressive + prédiction
+- [ ] **Agent OCR Factures** — Extraction IA + pré-comptabilisation automatique
+- [ ] **Transactions Récurrentes** — 3 types (programmée, rappel, template)
+- [ ] **Signets / Favoris** — Section SIGNETS personnalisable dans la sidebar
+- [ ] **Dashboard widgetisable** — Widgets réarrangeables par drag & drop
+- [ ] **Notes Internes vs Partagées** — Toggle 🔒 Interne / 👁️ Partagée
+- [ ] **Reclassification en masse** — Changement de compte en un clic
+- [ ] **Verrouillage de période** — Protection des périodes clôturées
+- [ ] **Requêtes Client In-App** — Communication structurée comptable → client
+
 ### 🔴 P0 — Priorité absolue (conquête marché)
 
 - [ ] **Intégration e-MECeF / Sygmef** — Obligatoire légalement, bloquant pour les clients
@@ -2189,7 +3271,7 @@ npx vite
 
 ### 🟢 P3 — Priorité future
 
-- [ ] **OCR import factures fournisseurs** — API Claude + spatie/pdf-to-text
+- [ ] **OCR import factures fournisseurs** — API IA (Gemini) + spatie/pdf-to-text
 - [ ] **Rapprochement bancaire automatique** — CSV/OFX/MT940, fuzzy matching
 - [ ] **États financiers SYSCOHADA complets** — Bilan, CRP, TAFIRE, Notes
 - [ ] **Comptabilité analytique** — Centres de coûts, répartition
@@ -2213,7 +3295,9 @@ npx vite
 
 ## 13. Extension Stratégique v2.0 — Récapitulatif
 
-### 13.1 Nouvelles tables (23 nouvelles)
+### 13.1 Nouvelles tables (23 tables v2.0 + 8 tables v2.2)
+
+**Tables Version 2.0 :**
 
 ```
 audit_logs                  → Traçabilité complète de toutes les actions sensibles
@@ -2241,6 +3325,19 @@ tontine_cotisations         → Cotisations tontine
 + Colonnes additionnelles sur users, clients, invoices (e-MECeF, 2FA, sécurité IP)
 ```
 
+**Tables Version 2.2 (GEL Intelligence) :**
+
+```
+ai_suggestions               → Suggestions/actions des 6 agents IA (fil d'activité)
+ai_learning_log              → Journal d'apprentissage (corrections manuelles → amélioration)
+workpapers                   → Dossiers de travail avec statut de révision par compte
+magic_link_requests          → Demandes de documents sans login avec token signé
+recurring_transactions       → Transactions récurrentes (3 types : scheduled/reminder/template)
+user_bookmarks               → Signets personnalisables (favoris dans la sidebar)
+user_dashboard_config        → Configuration des widgets du dashboard
+entity_notes                 → Notes internes et partagées sur toutes les entités
+```
+
 ### 13.2 Nouveaux packages
 
 | Package | Usage | Partie |
@@ -2263,13 +3360,21 @@ App\Services\
 │   └── CnssCalculator         → Calcul CNSS (employeur 15,4%, salarié 3,36%)
 ├── Comptabilite\
 │   └── EtatsFinanciersService → Bilan/CRP/TAFIRE conformes SYSCOHADA
-├── OcrInvoiceService          → OCR factures fournisseurs (API Claude)
+├── OcrInvoiceService          → OCR factures fournisseurs (API IA (Gemini))
 ├── BankReconciliationService  → Rapprochement bancaire automatique
 ├── SmsService                 → SMS Bénin (Africa's Talking / passerelle locale)
 ├── WhatsAppService            → WhatsApp Business API (Meta WABA v18.0)
 ├── MobileMoneyService         → MTN MoMo + Moov Money
 ├── ItRapportService           → Rapports d'intervention IT (PDF signable)
 └── IfuVerificationService     → Validation IFU Bénin (clé modulo 97)
+├── IA\
+│   └── GelIntelligenceService → Orchestrateur des 6 agents IA (suggestions, actions, apprentissage)
+├── Comptabilite\
+│   ├── WorkpaperService       → Révision structurée des comptes (workpapers)
+│   └── RecurringTransactionService → Gestion des transactions récurrentes
+├── RelanceIntelligenteService → Agent relance (canal optimal, escalade, prédiction paiement)
+├── ReconciliationService      → Agent rapprochement bancaire (matching, scores, ready-to-post)
+└── FiscalBeninService         → Agent fiscal (TVA, déclarations, échéances, simulation e-MECeF)
 ```
 
 ### 13.4 Nouvelles commandes artisan
@@ -2278,12 +3383,17 @@ App\Services\
 |----------|-----------|-------------|
 | `CheckItAssetAlerts` | Hebdomadaire (lundi 08:00) | Alertes garanties et licences expirant |
 | `ProcessRelances` | Quotidienne (09:00) | Relances automatiques clients impayés |
+| `ProcessRecurringTransactions` | Quotidienne (06:00) | Création des écritures programmées et envoi des rappels |
+| `ProcessAiAgentOhada` | Horaire | Analyse et suggestions Agent OHADA |
+| `ProcessAiAgentFiscal` | Quotidienne (07:00) | Alertes échéances et pré-remplissage déclarations |
+| `ProcessAiAgentRelance` | Quotidienne (08:00) | Analyse des impayés et suggestions de relance |
 
 ### 13.5 Nouveaux middlewares
 
 | Middleware | Description |
 |------------|-------------|
 | `IpWhitelist` | Blocage des IP non autorisées par client |
+| `CheckAiAgentAccess` | Vérification des droits d'accès aux agents IA |
 
 ### 13.6 Schéma de priorisation marché
 
@@ -2317,6 +3427,34 @@ P3 (différenciation, futur)
 ├── Workflows
 ├── Dashboard exécutif
 └── Contrats maintenance IT
+
+P0 v2.2 (fondation GEL Intelligence)
+├── Mise à jour CAHIER_DES_CHARGES.md
+├── Omnisearch (Ctrl+K)
+├── Filtres en chips (FilterChips.vue)
+└── Sidebar dépliante + Bouton "+ Nouveau"
+
+P1 v2.2 (core IA)
+├── Tables IA + API CRUD
+├── AiFeed.vue + badge sidebar
+├── Agent Fiscal Bénin
+└── Agent Rapprochement Bancaire
+
+P2 v2.2 (automatisation)
+├── Magic Links
+├── Workpapers
+├── Agent Relance Intelligente
+├── Agent OCR Factures
+├── Transactions Récurrentes
+├── Signets
+├── Dashboard widgetisable
+└── Notes internes/partagées
+
+P3 v2.2 (optimisation)
+├── Agent OHADA complet
+├── Agent Prédiction Trésorerie
+├── Outils comptables en masse
+└── Requêtes client in-app
 ```
 
 ---

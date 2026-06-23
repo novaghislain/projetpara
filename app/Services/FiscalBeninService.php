@@ -27,7 +27,7 @@ class FiscalBeninService
         if (!$fiscalYearId) {
             $fiscalYear = FiscalYear::firstOrCreate(
                 ['client_id' => $clientId, 'year' => $year],
-                ['start_date' => "{$year}-01-01", 'end_date' => "{$year}-12-31", 'status' => 'open']
+                ['date_start' => "{$year}-01-01", 'date_end' => "{$year}-12-31", 'status' => 'open']
             );
             $fiscalYearId = $fiscalYear->id;
         }
@@ -35,7 +35,7 @@ class FiscalBeninService
         // Analyser les lignes de journal de la période
         $lines = AccountingJournalLine::whereHas('journal', function ($q) use ($clientId, $startDate, $endDate) {
             $q->where('client_id', $clientId)
-              ->whereBetween('date', [$startDate, $endDate]);
+              ->whereBetween('entry_date', [$startDate, $endDate]);
         })->get();
 
         $tvaCollected = 0;
@@ -57,7 +57,7 @@ class FiscalBeninService
                     'account' => $accountCode,
                     'amount' => $tvaAmount,
                     'label' => $line->label ?? 'Vente',
-                    'date' => $line->date,
+                    'date' => $line->created_at?->format('Y-m-d'),
                 ];
             }
             // TVA déductible (comptes 44566)
@@ -68,7 +68,7 @@ class FiscalBeninService
                     'account' => $accountCode,
                     'amount' => $tvaAmount,
                     'label' => $line->label ?? 'Achat',
-                    'date' => $line->date,
+                    'date' => $line->created_at?->format('Y-m-d'),
                 ];
             }
         }
@@ -129,6 +129,22 @@ class FiscalBeninService
     }
 
     /**
+     * Résumé / status pour le dashboard des agents IA.
+     */
+    public function summary(int $clientId): array
+    {
+        $pendingCount = AiSuggestion::byClient($clientId)->where('agent', 'fiscal')->pending()->count();
+        $alertsCount = AiSuggestion::byClient($clientId)->where('agent', 'fiscal')->where('type', 'like', 'alert_%')->pending()->count();
+        $tvaCount = AiSuggestion::byClient($clientId)->where('agent', 'fiscal')->where('type', 'tva_declaration')->pending()->count();
+
+        return [
+            'pending_suggestions' => $pendingCount,
+            'alerts_count' => $alertsCount,
+            'tva_suggestions' => $tvaCount,
+        ];
+    }
+
+    /**
      * Génère des alertes fiscales pour un client.
      */
     public function generateAlerts(int $clientId): array
@@ -161,7 +177,7 @@ class FiscalBeninService
         // 2. Vérification d'anomalies comptables
         $hightValueLines = AccountingJournalLine::whereHas('journal', function ($q) use ($clientId) {
             $q->where('client_id', $clientId)
-              ->where('date', '>=', now()->subMonth(3));
+              ->where('entry_date', '>=', now()->subMonths(3));
         })->where('debit', '>=', 5000000)
           ->orWhere('credit', '>=', 5000000)
           ->limit(5)
@@ -179,14 +195,14 @@ class FiscalBeninService
         // 3. Suggestion de clôture d'exercice
         $openYear = FiscalYear::where('client_id', $clientId)
             ->where('status', 'open')
-            ->where('end_date', '<=', $now)
+            ->where('date_end', '<=', $now)
             ->first();
 
         if ($openYear) {
             $alerts[] = [
                 'type' => 'closing_due',
                 'title' => 'Clôture d\'exercice en attente',
-                'description' => "L'exercice {$openYear->year} est terminé depuis le {$openYear->end_date->format('d/m/Y')}.",
+                'description' => "L'exercice {$openYear->year} est terminé depuis le {$openYear->date_end->format('d/m/Y')}.",
                 'urgency' => 'warning',
                 'fiscal_year_id' => $openYear->id,
             ];

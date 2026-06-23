@@ -23,7 +23,7 @@ class ReconciliationAgentService
 
         // Trouver les rapprochements en cours
         $pendingReconciliations = BankReconciliation::where('client_id', $clientId)
-            ->whereIn('status', ['draft', 'in_progress'])
+            ->whereIn('status', ['draft', 'matched'])
             ->get();
 
         foreach ($pendingReconciliations as $rec) {
@@ -70,7 +70,7 @@ class ReconciliationAgentService
 
         $total = 0;
         foreach ($comptesTiers as $compte) {
-            $total += $compte->entries()->whereNull('lettrage_code')->count();
+            $total += $compte->journalLines()->whereNull('lettrage_code')->count();
         }
 
         if ($total > 0) {
@@ -93,7 +93,7 @@ class ReconciliationAgentService
     public function summary(int $clientId): array
     {
         $pending = AiSuggestion::byClient($clientId)->byAgent('reconciliation')->pending()->count();
-        $openRecs = BankReconciliation::where('client_id', $clientId)->whereIn('status', ['draft', 'in_progress'])->count();
+        $openRecs = BankReconciliation::where('client_id', $clientId)->whereIn('status', ['draft', 'matched'])->count();
 
         return [
             'pending_suggestions' => $pending,

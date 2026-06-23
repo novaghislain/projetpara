@@ -7,9 +7,16 @@ use App\Models\AccountingJournal;
 use App\Models\AccountingJournalLine;
 use App\Models\AccountingAccount;
 use App\Models\FiscalYear;
+use App\Services\AiService;
 
 class OhadaAgentService
 {
+    public function __construct(
+        private ?AiService $ai = null
+    ) {
+        $this->ai ??= app(AiService::class);
+    }
+
     /**
      * Vérifier la conformité SYSCOHADA des écritures récentes.
      */
@@ -81,7 +88,7 @@ class OhadaAgentService
         $linesWithoutRef = AccountingJournalLine::whereHas('journal', function ($q) use ($clientId) {
             $q->where('client_id', $clientId);
         })->where(function ($q) {
-            $q->whereNull('piece_number')->orWhere('piece_number', '');
+            $q->whereNull('reference_document')->orWhere('reference_document', '');
         })->limit(20)->get();
 
         if ($linesWithoutRef->count()) {
@@ -94,6 +101,21 @@ class OhadaAgentService
             ];
         }
 
+        // Analyse IA enrichie du contexte
+        $aiDescription = null;
+        if ($this->ai->isConfigured()) {
+            $context = "Entreprise #{$clientId}, exercice {$fiscalYear->year}. ";
+            $context .= count($anomalies) . " anomalies détectées : ";
+            foreach ($anomalies as $a) {
+                $context .= "- {$a['title']}: {$a['description']} ";
+            }
+            $aiDescription = $this->ai->generate(
+                "Tu es un expert comptable SYSCOHADA. Analyse ces anomalies:\n{$context}\n"
+                . "Donne un résumé concis (2-3 phrases) des actions recommandées.",
+                0.3
+            );
+        }
+
         // Créer une suggestion IA si anomalies
         $suggestionId = null;
         if (count($anomalies)) {
@@ -102,9 +124,9 @@ class OhadaAgentService
                 'agent' => 'ohada',
                 'type' => 'compliance_check',
                 'title' => 'Conformité SYSCOHADA — ' . count($anomalies) . ' anomalie(s)',
-                'description' => implode(' | ', array_map(fn($a) => $a['title'], $anomalies)),
+                'description' => $aiDescription ?? implode(' | ', array_map(fn($a) => $a['title'], $anomalies)),
                 'data' => ['anomalies' => $anomalies, 'fiscal_year_id' => $fiscalYear->id],
-                'metadata' => ['agent' => 'OHADA', 'version' => '1.0'],
+                'metadata' => ['agent' => 'OHADA', 'version' => '1.0', 'ai_enhanced' => $this->ai->isConfigured()],
                 'status' => 'pending',
             ]);
             $suggestionId = $suggestion->id;

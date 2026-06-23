@@ -69,6 +69,10 @@ const statusLabel = (status) => {
     return map[status] || status;
 };
 
+const onQrError = (e) => {
+    e.target.style.display = 'none';
+};
+
 const typeLabel = (type) => {
     const map = { invoice: 'Facture', credit_note: 'Avoir', devis: 'Devis' };
     return map[type] || type;
@@ -136,9 +140,21 @@ const loadStats = async () => {
     }
 };
 
-const loadInvoiceDetail = async (id) => {
+const loadInvoiceDetail = async (inv) => {
+    // Si c'est une facture ERP, on a déjà toutes les données
+    if (inv.source === 'erp') {
+        selectedInvoice.value = {
+            ...inv,
+            name: inv.number,
+            items: [],
+            payments: [],
+            created_by_name: 'Comptable GEL',
+        };
+        showDetailModal.value = true;
+        return;
+    }
     try {
-        const res = await fetch(`/api/company/invoices/${id}`);
+        const res = await fetch(`/api/company/invoices/${inv.id}`);
         if (!res.ok) throw new Error('Erreur chargement détail');
         const data = await res.json();
         selectedInvoice.value = data.invoice;
@@ -348,12 +364,16 @@ onMounted(() => {
                                             <th class="text-end">Montant TTC</th>
                                             <th class="text-end">Payé</th>
                                             <th>Statut</th>
+                                            <th>DGI</th>
                                             <th class="text-end pe-4">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr v-for="inv in invoices" :key="inv.id">
-                                            <td class="ps-4 isup-inv-number">{{ inv.number }}</td>
+                                        <tr v-for="inv in invoices" :key="'inv-' + inv.id" :class="{ 'isup-row-erp': inv.source === 'erp' }">
+                                            <td class="ps-4 isup-inv-number">
+                                                {{ inv.number }}
+                                                <span v-if="inv.source === 'erp'" class="isup-source-badge" title="Facture émise par le comptable GEL">ERP</span>
+                                            </td>
                                             <td><span class="isup-badge isup-badge-light">{{ typeLabel(inv.type) }}</span></td>
                                             <td class="isup-inv-client">{{ inv.recipient_name }}</td>
                                             <td class="isup-inv-date">{{ formatDate(inv.issue_date) }}</td>
@@ -365,18 +385,24 @@ onMounted(() => {
                                                     {{ statusLabel(inv.computed_status || inv.status) }}
                                                 </span>
                                             </td>
+                                            <td>
+                                                <span v-if="inv.source === 'erp' && inv.emecef?.statut === 'emise'" class="isup-emecef-badge" title="Certifiée DGI">
+                                                    <i class="bi-shield-check"></i> DGI ✓
+                                                </span>
+                                                <span v-else class="isup-emecef-na">—</span>
+                                            </td>
                                             <td class="text-end pe-4">
                                                 <div class="d-flex gap-1 justify-content-end">
-                                                    <button class="isup-icon-btn" title="Détail" @click="loadInvoiceDetail(inv.id)">
+                                                    <button class="isup-icon-btn" title="Détail" @click="loadInvoiceDetail(inv)">
                                                         <i class="bi-eye" style="color:#00838f;"></i>
                                                     </button>
-                                                    <button v-if="inv.status === 'draft'" class="isup-icon-btn" title="Marquer envoyée" @click="updateInvoiceStatus(inv.id, 'sent')">
+                                                    <button v-if="!inv.source && inv.status === 'draft'" class="isup-icon-btn" title="Marquer envoyée" @click="updateInvoiceStatus(inv.id, 'sent')">
                                                         <i class="bi-send" style="color:#1565c0;"></i>
                                                     </button>
-                                                    <button v-if="inv.status === 'draft'" class="isup-icon-btn isup-icon-danger" title="Supprimer" @click="deleteInvoice(inv.id)">
+                                                    <button v-if="!inv.source && inv.status === 'draft'" class="isup-icon-btn isup-icon-danger" title="Supprimer" @click="deleteInvoice(inv.id)">
                                                         <i class="bi-trash"></i>
                                                     </button>
-                                                    <button v-if="inv.status !== 'paid' && inv.status !== 'cancelled'" class="isup-icon-btn" title="Enregistrer paiement" @click="openPaymentModal(inv)">
+                                                    <button v-if="!inv.source && inv.status !== 'paid' && inv.status !== 'cancelled'" class="isup-icon-btn" title="Enregistrer paiement" @click="openPaymentModal(inv)">
                                                         <i class="bi-cash" style="color:#2e7d32;"></i>
                                                     </button>
                                                 </div>
@@ -704,6 +730,41 @@ onMounted(() => {
                                 </span>
                             </div>
                         </div>
+
+                        <!-- QR Code e-MECeF -->
+                        <div v-if="selectedInvoice.emecef?.qr" class="isup-emecef-section mt-3">
+                            <div style="font-size:13px;font-weight:700;color:#163A5E;margin-bottom:10px;">
+                                <i class="bi-shield-check me-2" style="color:#2e7d32;"></i>Certification DGI (e-MECeF)
+                            </div>
+                            <div class="isup-emecef-card">
+                                <div class="isup-emecef-qr-wrap">
+                                    <img :src="selectedInvoice.emecef.qr" alt="QR Code DGI" class="isup-emecef-qr"
+                                         @error="onQrError" />
+                                </div>
+                                <div class="isup-emecef-info">
+                                    <div class="isup-emecef-row">
+                                        <span class="isup-emecef-label">NIM</span>
+                                        <span class="isup-emecef-value">{{ selectedInvoice.emecef.nim }}</span>
+                                    </div>
+                                    <div class="isup-emecef-row">
+                                        <span class="isup-emecef-label">Compteur</span>
+                                        <span class="isup-emecef-value">{{ selectedInvoice.emecef.compteur }}</span>
+                                    </div>
+                                    <div class="isup-emecef-row">
+                                        <span class="isup-emecef-label">Émis le</span>
+                                        <span class="isup-emecef-value">{{ selectedInvoice.emecef.datetime }}</span>
+                                    </div>
+                                    <div class="isup-emecef-row">
+                                        <span class="isup-emecef-label">Statut</span>
+                                        <span class="isup-emecef-value isup-emecef-valide">Certifiée ✓</span>
+                                    </div>
+                                    <div class="isup-emecef-row isup-emecef-full">
+                                        <span class="isup-emecef-label">QR URL</span>
+                                        <span class="isup-emecef-url">{{ selectedInvoice.emecef.qr }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="isup-modal-footer">
                         <button class="isup-btn-grey" @click="showDetailModal = false">Fermer</button>
@@ -785,4 +846,28 @@ onMounted(() => {
 .isup-pay-info { background:#e3f2fd; border:1px solid #bbdefb; border-radius:4px; padding:12px 14px; margin-top:14px; }
 .isup-alert-close { float:right; background:none; border:none; font-size:18px; line-height:1; color:#888; cursor:pointer; opacity:0.7; margin:-6px -4px 0 0; padding:0; }
 .isup-alert-close:hover { opacity:1; }
+
+/* ── ERP / e-MECeF specific styles ── */
+.isup-row-erp { background:#fafbfc; }
+.isup-row-erp:hover { background:#f0f4f8 !important; }
+.isup-source-badge { display:inline-block; font-size:9px; font-weight:700; padding:1px 5px; border-radius:3px; background:#163A5E; color:#fff; margin-left:5px; vertical-align:middle; letter-spacing:0.02em; }
+.isup-emecef-badge { display:inline-flex; align-items:center; gap:3px; font-size:11px; font-weight:600; color:#2e7d32; background:#e8f5e9; padding:2px 8px; border-radius:4px; white-space:nowrap; }
+.isup-emecef-na { color:#ccc; font-size:11px; }
+
+/* ── e-MECeF detail card ── */
+.isup-emecef-section { margin-top:16px; }
+.isup-emecef-card { display:flex; gap:16px; background:#f1f8e9; border:1px solid #c8e6c9; border-radius:8px; padding:14px; }
+.isup-emecef-qr-wrap { flex-shrink:0; }
+.isup-emecef-qr { width:120px; height:120px; border:2px solid #fff; border-radius:4px; background:#fff; }
+.isup-emecef-info { flex:1; display:flex; flex-direction:column; gap:4px; }
+.isup-emecef-row { display:flex; align-items:center; gap:8px; }
+.isup-emecef-label { font-size:10px; font-weight:700; color:#558b2f; text-transform:uppercase; letter-spacing:0.03em; min-width:60px; }
+.isup-emecef-value { font-size:12px; font-weight:600; color:#33691e; }
+.isup-emecef-valide { color:#2e7d32; }
+.isup-emecef-url { font-size:10px; color:#689f38; word-break:break-all; font-family:monospace; }
+.isup-emecef-full { flex-direction:column; align-items:flex-start; gap:2px; }
+
+@media (max-width:576px) {
+    .isup-emecef-card { flex-direction:column; align-items:center; }
+}
 </style>

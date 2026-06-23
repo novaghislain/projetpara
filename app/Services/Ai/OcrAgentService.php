@@ -17,10 +17,12 @@ class OcrAgentService
      */
     public function suggestOcr(int $clientId): array
     {
-        // Documents non scannés
+        // Documents non traités par OCR (sans scan, PDF/images récents)
         $pendingDocs = Document::where('client_id', $clientId)
-            ->whereNull('scanned_at')
             ->whereIn('mime_type', ['application/pdf', 'image/jpeg', 'image/png', 'image/tiff'])
+            ->where(function ($q) {
+                $q->whereNull('file_hash')->orWhere('file_hash', '');
+            })
             ->limit(10)
             ->get();
 
@@ -67,8 +69,10 @@ class OcrAgentService
     {
         $pending = AiSuggestion::byClient($clientId)->byAgent('ocr')->pending()->count();
         $unscanned = Document::where('client_id', $clientId)
-            ->whereNull('scanned_at')
             ->whereIn('mime_type', ['application/pdf', 'image/jpeg', 'image/png'])
+            ->where(function ($q) {
+                $q->whereNull('file_hash')->orWhere('file_hash', '');
+            })
             ->count();
 
         return [
