@@ -8,6 +8,8 @@
                 </a>
             </div>
 
+            <div v-if="error" class="alert alert-danger">⚠️ {{ error }}</div>
+
             <div class="d-flex gap-2 mb-3 flex-wrap">
                 <button v-for="s in statutsFiltres" :key="s.key" class="btn btn-sm" :class="filtre === s.key ? 'btn-dark' : 'btn-outline-secondary'" @click="filtre = s.key">
                     {{ s.label }} ({{ s.count }})
@@ -48,6 +50,7 @@ import ContratStatusBadge from '../../../../Components/Legal/ContratStatusBadge.
 
 const litiges = ref([]);
 const filtre = ref('tous');
+const error = ref(null);
 
 const counts = computed(() => ({
     tous: litiges.value.length,
@@ -76,8 +79,15 @@ function formatCurrency(val) {
 }
 
 async function load() {
-    try { const res = await fetch('/juridique/contentieux'); litiges.value = await res.json(); }
-    catch (e) { console.error(e); }
+    error.value = null;
+    try {
+        const res = await fetch('/juridique/contentieux');
+        if (!res.ok) throw new Error('Erreur ' + res.status);
+        litiges.value = await res.json();
+    } catch (e) {
+        console.error(e);
+        error.value = 'Impossible de charger les contentieux.';
+    }
 }
 onMounted(load);
 </script>

@@ -1,3 +1,24 @@
+// =============================================================================
+// FICHIER : app.js
+// RÔLE    : Point d'entrée du bundle JavaScript — Initialise Vue 3
+// ÉQUIPE  : GEL Cabinet — Équipe Dev Frontend
+// =============================================================================
+// Ce fichier est compilé par Vite (via resources/js/app.js → vite.config.js).
+// Il importe tous les composants Vue 3, les layouts, et les stores, puis
+// monte l'application sur l'élément #app du DOM.
+//
+// Architecture des imports :
+//   1. CSS (Tailwind + Bootstrap personnalisé)
+//   2. Bootstrap JS (Sidebar, Offcanvas, etc.)
+//   3. Stores (Authentication)
+//   4. Layouts (GelLayout, CompanyLayout, CpaLayout, ClientLayout)
+//   5. Pages (Gel/, Company/, Client/, Modules/, Auth/)
+//   6. Composants (Omnisearch, Modals, etc.)
+//
+// ⚠️  Ne JAMAIS importer de fichier qui n'est pas utilisé — Vite tree-shake
+//     les imports, mais l'import lui-même peut avoir des side effects.
+// =============================================================================
+
 import '../css/app.css';
 import '../css/company.css';
 import './bootstrap';
@@ -6,7 +27,8 @@ import { createApp } from 'vue';
 import Root from './Root.vue';
 import { initAuth } from './stores/auth';
 
-// Initialize auth state from Blade-embedded JSON before Vue mounts
+// Initialise l'état d'authentification depuis les données JSON injectées
+// par Laravel dans Blade (avant que Vue ne monte)
 initAuth();
 
 import GelLayout from './Layouts/GelLayout.vue';
@@ -51,7 +73,15 @@ import CommercePos from './Pages/Commerce/PosPage.vue';
 import CommerceInventory from './Pages/Commerce/Inventory.vue';
 import CommerceBusinessUsers from './Pages/Commerce/BusinessUsers.vue';
 
+// Onboarding / Inscription Components
+import OnboardingStep1 from './Pages/Onboarding/Step1_Company.vue';
+import OnboardingStep2 from './Pages/Onboarding/Step2_Domain.vue';
+import OnboardingStep3 from './Pages/Onboarding/Step3_Plan.vue';
+import OnboardingStep4 from './Pages/Onboarding/Step4_Admin.vue';
+import OnboardingStep5 from './Pages/Onboarding/Step5_Confirm.vue';
+
 // Licenses, Company Admins, Requests
+import GelPersonnel from './Pages/Gel/Personnel/Index.vue';
 import GelLicenses from './Pages/Gel/Licenses/Index.vue';
 import GelCompanyAdmins from './Pages/Gel/CompanyAdmins/Index.vue';
 import GelRequests from './Pages/Gel/Admin/Requests/Index.vue';
@@ -104,6 +134,7 @@ app.component('ErpTreasury', ErpTreasury);
 
 // Licenses, Company Admins, Requests
 app.component('GelLicenses', GelLicenses);
+app.component('GelPersonnel', GelPersonnel);
 app.component('GelCompanyAdmins', GelCompanyAdmins);
 app.component('GelRequests', GelRequests);
 app.component('GelSettings', GelSettings);
@@ -116,6 +147,13 @@ app.component('commerce-suppliers', CommerceSuppliers);
 app.component('commerce-pos', CommercePos);
 app.component('commerce-inventory', CommerceInventory);
 app.component('commerce-business-users', CommerceBusinessUsers);
+
+// Onboarding
+app.component('onboarding-step1', OnboardingStep1);
+app.component('onboarding-step2', OnboardingStep2);
+app.component('onboarding-step3', OnboardingStep3);
+app.component('onboarding-step4', OnboardingStep4);
+app.component('onboarding-step5', OnboardingStep5);
 
 // Nos Services Components
 import PublicCatalogueIndex from './Pages/Public/Catalogue/Index.vue';
@@ -154,6 +192,7 @@ import CompanyCrm from './Pages/Company/Crm.vue';
 import CompanyAiAssistant from './Pages/Company/AiAssistant.vue';
 import CompanyAccounting from './Pages/Company/Accounting.vue';
 import CompanyCaisse from './Pages/Company/Caisse.vue';
+import CompanyEmecef from './Pages/Company/Emecef.vue';
 
 app.component('company-dashboard', CompanyDashboard);
 app.component('company-services', CompanyServices);
@@ -169,6 +208,7 @@ app.component('company-crm', CompanyCrm);
 app.component('company-ai-assistant', CompanyAiAssistant);
 app.component('company-accounting', CompanyAccounting);
 app.component('company-caisse', CompanyCaisse);
+app.component('company-emecef', CompanyEmecef);
 
 // CPA (Crescendo) Dashboard Components
 import CpaDashboard from './Pages/Cpa/Dashboard.vue';
@@ -224,6 +264,18 @@ app.component('dae-personnel-show', DaePersonnelShow);
 // Company DAE
 import CompanyDaeDashboard from './Pages/Company/DaeDashboard.vue';
 app.component('company-dae-dashboard', CompanyDaeDashboard);
+
+import CompanyDaeCourriers from './Pages/Company/CompanyDaeCourriers.vue';
+app.component('company-dae-courriers', CompanyDaeCourriers);
+
+import CompanyDaeContrats from './Pages/Company/CompanyDaeContrats.vue';
+app.component('company-dae-contrats', CompanyDaeContrats);
+
+import CompanyDaeDocuments from './Pages/Company/CompanyDaeDocuments.vue';
+app.component('company-dae-documents', CompanyDaeDocuments);
+
+import CompanyDaeTaches from './Pages/Company/CompanyDaeTaches.vue';
+app.component('company-dae-taches', CompanyDaeTaches);
 
 // ─── Legal Module Components ───────────────────────────
 import LegalDashboard from './Pages/Modules/Legal/Dashboard.vue';
@@ -354,6 +406,10 @@ app.component('gel-tontines', GelTontines);
 app.component('gel-tontines-form', GelTontinesForm);
 app.component('gel-tontines-show', GelTontinesShow);
 
+// ─── Agents IA Components ──────────────────────────────
+import AiAgents from './Pages/Gel/Ai/Agents.vue';
+app.component('ai-agents', AiAgents);
+
 // ─── Télédéclaration Components ──────────────────────────
 import GelTeleDeclarations from './Pages/Gel/TeleDeclarations/Index.vue';
 import GelTeleDeclarationsForm from './Pages/Gel/TeleDeclarations/Form.vue';
@@ -430,6 +486,19 @@ app.component('gel-security', GelSecurity);
 // ─── Audit — Journal d'Audit ──────────────────────────
 import GelAudit from './Pages/Gel/Audit/Index.vue';
 app.component('gel-audit', GelAudit);
+
+// ─── IA & Automatisation Components ────────────────────
+import GelAiFeed from './Pages/Gel/Ai/Feed.vue';
+import GelAiReconciliation from './Pages/Gel/Ai/Reconciliation.vue';
+import GelAiRelances from './Pages/Gel/Ai/Relances.vue';
+import GelAiOcr from './Pages/Gel/Ai/Ocr.vue';
+import GelAiCashflow from './Pages/Gel/Ai/Cashflow.vue';
+
+app.component('gel-ai-feed', GelAiFeed);
+app.component('gel-ai-reconciliation', GelAiReconciliation);
+app.component('gel-ai-relances', GelAiRelances);
+app.component('gel-ai-ocr', GelAiOcr);
+app.component('gel-ai-cashflow', GelAiCashflow);
 
 // ─── Multi-Tenant / Permissions Components ────────────
 import SelectContext from './Pages/Company/SelectContext.vue';

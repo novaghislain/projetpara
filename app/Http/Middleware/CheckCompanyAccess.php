@@ -1,4 +1,16 @@
 <?php
+// =============================================================================
+// FICHIER : CheckCompanyAccess.php
+// RÔLE    : Middleware — Empêche les company_admins d'accéder au back-office
+// ÉQUIPE  : GEL Cabinet — Équipe Dev Backend
+// =============================================================================
+// Ce middleware protège les routes du GEL Cabinet (back-office interne).
+// Les company_admins (administrateurs d'entreprise cliente) n'ont pas le droit
+// d'accéder aux pages du cabinet — ils sont redirigés vers leur portail.
+//
+// Utilisation :
+//   Route::middleware('company') → appliqué aux routes du back-office
+// =============================================================================
 
 namespace App\Http\Middleware;
 

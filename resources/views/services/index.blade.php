@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Nos Services | GEL Cabinet</title>
-    <meta name="description" content="Services GEL Cabinet : Comptabilité, Juridique, Fiscal et Social & Paie pour la gestion de votre cabinet.">
+    <meta name="description" content="Services GEL Cabinet : Consultation, Fiscal, IT, Social & Paie, Juridique, Logiciel Comptabilité et Administration.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,6 +39,9 @@
         .delay-2 { transition-delay: 0.2s !important; }
         .delay-3 { transition-delay: 0.3s !important; }
         .delay-4 { transition-delay: 0.4s !important; }
+        .delay-5 { transition-delay: 0.5s !important; }
+        .delay-6 { transition-delay: 0.6s !important; }
+        .delay-7 { transition-delay: 0.7s !important; }
 
         /* Navbar */
         .gel-navbar {
@@ -250,7 +253,7 @@
             </div>
             <div class="gel-stats-row">
                 <div class="gel-stat-item anim-fade-up delay-1">
-                    <div class="gel-stat-num">4</div>
+                    <div class="gel-stat-num">7</div>
                     <div class="gel-stat-label">Services experts</div>
                 </div>
                 <div class="gel-stat-item anim-fade-up delay-2">
@@ -281,31 +284,31 @@
             </div>
             <div class="row g-4">
 
-                <!-- Comptabilité -->
+                <!-- Administration -->
                 <div class="col-md-6 col-lg-4 anim-fade-up delay-1">
-                    <a href="/services/comptabilite" class="gel-svc-card" style="--svc-color:#FF7900;--svc-light:rgba(255,121,0,0.08);">
-                        <div class="gel-svc-card-icon"><i class="bi-calculator"></i></div>
-                        <h4>Comptabilité</h4>
-                        <p>Plan comptable SYSCOA/OHADA, journaux, balance, bilan, déclarations fiscales et rapprochement bancaire.</p>
+                    <a href="/services/administration" class="gel-svc-card" style="--svc-color:#6B7280;--svc-light:rgba(107,114,128,0.08);">
+                        <div class="gel-svc-card-icon"><i class="bi-shield-lock"></i></div>
+                        <h4>Administration</h4>
+                        <p>Gestion des utilisateurs, attribution des rôles et permissions, sécurisation des accès, audit des activités, journalisation des actions et paramétrage avancé de la plateforme.</p>
                         <div class="gel-svc-tags">
-                            <span class="gel-svc-tag">SYSCOA</span>
-                            <span class="gel-svc-tag">Bilan</span>
-                            <span class="gel-svc-tag">TVA</span>
+                            <span class="gel-svc-tag">Sécurité</span>
+                            <span class="gel-svc-tag">Audit</span>
+                            <span class="gel-svc-tag">Permissions</span>
                         </div>
                         <div style="margin-top:14px;" class="gel-svc-card-link">Découvrir <i class="bi-arrow-right"></i></div>
                     </a>
                 </div>
 
-                <!-- Juridique -->
+                <!-- Consultation -->
                 <div class="col-md-6 col-lg-4 anim-fade-up delay-2">
-                    <a href="/services/juridique" class="gel-svc-card" style="--svc-color:#3B82F6;--svc-light:rgba(59,130,246,0.08);">
-                        <div class="gel-svc-card-icon"><i class="bi-bank2"></i></div>
-                        <h4>Juridique</h4>
-                        <p>Constitution de sociétés, veille juridique, rédaction de contrats, formalités légales et gestion documentaire.</p>
+                    <a href="/services/consultation" class="gel-svc-card" style="--svc-color:#3B82F6;--svc-light:rgba(59,130,246,0.08);">
+                        <div class="gel-svc-card-icon"><i class="bi-chat-dots"></i></div>
+                        <h4>Consultation</h4>
+                        <p>Accompagnement personnalisé des entreprises : gestion de la relation client, pilotage des missions, secrétariat administratif, signatures électroniques et numérisation intelligente (OCR).</p>
                         <div class="gel-svc-tags">
-                            <span class="gel-svc-tag">Contrats</span>
-                            <span class="gel-svc-tag">Sociétés</span>
-                            <span class="gel-svc-tag">Veille</span>
+                            <span class="gel-svc-tag">Clients</span>
+                            <span class="gel-svc-tag">Missions</span>
+                            <span class="gel-svc-tag">Secrétariat</span>
                         </div>
                         <div style="margin-top:14px;" class="gel-svc-card-link">Découvrir <i class="bi-arrow-right"></i></div>
                     </a>
@@ -316,7 +319,7 @@
                     <a href="/services/fiscal" class="gel-svc-card" style="--svc-color:#8B5CF6;--svc-light:rgba(139,92,246,0.08);">
                         <div class="gel-svc-card-icon"><i class="bi-receipt"></i></div>
                         <h4>Fiscal</h4>
-                        <p>Déclarations TVA, BIC, IS, IRPP, optimisation fiscale, échéances & rappels et contrôle fiscal.</p>
+                        <p>Déclarations TVA, BIC, IS et IRPP, optimisation fiscale, suivi des échéances, rappels automatisés et contrôle fiscal intégré.</p>
                         <div class="gel-svc-tags">
                             <span class="gel-svc-tag">TVA</span>
                             <span class="gel-svc-tag">IS</span>
@@ -326,12 +329,27 @@
                     </a>
                 </div>
 
-                <!-- Social & Paie -->
+                <!-- IT -->
                 <div class="col-md-6 col-lg-4 anim-fade-up delay-4">
+                    <a href="/services/it" class="gel-svc-card" style="--svc-color:#0EA5E9;--svc-light:rgba(14,165,233,0.08);">
+                        <div class="gel-svc-card-icon"><i class="bi-laptop"></i></div>
+                        <h4>IT</h4>
+                        <p>Maintenance et support informatique, infrastructure cloud et hébergement, développement web et mobile, solutions e-MECeF, plateforme e-commerce et sécurité des systèmes.</p>
+                        <div class="gel-svc-tags">
+                            <span class="gel-svc-tag">Maintenance</span>
+                            <span class="gel-svc-tag">Cloud</span>
+                            <span class="gel-svc-tag">Sécurité</span>
+                        </div>
+                        <div style="margin-top:14px;" class="gel-svc-card-link">Découvrir <i class="bi-arrow-right"></i></div>
+                    </a>
+                </div>
+
+                <!-- Social & Paie -->
+                <div class="col-md-6 col-lg-4 anim-fade-up delay-5">
                     <a href="/services/social-paie" class="gel-svc-card" style="--svc-color:#10B981;--svc-light:rgba(16,185,129,0.08);">
                         <div class="gel-svc-card-icon"><i class="bi-people"></i></div>
                         <h4>Social & Paie</h4>
-                        <p>Gestion de la paie, déclarations sociales, contrats de travail, absences, congés et tableaux de bord sociaux.</p>
+                        <p>Gestion complète de la paie et des déclarations sociales, contrats de travail, suivi des absences et congés, tableaux de bord sociaux et indicateurs RH.</p>
                         <div class="gel-svc-tags">
                             <span class="gel-svc-tag">Paie</span>
                             <span class="gel-svc-tag">Déclarations</span>
@@ -341,12 +359,27 @@
                     </a>
                 </div>
 
-                <!-- Logiciel Comptabilité (ERP) -->
-                <div class="col-md-6 col-lg-4 anim-fade-up delay-4">
-                    <a href="/logiciel-comptabilite" class="gel-svc-card" style="--svc-color:#163A5E;--svc-light:rgba(22,58,94,0.08);">
+                <!-- Juridique -->
+                <div class="col-md-6 col-lg-4 anim-fade-up delay-6">
+                    <a href="/services/juridique" class="gel-svc-card" style="--svc-color:#1E40AF;--svc-light:rgba(30,64,175,0.08);">
+                        <div class="gel-svc-card-icon"><i class="bi-bank2"></i></div>
+                        <h4>Juridique</h4>
+                        <p>Constitution et gestion de sociétés, veille juridique et réglementaire, rédaction et suivi de contrats, formalités légales, contentieux et gestion documentaire.</p>
+                        <div class="gel-svc-tags">
+                            <span class="gel-svc-tag">Contrats</span>
+                            <span class="gel-svc-tag">Sociétés</span>
+                            <span class="gel-svc-tag">Contentieux</span>
+                        </div>
+                        <div style="margin-top:14px;" class="gel-svc-card-link">Découvrir <i class="bi-arrow-right"></i></div>
+                    </a>
+                </div>
+
+                <!-- Logiciel Comptabilité -->
+                <div class="col-md-6 col-lg-4 anim-fade-up delay-7">
+                    <a href="/services/erp" class="gel-svc-card" style="--svc-color:#163A5E;--svc-light:rgba(22,58,94,0.08);">
                         <div class="gel-svc-card-icon"><i class="bi-cpu"></i></div>
                         <h4>Logiciel Comptabilité</h4>
-                        <p>ERP complet avec 35+ modules : comptabilité, stock, ventes, paie, caisse, Mobile Money, hôtel, scolaire et plus.</p>
+                        <p>ERP complet avec plus de 35 modules : plan comptable OHADA/SYSCOA, comptabilité, stock, ventes, paie, caisse, Mobile Money, hôtel, scolaire, tontine et bien plus encore.</p>
                         <div class="gel-svc-tags">
                             <span class="gel-svc-tag">OHADA/SYSCOA</span>
                             <span class="gel-svc-tag">35+ modules</span>

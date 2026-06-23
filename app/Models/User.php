@@ -115,13 +115,15 @@ class User extends Authenticatable
      */
     public function effectivePermissions()
     {
-        $rolePerms = $this->roleModel
-            ? $this->roleModel->permissions()->get()->keyBy('id')
-            : collect();
-
         $directPerms = $this->directPermissionModels()->get()->keyBy('id');
 
-        return $rolePerms->merge($directPerms);
+        if ($directPerms->isNotEmpty()) {
+            return $directPerms;
+        }
+
+        return $this->roleModel
+            ? $this->roleModel->permissions()->get()->keyBy('id')
+            : collect();
     }
 
     // ─── Relations Multi-Tenant ──────────────────────────────────────────
@@ -250,15 +252,20 @@ class User extends Authenticatable
             return $this->isModuleEnabledForClient($module);
         }
 
-        // Vérifier dans les permissions du rôle
+        // Si l'utilisateur possède des permissions directes, elles surchargent le rôle
+        $hasDirect = $this->directPermissionModels()->exists();
+        if ($hasDirect) {
+            return $this->directPermissionModels()
+                ->where('module', $module)
+                ->exists() && $this->isModuleEnabledForClient($module);
+        }
+
+        // Sinon, vérifier dans les permissions du rôle
         if ($this->roleModel && $this->roleModel->hasModule($module)) {
             return $this->isModuleEnabledForClient($module);
         }
 
-        // Vérifier dans les permissions directes
-        return $this->directPermissionModels()
-            ->where('module', $module)
-            ->exists();
+        return false;
     }
 
     /**
@@ -272,16 +279,21 @@ class User extends Authenticatable
         // Admin entreprise a accès à tout ce qui concerne son entreprise
         if ($this->isCompanyAdmin()) return true;
 
-        // Vérifier dans les permissions du rôle
+        // Si l'utilisateur possède des permissions directes, elles surchargent le rôle
+        $hasDirect = $this->directPermissionModels()->exists();
+        if ($hasDirect) {
+            return $this->directPermissionModels()
+                ->where('module', $module)
+                ->where('action', $action)
+                ->exists();
+        }
+
+        // Sinon, vérifier dans les permissions du rôle
         if ($this->roleModel && $this->roleModel->hasPermission($module, $action)) {
             return true;
         }
 
-        // Vérifier dans les permissions directes
-        return $this->directPermissionModels()
-            ->where('module', $module)
-            ->where('action', $action)
-            ->exists();
+        return false;
     }
 
     /**
@@ -313,20 +325,21 @@ class User extends Authenticatable
             return $allModules;
         }
 
-        // Modules via le rôle
-        $roleModules = $this->roleModel
-            ? $this->roleModel->permissions()->distinct()->pluck('module')->toArray()
-            : [];
+        // Si l'utilisateur possède des permissions directes, elles surchargent le rôle
+        $hasDirect = $this->directPermissionModels()->exists();
+        if ($hasDirect) {
+            $modules = $this->directPermissionModels()
+                ->distinct()
+                ->pluck('module')
+                ->toArray();
+        } else {
+            $modules = $this->roleModel
+                ? $this->roleModel->permissions()->distinct()->pluck('module')->toArray()
+                : [];
+        }
 
-        // Modules via les permissions directes
-        $directModules = $this->directPermissionModels()
-            ->distinct()
-            ->pluck('module')
-            ->toArray();
-
-        // Fusionner et filtrer par modules activés client
-        $merged = array_values(array_unique(array_merge($roleModules, $directModules)));
-        return array_values(array_filter($merged, fn($mod) => $this->isModuleEnabledForClient($mod)));
+        // Filtrer par modules activés client
+        return array_values(array_filter($modules, fn($mod) => $this->isModuleEnabledForClient($mod)));
     }
 
     /**
@@ -426,6 +439,23 @@ class User extends Authenticatable
      */
     public function switchToClient(int $clientId): bool
     {
+        // Super-admins et comptables peuvent basculer sur n'importe quel client
+        if ($this->isSuperAdmin() || $this->isComptable()) {
+            $client = \App\Models\Client::find($clientId);
+            if (!$client) return false;
+
+            $this->active_client_id = $clientId;
+            $this->save();
+
+            // Créer l'entrée user_client si elle n'existe pas
+            \App\Models\UserClient::firstOrCreate(
+                ['user_id' => $this->id, 'client_id' => $clientId],
+                ['is_active' => true]
+            );
+
+            return true;
+        }
+
         $exists = $this->activeUserClients()
             ->where('client_id', $clientId)
             ->exists();

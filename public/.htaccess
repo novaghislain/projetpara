@@ -1,3 +1,17 @@
+# =============================================================================
+# FICHIER : .htaccess (racine publique)
+# RÔLE    : Réécriture d'URL + sécurité périmètre web
+# ÉQUIPE  : GEL Cabinet — Équipe Dev
+# =============================================================================
+# Ce fichier fait deux choses :
+#   1. Réécriture (mod_rewrite) — redirige tout ce qui n'est pas un fichier
+#      ou dossier existant vers index.php (front controller Laravel).
+#   2. Sécurité — bloque l'accès aux fichiers sensibles (config, logs, BDD,
+#      dépendances) et ajoute des headers de protection HTTP.
+#
+# ⚠️ Ne JAMAIS désactiver les règles de sécurité ci-dessous.
+# =============================================================================
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
@@ -5,21 +19,103 @@
 
     RewriteEngine On
 
-    # Handle Authorization Header
+    # ─── Header Authorization (OAuth, API tokens) ─────────────────────────
+    # Certains environnements n'exposent pas le header Authorization à PHP.
+    # Cette règle le transmet manuellement.
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-    # Handle X-XSRF-Token Header
+    # ─── Header X-XSRF-Token (Laravel Sanctum / SPA) ─────────────────────
+    # Nécessaire pour la protection CSRF des appels SPA (axios avec
+    # withCredentials) vers /api/* depuis le même domaine.
     RewriteCond %{HTTP:x-xsrf-token} .
     RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
 
-    # Redirect Trailing Slashes If Not A Folder...
+    # ─── Suppression du slash final ───────────────────────────────────────
+    # Exemple : /ma-page/ → /ma-page  (sauf si c'est un dossier réel)
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
 
-    # Send Requests To Front Controller...
+    # ╔════════════════════════════════════════════════════════════════════╗
+    # ║  SÉCURITÉ : BLOCAGE FICHIERS & DOSSIERS SENSIBLES                ║
+    # ║  Ces règles empêchent l'accès public à :                         ║
+    # ║  - Configuration (.env, .env.example)                            ║
+    # ║  - Dépendances (vendor/, node_modules/)                          ║
+    # ║  - Logs (storage/logs/)                                          ║
+    # ║  - Base de données SQLite                                        ║
+    # ║  - Fichiers de build/debug (composer.json, package.json)         ║
+    # ║  - Artisan CLI                                                   ║
+    # ║  - Dépôt Git (.git/)                                             ║
+    # ╚════════════════════════════════════════════════════════════════════╝
+
+    # Fichiers de configuration et d'état
+    <FilesMatch "\.(env|env\.example|env\.backup|lock|log|sqlite|sqlite3)$">
+        Require all denied
+    </FilesMatch>
+
+    # Fichiers de build / debug / dépendances
+    <FilesMatch "(composer\.json|composer\.lock|package\.json|package-lock\.json|yarn\.lock|webpack\.mix\.js|phpunit\.xml|phpunit\.xml\.dist)$">
+        Require all denied
+    </FilesMatch>
+
+    # Console Laravel (ne doit être exécutée qu'en CLI)
+    <FilesMatch "(artisan)$">
+        Require all denied
+    </FilesMatch>
+
+    # Dossiers entiers — bloqués par pattern d'URL
+    RewriteRule ^(\.git|\.svn|\.hg|vendor|storage/app|storage/logs|bootstrap/cache|node_modules|database) - [F,L]
+
+    # ─── Front Controller Laravel ─────────────────────────────────────────
+    # Tout ce qui n'est pas un fichier ou dossier réel est envoyé à
+    # index.php. C'est le point d'entrée unique de l'application.
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  HEADERS DE SÉCURITÉ HTTP                                               ║
+# ║  Appliqués à TOUTES les réponses, même les erreurs.                     ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+<IfModule mod_headers.c>
+
+    # ─── X-Frame-Options ──────────────────────────────────────────────────
+    # Anti-clickjacking : interdit l'affichage dans une <iframe> sauf
+    # sur le même site (SAMEORIGIN). Passer à DENY si aucun iframe n'est
+    # utilisé.
+    Header always set X-Frame-Options "SAMEORIGIN"
+
+    # ─── X-Content-Type-Options ───────────────────────────────────────────
+    # Empêche le MIME-type sniffing : le navigateur utilise le type
+    # déclaré par le serveur, point barre.
+    Header always set X-Content-Type-Options "nosniff"
+
+    # ─── Referrer-Policy ──────────────────────────────────────────────────
+    # Contrôle les informations envoyées dans le header Referer.
+    # "strict-origin-when-cross-origin" : envoie l'origine seule quand
+    # on quitte le site, et rien en HTTPS→HTTP.
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # ─── Suppression X-Powered-By ─────────────────────────────────────────
+    # Retire le header qui révèle la version de PHP au client.
+    # Un attaquant connaîtrait ainsi une cible précise.
+    Header unset X-Powered-By
+
+    # ─── Content-Security-Policy (CSP) ────────────────────────────────────
+    # À DÉCOMMENTER et ADAPTER en production.
+    # Limite les sources autorisées pour scripts, styles, polices, etc.
+    # Header always set Content-Security-Policy "
+    #   default-src 'self';
+    #   script-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com;
+    #   style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com;
+    #   font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com;
+    #   img-src 'self' data:;
+    #   connect-src 'self';
+    #   frame-ancestors 'none';
+    # "
+</IfModule>
+
+# Désactiver l'affichage du contenu des répertoires (Options +Indexes)
+Options -Indexes

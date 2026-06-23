@@ -537,7 +537,6 @@
                     <div class="container">
                         <div class="row">
                             <div class="col-lg-7">
-                                <span class="gel-slide-badge"><i class="bi-lightning-fill"></i> La gestion de votre cabinet, réinventée</span>
                                 <h1>Gérez votre cabinet.<br><span>Vendez votre expertise.</span></h1>
                                 <p class="gel-slide-sub">CRM, GED, Comptabilité OHADA, ERP, RH — la plateforme SaaS tout-en-un pour les cabinets d'expertise comptable au Bénin.</p>
                                 <div class="gel-slide-actions">
@@ -565,7 +564,6 @@
                     <div class="container">
                         <div class="row">
                             <div class="col-lg-7">
-                                <span class="gel-slide-badge"><i class="bi-cpu"></i> Logiciel conforme OHADA</span>
                                 <h1>Le logiciel de comptabilité<br><span>pour les pros</span></h1>
                                 <p class="gel-slide-sub">Plan SYSCOA, journaux, bilan, CRP, déclarations fiscales — conforme aux normes OHADA. Licence standalone ou en SaaS.</p>
                                 <div class="gel-slide-actions">
@@ -677,7 +675,7 @@
                     <div class="gel-pourqui-card">
                         <div class="gel-pourqui-icon"><i class="bi-building"></i></div>
                         <h5 style="font-size:15px;font-weight:700;margin-bottom:8px;">Entreprise cliente</h5>
-                        <p style="font-size:13px;color:var(--gel-muted);margin:0;line-height:1.6;">Vous êtes une entreprise cliente de GEL Cabinet. Accédez à votre portail, vos documents comptables, vos factures et votre suivi RH en temps réel.</p>
+                        <p style="font-size:13px;color:var(--gel-muted);margin:0;line-height:1.6;">Vous êtes une entreprise cliente de GEL Cabinet. Accédez à votre portail, gérez votre administration, vos documents comptables, vos factures, vos stocks et votre suivi RH en temps réel.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-3">
@@ -769,41 +767,9 @@
                                 <path d="M6 8h2l2 4 2-6 2 6 2-4 2 2"/>
                             </svg>
                         </div>
-                        <h5>Production d'états financiers</h5>
+                        <h5>Comptabilité</h5>
                         <p>Bénéficiez d'un accompagnement comptable complet pour piloter sereinement votre entreprise au quotidien. Notre équipe de techniciens et de comptables professionnels, passionnés et dynamiques, vous aide à gagner du temps et à réduire vos coûts. Nous produisons vos états financiers avec le niveau d'assurance adapté aux attentes de vos partenaires, élément clé de tout travail fiscal et financier. Faites confiance à nos experts CPA pour renforcer la transparence et la crédibilité de votre gestion.</p>
                         <a href="/services/comptabilite" class="gel-service-arrow">En savoir plus <i class="bi-arrow-right"></i></a>
-                    </div>
-                </div>
-                <!-- Impôts -->
-                <div class="col-md-6 col-sm-6 anim-fade-up delay-2">
-                    <div class="gel-service-card">
-                        <div class="gel-service-icon-wrap">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                <polyline points="14 2 14 8 20 8"/>
-                                <line x1="16" y1="13" x2="8" y2="13"/>
-                                <line x1="16" y1="17" x2="8" y2="17"/>
-                                <polyline points="10 9 9 9 8 9"/>
-                            </svg>
-                        </div>
-                        <h5>Impôts</h5>
-                        <p>Confiez vos déclarations fiscales à de véritables professionnels. Nous prenons en charge les déclarations d'impôts des particuliers, des entreprises et des fiducies, pour vous garantir une parfaite conformité avec les autorités fiscales. Chaque déclaration est préparée par des comptables expérimentés et rigoureusement révisée par des fiscalistes. Un rapport d'impôt signé par un bureau comptable professionnel renforce considérablement votre crédibilité auprès des administrations publiques.</p>
-                        <a href="/services/fiscal" class="gel-service-arrow">En savoir plus <i class="bi-arrow-right"></i></a>
-                    </div>
-                </div>
-                <!-- Fiscalité -->
-                <div class="col-md-6 col-sm-6 anim-fade-up delay-3">
-                    <div class="gel-service-card">
-                        <div class="gel-service-icon-wrap">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M12 2L2 7v1c0 6.1 3 12 10 15 7-3 10-8.9 10-15V7l-10-5z"/>
-                                <path d="M12 6v10"/>
-                                <path d="M8 9h8"/>
-                            </svg>
-                        </div>
-                        <h5>Fiscalité</h5>
-                        <p>Optimisez votre stratégie fiscale avec un accompagnement sur mesure. Les impôts représentent souvent la troisième charge la plus lourde pour un entrepreneur — nos fiscalistes vous aident à la réduire intelligemment. Que ce soit pour l'achat ou la vente d'une entreprise, la planification de la relève, l'impôt au décès, la TPS et la TVQ, notre équipe vous propose des solutions avantageuses adaptées à chaque situation.</p>
-                        <a href="/services/fiscal" class="gel-service-arrow">En savoir plus <i class="bi-arrow-right"></i></a>
                     </div>
                 </div>
                 <!-- Ressources Humaines -->
@@ -820,6 +786,21 @@
                         <h5>Ressources Humaines</h5>
                         <p>Valorisez votre capital humain avec une gestion RH professionnelle et personnalisée. Bien qu'il n'apparaisse pas au bilan, le capital humain est souvent l'actif le plus précieux d'une entreprise. Nos conseillers en ressources humaines vous accompagnent pour recruter, fidéliser et manager vos équipes avec des solutions adaptées. Face à la complexité des décisions liées à la gestion du personnel, laissez nos experts vous épauler au quotidien.</p>
                         <a href="/services/social-paie" class="gel-service-arrow">En savoir plus <i class="bi-arrow-right"></i></a>
+                    </div>
+                </div>
+                <!-- Fiscalité -->
+                <div class="col-md-6 col-sm-6 anim-fade-up delay-3">
+                    <div class="gel-service-card">
+                        <div class="gel-service-icon-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2L2 7v1c0 6.1 3 12 10 15 7-3 10-8.9 10-15V7l-10-5z"/>
+                                <path d="M12 6v10"/>
+                                <path d="M8 9h8"/>
+                            </svg>
+                        </div>
+                        <h5>Fiscalité</h5>
+                        <p>Optimisez votre stratégie fiscale avec un accompagnement sur mesure. Les impôts représentent souvent la troisième charge la plus lourde pour un entrepreneur — nos fiscalistes vous aident à la réduire intelligemment. Que ce soit pour l'achat ou la vente d'une entreprise, la planification de la relève, l'impôt au décès, la TPS et la TVQ, notre équipe vous propose des solutions avantageuses adaptées à chaque situation.</p>
+                        <a href="/services/fiscal" class="gel-service-arrow">En savoir plus <i class="bi-arrow-right"></i></a>
                     </div>
                 </div>
                 <!-- Stratégie -->
@@ -850,6 +831,24 @@
                         <h5>Juridique</h5>
                         <p>Constitution de sociétés, formalités administratives, rédaction de contrats et veille juridique. Notre équipe vous accompagne dans toutes vos démarches légales pour sécuriser vos décisions et rester en conformité avec la réglementation en vigueur. De la création d'entreprise aux contentieux, bénéficiez d'un accompagnement sur mesure.</p>
                         <a href="/services/juridique" class="gel-service-arrow">En savoir plus <i class="bi-arrow-right"></i></a>
+                    </div>
+                </div>
+                <!-- Administration / Secrétariat -->
+                <div class="col-md-6 col-sm-6 anim-fade-up delay-1">
+                    <div class="gel-service-card">
+                        <div class="gel-service-icon-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="3" width="20" height="14" rx="2"/>
+                                <line x1="8" y1="21" x2="16" y2="21"/>
+                                <line x1="12" y1="17" x2="12" y2="21"/>
+                                <path d="M4 7h16"/>
+                                <path d="M4 11h4"/>
+                                <path d="M12 11h4"/>
+                            </svg>
+                        </div>
+                        <h5>Administration</h5>
+                        <p>Déléguez vos tâches administratives et libérez du temps pour votre cœur de métier. Courriers entrants et sortants, gestion des contrats, suivi des échéances, numérisation et classement de documents — notre équipe de secrétaires prend en charge votre administration au quotidien. Solution idéale pour les dirigeants qui manquent de temps et souhaitent une organisation professionnelle sans recruter en interne.</p>
+                        <a href="/services/administration" class="gel-service-arrow">En savoir plus <i class="bi-arrow-right"></i></a>
                     </div>
                 </div>
             </div>
@@ -925,7 +924,7 @@
 
             <div class="row g-3">
                 @foreach([
-                    ['bi-people-fill','CRM Clients','Gérez vos entreprises, contacts et relances. Historique complet des échanges et suivi des opportunités.'],
+                    ['bi-people-fill','CRM','Gérez vos entreprises, contacts et relances. Historique complet des échanges et suivi des opportunités.'],
                     ['bi-diagram-3-fill','Pôles & Missions','Structurez votre cabinet par départements. Suivez les missions en temps réel avec vos équipes.'],
                     ['bi-folder2-open','GED','Stockez, indexez et retrouvez tous vos documents en un clic. Versionning et partage sécurisé.'],
                     ['bi-calculator-fill','Comptabilité','Plan comptable SYSCOA/OHADA, journaux, balance, bilan, CRP. Déclarations fiscales intégrées.'],
@@ -933,6 +932,7 @@
                     ['bi-file-earmark-text','Juridique','Constitution de sociétés, formalités, contrats et veille juridique. Suivi des dossiers contentieux.'],
                     ['bi-robot','Assistant IA','Analyse automatique de documents, suggestions intelligentes et classification aidée par intelligence artificielle.'],
                     ['bi-chat-dots','Communication','Messagerie intégrée, notifications temps réel, alerts et rappels automatiques pour votre équipe.'],
+                    ['bi-envelope-paper','Administration','Gestion des courriers, contrats, suivi des échéances et tâches secrétariat. Déléguez votre administration au quotidien.'],
                     ['bi-shield-check','Sécurité & Conformité','Authentification, rôles personnalisés, chiffrement, audit trail. Conforme aux normes en vigueur.'],
                 ] as $f)
                 <div class="col-lg-4 col-md-6 anim-fade-up">
@@ -1201,7 +1201,7 @@
                                     <label class="gel-form-label">Module souhaité</label>
                                     <select name="module" class="gel-form-control">
                                         <option value="">Choisir un module</option>
-                                        <option>CRM Clients</option>
+                                        <option>CRM</option>
                                         <option>GED — Documents</option>
                                         <option>Comptabilité</option>
                                         <option>ERP Intégré</option>

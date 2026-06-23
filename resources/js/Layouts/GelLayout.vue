@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { authStore } from '../stores/auth';
+import Omnisearch from '../Components/Omnisearch.vue';
 
 const props = defineProps({
     pageTitle: { type: String, default: 'GEL Cabinet' }
@@ -8,6 +9,50 @@ const props = defineProps({
 
 const sidebarOpen = ref(true);
 const isMobile = ref(false);
+
+// Sections repliables — stocke les clés des sections réduites
+const collapsedSections = ref(loadCollapsed());
+
+function loadCollapsed() {
+    try {
+        return JSON.parse(localStorage.getItem('gel_collapsed_sections') || '[]');
+    } catch { return []; }
+}
+
+function saveCollapsed() {
+    localStorage.setItem('gel_collapsed_sections', JSON.stringify(collapsedSections.value));
+}
+
+function toggleSection(groupKey) {
+    const idx = collapsedSections.value.indexOf(groupKey);
+    if (idx > -1) {
+        collapsedSections.value.splice(idx, 1);
+    } else {
+        collapsedSections.value.push(groupKey);
+    }
+    saveCollapsed();
+}
+
+function isSectionCollapsed(groupKey) {
+    return collapsedSections.value.includes(groupKey);
+}
+
+// Mapping section → route de création ("+Nouveau")
+const sectionNewRoutes = {
+    administration:  '/personnel/create',
+    consultation:    '/clients/create',
+    fiscal:          '/accounting/entries/create',
+    it:              '/it/tickets/create',
+    social_paie:     '/rh/employees/create',
+    juridique:       '/juridique/dossiers/create',
+    logiciel_compta: '/admin/catalogue/orders/create',
+    ia_automation:   '/ai/feed',
+};
+
+function getNewUrl(groupKey) {
+    const route = sectionNewRoutes[groupKey];
+    return route ? buildUrl(route) : '#';
+}
 
 // Detect mobile on mount
 if (typeof window !== 'undefined') {
@@ -44,17 +89,17 @@ const isSubLinkActive = (linkHref) => {
     }
     const cleanCurrent = currentPath.endsWith('/') ? currentPath.slice(0, -1) : currentPath;
     const cleanTarget = targetPath.endsWith('/') ? targetPath.slice(0, -1) : targetPath;
-    
+
     return cleanCurrent === cleanTarget || cleanCurrent.startsWith(cleanTarget + '/');
 };
 
 const handleClientChange = (event) => {
     const newId = event.target.value;
     if (!newId) return;
-    
+
     const currentPath = window.location.pathname;
     const parts = currentPath.split('/');
-    
+
     let idIndex = -1;
     for (let i = parts.length - 1; i >= 0; i--) {
         if (/^\d+$/.test(parts[i])) {
@@ -62,7 +107,7 @@ const handleClientChange = (event) => {
             break;
         }
     }
-    
+
     let newPath = '';
     if (idIndex !== -1) {
         parts[idIndex] = newId;
@@ -70,19 +115,19 @@ const handleClientChange = (event) => {
     } else {
         newPath = currentPath.endsWith('/') ? currentPath + newId : currentPath + '/' + newId;
     }
-    
+
     window.location.href = newPath;
 };
 
 onMounted(async () => {
     selectedClientId.value = getCurrentClientId();
-    
+
     setTimeout(() => {
         const activeItem = document.querySelector('.dp-nav-item--active');
         if (activeItem) {
             activeItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-        
+
         const activeSubLink = document.querySelector('.dp-ps-link--active');
         if (activeSubLink) {
             activeSubLink.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
@@ -117,7 +162,7 @@ const buildUrl = (path) => {
 const buildContextUrl = (path) => {
     if (!path) return '#';
     if (path.startsWith('http')) return path;
-    
+
     let finalPath = path;
     if (typeof window !== 'undefined') {
         const parts = window.location.pathname.split('/');
@@ -133,47 +178,93 @@ const buildContextUrl = (path) => {
             finalPath = path.endsWith('/') ? path + entityId : path + '/' + entityId;
         }
     }
-    
+
     const base = getBaseUrl();
     return base + (finalPath.startsWith('/') ? finalPath : '/' + finalPath);
 };
 
+// ── Définition des sections de navigation ───────────
+const navSections = {
+    administration:  { label: 'Administration',        icon: 'bi-shield-lock' },
+    consultation:    { label: 'Consultation',          icon: 'bi-chat-dots' },
+    fiscal:          { label: 'Fiscal',                icon: 'bi-file-earmark-text' },
+    it:              { label: 'IT',                    icon: 'bi-laptop' },
+    social_paie:     { label: 'Social & Paie',         icon: 'bi-people' },
+    juridique:       { label: 'Juridique',             icon: 'bi-briefcase' },
+    logiciel_compta: { label: 'Logiciel Comptabilité', icon: 'bi-calculator' },
+    ia_automation:   { label: 'IA & Automatisation',   icon: 'bi-robot' },
+};
+
 // ── Navigation principale ────────────────────────
 const navItems = [
-    { name: 'Accueil',        icon: 'bi-house',        route: '/dashboard',               key: 'gel-dashboard' },
-    { name: 'Clients',        icon: 'bi-building',     route: '/clients',                  key: 'gel-clients' },
-    { name: 'Missions',       icon: 'bi-check2-square',route: '/missions',                 key: 'gel-missions' },
-    { name: 'Comptabilité',  icon: 'bi-calculator',   route: '/accounting',               key: 'gel-accounting' },
-    { name: 'Commandes',      icon: 'bi-cart-check',   route: '/admin/catalogue/orders',   key: 'erp-orders' },
-    { name: 'Catalogue',     icon: 'bi-tags',          route: '/admin/catalogue/services', key: 'erp-catalogue' },
-    { name: 'Finance ERP',    icon: 'bi-receipt',      route: '/erp/invoices',             key: 'erp-invoice' },
-    { name: 'Caisse',        icon: 'bi-cash-stack',    route: '/erp/treasury',             key: 'erp-treasury' },
-    { name: 'Administration', icon: 'bi-gear',         route: '/licenses',                 key: 'gel-licenses' },
-    { name: 'Admins',        icon: 'bi-person-badge', route: '/company-admins',           key: 'gel-company-admins' },
-    { name: 'Secrétariat',   icon: 'bi-file-text',     route: '/dae',                      key: 'dae-dashboard' },
-    { name: 'Juridique',    icon: 'bi-briefcase',     route: '/juridique',                key: 'legal-dashboard' },
-    { name: 'RH',           icon: 'bi-people',        route: '/rh',                       key: 'rh-dashboard' },
-    { name: 'IT Support',   icon: 'bi-laptop',        route: '/it/tickets',               key: 'gel-it-tickets' },
-    { name: 'Tontines',     icon: 'bi-piggy-bank',    route: '/tontines',                  key: 'gel-tontines' },
-    { name: 'Télédécl.',    icon: 'bi-file-earmark-text', route: '/tele-declarations',     key: 'gel-tele-declarations' },
-    { name: 'Signatures',   icon: 'bi-pen',           route: '/signatures',                key: 'gel-signatures' },
-    { name: 'Validations',  icon: 'bi-check-all',     route: '/approval-workflows',        key: 'gel-approval-workflows' },
-    { name: 'Relances',     icon: 'bi-bell',          route: '/relance-rules',             key: 'gel-relances' },
-    { name: 'Centres coûts',icon: 'bi-diagram-2',     route: '/cost-centers',              key: 'gel-cost-centers' },
-    { name: 'e-MECeF',      icon: 'bi-receipt-cutoff', route: '/erp/invoices',              key: 'gel-emecef' },
-    { name: 'OCR',          icon: 'bi-scanner',        route: '/ocr',                       key: 'gel-ocr' },
-    { name: 'Paie',         icon: 'bi-calculator',     route: '/paie/calculateur',           key: 'gel-paie' },
-    { name: 'Sécurité',     icon: 'bi-shield-lock',    route: '/securite',                    key: 'gel-security' },
-    { name: 'Audit',        icon: 'bi-journal-text',   route: '/administration/audit',        key: 'gel-audit' },
-    { name: 'Articles',     icon: 'bi-pencil-square',  route: '/administration/articles',      key: 'gel-articles' },
-    { name: 'Commerce',    icon: 'bi-shop',           route: '/commerce',                     key: 'commerce-dashboard' },
+    // Accueil (toujours en haut, sans groupe)
+    { name: 'Accueil', icon: 'bi-house', route: '/dashboard', key: 'gel-dashboard' },
+
+    // ── Administration ──
+    { name: 'Personnel',      icon: 'bi-people-fill',        route: '/personnel',                 key: 'gel-personnel',      group: 'administration' },
+    { name: 'Administration', icon: 'bi-gear',                route: '/licenses',                  key: 'gel-licenses',       group: 'administration', module: 'superadmin_only' },
+    { name: 'Admins',         icon: 'bi-person-badge',        route: '/company-admins',            key: 'gel-company-admins', group: 'administration', module: 'superadmin_only' },
+    { name: 'Sécurité',       icon: 'bi-shield-lock',         route: '/securite',                  key: 'gel-security',       group: 'administration', module: 'superadmin_only' },
+    { name: 'Audit',          icon: 'bi-journal-text',        route: '/administration/audit',      key: 'gel-audit',          group: 'administration', module: 'superadmin_only' },
+    { name: 'Articles',       icon: 'bi-pencil-square',       route: '/administration/articles',   key: 'gel-articles',       group: 'administration', module: 'facturation' },
+
+    // ── Consultation ──
+    { name: 'Clients',        icon: 'bi-building',            route: '/clients',                   key: 'gel-clients',        group: 'consultation', module: 'crm' },
+    { name: 'Missions',       icon: 'bi-check2-square',       route: '/missions',                  key: 'gel-missions',       group: 'consultation', module: 'projets' },
+    { name: 'Secrétariat',    icon: 'bi-file-text',           route: '/dae',                       key: 'dae-dashboard',      group: 'consultation', module: 'dae' },
+    { name: 'Signatures',     icon: 'bi-pen',                 route: '/signatures',                key: 'gel-signatures',     group: 'consultation', module: 'document' },
+    { name: 'OCR',            icon: 'bi-scanner',             route: '/ocr',                       key: 'gel-ocr',            group: 'consultation', module: 'document' },
+
+    // ── Fiscal ──
+    { name: 'Comptabilité',   icon: 'bi-calculator',          route: '/accounting',                key: 'gel-accounting',     group: 'fiscal', module: 'comptabilite' },
+    { name: 'Télédécl.',      icon: 'bi-file-earmark-text',   route: '/tele-declarations',         key: 'gel-tele-declarations', group: 'fiscal', module: 'comptabilite' },
+    { name: 'Centres coûts',  icon: 'bi-diagram-2',           route: '/cost-centers',              key: 'gel-cost-centers',   group: 'fiscal', module: 'comptabilite' },
+
+    // ── IT ──
+    { name: 'IT Support',     icon: 'bi-laptop',              route: '/it/tickets',                key: 'gel-it-tickets',     group: 'it', module: 'it_helpdesk' },
+    { name: 'Commerce',       icon: 'bi-shop',                route: '/commerce',                  key: 'commerce-dashboard', group: 'it', module: 'commerce' },
+    { name: 'e-MECeF',        icon: 'bi-receipt-cutoff',      route: '/erp/invoices',              key: 'gel-emecef',         group: 'it', module: 'facturation' },
+
+    // ── Social & Paie ──
+    { name: 'RH',             icon: 'bi-people',              route: '/rh',                        key: 'rh-dashboard',       group: 'social_paie', module: 'rh' },
+    { name: 'Paie',           icon: 'bi-calculator',          route: '/paie/calculateur',          key: 'gel-paie',           group: 'social_paie', module: 'rh' },
+    { name: 'Relances',       icon: 'bi-bell',                route: '/relance-rules',             key: 'gel-relances',       group: 'social_paie', module: 'facturation' },
+
+    // ── Juridique ──
+    { name: 'Juridique',      icon: 'bi-briefcase',           route: '/juridique',                 key: 'legal-dashboard',    group: 'juridique', module: 'juridique' },
+
+    // ── Logiciel Comptabilité ──
+    { name: 'Commandes',      icon: 'bi-cart-check',          route: '/admin/catalogue/orders',    key: 'erp-orders',         group: 'logiciel_compta', module: 'commerce' },
+    { name: 'Catalogue',      icon: 'bi-tags',                route: '/admin/catalogue/services',  key: 'erp-catalogue',      group: 'logiciel_compta', module: 'commerce' },
+    { name: 'Finance ERP',    icon: 'bi-receipt',             route: '/erp/invoices',              key: 'erp-invoice',        group: 'logiciel_compta', module: 'facturation' },
+    { name: 'Caisse',         icon: 'bi-cash-stack',          route: '/erp/treasury',              key: 'erp-treasury',       group: 'logiciel_compta', module: 'caisse' },
+    { name: 'Tontines',       icon: 'bi-piggy-bank',          route: '/tontines',                  key: 'gel-tontines',       group: 'logiciel_compta', module: 'caisse' },
+    { name: 'Validations',    icon: 'bi-check-all',           route: '/approval-workflows',        key: 'gel-approval-workflows', group: 'logiciel_compta', module: 'document' },
+
+    // ── IA & Automatisation ──
+    { name: 'Agents IA',          icon: 'bi-robot',            route: '/ai/agents',                 key: 'ai-agents',          group: 'ia_automation' },
+    { name: 'Fil IA',             icon: 'bi-robot',            route: '/ai/feed',                   key: 'gel-ai-feed',        group: 'ia_automation' },
+    { name: 'Rapprochement',      icon: 'bi-arrow-left-right', route: '/ai/reconciliation',         key: 'gel-ai-reconciliation', group: 'ia_automation' },
+    { name: 'Relances IA',        icon: 'bi-send-check',       route: '/ai/relances',               key: 'gel-ai-relances',    group: 'ia_automation' },
+    { name: 'OCR Factures',       icon: 'bi-upc-scan',         route: '/ai/ocr',                    key: 'gel-ai-ocr',         group: 'ia_automation' },
+    { name: 'Prévisions',         icon: 'bi-graph-up-arrow',   route: '/ai/cashflow',               key: 'gel-ai-cashflow',    group: 'ia_automation' },
 ];
 
-const filteredNavItems = computed(() => {
-    if (authStore.user?.role_secretaire) {
-        return navItems.filter(t => t.key === 'dae-dashboard');
-    }
-    return navItems;
+const groupedNavItems = computed(() => {
+    const sections = {};
+
+    const filtered = navItems.filter(t => {
+        if (authStore.user?.role_secretaire) return t.key === 'dae-dashboard';
+        return !t.module || authStore.hasModule(t.module);
+    });
+
+    filtered.forEach(item => {
+        const g = item.group || '_ungrouped';
+        if (!sections[g]) sections[g] = [];
+        sections[g].push(item);
+    });
+
+    return sections;
 });
 
 // ── Sidebar contextuelle ─────────────────────────
@@ -343,7 +434,7 @@ const sidebarBySection = {
             { label: 'Paie',              href: '/rh/payrolls',      icon: 'bi-calculator' },
             { label: 'Pointage',          href: '/rh/attendance',    icon: 'bi-clock' },
             { label: 'Formations',        href: '/rh/trainings',     icon: 'bi-book' },
-            { label: 'Alertes',           href: '/rh/alerts',        icon: 'bi-bell' },
+            { label: 'Alertes',           href: '/rh',               icon: 'bi-bell' },
         ]},
     ],
     'gel-accounting': [
@@ -384,7 +475,7 @@ const sidebarBySection = {
             { label: 'Contentieux',       href: '/juridique/contentieux',    icon: 'bi-shield-exclamation' },
             { label: 'Conformité',        href: '/juridique/conformite',     icon: 'bi-check-circle' },
             { label: 'Bibliothèque',      href: '/juridique/bibliotheque',   icon: 'bi-book' },
-            { label: 'Veille juridique',  href: '/juridique/veille',         icon: 'bi-newspaper' },
+            { label: 'Veille juridique',  href: '/juridique',                icon: 'bi-newspaper' },
             { label: 'Dossiers',          href: '/juridique/dossiers',       icon: 'bi-folder2-open' },
         ]},
     ],
@@ -425,6 +516,15 @@ const sidebarBySection = {
             { label: 'Inventaire',        href: '/commerce/inventory',     icon: 'bi-clipboard-data' },
         ]},
     ],
+    'gel-ai-feed': [
+        { group: '', items: [
+            { label: 'Fil d\'activité',    href: '/ai/feed',             icon: 'bi-robot' },
+            { label: 'Rapprochement',      href: '/ai/reconciliation',   icon: 'bi-arrow-left-right' },
+            { label: 'Relances IA',        href: '/ai/relances',         icon: 'bi-send-check' },
+            { label: 'OCR Factures',       href: '/ai/ocr',              icon: 'bi-upc-scan' },
+            { label: 'Prévisions',         href: '/ai/cashflow',         icon: 'bi-graph-up-arrow' },
+        ]},
+    ],
 };
 
 const sidebarLinks = computed(() => sidebarBySection[pageKey.value] || sidebarBySection['gel-dashboard']);
@@ -462,12 +562,19 @@ const sectionTitles = {
     'gel-security': 'Sécurité',
     'gel-audit': "Journal d'Audit",
     'gel-articles': 'Articles / Blog',
+    'gel-personnel': 'Personnel GEL',
     'commerce-dashboard': 'Commerce / POS',
+    'gel-ai-feed': 'GEL Intelligence',
+    'gel-ai-reconciliation': 'Rapprochement IA',
+    'gel-ai-relances': 'Relances Intelligentes',
+    'gel-ai-ocr': 'OCR Factures',
+    'gel-ai-cashflow': 'Prévisions Trésorerie',
 };
 
 const pageKey = computed(() => {
     const path = window.location.pathname;
     if (path.startsWith('/clients'))        return 'gel-clients';
+    if (path.startsWith('/personnel'))      return 'gel-personnel';
     if (path.startsWith('/poles'))          return 'gel-poles';
     if (path.startsWith('/missions'))       return 'gel-missions';
     if (path.startsWith('/services'))       return 'gel-services';
@@ -502,6 +609,12 @@ const pageKey = computed(() => {
     if (path.startsWith('/administration/audit')) return 'gel-audit';
     if (path.startsWith('/administration/articles')) return 'gel-articles';
     if (path.startsWith('/commerce'))       return 'commerce-dashboard';
+    if (path.startsWith('/ai/feed'))        return 'gel-ai-feed';
+    if (path.startsWith('/ai/reconciliation')) return 'gel-ai-reconciliation';
+    if (path.startsWith('/ai/relances'))    return 'gel-ai-relances';
+    if (path.startsWith('/ai/ocr'))         return 'gel-ai-ocr';
+    if (path.startsWith('/ai/cashflow'))    return 'gel-ai-cashflow';
+    if (path.startsWith('/ai'))             return 'gel-ai-feed';
     return 'gel-dashboard';
 });
 
@@ -562,6 +675,7 @@ const logout = async () => {
                 <h1 class="dp-page-title">{{ props.pageTitle }}</h1>
             </div>
             <div class="dp-topbar-right">
+                <Omnisearch @navigate="route => window.location.href = buildUrl(route)" />
                 <span class="dp-role-badge">{{ userRoleLabel }}</span>
                 <button class="dp-logout-btn" @click="logout" title="Déconnexion">
                     <i class="bi-box-arrow-right"></i>
@@ -606,19 +720,83 @@ const logout = async () => {
                     </div>
                 </div>
 
-
-
-                <!-- Navigation principale -->
+                <!-- Navigation principale — regroupée par sections -->
                 <nav class="dp-nav">
                     <div class="dp-nav-label">Navigation</div>
-                    <a v-for="item in filteredNavItems" :key="item.key"
-                       :href="buildUrl(item.route)"
-                       class="dp-nav-item"
-                       :class="{ 'dp-nav-item--active': pageKey === item.key }">
-                        <i :class="item.icon" class="dp-nav-icon"></i>
-                        <span class="dp-nav-name">{{ item.name }}</span>
-                    </a>
+
+                    <template v-for="(items, groupKey) in groupedNavItems" :key="groupKey">
+                        <!-- Section header (sauf Accueil qui est seul) — cliquable pour replier/déplier -->
+                        <div v-if="groupKey !== '_ungrouped'"
+                             class="dp-section-header"
+                             :class="{ 'dp-section-header--collapsed': isSectionCollapsed(groupKey) }"
+                             @click="toggleSection(groupKey)"
+                             role="button"
+                             tabindex="0"
+                             @keydown.enter.prevent="toggleSection(groupKey)">
+                            <div class="dp-section-header-left">
+                                <i :class="navSections[groupKey]?.icon" class="dp-section-icon"></i>
+                                <span>{{ navSections[groupKey]?.label || groupKey }}</span>
+                            </div>
+                            <div class="dp-section-actions">
+                                <!-- Bouton +Nouveau (visible au hover de la section) -->
+                                <a v-if="!isSectionCollapsed(groupKey)"
+                                   :href="getNewUrl(groupKey)"
+                                   class="dp-section-add"
+                                   title="Ajouter"
+                                   @click.stop>
+                                    <i class="bi-plus-lg"></i>
+                                </a>
+                                <i class="bi-chevron-down dp-section-chevron"
+                                   :class="{ 'dp-section-chevron--rotated': isSectionCollapsed(groupKey) }"></i>
+                            </div>
+                        </div>
+
+                        <template v-if="!isSectionCollapsed(groupKey)">
+                            <a v-for="item in items" :key="item.key"
+                               :href="buildUrl(item.route)"
+                               class="dp-nav-item"
+                               :class="{ 'dp-nav-item--active': pageKey === item.key }">
+                                <i :class="item.icon" class="dp-nav-icon"></i>
+                                <span class="dp-nav-name">{{ item.name }}</span>
+                            </a>
+                        </template>
+                    </template>
                 </nav>
+
+                <!-- IA Mini Dashboard — Always visible widget -->
+                <div class="dp-ai-widget">
+                    <a :href="buildUrl('/ai/feed')" class="dp-ai-widget-header">
+                        <div class="dp-ai-widget-left">
+                            <div class="dp-ai-icon-wrap">
+                                <i class="bi-robot"></i>
+                                <span class="dp-ai-pulse"></span>
+                            </div>
+                            <div class="dp-ai-widget-text">
+                                <span class="dp-ai-widget-title">GEL Intelligence</span>
+                                <span class="dp-ai-widget-sub">Agents IA actifs</span>
+                            </div>
+                        </div>
+                        <i class="bi-chevron-right dp-ai-chevron"></i>
+                    </a>
+                    <div class="dp-ai-agents-grid">
+                        <a :href="buildUrl('/ai/reconciliation')" class="dp-ai-agent-chip" title="Rapprochement Bancaire">
+                            <i class="bi-arrow-left-right" style="color: #06B6D4"></i>
+                            <span>Réconc.</span>
+                        </a>
+                        <a :href="buildUrl('/ai/relances')" class="dp-ai-agent-chip" title="Relances Intelligentes">
+                            <i class="bi-send-check" style="color: #F59E0B"></i>
+                            <span>Relances</span>
+                        </a>
+                        <a :href="buildUrl('/ai/ocr')" class="dp-ai-agent-chip" title="OCR Factures">
+                            <i class="bi-upc-scan" style="color: #10B981"></i>
+                            <span>OCR</span>
+                        </a>
+                        <a :href="buildUrl('/ai/cashflow')" class="dp-ai-agent-chip" title="Prévisions Trésorerie">
+                            <i class="bi-graph-up-arrow" style="color: #EF4444"></i>
+                            <span>Cashflow</span>
+                        </a>
+                    </div>
+                </div>
 
                 <!-- User bottom section -->
                 <div class="dp-sidebar-footer">
@@ -924,6 +1102,81 @@ const logout = async () => {
     color: rgba(255,255,255,0.25);
     padding: 8px 10px 6px;
 }
+
+/* ── Section headers (Services / Modules / Admin) ── */
+.dp-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 10px 6px;
+    margin: 8px 0 2px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(255,255,255,0.55);
+    background: rgba(255,255,255,0.03);
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s;
+}
+.dp-section-header:hover {
+    color: rgba(255,255,255,0.8);
+    background: rgba(255,255,255,0.06);
+}
+.dp-section-header:first-of-type {
+    margin-top: 0;
+}
+.dp-section-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.dp-section-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.dp-section-add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    color: rgba(255,255,255,0.3);
+    font-size: 11px;
+    text-decoration: none;
+    transition: all 0.2s;
+    opacity: 0;
+}
+.dp-section-header:hover .dp-section-add {
+    opacity: 1;
+}
+.dp-section-add:hover {
+    background: rgba(255,121,0,0.2);
+    color: #FF7900;
+}
+.dp-section-chevron {
+    font-size: 10px;
+    color: rgba(255,255,255,0.25);
+    transition: transform 0.25s ease;
+}
+.dp-section-chevron--rotated {
+    transform: rotate(-90deg);
+}
+.dp-section-header--collapsed {
+    color: rgba(255,255,255,0.2);
+}
+.dp-section-header--collapsed .dp-section-icon {
+    opacity: 0.4;
+}
+.dp-section-icon {
+    font-size: 12px;
+    opacity: 0.6;
+}
+
 .dp-nav-item {
     display: flex;
     align-items: center;
@@ -1067,6 +1320,114 @@ const logout = async () => {
 .dp-client-select option {
     background: #0F1A2E !important;
     color: #fff !important;
+}
+
+/* ── Sidebar — IA Widget (Always visible) ──── */
+.dp-ai-widget {
+    margin: 8px 10px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(255,121,0,0.08) 0%, rgba(139,92,246,0.08) 100%);
+    border: 1px solid rgba(255,121,0,0.12);
+    overflow: hidden;
+    margin-top: auto;
+    flex-shrink: 0;
+}
+.dp-ai-widget-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    text-decoration: none;
+    transition: all 0.2s;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.dp-ai-widget-header:hover {
+    background: rgba(255,121,0,0.06);
+}
+.dp-ai-widget-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.dp-ai-icon-wrap {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #FF7900, #8B5CF6);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 15px;
+    flex-shrink: 0;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(255,121,0,0.3);
+}
+.dp-ai-pulse {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    background: #10B981;
+    border-radius: 50%;
+    border: 2px solid #0B1120;
+    animation: ai-pulse 2s ease-in-out infinite;
+}
+@keyframes ai-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.2); }
+}
+.dp-ai-widget-text {
+    display: flex;
+    flex-direction: column;
+}
+.dp-ai-widget-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    line-height: 1.2;
+}
+.dp-ai-widget-sub {
+    font-size: 9px;
+    color: rgba(255,255,255,0.4);
+    font-weight: 500;
+}
+.dp-ai-chevron {
+    font-size: 10px;
+    color: rgba(255,255,255,0.25);
+    transition: transform 0.2s;
+}
+.dp-ai-widget-header:hover .dp-ai-chevron {
+    color: #FF7900;
+    transform: translateX(2px);
+}
+.dp-ai-agents-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    padding: 6px;
+}
+.dp-ai-agent-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.55);
+    text-decoration: none;
+    transition: all 0.15s;
+    background: rgba(255,255,255,0.03);
+}
+.dp-ai-agent-chip:hover {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.85);
+}
+.dp-ai-agent-chip i {
+    font-size: 12px;
+    flex-shrink: 0;
 }
 
 /* ── Sidebar footer — User section ──────────── */

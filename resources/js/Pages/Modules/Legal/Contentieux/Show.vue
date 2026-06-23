@@ -1,7 +1,23 @@
 <template>
     <GelLayout>
         <div class="p-4" style="background:#f8f9fa;min-height:100vh">
-            <div v-if="litige" class="row g-4">
+            <div v-if="error" class="alert alert-danger d-flex align-items-center gap-3">
+                <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+                <div>
+                    <h5 class="mb-1">Élément introuvable</h5>
+                    <p class="mb-0">{{ error }}</p>
+                    <a href="/juridique/contentieux" class="btn btn-outline-danger btn-sm mt-2">
+                        <i class="bi bi-arrow-left me-1"></i> Retour à la liste
+                    </a>
+                </div>
+            </div>
+            <div v-else-if="!litige" class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+                <p class="text-muted mt-2">Chargement du litige...</p>
+            </div>
+            <div v-else class="row g-4">
                 <div class="col-12">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -98,6 +114,7 @@ import GelLayout from '../../../../Layouts/GelLayout.vue';
 import ContratStatusBadge from '../../../../Components/Legal/ContratStatusBadge.vue';
 
 const litige = ref(null);
+const error = ref(null);
 const id = window.location.pathname.split('/').pop();
 
 function formatDate(date) {
@@ -109,8 +126,18 @@ function formatCurrency(val) {
 }
 
 async function load() {
-    try { const res = await fetch('/juridique/contentieux/' + id); litige.value = await res.json(); }
-    catch (e) { console.error(e); }
+    try {
+        const res = await fetch('/juridique/contentieux/' + id);
+        if (!res.ok) {
+            if (res.status === 404) error.value = 'Ce litige n\'existe pas ou a été supprimé.';
+            else error.value = 'Erreur lors du chargement (' + res.status + ').';
+            return;
+        }
+        litige.value = await res.json();
+    } catch (e) {
+        console.error(e);
+        error.value = 'Impossible de charger le litige. Vérifiez votre connexion.';
+    }
 }
 
 async function changerStatut() {

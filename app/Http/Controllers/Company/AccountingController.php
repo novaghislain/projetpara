@@ -9,6 +9,7 @@ use App\Models\AccountingJournalLine;
 use App\Models\AccountingJournalSequence;
 use App\Models\FiscalYear;
 use App\Services\AuditTrailService;
+use App\Services\TenantDomainService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +22,13 @@ class AccountingController extends BaseCompanyController
     public function index()
     {
         $clientId = $this->getClientId();
+
+        // Partager les modules comptables actifs pour la sidebar dynamique
+        $modules = TenantDomainService::getActiveModules($clientId);
+        $sidebar = TenantDomainService::getModulesSidebar($clientId);
+        view()->share('accountingModulesJson', json_encode($modules));
+        view()->share('accountingSidebarJson', json_encode($sidebar));
+
         return view('company', ['page' => 'company-accounting', 'clientId' => $clientId]);
     }
 
@@ -808,6 +816,7 @@ class AccountingController extends BaseCompanyController
 
         $journals = AccountingJournal::where('client_id', $clientId)->get();
         $accounts = AccountingAccount::where('client_id', $clientId)->get();
+        $client = \App\Models\Client::find($clientId);
 
         $stats = [
             'total_accounts'  => $accounts->count(),
@@ -824,9 +833,401 @@ class AccountingController extends BaseCompanyController
                     'credit' => (float) $group->sum(fn ($j) => $j->credit_total),
                 ];
             }),
+            'domaine' => $client?->domain_code,
+            'domain_kpis' => $client ? $this->getDomainKpis($client) : [],
         ];
 
         return response()->json($stats);
+    }
+
+    /**
+     * Retourne les KPIs adaptés au domaine d'activité du client.
+     */
+    private function getDomainKpis(\App\Models\Client $client): array
+    {
+        $clientId = $client->id;
+        $domainCode = $client->domain_code;
+
+        // Soldes des comptes de résultat via journaux
+        $compteSolde = function ($prefix) use ($clientId) {
+            $accounts = AccountingAccount::where('client_id', $clientId)
+                ->where('code', 'like', $prefix . '%')
+                ->get();
+            return (float) $accounts->reduce(function ($carry, $a) {
+                return $carry + ((float) $a->debit_total) - ((float) $a->credit_total);
+            }, 0);
+        };
+
+        $soldeCompte = function ($code) use ($clientId) {
+            $account = AccountingAccount::where('client_id', $clientId)
+                ->where('code', $code)->first();
+            if (!$account) return 0;
+            return (float) $account->balance;
+        };
+
+        // Soldes trésorerie (521 + 571)
+        $tresorerie = $compteSolde('5');
+        if ($tresorerie == 0) $tresorerie = ($soldeCompte('521') ?: 0) + ($soldeCompte('571') ?: 0);
+
+        // Compte clients (411)
+        $creances = $soldeCompte('411') ?: $compteSolde('41');
+
+        // Compte fournisseurs (401)
+        $dettes = $soldeCompte('401') ?: $compteSolde('40');
+
+        switch ($domainCode) {
+            case 'commerce':
+                $ca = $compteSolde('701') ?: $compteSolde('70');
+                $achats = $compteSolde('601') ?: $compteSolde('60');
+                return [
+                    'ca_mensuel'          => round($ca, 2),
+                    'achats_mensuel'      => round($achats, 2),
+                    'marge_brute'         => round($ca - $achats, 2),
+                    'tresorerie'          => round($tresorerie, 2),
+                    'creances_clients'    => round($creances, 2),
+                    'dettes_fournisseurs' => round($dettes, 2),
+                    'stock_valorise'      => round($compteSolde('3'), 2),
+                    'tva_a_payer'         => round($soldeCompte('441'), 2),
+                ];
+
+            case 'hotel':
+                $recettes = $compteSolde('706');
+                return [
+                    'recettes_nuitees'    => round($recettes, 2),
+                    'taux_occupation'     => null, // nécessite données chambres
+                    'revpar'              => null,
+                    'taxe_nuitee_due'     => round($soldeCompte('447'), 2),
+                    'tresorerie'          => round($tresorerie, 2),
+                    'creances_clients'    => round($creances, 2),
+                    'tva_a_payer'         => round($soldeCompte('441'), 2),
+                ];
+
+            case 'scolaire':
+                $recettes = $compteSolde('706');
+                return [
+                    'recettes_scolarite'  => round($recettes, 2),
+                    'frais_percus'        => round($recettes, 2),
+                    'impayes'             => round($creances, 2),
+                    'tresorerie'          => round($tresorerie, 2),
+                    'charges_totales'     => round($compteSolde('6'), 2),
+                    'tva_a_payer'         => round($soldeCompte('441'), 2),
+                ];
+
+            case 'location':
+                $loyers = $compteSolde('703');
+                return [
+                    'loyers_du_mois'      => round($loyers, 2),
+                    'loyers_encaisses'     => round($loyers - $creances, 2),
+                    'taux_recouvrement'   => $loyers > 0 ? round(($loyers - $creances) / $loyers * 100, 1) : null,
+                    'impayes_total'       => round($creances, 2),
+                    'tresorerie'          => round($tresorerie, 2),
+                ];
+
+            case 'tontine':
+                $cotisations = $compteSolde('70');
+                return [
+                    'cotisations_mois'    => round($cotisations, 2),
+                    'total_cagnotte'      => round($cotisations, 2),
+                    'tresorerie'          => round($tresorerie, 2),
+                ];
+
+            case 'transport':
+                $ca = $compteSolde('706');
+                $carburant = $compteSolde('605') ?: $compteSolde('606');
+                return [
+                    'ca_fret_mois'        => round($ca, 2),
+                    'charges_carburant'   => round($carburant, 2),
+                    'marge_transport'     => round($ca - $carburant, 2),
+                    'tresorerie'          => round($tresorerie, 2),
+                    'creances'            => round($creances, 2),
+                ];
+
+            case 'cabinet_comptable':
+                $honoraires = $compteSolde('706');
+                return [
+                    'honoraires_mois'     => round($honoraires, 2),
+                    'tresorerie'          => round($tresorerie, 2),
+                    'creances_clients'    => round($creances, 2),
+                ];
+
+            default:
+                // KPIs génériques pour les autres domaines
+                return [
+                    'ca_total'            => round($compteSolde('7'), 2),
+                    'charges_total'       => round($compteSolde('6'), 2),
+                    'resultat'            => round($compteSolde('7') - $compteSolde('6'), 2),
+                    'tresorerie'          => round($tresorerie, 2),
+                    'creances_clients'    => round($creances, 2),
+                ];
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ─── Stock Métier — API ─────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * API: Liste les articles en stock du client.
+     */
+    public function stockItems(Request $request)
+    {
+        $clientId = $this->getClientId();
+
+        $items = \App\Models\ErpItem::where('client_id', $clientId)
+            ->with('stockMovements')
+            ->orderBy('designation')
+            ->get()
+            ->map(function ($item) {
+                $in  = $item->stockMovements->where('type','entry')->sum('quantity');
+                $out = $item->stockMovements->where('type','exit')->sum('quantity');
+                return [
+                    'id'             => $item->id,
+                    'reference'      => $item->reference,
+                    'designation'    => $item->designation,
+                    'stock'          => $in - $out,
+                    'stock_alert'    => $item->stock_alert,
+                    'purchase_price' => (float) $item->purchase_price,
+                    'selling_price'  => (float) $item->selling_price,
+                    'unit'           => $item->unit,
+                    'category'       => $item->category?->name,
+                ];
+            });
+
+        return response()->json($items);
+    }
+
+    /**
+     * API: Crée un nouvel article en stock.
+     */
+    public function storeStockItem(Request $request)
+    {
+        $clientId = $this->getClientId();
+
+        $validated = $request->validate([
+            'reference'      => 'required|string|max:50',
+            'designation'    => 'required|string|max:255',
+            'purchase_price' => 'nullable|numeric|min:0',
+            'selling_price'  => 'nullable|numeric|min:0',
+            'stock_alert'    => 'nullable|integer|min:0',
+            'unit'           => 'nullable|string|max:20',
+        ]);
+
+        $validated['client_id'] = $clientId;
+
+        $item = \App\Models\ErpItem::create($validated);
+
+        return response()->json(['message' => 'Article créé.', 'item' => $item], 201);
+    }
+
+    /**
+     * API: Supprime un article en stock.
+     */
+    public function deleteStockItem($id)
+    {
+        $clientId = $this->getClientId();
+        $item = \App\Models\ErpItem::where('client_id', $clientId)->findOrFail($id);
+        $item->delete();
+        return response()->json(['message' => 'Article supprimé.']);
+    }
+
+    /**
+     * API: Import CSV d'articles en stock.
+     */
+    public function importStockItems(Request $request)
+    {
+        $clientId = $this->getClientId();
+
+        $request->validate([
+            'csv' => 'required|file|mimes:csv,txt|max:5120',
+        ]);
+
+        $file = $request->file('csv');
+        $handle = fopen($file->getPathname(), 'r');
+        $headers = fgetcsv($handle);
+        $imported = 0;
+        $errors = [];
+
+        DB::beginTransaction();
+        try {
+            while (($row = fgetcsv($handle)) !== false) {
+                $data = array_combine($headers, $row);
+                $reference   = trim($data['reference'] ?? '');
+                $designation = trim($data['designation'] ?? '');
+                $purchase_price = (float) ($data['purchase_price'] ?? $data['prix_achat'] ?? 0);
+                $selling_price  = (float) ($data['selling_price'] ?? $data['prix_vente'] ?? 0);
+                $stock_alert    = (int) ($data['stock_alert'] ?? $data['seuil_alerte'] ?? 0);
+                $unit           = trim($data['unit'] ?? $data['unite'] ?? 'unite');
+
+                if (empty($reference) || empty($designation)) {
+                    continue;
+                }
+
+                $exists = \App\Models\ErpItem::where('client_id', $clientId)
+                    ->where('reference', $reference)
+                    ->exists();
+
+                if (!$exists) {
+                    \App\Models\ErpItem::create([
+                        'client_id'      => $clientId,
+                        'reference'      => $reference,
+                        'designation'    => $designation,
+                        'purchase_price' => $purchase_price,
+                        'selling_price'  => $selling_price,
+                        'stock_alert'    => $stock_alert,
+                        'unit'           => $unit,
+                    ]);
+                    $imported++;
+                } else {
+                    $errors[] = "Réf. '$reference' déjà existant, ignoré.";
+                }
+                if ($imported > 5000) break; // sécurité anti-dépassement
+            }
+            fclose($handle);
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            fclose($handle);
+            return response()->json(['message' => 'Erreur lors de l\'import : ' . $e->getMessage()], 422);
+        }
+
+        return response()->json([
+            'message' => "{$imported} article(s) importé(s) avec succès.",
+            'imported' => $imported,
+            'errors' => $errors,
+        ]);
+    }
+
+    /**
+     * API: Mouvements de stock du client.
+     */
+    public function stockMovements(Request $request)
+    {
+        $clientId = $this->getClientId();
+
+        $movements = \App\Models\ErpStockMovement::whereHas('item', function ($q) use ($clientId) {
+                $q->where('client_id', $clientId);
+            })
+            ->with(['item', 'warehouse'])
+            ->latest()
+            ->take(200)
+            ->get()
+            ->map(function ($m) {
+                return [
+                    'id'           => $m->id,
+                    'item'         => $m->item?->designation,
+                    'item_ref'     => $m->item?->reference,
+                    'type'         => $m->type,
+                    'quantity'     => $m->quantity,
+                    'warehouse'    => $m->warehouse?->name,
+                    'motif'        => $m->motif,
+                    'date'         => $m->movement_date?->format('Y-m-d'),
+                    'created_at'   => $m->created_at?->format('Y-m-d H:i'),
+                ];
+            });
+
+        return response()->json($movements);
+    }
+
+    /**
+     * API: Enregistre un mouvement de stock (entrée/sortie).
+     */
+    public function storeStockMovement(Request $request)
+    {
+        $clientId = $this->getClientId();
+
+        $validated = $request->validate([
+            'erp_item_id'  => 'required|exists:erp_items,id',
+            'type'         => 'required|in:entry,exit',
+            'quantity'     => 'required|numeric|min:0.01',
+            'motif'        => 'nullable|string|max:255',
+            'movement_date'=> 'nullable|date',
+        ]);
+
+        // Vérifier que l'article appartient au client
+        $item = \App\Models\ErpItem::where('client_id', $clientId)->findOrFail($validated['erp_item_id']);
+
+        $movement = \App\Models\ErpStockMovement::create([
+            'erp_item_id'   => $validated['erp_item_id'],
+            'type'          => $validated['type'],
+            'quantity'      => $validated['quantity'],
+            'motif'         => $validated['motif'] ?? null,
+            'movement_date' => $validated['movement_date'] ?? now(),
+            'created_by'    => Auth::id(),
+        ]);
+
+        return response()->json(['message' => 'Mouvement enregistré.', 'movement' => $movement], 201);
+    }
+
+    // ─── Emballages consignés — API ────────────────────────────────
+
+    /**
+     * API: Liste les emballages du client.
+     */
+    public function emballages(Request $request)
+    {
+        $clientId = $this->getClientId();
+
+        $items = \App\Models\AccountingEmballage::where('client_id', $clientId)
+            ->orderBy('created_at', 'desc')
+            ->take(200)
+            ->get()
+            ->map(function ($e) {
+                return [
+                    'id'              => $e->id,
+                    'type'            => $e->type,
+                    'tiers_nom'       => $e->tiers_nom,
+                    'tiers_type'      => $e->tiers_type,
+                    'produit'         => $e->produit,
+                    'quantite'        => $e->quantite,
+                    'montant_consigne'=> (float) $e->montant_consigne,
+                    'date_emission'   => $e->date_emission?->format('Y-m-d'),
+                    'date_retour'     => $e->date_retour?->format('Y-m-d'),
+                    'statut'          => $e->statut,
+                    'notes'           => $e->notes,
+                ];
+            });
+
+        return response()->json($items);
+    }
+
+    /**
+     * API: Crée un emballage consigné.
+     */
+    public function storeEmballage(Request $request)
+    {
+        $clientId = $this->getClientId();
+
+        $validated = $request->validate([
+            'type'             => 'required|in:consigne,perdu,retourne,echange',
+            'tiers_nom'        => 'nullable|string|max:255',
+            'tiers_type'       => 'nullable|in:client,fournisseur',
+            'produit'          => 'nullable|string|max:255',
+            'quantite'         => 'required|integer|min:1',
+            'montant_consigne' => 'nullable|numeric|min:0',
+            'date_emission'    => 'nullable|date',
+            'date_retour'      => 'nullable|date',
+            'statut'           => 'nullable|in:en_cours,retourne,facture,perdu',
+            'notes'            => 'nullable|string',
+        ]);
+
+        $validated['client_id'] = $clientId;
+        $validated['created_by'] = Auth::id();
+        $validated['statut'] ??= 'en_cours';
+
+        $emballage = \App\Models\AccountingEmballage::create($validated);
+
+        return response()->json(['message' => 'Emballage créé.', 'emballage' => $emballage], 201);
+    }
+
+    /**
+     * API: Supprime un emballage.
+     */
+    public function deleteEmballage($id)
+    {
+        $clientId = $this->getClientId();
+        $item = \App\Models\AccountingEmballage::where('client_id', $clientId)->findOrFail($id);
+        $item->delete();
+        return response()->json(['message' => 'Emballage supprimé.']);
     }
 
     // ─── Helpers ───────────────────────────────────────────────────

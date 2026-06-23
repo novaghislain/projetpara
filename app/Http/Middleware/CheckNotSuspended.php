@@ -1,4 +1,15 @@
 <?php
+// =============================================================================
+// FICHIER : CheckNotSuspended.php
+// RÔLE    : Middleware — Vérifie que l'utilisateur n'est pas suspendu
+// ÉQUIPE  : GEL Cabinet — Équipe Dev Backend
+// =============================================================================
+// Appliqué aux routes nécessitant un compte actif.
+// Si l'utilisateur est suspendu (is_suspended = true) :
+//   - Déconnexion forcée (Auth::logout)
+//   - Message d'erreur expliquant la suspension
+//   - Redirection vers la page de connexion
+// =============================================================================
 
 namespace App\Http\Middleware;
 
@@ -11,6 +22,7 @@ class CheckNotSuspended
 {
     /**
      * Vérifie que l'utilisateur n'est pas suspendu.
+     * Si suspendu : déconnexion + message explicatif.
      */
     public function handle(Request $request, Closure $next): Response
     {

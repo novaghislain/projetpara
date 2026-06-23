@@ -116,4 +116,15 @@ return [
         'google_credentials' => env('GOOGLE_VISION_API_KEY'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | AI & Machine Learning (Gemini)
+    |--------------------------------------------------------------------------
+    */
+    'ai' => [
+        'api_key' => env('AI_API_KEY', ''),
+        'api_url' => env('AI_API_URL', 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent'),
+        'model' => env('AI_MODEL', 'gemini-1.5-pro'),
+    ],
+
 ];

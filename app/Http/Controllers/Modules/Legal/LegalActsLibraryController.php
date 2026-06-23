@@ -20,13 +20,16 @@ class LegalActsLibraryController extends BaseLegalController
         if (!$request->expectsJson()) {
             return view('app', ['page' => 'legal-bibliotheque']);
         }
-        $clientId = $this->getClientId($request);
-
-        // Modèles globaux (client_id = NULL) + modèles du client
-        $modeles = LegalActsLibrary::whereNull('client_id')
-            ->orWhere('client_id', $clientId)
-            ->orderBy('categorie')
-            ->get();
+        // Super admin voit tous les modèles, sinon filtrer par client
+        if (auth()->check() && auth()->user()->isSuperAdmin()) {
+            $modeles = LegalActsLibrary::orderBy('categorie')->get();
+        } else {
+            $clientId = $this->getClientId($request);
+            $modeles = LegalActsLibrary::whereNull('client_id')
+                ->orWhere('client_id', $clientId)
+                ->orderBy('categorie')
+                ->get();
+        }
 
         return response()->json($modeles);
     }

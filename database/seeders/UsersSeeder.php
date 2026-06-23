@@ -55,6 +55,7 @@ class UsersSeeder extends Seeder
                 'is_admin' => true,
                 'is_active' => true,
                 'is_company_admin' => false,
+                'must_change_password' => true,
                 'role_id' => $roles['super_admin']?->id,
                 'fonction' => 'Super Administrateur - GEL Cabinet',
                 'phone' => '+229 97 00 00 01',
@@ -129,6 +130,7 @@ class UsersSeeder extends Seeder
                     'phone' => $data['phone'],
                     'role_secretaire' => $data['role_secretaire'] ?? false,
                     'clients_assignes' => $data['clients_assignes'] ?? null,
+                    'must_change_password' => true,
                     'email_verified_at' => $now,
                 ]
             );
@@ -185,6 +187,7 @@ class UsersSeeder extends Seeder
                     'role_id' => $roles['company_admin']?->id,
                     'fonction' => $data['fonction'],
                     'phone' => $data['phone'],
+                    'must_change_password' => true,
                     'email_verified_at' => $now,
                 ]
             );
@@ -231,6 +234,7 @@ class UsersSeeder extends Seeder
                     'role_id' => $roles['company_manager']?->id,
                     'fonction' => $data['fonction'],
                     'phone' => $data['phone'],
+                    'must_change_password' => true,
                     'email_verified_at' => $now,
                 ]
             );
@@ -284,6 +288,7 @@ class UsersSeeder extends Seeder
                     'role_id' => $roles['caissier']?->id,
                     'fonction' => $data['fonction'],
                     'phone' => $data['phone'],
+                    'must_change_password' => true,
                     'email_verified_at' => $now,
                 ]
             );
@@ -332,6 +337,7 @@ class UsersSeeder extends Seeder
                     'role_id' => $roles['company_employee']?->id,
                     'fonction' => $data['fonction'],
                     'phone' => $data['phone'],
+                    'must_change_password' => true,
                     'email_verified_at' => $now,
                 ]
             );
@@ -383,6 +389,7 @@ class UsersSeeder extends Seeder
                     'role_id' => $roles['client']?->id,
                     'fonction' => $data['fonction'],
                     'phone' => $data['phone'],
+                    'must_change_password' => true,
                     'email_verified_at' => $now,
                 ]
             );

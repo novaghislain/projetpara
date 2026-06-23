@@ -1,4 +1,20 @@
 <?php
+// =============================================================================
+// FICHIER : IpWhitelist.php
+// RÔLE    : Middleware — Restreint l'accès par adresse IP
+// ÉQUIPE  : GEL Cabinet — Équipe Dev Backend
+// =============================================================================
+// Ce middleware est utilisé par les entreprises clientes qui souhaitent
+// limiter l'accès à leur portail depuis des IP spécifiques.
+//
+// Fonctionnement :
+//   - Si le client a défini allowed_ips dans sa fiche, seules ces IP sont
+//     autorisées à accéder aux routes protégées.
+//   - Si allowed_ips est vide ou non défini, aucune restriction.
+//
+// Utilisation dans les routes :
+//   Route::middleware('ip.whitelist')->group(...)
+// =============================================================================
 
 namespace App\Http\Middleware;
 

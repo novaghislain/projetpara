@@ -9,6 +9,7 @@ use App\Models\Permission;
 use App\Models\UserPermission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
@@ -60,7 +61,7 @@ class UserController extends BaseCompanyController
                     'role_slug' => $u->roleModel?->slug ?? '',
                     'is_active' => $u->is_active,
                     'is_company_admin' => $u->is_company_admin,
-                    'permissions' => $u->getDirectPermissionIds(),
+                    'permissions' => $u->effectivePermissions()->pluck('id')->toArray(),
                     'modules' => $u->getAccessibleModules(),
                     'formatted_permissions' => $u->getFormattedPermissions(),
                     'created_at' => $u->created_at?->format('d/m/Y'),
@@ -98,7 +99,7 @@ class UserController extends BaseCompanyController
             'role_id' => $target->role_id,
             'role_name' => $target->roleModel?->name ?? 'N/A',
             'is_active' => $target->is_active,
-            'permissions' => $target->getDirectPermissionIds(),
+            'permissions' => $target->effectivePermissions()->pluck('id')->toArray(),
             'modules' => $target->getAccessibleModules(),
         ]);
     }
@@ -344,29 +345,44 @@ class UserController extends BaseCompanyController
      */
     private function syncUserPermissions(int $userId, array $permissionIds, int $grantedBy): void
     {
-        // Supprimer les anciennes permissions directes
-        UserPermission::where('user_id', $userId)->delete();
+        DB::transaction(function () use ($userId, $permissionIds, $grantedBy) {
+            // Supprimer les anciennes permissions directes
+            UserPermission::where('user_id', $userId)->delete();
 
-        // Insérer les nouvelles
-        $now = now();
-        $records = [];
-        foreach ($permissionIds as $permId) {
-            $records[] = [
-                'user_id' => $userId,
-                'permission_id' => $permId,
-                'granted_by' => $grantedBy,
-                'granted_at' => $now,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ];
-        }
+            $user = User::find($userId);
+            $rolePermissionIds = $user && $user->roleModel
+                ? $user->roleModel->permissions()->pluck('permissions.id')->toArray()
+                : [];
 
-        if (!empty($records)) {
-            UserPermission::insert($records);
-        }
+            // Comparer les tableaux (les deux triés et uniques pour être sûr)
+            $pIds = array_values(array_unique($permissionIds));
+            sort($pIds);
+            sort($rolePermissionIds);
 
-        // Notifier l'utilisateur des changements (temps réel)
-        EventsController::notifyUserPermissionsChanged($userId);
+            // Si la liste est identique aux permissions du rôle, on n'ajoute pas de permissions directes
+            // Cela permet de repasser aux permissions par défaut du rôle (sans surcharge)
+            if ($pIds !== $rolePermissionIds) {
+                $now = now();
+                $records = [];
+                foreach ($pIds as $permId) {
+                    $records[] = [
+                        'user_id' => $userId,
+                        'permission_id' => $permId,
+                        'granted_by' => $grantedBy,
+                        'granted_at' => $now,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
+                }
+
+                if (!empty($records)) {
+                    UserPermission::insert($records);
+                }
+            }
+
+            // Notifier l'utilisateur des changements (temps réel)
+            EventsController::notifyUserPermissionsChanged($userId);
+        });
     }
 
     private function moduleLabel(string $module): string

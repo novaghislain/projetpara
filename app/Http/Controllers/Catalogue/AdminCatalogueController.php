@@ -11,13 +11,15 @@ use Illuminate\Http\Request;
 class AdminCatalogueController extends Controller
 {
     /**
-     * Gestion du catalogue (catégories + services)
+     * Gestion du catalogue (catégories + services + modèles)
      */
     public function index()
     {
-        $categories = CatalogueCategory::with(['services' => function ($q) {
-            $q->orderBy('ordre_affichage');
-        }])->orderBy('ordre')->get();
+        $categories = CatalogueCategory::with([
+            'services' => function ($q) {
+                $q->orderBy('type')->orderBy('ordre_affichage');
+            }
+        ])->orderBy('ordre')->get();
 
         return view('app', [
             'page' => 'admin-services-index',
@@ -70,6 +72,7 @@ class AdminCatalogueController extends Controller
         $request->validate([
             'category_id'           => 'required|exists:catalogue_categories,id',
             'nom'                   => 'required|string|max:255',
+            'type'                  => 'nullable|string|in:service,modele',
             'description'           => 'nullable|string',
             'inclus_json'           => 'nullable|array',
             'delai_jours'           => 'nullable|string',
@@ -80,7 +83,11 @@ class AdminCatalogueController extends Controller
             'ordre_affichage'       => 'nullable|integer',
         ]);
 
-        CatalogueService::create($request->all());
+        $data = $request->all();
+        if (!isset($data['type'])) {
+            $data['type'] = 'service';
+        }
+        CatalogueService::create($data);
         return redirect()->back()->with('success', 'Service créé.');
     }
 
@@ -89,6 +96,7 @@ class AdminCatalogueController extends Controller
         $request->validate([
             'category_id'           => 'required|exists:catalogue_categories,id',
             'nom'                   => 'required|string|max:255',
+            'type'                  => 'nullable|string|in:service,modele',
             'tarif_type'            => 'required|in:fixe,devis',
             'actif'                 => 'boolean',
         ]);

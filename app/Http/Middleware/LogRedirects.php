@@ -1,4 +1,15 @@
 <?php
+// =============================================================================
+// FICHIER : LogRedirects.php
+// RÔLE    : Middleware — Enregistre les redirections dans les logs
+// ÉQUIPE  : GEL Cabinet — Équipe Dev Backend
+// =============================================================================
+// Middleware global qui se déclenche sur chaque requête.
+// Actuellement, il est pass-through (ne fait rien).
+//
+// @todo  Implémenter le logging des redirections HTTP pour déboguer
+//        les boucles de redirection en environnement multi-tenant.
+// =============================================================================
 
 namespace App\Http\Middleware;
 
@@ -9,9 +20,9 @@ use Symfony\Component\HttpFoundation\Response;
 class LogRedirects
 {
     /**
-     * Handle an incoming request.
+     * Middleware pass-through — prêt pour l'implémentation du logging.
      *
-     * @param  Closure(Request): (Response)  $next
+     * @todo  Logger les redirections avec Request::path() et status code
      */
     public function handle(Request $request, Closure $next): Response
     {

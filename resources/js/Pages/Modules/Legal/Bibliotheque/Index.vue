@@ -13,6 +13,7 @@
                 </div>
             </div>
 
+            <div v-if="error" class="alert alert-danger">⚠️ {{ error }}</div>
             <div class="row g-3 mb-3">
                 <div class="col-md-4">
                     <select v-model="filtreCategorie" class="form-select form-select-sm">
@@ -59,6 +60,7 @@ import GelLayout from '../../../../Layouts/GelLayout.vue';
 
 const actes = ref([]);
 const filtreCategorie = ref('');
+const error = ref(null);
 
 const categories = computed(() => [...new Set(actes.value.map(a => a.categorie).filter(Boolean))]);
 
@@ -68,8 +70,15 @@ const filteredList = computed(() => {
 });
 
 async function load() {
-    try { const res = await fetch('/juridique/bibliotheque'); actes.value = await res.json(); }
-    catch (e) { console.error(e); }
+    error.value = null;
+    try {
+        const res = await fetch('/juridique/bibliotheque');
+        if (!res.ok) throw new Error('Erreur ' + res.status);
+        actes.value = await res.json();
+    } catch (e) {
+        console.error(e);
+        error.value = 'Impossible de charger la bibliothèque.';
+    }
 }
 onMounted(load);
 </script>

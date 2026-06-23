@@ -1,6 +1,6 @@
 # Architecture GEL Cabinet — Plateforme SaaS Multi-Portail
 
-> **Version :** 2.1.0 | **Date :** 20 juin 2026 | **Stack :** Laravel 12 + Vue 3 + Vite + Bootstrap 5 + MySQL
+> **Version :** 2.1.1 | **Date :** 21 juin 2026 | **Stack :** Laravel 12 + Vue 3 + Vite + Bootstrap 5 + MySQL
 
 ## 1. Vue d'ensemble
 
@@ -243,7 +243,160 @@ POST /login → AuthenticatedSessionController::store
 
 Total : **89 permissions** réparties dans 12 modules.
 
-## 8. Flux des Permissions (Frontend)
+## 8. Architecture du Module Juridique
+
+### 8.1 Modèle de base — LegalBaseModel
+
+```php
+abstract class LegalBaseModel extends Model
+{
+    // Scope multi-tenant : super admin bypass, sinon filtre par client_id
+    public function scopeByClient($query, int $clientId)
+    {
+        if (auth()->check() && auth()->user()->isSuperAdmin()) {
+            return $query; // Super admin voit toutes les données
+        }
+        return $query->where('client_id', $clientId);
+    }
+}
+```
+
+Tous les modèles juridiques héritent de cette classe abstraite, garantissant que :
+- Les **super admins** voient l'intégralité des données (tous les clients)
+- Les **comptables / company_admin** voient uniquement `client_id = X`
+- Le filtre est appliqué automatiquement via `->byClient($clientId)` dans les contrôleurs
+
+### 8.2 Sous-modules (8)
+
+| Sous-module | Tables | Pages Vue |
+|-------------|--------|-----------|
+| Fiche Société | `legal_company_infos` | Societe/Index |
+| Assemblées | `legal_assemblies` | Assemblees/Index, Show, Form |
+| Contrats | `legal_contracts`, `legal_contract_signatures` | Contrats/Index, Show, Form |
+| Contentieux | `legal_litigations` | Contentieux/Index, Show, Form |
+| Conformité | `legal_compliance` | Conformite/Index, Form, Calendrier |
+| Bibliothèque | `legal_acts_library` | Bibliotheque/Index, Form, Generer |
+| Dossiers | `legal_dossiers` | Dossiers/Index, Show, Form |
+| Registres | `legal_registres` | Registres/Show |
+
+### 8.3 Générateur d'actes
+
+`ActeGeneratorService` : remplace les variables `{nom_client}`, `{date}`, `{capital}` dans les modèles de la bibliothèque par les valeurs dynamiques du client. Utilisé par `LegalActsLibraryController::generer()`.
+
+## 9. Flux Facture (création → normalisation e-MECeF → portail client)
+
+### 9.1 Architecture à deux systèmes de facturation
+
+Le système repose sur **deux modèles distincts et indépendants** :
+
+| Aspect | `ErpInvoice` (GEL) | `CompanyInvoice` (Entreprise) |
+|--------|-------------------|------------------------------|
+| **Namespace** | `App\Models\ErpInvoice` | `App\Models\CompanyInvoice` |
+| **Portail** | GEL Cabinet (backoffice) | Portail Entreprise |
+| **Créée par** | Comptable cabinet | Admin/manager entreprise |
+| **e-MECeF** | ✅ Oui (champs dédiés) | ❌ Non |
+| **Paiements** | Non géré | ✅ CompanyPayment |
+| **Items** | ErpInvoiceItem | CompanyInvoiceItem |
+| **Scope** | client_id (manuel) | byClient() scope |
+
+### 9.2 Flux d'émission e-MECeF (détaillé)
+
+```
+Étape 1 : Facture créée par le comptable (GEL)
+  POST /erp/invoices → ErpInvoiceController::store()
+  → Création ErpInvoice + ErpInvoiceItems
+  → Statut initial : "brouillon"
+  → Aucun champ e-MECeF rempli
+
+Étape 2 : Clic sur le bouton DGI
+  POST /emecef/emit/{invoice} → EmecefController::emitInvoice()
+  → Vérifie que la facture n'est pas déjà émise (422 si déjà 'emise')
+  → Appelle EmecefService::emettreFactureNormalisee($invoice)
+
+Étape 3 : EmecefService::emettreFactureNormalisee()
+  1. Vérifie la configuration e-MECeF du client :
+     - client->emecef_is_active (bool) 
+     - client->emecef_nim (string)
+     - client->emecef_password (encrypted)
+  2. Construit le payload DGI :
+     - IFU émetteur, IFU récepteur
+     - Type de facture (FV/FA/AV/EA)
+     - Montants HT, TVA, TTC
+     - Calcul AIB (1% DGE/DME, 5% CSI)
+     - Liste des articles
+  3. Appelle l'API Sygmef (ou simule si EMECEF_TEST_MODE=true)
+  4. Sur succès :
+     - Stocke emecef_nim, emecef_compteur, emecef_hash, emecef_qr
+     - Passe emecef_statut = 'emise'
+     - Enregistre emecef_datetime
+  5. Retourne ['success' => true, 'data' => [...]]
+
+Étape 4 : Création des notifications (si émission réussie)
+  EmecefController::createEmissionNotifications($invoice)
+  → Notification 1 : admin de l'entreprise (via $client->companyAdmins())
+  → Notification 2 : comptable qui a émis (via $invoice->created_by)
+
+Étape 5 : Portail entreprise — affichage de la facture
+  GET /api/company/invoices → CompanyInvoiceController::listAll()
+  → Récupère CompanyInvoice byClient($clientId)
+  → Récupère ErpInvoice where client_id = $clientId AND emecef_statut = 'emise'
+  → Fusionne les deux collections, tri par date descendante
+  → Chaque entrée ErpInvoice a un flag source: 'erp' + emecef data
+
+Étape 6 : Affichage dans Invoices.vue (Company)
+  → Badge "ERP" (fond bleu foncé #163A5E)
+  → Badge "DGI ✓" (vert, pour les factures certifiées)
+  → QR code dans le détail (NIM, compteur, datetime, statut)
+  → Distinction visuelle (isup-row-erp: fond alterné)
+```
+
+### 9.3 EmecefService — API complète
+
+```php
+class EmecefService
+{
+    public function __construct(
+        private readonly string $apiUrl,
+        private readonly string $apiToken,
+        private readonly string $defaultNim,
+        private readonly bool $testMode,
+    ) {}
+
+    // Émet une facture normalisée à la DGI
+    public function emettreFactureNormalisee(ErpInvoice $invoice): array
+    {
+        $client = $invoice->client;
+        if (!$client || !$client->emecef_is_active || !$client->emecef_nim) {
+            return ['success' => false, 'error' => 'Client non configuré pour e-MECeF.'];
+        }
+
+        // Construction du payload...
+        // Appel API ou simulation...
+        // Mise à jour des champs emecef_* sur l'invoice...
+    }
+
+    // Annule une facture auprès de la DGI
+    public function annulerFacture(ErpInvoice $invoice): array {}
+
+    // Vérifie le statut d'une facture
+    public function verifierFacture(string $nim, string $compteur): array {}
+
+    // Certifie pour PDF (statique, sans API)
+    public static function certifyInvoice(ErpInvoice $invoice): ErpInvoice {}
+}
+```
+
+### 9.4 EmecefController — Endpoints
+
+| Méthode | Endpoint | Action | Préconditions |
+|---------|----------|--------|---------------|
+| POST | `/emecef/emit/{invoice}` | Émettre à la DGI | Facture non déjà émise |
+| POST | `/emecef/cancel/{invoice}` | Annuler à la DGI | Facture doit avoir emecef_nim |
+| GET | `/emecef/verify/{invoice}` | Vérifier statut | Facture doit avoir nim + compteur |
+
+---
+
+## 10. Flux des Permissions (Frontend)
 
 ### 8.1 Store authStore (reactive, singleton)
 
@@ -272,7 +425,7 @@ CHANGEMENT DE CONTEXTE :
     → refreshPermissions() + window.location.reload()
 ```
 
-## 9. Structure des fichiers
+## 11. Structure des fichiers
 
 ```
 app/
@@ -298,6 +451,17 @@ app/
 │   │   │   ├── Ocr/
 │   │   │   ├── Paie/
 │   │   │   └── Admin/           → Audit, Articles
+│   │   ├── Modules/             → Modules spécialisés
+│   │   │   └── Legal/           → Module juridique (9 contrôleurs)
+│   │   │       ├── LegalDashboardController
+│   │   │       ├── LegalCompanyInfoController
+│   │   │       ├── LegalAssembliesController
+│   │   │       ├── LegalContratsController
+│   │   │       ├── LegalLitigationsController
+│   │   │       ├── LegalComplianceController
+│   │   │       ├── LegalActsLibraryController
+│   │   │       ├── LegalDossiersController
+│   │   │       └── LegalRegistresController
 │   │   ├── Company/             → Portail entreprise (Users, Events, Caisse, DAE...)
 │   │   ├── Public/              → Catalogue e-commerce, Commande, Panier
 │   │   ├── Commerce/            → Dashboard commerce/POS
@@ -322,6 +486,12 @@ app/
 │   ├── Employee.php, Contract.php, Payslip.php, LeaveRequest.php
 │   ├── Project.php, ProjectTask.php, ProjectMilestone.php
 │   ├── LegalCase.php, Article.php, Caisse.php, CaisseTransaction.php
+│   ├── Legal/                    → Module juridique (11 modèles, base abstraite)
+│   │   ├── LegalBaseModel.php   → Abstract, scopeByClient() (super_admin bypass)
+│   │   ├── LegalCompanyInfo.php, LegalAssembly.php, LegalContract.php
+│   │   ├── LegalContractSignature.php, LegalLitigation.php, LegalCompliance.php
+│   │   ├── LegalActsLibrary.php, LegalRegistre.php, LegalDossier.php
+│   │   ├── LegalVeille.php, LegalAuditLog.php
 │   ├── ClientFolder.php, Document.php, DocumentVersion.php
 │   ├── DossierDae.php, CourrierDae.php, TacheDae.php
 │   ├── ItTicket.php, ItAsset.php, ItMaintenanceContract.php
@@ -355,6 +525,11 @@ resources/
 │   │   │   ├── Tontines/, Signatures/, Relances/, CostCenters/
 │   │   │   ├── Ocr/, Paie/
 │   │   │   └── Admin/          → Requests, Audit, Articles
+│   │   ├── Modules/            → Modules spécialisés
+│   │   │   └── Legal/          → Module juridique (21 pages)
+│   │   │       ├── Dashboard.vue, Societe/, Assemblees/
+│   │   │       ├── Contrats/, Contentieux/, Conformite/
+│   │   │       ├── Bibliotheque/, Dossiers/, Registres/
 │   │   ├── Company/            → 15+ pages portail entreprise
 │   │   ├── Public/             → Catalogue, Panier, Commande
 │   │   └── Auth/               → CpaLogin, CpaRegister
@@ -385,14 +560,63 @@ database/
     ├── DemoCompanySeeder       → Données entreprise démo
     ├── AccountingDemoSeeder    → Écritures comptables démo
     ├── DaeDemoSeeder           → Secrétariat DAE démo
+    ├── LegalDemoSeeder         → Données juridiques démo (contrats, contentieux, conformité, actes, AG, registres)
     └── ...
 
 bootstrap/app.php               → Aliases middleware + SetTenantContext global
 ```
 
-## 10. API Endpoints
+## 12. API Endpoints
 
-### 10.1 Profil et permissions
+### 12.1 Company — Factures
+| Endpoint | Méthode | Description |
+|----------|---------|-------------|
+| `/company/invoices` | GET | Page facturation (SPA) |
+| `/api/company/invoices` | GET | Liste toutes les factures (CompanyInvoice + ErpInvoice émises) |
+| `/api/company/invoices/stats` | GET | Statistiques (total TTC, payé, dû, par statut) |
+| `/api/company/invoices` | POST | Créer facture |
+| `/api/company/invoices/{id}` | GET | Détail facture avec lignes + paiements |
+| `/api/company/invoices/{id}` | PUT | Mettre à jour facture (brouillon seulement) |
+| `/api/company/invoices/{id}` | DELETE | Supprimer facture (brouillon seulement) |
+| `/api/company/invoices/{id}/status` | PATCH | Changer statut (draft/sent/paid/cancelled/overdue) |
+| `/api/company/invoices/{id}/payments` | POST | Enregistrer un paiement |
+
+### 12.2 CompanyInvoice — Modèle de données
+```sql
+company_invoices (
+    id, client_id, number, type (invoice/credit_note/devis),
+    status (draft/sent/paid/cancelled/overdue),
+    recipient_name, recipient_address,
+    issue_date, due_date,
+    total_ht DECIMAL(15,2), total_tva DECIMAL(15,2), total_ttc DECIMAL(15,2),
+    paid_amount DECIMAL(15,2) DEFAULT 0,
+    notes TEXT, created_by FK→users,
+    created_at, updated_at, deleted_at
+)
+```
+- **Attribut calculé** : `computedStatus` = 'paid' si `paid_amount >= total_ttc`
+- **Relations** : items(), payments(), createdBy()
+- **Scope** : byClient(int $clientId)
+
+### 12.3 ErpInvoice — Modèle de données (e-MECeF)
+```sql
+erp_invoices (
+    id, invoice_number, type, client_id FK→clients, client_name,
+    invoice_date, due_date,
+    total_ht DECIMAL(15,2), tax_amount DECIMAL(15,2), total_ttc DECIMAL(15,2),
+    status, created_by FK→users,
+    emecef_nim VARCHAR(50),        -- NIM du client (per-client)
+    emecef_compteur INT,           -- Compteur retourné par la DGI
+    emecef_hash VARCHAR(255),       -- Hash de la facture
+    emecef_qr TEXT,                 -- QR code (URL de vérification DGI)
+    emecef_statut VARCHAR(20),      -- non_emise / emise / annulee
+    emecef_datetime DATETIME,       -- Date d'émission DGI
+    created_at, updated_at, deleted_at
+)
+```
+- **Relations** : client(), lineItems(), creator()
+
+### 12.5 Profil et permissions
 | Endpoint | Méthode | Description |
 |----------|---------|-------------|
 | `/api/me/profile` | GET | Profil complet + permissions + entreprises |
@@ -400,18 +624,18 @@ bootstrap/app.php               → Aliases middleware + SetTenantContext global
 | `/api/me/field-restrictions/{module}` | GET | Champs cachés pour un module |
 | `/api/me/switch-context` | POST | Basculer le contexte entreprise |
 
-### 10.2 Contexte entreprise
+### 12.6 Contexte entreprise
 | Endpoint | Méthode | Description |
 |----------|---------|-------------|
 | `/context` | GET | Sélecteur de contexte (multi-entreprise) |
 | `/context/switch` | POST | Changer d'entreprise active |
 
-### 10.3 Polling
+### 12.7 Polling
 | Endpoint | Méthode | Description |
 |----------|---------|-------------|
 | `/api/company/events/check` | GET | Vérification des mises à jour permissions |
 
-### 10.4 CRM Clients (API GEL)
+### 12.9 CRM Clients (API GEL)
 | Endpoint | Méthode | Description |
 |----------|---------|-------------|
 | `/api/clients` | GET | Liste des clients |
@@ -422,7 +646,7 @@ bootstrap/app.php               → Aliases middleware + SetTenantContext global
 | `/api/clients/{clientId}/services/{serviceId}/status` | PUT | Statut d'un service |
 | `/api/clients/{id}/modules` | PUT | Modules d'un client |
 
-### 10.5 Commerce / Catalogue
+### 12.10 Commerce / Catalogue
 | Endpoint | Méthode | Description |
 |----------|---------|-------------|
 | `/api/commerce/dashboard` | GET | Stats dashboard commerce |
@@ -432,9 +656,9 @@ bootstrap/app.php               → Aliases middleware + SetTenantContext global
 | `/api/cart/remove/{id}` | DELETE | Retirer du panier |
 | `/api/cart/clear` | POST | Vider le panier |
 
-## 11. Architecture Frontend (Vue 3)
+## 13. Architecture Frontend (Vue 3)
 
-### 11.1 bootstrap.js — Configuration réseau
+### 13.1 bootstrap.js — Configuration réseau
 ```
 Axios defaults :
   baseURL       ← <meta name="base-url"> (request()->root() côté serveur)
@@ -447,7 +671,7 @@ fetch() wrapper :
   → Évite les 404 dus au décalage entre APP_URL et le chemin XAMPP
 ```
 
-### 11.2 Stores Vue (réactifs)
+### 13.2 Stores Vue (réactifs)
 
 **authStore** (stores/auth.js) — Singleton réactif :
 ```
@@ -472,7 +696,7 @@ Cycle de vie :
 Méthodes : fetchCart(), addToCart(), updateCartItem(), removeFromCart(), clearCart()
 ```
 
-### 11.3 Root.vue — Routeur de composants
+### 13.3 Root.vue — Routeur de composants
 ```
 Lecture de data-page sur #app
 Map<pageKey, Component> résout le composant Vue correspondant
@@ -480,7 +704,7 @@ Props passées via data-props (JSON dans l'attribut data-props du div #app)
 Rendu : <component :is="pageComponent" v-bind="pageProps" />
 ```
 
-## 12. Modèle de Données (tables multi-tenant)
+## 14. Modèle de Données (tables multi-tenant)
 
 ### user_clients
 ```sql
@@ -508,7 +732,7 @@ is_active, created_by (FK→users)
 INDEX (module, action), INDEX (module, role_slug)
 ```
 
-## 13. Plan de Développement
+## 15. Plan de Développement
 
 ### Phase 0 — Fondation ✅
 - [x] Système de rôles et permissions (11 rôles, 89 permissions, 12 modules)
@@ -528,7 +752,7 @@ INDEX (module, action), INDEX (module, role_slug)
 - [x] IT Helpdesk (tickets, SLA, base de connaissances)
 - [x] ITAM (inventaire, licences, interventions)
 - [x] Caisse (encaissements, décaissements, rapports)
-- [x] Juridique (dossiers, veille)
+- [x] Juridique (8 sous-modules : société, assemblées, contrats, contentieux, conformité, bibliothèque d'actes, dossiers, registres)
 - [x] Projets (tâches, jalons, budget)
 - [x] CRM Clients (CRUD, contacts, catégorisation)
 - [x] Tontine / Microfinance
@@ -546,3 +770,93 @@ INDEX (module, action), INDEX (module, role_slug)
 - [x] Base URL dynamique (XAMPP + artisan serve)
 - [x] Stores Vue auth + cart
 - [x] CSRF automatique + fetch wrapper
+
+---
+
+## 16. Configuration post-installation
+
+### 16.1 Activation des modules par client
+
+Chaque entreprise cliente doit avoir ses modules activés via la table `client_modules` (accessible dans l'UI super_admin → Client → Modules) :
+
+```sql
+INSERT INTO client_modules (client_id, module, is_active, activated_at, activated_by)
+VALUES (2, 'rh', true, NOW(), 1);
+```
+
+Les modules non activés sont masqués côté serveur (middleware `module:*`) et côté client (sidebar filtrée par `authStore.hasModule()`).
+
+**Modules disponibles :** caisse, comptabilite, crm, dae, document, erp, facturation, it_assets, it_helpdesk, juridique, projets, rh
+
+### 16.2 Configuration e-MECeF par client
+
+Pour activer l'envoi des factures à la DGI pour un client :
+
+1. **IFU** (Identifiant Fiscal Unique) — obligatoire, renseigné sur la fiche client
+2. **NIM** (Numéro d'Identification Machine) — fourni par la DGI, stocké dans `clients.emecef_nim`
+3. **Mot de passe e-MECeF** — stocké chiffré dans `clients.emecef_password`
+4. **Toggle** — `clients.emecef_is_active = true`
+
+Ces champs sont gérés dans `resources/js/Pages/Gel/Clients/Show.vue` (section paramètres/modifiables par super_admin et comptables).
+
+### 16.3 Configuration .env
+
+```env
+EMECEF_API_TOKEN=token_dgi
+EMECEF_NIM=XX-XXXXXXX           # NIM global (déprécié — utiliser per-client)
+EMECEF_TEST_MODE=true            # true = pas d'appel API réel
+EMECEF_API_URL=https://sygmef.impots.bj/emcf/api
+SESSION_DRIVER=file
+SESSION_LIFETIME=120
+MAIL_MAILER=smtp                # Pour notifications et envoi factures
+MOMO_API_KEY=                   # MTN MoMo (sandbox → production)
+```
+
+### 16.4 Création des utilisateurs et rattachement
+
+```php
+// Créer un utilisateur entreprise
+$user = User::create([...]);
+UserClient::create([
+    'user_id' => $user->id,
+    'client_id' => $client->id,
+    'role' => 'company_admin',
+    'is_active' => true,
+    'joined_at' => now(),
+]);
+$user->switchToClient($client->id); // active_client_id = client->id
+```
+
+**Comptes démo pré-existants (via UsersSeeder) :**
+- `jean@techinnov.bj` / admin123 — Admin TechInnov (client_id = 2)
+- `aminata@africa-logistics.com` / admin123 — Admin Africa Logistics (client_id = 4)
+- `kossi@servicespro.bj` / admin123 — Admin Services Pro (client_id = 3)
+- `marie@techinnov.bj` / admin123 — Manager TechInnov
+- `david@techinnov.bj` / admin123 — Employé TechInnov
+
+### 16.5 Vérification du bon fonctionnement
+
+```bash
+# 1. Migrations OK
+php artisan migrate:status
+
+# 2. Seeders chargés
+php artisan db:seed --class=DatabaseSeeder
+
+# 3. Build frontend
+npm run build
+
+# 4. Connexion test (super_admin)
+#    admin@gel.cabinet / admin123 → /dashboard
+#    Vérifier que la sidebar affiche tous les modules
+
+# 5. Connexion test (entreprise)
+#    jean@techinnov.bj / admin123 → /company/dashboard
+#    Vérifier que les modules activés sont visibles
+
+# 6. Test e-MECeF (mode test)
+#    EMECEF_TEST_MODE=true → l'émission simule une réponse DGI
+#    → emecef_statut passe à 'emise'
+#    → notification créée pour l'admin entreprise
+#    → facture visible côté entreprise avec badge DGI ✓
+```

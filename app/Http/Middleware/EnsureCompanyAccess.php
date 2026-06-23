@@ -1,4 +1,17 @@
 <?php
+// =============================================================================
+// FICHIER : EnsureCompanyAccess.php
+// RÔLE    : Middleware — Vérifie que l'utilisateur a un contexte entreprise
+// ÉQUIPE  : GEL Cabinet — Équipe Dev Backend
+// =============================================================================
+// Ce middleware est utilisé sur les routes du portail entreprise.
+// Il vérifie que l'utilisateur connecté a bien un active_client_id valide
+// et qu'il est rattaché à cette entreprise via la table user_clients.
+//
+// Cas particuliers :
+//   - Super admin, comptables et clients : bypass (pas de contexte entreprise)
+//   - Si pas de client_id : redirection vers la page de sélection de contexte
+// =============================================================================
 
 namespace App\Http\Middleware;
 

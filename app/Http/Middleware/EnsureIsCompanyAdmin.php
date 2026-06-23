@@ -1,4 +1,17 @@
 <?php
+// =============================================================================
+// FICHIER : EnsureIsCompanyAdmin.php
+// RÔLE    : Middleware — Vérifie que l'utilisateur est rattaché à une entreprise
+// ÉQUIPE  : GEL Cabinet — Équipe Dev Backend
+// =============================================================================
+// Protège les routes du portail entreprise.
+// L'utilisateur doit avoir un client_id non nul (être rattaché à une entreprise
+// cliente). Les utilisateurs internes du cabinet (super_admin, comptables, etc.)
+// n'ont pas de client_id — ils sont redirigés vers leur dashboard.
+//
+// Note : ne distingue pas company_admin et employé standard.
+//        Cette distinction se fait côté fonctionnalités dans les contrôleurs.
+// =============================================================================
 
 namespace App\Http\Middleware;
 

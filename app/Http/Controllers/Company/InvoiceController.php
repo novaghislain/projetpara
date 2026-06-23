@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CompanyInvoice;
 use App\Models\CompanyInvoiceItem;
 use App\Models\CompanyPayment;
+use App\Models\ErpInvoice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -57,7 +58,46 @@ class InvoiceController extends BaseCompanyController
             ];
         });
 
-        return response()->json($invoices);
+        // ─── Factures ERP du comptable (émises via e-MECeF) ───
+        $erpInvoices = ErpInvoice::where('client_id', $clientId)
+            ->where('emecef_statut', 'emise')
+            ->whereNotNull('emecef_nim')
+            ->latest('invoice_date')
+            ->get()
+            ->map(function ($inv) {
+                return [
+                    'id'             => $inv->id,
+                    'number'         => $inv->invoice_number,
+                    'type'           => $inv->type ?? 'invoice',
+                    'status'         => $inv->status,
+                    'computed_status' => $inv->emecef_statut === 'emise' ? 'sent' : $inv->status,
+                    'recipient_name' => $inv->client_name,
+                    'issue_date'     => $inv->invoice_date?->format('Y-m-d'),
+                    'due_date'       => $inv->due_date?->format('Y-m-d'),
+                    'total_ht'       => (float) $inv->total_ht,
+                    'total_tva'      => (float) ($inv->tax_amount ?? 0),
+                    'total_ttc'      => (float) $inv->total_ttc,
+                    'paid_amount'    => 0,
+                    'items_count'    => 0,
+                    'payments_count' => 0,
+                    'created_at'     => $inv->invoice_date?->format('d/m/Y'),
+                    'source'         => 'erp',
+                    'emecef'         => [
+                        'nim'      => $inv->emecef_nim,
+                        'compteur' => $inv->emecef_compteur,
+                        'qr'       => $inv->emecef_qr,
+                        'statut'   => $inv->emecef_statut,
+                        'datetime' => $inv->emecef_datetime?->format('d/m/Y H:i'),
+                    ],
+                ];
+            });
+
+        // Fusionner et trier par date (plus récent d'abord)
+        $allInvoices = collect(array_merge($invoices->toArray(), $erpInvoices->toArray()))
+            ->sortByDesc('issue_date')
+            ->values();
+
+        return response()->json($allInvoices);
     }
 
     /**

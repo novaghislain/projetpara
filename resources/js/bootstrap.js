@@ -1,3 +1,20 @@
+// =============================================================================
+// FICHIER : bootstrap.js
+// RÔLE    : Configuration globale axios + fetch avec support multi-dossier
+// ÉQUIPE  : GEL Cabinet — Équipe Dev Frontend
+// =============================================================================
+// Ce fichier est chargé UNE FOIS au démarrage du SPA. Il configure :
+//   1. axios pour toutes les requêtes AJAX
+//   2. Le token CSRF global (extrait du meta tag Blade)
+//   3. La base URL dynamique (important pour les déploiements en sous-dossier)
+//   4. Un wrapper fetch() qui préfixe automatiquement les URLs d'API
+//
+// ⚠️  Le wrapper fetch est INDISPENSABLE pour les déploiements XAMPP où
+//     l'application est servie depuis http://localhost/Para/public/.
+//     Sans lui, fetch('/api/...') résoudrait sur http://localhost/api/...
+//     au lieu de http://localhost/Para/public/api/...
+// =============================================================================
+
 import axios from 'axios';
 window.axios = axios;
 
@@ -27,6 +44,18 @@ if (apiBaseUrl) {
     // We wrap fetch to automatically prepend the base URL for API paths.
     const originalFetch = window.fetch;
     window.fetch = function(input, init) {
+        // Always add Accept: application/json and X-Requested-With headers
+        // so Laravel controllers return JSON data instead of HTML SPA views.
+        if (!init) init = {};
+        if (!init.headers) init.headers = {};
+        if (init.headers instanceof Headers && !init.headers.has('Accept')) {
+            init.headers.set('Accept', 'application/json');
+            init.headers.set('X-Requested-With', 'XMLHttpRequest');
+        } else if (init.headers && !(init.headers instanceof Headers) && !init.headers['Accept']) {
+            init.headers['Accept'] = 'application/json';
+            init.headers['X-Requested-With'] = 'XMLHttpRequest';
+        }
+
         if (typeof input === 'string' && input.startsWith('/') && !input.startsWith(apiBaseUrl)) {
             input = apiBaseUrl + input;
         } else if (input instanceof Request) {

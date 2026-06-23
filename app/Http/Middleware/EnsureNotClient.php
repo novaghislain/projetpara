@@ -1,4 +1,15 @@
 <?php
+// =============================================================================
+// FICHIER : EnsureNotClient.php
+// RÔLE    : Middleware — Bloque les clients publics du parcours e-commerce
+// ÉQUIPE  : GEL Cabinet — Équipe Dev Backend
+// =============================================================================
+// Similaire à RedirectIfClient mais avec un message différent.
+// Utilisé sur les routes strictement internes où un client n'a rien à faire.
+//
+// Les clients publics (role=client) sont ceux qui commandent sur le site
+// e-commerce — ils n'ont qu'un accès à /mes-commandes.
+// =============================================================================
 
 namespace App\Http\Middleware;
 

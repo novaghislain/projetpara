@@ -1,4 +1,19 @@
 <?php
+// =============================================================================
+// FICHIER : CheckRole.php
+// RÔLE    : Middleware — Vérifie que l'utilisateur a un rôle spécifique
+// ÉQUIPE  : GEL Cabinet — Équipe Dev Backend
+// =============================================================================
+// Middleware paramétrable : on lui passe un ou plusieurs rôles acceptés.
+//
+// Utilisation dans les routes :
+//   Route::middleware('role:super_admin')
+//   Route::middleware('role:director,pole_responsible')
+//
+// Comportement :
+//   - L'utilisateur doit avoir l'un des rôles spécifiés (OU logique)
+//   - Si aucun rôle ne correspond → 403
+// =============================================================================
 
 namespace App\Http\Middleware;
 
@@ -12,6 +27,8 @@ class CheckRole
     /**
      * Vérifie que l'utilisateur authentifié a le rôle requis.
      * Usage: ->middleware('role:super_admin') ou 'role:director,pole_responsible'
+     *
+     * @param  string  ...$roles  Liste des rôles autorisés (OR)
      */
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {

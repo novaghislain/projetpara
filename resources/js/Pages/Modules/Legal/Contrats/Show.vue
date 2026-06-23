@@ -1,7 +1,23 @@
 <template>
     <GelLayout>
         <div class="p-4" style="background:#f8f9fa;min-height:100vh">
-            <div v-if="contrat" class="row g-4">
+            <div v-if="error" class="alert alert-danger d-flex align-items-center gap-3">
+                <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+                <div>
+                    <h5 class="mb-1">Contrat introuvable</h5>
+                    <p class="mb-0">{{ error }}</p>
+                    <a href="/juridique/contrats" class="btn btn-outline-danger btn-sm mt-2">
+                        <i class="bi bi-arrow-left me-1"></i> Retour à la liste
+                    </a>
+                </div>
+            </div>
+            <div v-else-if="!contrat" class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+                <p class="text-muted mt-2">Chargement du contrat...</p>
+            </div>
+            <div v-else class="row g-4">
                 <div class="col-12">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -103,6 +119,7 @@ import ContratStatusBadge from '../../../../Components/Legal/ContratStatusBadge.
 import PartiesTable from '../../../../Components/Legal/PartiesTable.vue';
 
 const contrat = ref(null);
+const error = ref(null);
 const contratId = window.location.pathname.split('/').pop();
 
 const typeLabels = {
@@ -120,8 +137,18 @@ function formatCurrency(val) {
 }
 
 async function loadContrat() {
-    try { const res = await fetch('/juridique/contrats/' + contratId); contrat.value = await res.json(); }
-    catch (e) { console.error(e); }
+    try {
+        const res = await fetch('/juridique/contrats/' + contratId);
+        if (!res.ok) {
+            if (res.status === 404) error.value = 'Ce contrat n\'existe pas ou a été supprimé.';
+            else error.value = 'Erreur lors du chargement (' + res.status + ').';
+            return;
+        }
+        contrat.value = await res.json();
+    } catch (e) {
+        console.error(e);
+        error.value = 'Impossible de charger le contrat. Vérifiez votre connexion.';
+    }
 }
 
 async function signer() {

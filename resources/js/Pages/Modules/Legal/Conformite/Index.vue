@@ -13,6 +13,7 @@
                 </div>
             </div>
 
+            <div v-if="error" class="alert alert-danger">⚠️ {{ error }}</div>
             <div class="row g-3">
                 <div v-for="c in conformites" :key="c.id" class="col-md-6 col-lg-4">
                     <div class="card border-0 shadow-sm h-100">
@@ -45,6 +46,7 @@ import { ref, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 
 const conformites = ref([]);
+const error = ref(null);
 
 function formatDate(date) {
     if (!date) return '—';
@@ -57,8 +59,15 @@ function isOverdue(date) {
 }
 
 async function load() {
-    try { const res = await fetch('/juridique/conformite'); conformites.value = await res.json(); }
-    catch (e) { console.error(e); }
+    error.value = null;
+    try {
+        const res = await fetch('/juridique/conformite');
+        if (!res.ok) throw new Error('Erreur ' + res.status);
+        conformites.value = await res.json();
+    } catch (e) {
+        console.error(e);
+        error.value = 'Impossible de charger les obligations.';
+    }
 }
 onMounted(load);
 </script>

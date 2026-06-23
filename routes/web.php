@@ -59,6 +59,9 @@ Route::get('/services', function () {
     return view('services.index');
 })->name('services.index');
 Route::view('/services/comptabilite', 'services.comptabilite')->name('services.comptabilite');
+Route::view('/services/consultation', 'services.consultation')->name('services.consultation');
+Route::view('/services/administration', 'services.administration')->name('services.administration');
+Route::view('/services/it', 'services.it')->name('services.it');
 Route::view('/services/juridique', 'services.juridique')->name('services.juridique');
 Route::view('/services/fiscal', 'services.fiscal')->name('services.fiscal');
 Route::view('/services/social-paie', 'services.social-paie')->name('services.social-paie');
@@ -203,18 +206,35 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client']
         return view('app', ['page' => 'settings']);
     })->name('settings');
 
-    // Diagnostic
-    Route::get('/api/debug-clients', function() {
-        $clients = \App\Models\Client::latest()->get();
-        return response()->json([
-            'count' => $clients->count(),
-            'user' => ['id' => Auth::id(), 'name' => Auth::user()->name, 'role' => Auth::user()->role],
-            'clients' => $clients->map(fn($c) => ['id' => $c->id, 'name' => $c->company_name, 'email' => $c->email, 'phone' => $c->phone, 'status' => $c->status]),
-        ]);
-    });
-
     // API endpoints (donnÃ©es JSON pour Vue)
     Route::get('/api/stats', [DashboardController::class, 'stats']);
+    Route::get('/api/search', [\App\Http\Controllers\Api\SearchController::class, 'search']);
+
+    // IA — Suggestions (+ lecture seule pour le journal d'apprentissage)
+    Route::prefix('api/ai')->group(function () {
+        Route::get('/suggestions', [\App\Http\Controllers\Api\AiSuggestionController::class, 'index']);
+        Route::get('/suggestions/unread-count', [\App\Http\Controllers\Api\AiSuggestionController::class, 'unreadCount']);
+        Route::post('/suggestions/{id}/read', [\App\Http\Controllers\Api\AiSuggestionController::class, 'markRead']);
+        Route::post('/suggestions/mark-all-read', [\App\Http\Controllers\Api\AiSuggestionController::class, 'markAllRead']);
+        Route::get('/suggestions/{id}', [\App\Http\Controllers\Api\AiSuggestionController::class, 'show']);
+        Route::post('/suggestions/{id}/approve', [\App\Http\Controllers\Api\AiSuggestionController::class, 'approve']);
+        Route::post('/suggestions/{id}/reject', [\App\Http\Controllers\Api\AiSuggestionController::class, 'reject']);
+        Route::delete('/suggestions/{id}', [\App\Http\Controllers\Api\AiSuggestionController::class, 'destroy']);
+        Route::get('/learning-log', [\App\Http\Controllers\Api\AiSuggestionController::class, 'learningLog']);
+    });
+
+    // Agent Fiscal Bénin
+    Route::prefix('api/fiscal')->group(function () {
+        Route::post('/propose-tva', [\App\Http\Controllers\Api\FiscalAgentController::class, 'proposeTva']);
+        Route::get('/alerts', [\App\Http\Controllers\Api\FiscalAgentController::class, 'alerts']);
+        Route::post('/apply-tva/{id}', [\App\Http\Controllers\Api\FiscalAgentController::class, 'applyTva']);
+        Route::get('/summary', [\App\Http\Controllers\Api\FiscalAgentController::class, 'summary']);
+    });
+
+    // Agents IA — dashboard + exécution
+    Route::get('/api/ai/agents/dashboard', [\App\Http\Controllers\Ai\AgentController::class, 'dashboard']);
+    Route::post('/api/ai/agents/run/{agent}', [\App\Http\Controllers\Ai\AgentController::class, 'runAgent']);
+
     Route::middleware('module:crm')->group(function () {
         Route::get('/api/clients', [ClientController::class, 'listAll']);
         Route::get('/api/clients/{id}', [ClientController::class, 'getClient']);
@@ -582,6 +602,15 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client']
     // â”€â”€â”€ Admins entreprise â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Route::get('/company-admins', [\App\Http\Controllers\Gel\CompanyAdminController::class, 'index'])->name('company-admins.index');
 
+    // â”€â”€â”€ Personnel GEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    Route::get('/personnel', [\App\Http\Controllers\Gel\PersonnelController::class, 'index'])->name('gel.personnel');
+
+    // â”€â”€â”€ API â€” Personnel GEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    Route::get('/api/gel/personnel', [\App\Http\Controllers\Gel\PersonnelController::class, 'listAll']);
+    Route::post('/api/gel/personnel', [\App\Http\Controllers\Gel\PersonnelController::class, 'store']);
+    Route::put('/api/gel/personnel/{id}', [\App\Http\Controllers\Gel\PersonnelController::class, 'update']);
+    Route::delete('/api/gel/personnel/{id}', [\App\Http\Controllers\Gel\PersonnelController::class, 'destroy']);
+
     // â”€â”€â”€ API â€” Demandes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Route::get('/api/requests', [\App\Http\Controllers\Gel\CompanyRequestController::class, 'listAll']);
     Route::get('/api/requests/{id}', [\App\Http\Controllers\Gel\CompanyRequestController::class, 'show']);
@@ -907,6 +936,27 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client']
         Route::put('/{article}', [\App\Http\Controllers\Gel\ArticleController::class, 'update'])->name('update');
         Route::delete('/{article}', [\App\Http\Controllers\Gel\ArticleController::class, 'destroy'])->name('destroy');
     });
+
+    // ─── IA & Automatisation ─────────────────────────────────────────────
+    Route::prefix('ai')->name('ai.')->group(function () {
+        Route::get('/feed', fn() => view('app', ['page' => 'gel-ai-feed']))->name('feed');
+        Route::get('/agents', fn() => view('company', ['page' => 'ai-agents', 'clientId' => auth()->user()?->client_id]))->name('agents');
+        Route::get('/reconciliation', fn() => view('app', ['page' => 'gel-ai-reconciliation']))->name('reconciliation');
+        Route::get('/relances', fn() => view('app', ['page' => 'gel-ai-relances']))->name('relances');
+        Route::get('/ocr', fn() => view('app', ['page' => 'gel-ai-ocr']))->name('ocr');
+        Route::get('/cashflow', fn() => view('app', ['page' => 'gel-ai-cashflow']))->name('cashflow');
+    });
+
+    // ─── API IA ──────────────────────────────────────────────────────────
+    Route::get('/api/ai/suggestions', function () {
+        return response()->json(['data' => []]);
+    })->name('ai.api.suggestions');
+    Route::post('/api/ai/suggestions/{id}/approve', function ($id) {
+        return response()->json(['status' => 'approved']);
+    })->name('ai.api.approve');
+    Route::post('/api/ai/suggestions/{id}/reject', function ($id) {
+        return response()->json(['status' => 'rejected']);
+    })->name('ai.api.reject');
 });
 
 // â”€â”€â”€ Portail Entreprise (company admins uniquement) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -1273,7 +1323,6 @@ Route::middleware(['auth', 'not_suspended'])->prefix('context')->name('select.')
 });
 
 require __DIR__.'/auth.php';
-require __DIR__.'/debug.php';
 
 // Routes publiques
 Route::post('/demande', [\App\Http\Controllers\Gel\PublicController::class, 'storeDemande'])->name('demande.store');

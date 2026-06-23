@@ -11,6 +11,7 @@ const props = defineProps({
 const clients = ref([]);
 const poles = ref([]);
 const services = ref([]);
+const domains = ref([]);
 const loading = ref(true);
 const error = ref(null);
 const submitting = ref(false);
@@ -34,6 +35,7 @@ const form = ref({
     address: '', city: '', country: '', phone: '', email: '', website: '',
     status: 'prospect',
     contract_type: '', contract_start: '', contract_end: '', notes: '',
+    domain_code: '',
     pole_ids: [],
     service_ids: [],
 });
@@ -73,6 +75,15 @@ const fetchServices = async () => {
         services.value = Array.isArray(res.data) ? res.data : (res.data?.data || []);
     } catch (e) {
         console.error('fetchServices error:', e);
+    }
+};
+
+const fetchDomains = async () => {
+    try {
+        const res = await window.axios.get('/api/domains');
+        domains.value = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+    } catch (e) {
+        console.error('fetchDomains error:', e);
     }
 };
 
@@ -116,6 +127,7 @@ const openEditModal = async (id) => {
             contract_start: data.contract_start || '',
             contract_end: data.contract_end || '',
             notes: data.notes || '',
+            domain_code: data.domain_code || '',
             pole_ids: data.poles?.map(p => p.id) || [],
             service_ids: data.services?.map(s => s.id) || [],
         };
@@ -143,6 +155,7 @@ const resetForm = () => {
         address: '', city: '', country: '', phone: '', email: '', website: '',
         status: 'prospect',
         contract_type: '', contract_start: '', contract_end: '', notes: '',
+        domain_code: '',
         pole_ids: [],
         service_ids: [],
     };
@@ -191,7 +204,7 @@ const deleteClient = async (id) => {
 
 // ── Lifecycle ──
 onMounted(async () => {
-    await Promise.all([fetchClients(), fetchPoles(), fetchServices()]);
+    await Promise.all([fetchClients(), fetchPoles(), fetchServices(), fetchDomains()]);
 });
 </script>
 
@@ -370,6 +383,17 @@ onMounted(async () => {
                                 <div class="col-12">
                                     <label class="form-label small">Notes</label>
                                     <textarea v-model="form.notes" class="form-control form-control-sm" rows="2"></textarea>
+                                </div>
+
+                                <div class="col-12 mt-3">
+                                    <h6 class="fw-bold text-primary border-bottom pb-2">Domaine d'activité</h6>
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label small">Domaine *</label>
+                                    <select v-model="form.domain_code" class="form-select form-select-sm">
+                                        <option value="">Sélectionner un domaine</option>
+                                        <option v-for="d in domains" :key="d.code" :value="d.code">{{ d.label }}</option>
+                                    </select>
                                 </div>
 
                                 <div class="col-12 mt-3">
