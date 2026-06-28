@@ -4,7 +4,15 @@ import { ref, computed, reactive } from 'vue';
 const props = defineProps({
     service: {
         type: Object,
-        required: true,
+        default: () => ({})
+    },
+    cart: {
+        type: Object,
+        default: () => ({})
+    },
+    services: {
+        type: Array,
+        default: () => []
     },
     user: {
         type: Object,
@@ -17,7 +25,9 @@ const processing = ref(false);
 
 const form = reactive({
     form_data: {},
-    documents: [] // Array of { file: File, label: String }
+    documents: [], // Array of { file: File, label: String }
+    payment_method: '',
+    phone_number: ''
 });
 
 // Initialiser les champs dynamiques s'ils existent
@@ -27,12 +37,38 @@ if (props.service.champs_formulaire_json) {
     });
 }
 
+const hasDynamicFields = computed(() => props.service.champs_formulaire_json?.length > 0);
+
 const totalSteps = computed(() => {
-    // Étape 1 : Champs dynamiques + Étape 2 : Récap
-    return (props.service.champs_formulaire_json?.length ? 1 : 0) + 1;
+    // Étape 1 : Champs dynamiques (si présents)
+    // Étape X : Paiement Mobile Money
+    // Étape Finale : Récap
+    return (hasDynamicFields.value ? 1 : 0) + 1 + 1; // +1 paiement, +1 récap
+});
+
+// Étape Paiement = avant-dernière (totalSteps - 1)
+const paymentStep = computed(() => totalSteps.value - 1);
+
+// Calcul du total depuis le panier (si disponible)
+const cartItems = computed(() => Object.values(props.cart || {}));
+const cartTotal = computed(() => cartItems.value.reduce((acc, item) => {
+    if (item.tarif_type === 'fixe' && item.tarif_fcfa) return acc + (item.tarif_fcfa * (item.quantity || 1));
+    return acc;
+}, 0));
+const hasDevisItems = computed(() => cartItems.value.some(i => i.tarif_type !== 'fixe') || props.service.tarif_type !== 'fixe');
+
+// Montant depuis le service unique (fallback si pas de panier)
+const totalAmount = computed(() => {
+    if (cartItems.value.length > 0) return cartTotal.value;
+    if (props.service.tarif_type === 'fixe') return props.service.tarif_fcfa || 0;
+    return 0;
 });
 
 const nextStep = () => {
+    if (currentStep.value === paymentStep.value && form.payment_method && !form.phone_number.trim()) {
+        alert('Veuillez saisir votre numéro de téléphone Mobile Money.');
+        return;
+    }
     currentStep.value++;
 };
 
@@ -87,10 +123,13 @@ const submitOrder = async () => {
     processing.value = true;
     try {
         const formData = new FormData();
-        // Ajouter les champs de formulaire (sérialisés en JSON car c'est un tableau dynamique côté serveur)
+        // Ajouter les champs de formulaire
         for (const [key, value] of Object.entries(form.form_data)) {
             formData.append(`form_data[${key}]`, value);
         }
+        // Ajouter infos paiement
+        formData.append('payment_method', form.payment_method);
+        formData.append('phone_number', form.phone_number);
         // Ajouter les fichiers et types
         form.documents.forEach((doc, index) => {
             formData.append(`documents[${index}]`, doc.file);
@@ -212,6 +251,62 @@ const submitOrder = async () => {
                         </div>
                     </div>
 
+                    <!-- Etape Paiement: Mobile Money -->
+                    <div v-if="currentStep === paymentStep">
+                        <h2 class="h4 fw-bold text-dark mb-1">Paiement Mobile Money</h2>
+                        <p class="text-muted small mb-4">Sélectionnez votre réseau et entrez votre numéro.</p>
+
+                        <div v-if="totalAmount > 0" class="bg-light p-3 rounded-3 mb-4 d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Montant à régler</span>
+                            <span class="fw-bold fs-5" style="color:#FF7900;">{{ totalAmount.toLocaleString('fr-FR') }} FCFA</span>
+                        </div>
+                        <div v-if="hasDevisItems" class="alert alert-warning border-0 rounded-3 small mb-4">
+                            <i class="bi-info-circle me-1"></i> Certains services sont sur devis. Un conseiller vous contactera pour les tarifs correspondants.
+                        </div>
+
+                        <p class="fw-medium text-dark mb-3">Choisissez votre moyen de paiement :</p>
+                        <div class="row g-3 mb-4">
+                            <div class="col-6">
+                                <div class="p-3 border rounded-3 text-center"
+                                     style="cursor:pointer; transition: all 0.2s;"
+                                     :style="form.payment_method === 'MTN' ? 'border-color:#FFCC00 !important; background:rgba(255,204,0,0.08);' : ''"
+                                     @click="form.payment_method = 'MTN'">
+                                    <div class="fw-bold mb-1" style="color:#FFCC00; font-family:'Outfit',sans-serif;">MTN MoMo</div>
+                                    <i class="bi-phone fs-3 text-muted"></i>
+                                    <div v-if="form.payment_method === 'MTN'" class="mt-2">
+                                        <i class="bi-check-circle-fill" style="color:#FFCC00;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-3 border rounded-3 text-center"
+                                     style="cursor:pointer; transition: all 0.2s;"
+                                     :style="form.payment_method === 'MOOV' ? 'border-color:#0055A5 !important; background:rgba(0,85,165,0.08);' : ''"
+                                     @click="form.payment_method = 'MOOV'">
+                                    <div class="fw-bold mb-1" style="color:#0055A5; font-family:'Outfit',sans-serif;">Moov Money</div>
+                                    <i class="bi-phone fs-3 text-muted"></i>
+                                    <div v-if="form.payment_method === 'MOOV'" class="mt-2">
+                                        <i class="bi-check-circle-fill" style="color:#0055A5;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div v-if="form.payment_method" class="bg-light p-4 rounded-3 mt-2">
+                            <label class="form-label fw-medium">Numéro {{ form.payment_method }} <span class="text-danger">*</span></label>
+                            <input v-model="form.phone_number" type="tel" class="form-control form-control-lg bg-white border-0 shadow-sm"
+                                   placeholder="Ex: 01 23 45 67">
+                            <p class="small text-muted mt-2 mb-0">
+                                <i class="bi-shield-check me-1 text-success"></i>
+                                Un prompt de validation sera envoyé sur ce numéro.
+                            </p>
+                        </div>
+
+                        <div v-if="!totalAmount" class="alert alert-info border-0 rounded-3 small mt-3">
+                            <i class="bi-check-circle me-1"></i> Aucun paiement immédiat requis. Vous serez facturé après validation du devis.
+                        </div>
+                    </div>
+
                     <!-- Etape Finale: Récapitulatif -->
                     <div v-if="currentStep === totalSteps">
                         <h2 class="h4 fw-bold text-dark mb-4">Récapitulatif de votre demande</h2>
@@ -228,6 +323,14 @@ const submitOrder = async () => {
                                     <span v-if="service.tarif_type === 'fixe'">{{ service.tarif_fcfa?.toLocaleString('fr-FR') }} FCFA</span>
                                     <span v-else>Sur devis</span>
                                 </dd>
+
+                                <template v-if="form.payment_method">
+                                    <dt class="col-sm-4 text-muted fw-normal">Paiement</dt>
+                                    <dd class="col-sm-8 text-dark mb-0">
+                                        {{ form.payment_method === 'MTN' ? 'MTN MoMo' : 'Moov Money' }}
+                                        <span v-if="form.phone_number" class="ms-2 text-muted">({{ form.phone_number }})</span>
+                                    </dd>
+                                </template>
                             </dl>
                         </div>
                         <p class="small text-muted mb-0">En soumettant cette demande, vous acceptez nos conditions générales de service. Notre équipe vous contactera dans les plus brefs délais.</p>

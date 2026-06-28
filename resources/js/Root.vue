@@ -65,6 +65,7 @@ const pageComponent = computed(() => {
         'public-catalogue-index': 'public-catalogue-index',
         'public-catalogue-show': 'public-catalogue-show',
         'public-order-wizard': 'public-order-wizard',
+        'public-cart': 'public-cart',
         'client-orders-index': 'client-orders-index',
         'client-orders-show': 'client-orders-show',
         'admin-orders-kanban': 'admin-orders-kanban',

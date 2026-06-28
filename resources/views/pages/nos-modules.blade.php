@@ -132,7 +132,7 @@
             background: linear-gradient(135deg, #0A1628 0%, #1E293B 25%, #0F172A 50%, #1E293B 75%, #0A1628 100%);
             background-size: 300% 300%;
             animation: gelGradientMove 12s ease infinite;
-            padding: 100px 0 80px;
+            padding: 70px 0 50px;
             position: relative;
             overflow: hidden;
         }
@@ -171,7 +171,7 @@
         }
         .gel-page-header h1 {
             font-family: var(--font-heading);
-            font-size: clamp(2.2rem, 4.5vw, 3.2rem);
+            font-size: clamp(1.8rem, 3vw, 2.4rem);
             font-weight: 900;
             color: #fff;
             letter-spacing: -1px;

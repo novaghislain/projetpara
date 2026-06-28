@@ -9,6 +9,7 @@ const props = defineProps({
 
 const processing = ref(false);
 const animated = ref(false);
+const cartCount = ref(0);
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
 // ── IntersectionObserver for scroll animations ──
@@ -25,39 +26,31 @@ const initObserver = () => {
     document.querySelectorAll('.anim-show').forEach(el => observer.observe(el));
 };
 
-// ── Start order ──
-const startOrder = async () => {
+// ── Ajouter au panier ──
+const cartAdded = ref(false);
+
+const addToCart = async () => {
     processing.value = true;
-    if (!authStore.isAuthenticated) {
-        try {
-            await fetch('/commande/preparer', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({ service_id: props.service.id })
-            });
-        } catch (e) { /* silent */ }
-        window.location.href = '/login';
-        return;
-    }
     try {
-        const res = await fetch('/commande/initialiser', {
+        const res = await fetch('/api/cart/add', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': csrfToken,
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({ service_id: props.service.id })
+            body: JSON.stringify({ id: props.service.id, quantity: 1 })
         });
-        if (res.ok || res.redirected) {
-            window.location.href = res.url || '/commande/etape';
+        if (res.ok) {
+            const data = await res.json();
+            cartAdded.value = true;
+            cartCount.value = data.count;
+        } else {
+            alert('Impossible d\'ajouter ce service. Veuillez réessayer.');
         }
     } catch (e) {
         console.error(e);
+    } finally {
         processing.value = false;
     }
 };
@@ -65,6 +58,11 @@ const startOrder = async () => {
 onMounted(() => {
     setTimeout(() => { animated.value = true; }, 80);
     requestAnimationFrame(() => initObserver());
+    // Charger le nombre d'articles du panier
+    fetch('/api/cart')
+        .then(r => r.json())
+        .then(data => { cartCount.value = data.count || 0; })
+        .catch(() => {});
 });
 
 onUnmounted(() => {
@@ -86,6 +84,15 @@ onUnmounted(() => {
                     <a href="/nos-services" class="show-nav-link">
                         <i class="bi-arrow-left me-1"></i>Catalogue
                     </a>
+                    <!-- Icône Panier -->
+                    <a href="/panier" class="show-btn-outline" style="position:relative; padding: 8px 14px;" title="Mon panier">
+                        <i class="bi-cart"></i>
+                        <span v-if="cartCount > 0"
+                              style="position:absolute; top:-6px; right:-6px; background:#FF7900; color:#fff;
+                                     font-size:10px; font-weight:700; padding:1px 5px; border-radius:10px; line-height:1.4;">
+                            {{ cartCount }}
+                        </span>
+                    </a>
                     <a v-if="authStore.isAuthenticated" href="/dashboard" class="show-btn-primary">
                         <i class="bi-speedometer2 me-1"></i>Mon Espace
                     </a>
@@ -96,22 +103,13 @@ onUnmounted(() => {
             </div>
         </nav>
 
-        <!-- ═══ Sub-bar / Breadcrumb ═══ -->
-        <div class="show-subbar anim-show">
-            <div class="container d-flex align-items-center gap-2" style="font-size: 12px;">
-                <a href="/" class="show-subnav-link">Accueil</a>
-                <span style="color:rgba(255,255,255,0.4);">/</span>
-                <a href="/nos-services" class="show-subnav-link">Catalogue</a>
-                <span style="color:rgba(255,255,255,0.4);">/</span>
-                <span class="show-subnav-link active">{{ service.nom }}</span>
-            </div>
-        </div>
+
 
         <!-- ═══ Hero Banner ═══ -->
         <div :class="['show-hero', { 'show-anim-hero': animated }]">
             <div class="container">
                 <div class="d-flex align-items-center gap-3 mb-3">
-                    <div class="show-category-badge" v-html="category.icone"></div>
+                    <div class="show-category-badge"><i :class="category.icone"></i></div>
                     <span class="show-category-name">{{ category.nom }}</span>
                 </div>
                 <h1 class="show-service-title">{{ service.nom }}</h1>
@@ -229,27 +227,32 @@ onUnmounted(() => {
                                     <div class="show-order-value">{{ category.nom }}</div>
                                 </div>
                                 <button
-                                    @click="startOrder"
-                                    :disabled="processing"
+                                    @click="addToCart"
+                                    :disabled="processing || cartAdded"
                                     class="show-cta-btn mt-4"
                                 >
                                     <span v-if="processing">
                                         <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                                        Chargement...
+                                        Ajout en cours...
+                                    </span>
+                                    <span v-else-if="cartAdded">
+                                        <i class="bi-check-circle me-2"></i>Ajouté au panier !
                                     </span>
                                     <span v-else>
-                                        <i class="bi-send me-2"></i>Faire une demande
+                                        <i class="bi-cart-plus me-2"></i>Ajouter au panier
                                     </span>
                                 </button>
+                                <a v-if="cartAdded" href="/panier"
+                                   class="show-cta-btn mt-2"
+                                   style="background:transparent; border:2px solid #FF7900; color:#FF7900; text-decoration:none; display:block; text-align:center;">
+                                    <i class="bi-cart me-2"></i>Voir mon panier
+                                </a>
                                 <p class="text-center text-muted mt-3 mb-0" style="font-size: 12px;">
                                     <i class="bi-shield-check me-1 text-success"></i>
                                     Sans engagement immédiat.
                                 </p>
                             </div>
                         </div>
-                        <a href="/nos-services" class="show-back-link anim-show" style="transition-delay: 0.5s;">
-                            <i class="bi-arrow-left me-2"></i>Retour au catalogue
-                        </a>
                     </div>
                 </div>
 
@@ -390,11 +393,19 @@ onUnmounted(() => {
    HERO BANNER
    ═══════════════════════════════════════════════════════════════ */
 .show-hero {
-    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    background: linear-gradient(135deg, #0A1628 0%, #1E293B 25%, #0F172A 50%, #1E293B 75%, #0A1628 100%);
+    background-size: 300% 300%;
+    animation: showGradientMove 12s ease infinite;
     padding: 36px 0 32px;
     border-bottom: 1px solid rgba(255,255,255,0.1);
     overflow: hidden;
+    position: relative;
 }
+@keyframes showGradientMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+.show-hero::before { content: ''; position: absolute; top: -100px; right: -100px; width: 400px; height: 400px; background: radial-gradient(circle, rgba(255,121,0,0.12) 0%, transparent 70%); border-radius: 50%; animation: gelFloatA 8s ease-in-out infinite; }
+.show-hero::after { content: ''; position: absolute; bottom: -60px; left: -60px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(255,121,0,0.08) 0%, transparent 70%); border-radius: 50%; animation: gelFloatB 10s ease-in-out infinite; }
+@keyframes gelFloatA { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(-30px,20px) scale(1.05); } 66% { transform: translate(20px,-10px) scale(0.95); } }
+@keyframes gelFloatB { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(30px,-20px) scale(1.08); } 66% { transform: translate(-20px,10px) scale(0.92); } }
 .show-category-badge {
     width: 36px; height: 36px;
     background: rgba(255,121,0,0.2);
@@ -491,7 +502,7 @@ onUnmounted(() => {
     transform: translateY(-2px);
 }
 .show-order-header {
-    background: #3B82F6; color: #fff;
+    background: #1E293B; color: #fff;
     padding: 14px 18px;
     font-size: 14px; font-weight: 700;
     font-family: 'Outfit', sans-serif;

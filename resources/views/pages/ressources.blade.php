@@ -138,6 +138,7 @@
         @keyframes gelFloatB { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(30px,-20px) scale(1.08); } 66% { transform: translate(-20px,10px) scale(0.92); } }
         .gel-page-header h1 { font-family: var(--font-heading); font-size: clamp(1.8rem, 3vw, 2.4rem); font-weight: 900; color: #fff; letter-spacing: -1px; position: relative; z-index: 1; }
         .gel-page-header p { color: rgba(255,255,255,0.6); font-size: 15px; max-width: 620px; margin-top: 12px; line-height: 1.7; position: relative; z-index: 1; }
+        .gel-page-header-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); padding: 5px 14px; border-radius: 100px; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; position: relative; z-index: 1; }
 
         .gel-section { padding: 80px 0; }
         .gel-section-alt { background: var(--gel-light); }
@@ -189,217 +190,66 @@
 
     @include('partials.navbar')
 
-    <!-- Page Header -->
+    <!-- Header -->
     <header class="gel-page-header">
         <div class="container">
             <div class="row">
                 <div class="col-lg-8">
-                    <h1 class="anim-fade-up">Notre Cabinet</h1>
-                    <p class="anim-fade-up delay-1">GEL Cabinet en quelques mots : notre histoire, notre mission, nos valeurs.</p>
+                    <h1 class="anim-fade-up delay-1">Ressources</h1>
+                    <p class="anim-fade-up delay-2">Découvrez notre documentation, nos actualités et trouvez les réponses à vos questions.</p>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Stats -->
-    <div class="gel-stats">
+    <!-- Hub Cards -->
+    <div class="gel-section">
         <div class="container">
-            <div class="row">
-                <div class="col-6 col-md-3 gel-stat-item anim-fade-up">
-                    <span class="gel-stat-num">10+</span>
-                    <div class="gel-stat-lbl">Années d'expertise</div>
+            <div class="row g-4 justify-content-center">
+                
+                <div class="col-md-6 col-lg-3">
+                    <a href="/blogue" class="text-decoration-none h-100">
+                        <div class="gel-card anim-fade-up">
+                            <div class="gel-card-icon"><i class="bi-pencil-square"></i></div>
+                            <h5 style="color:var(--gel-dark);">Blogue</h5>
+                            <p>Actualités, astuces et conseils d'experts sur la gestion d'entreprise.</p>
+                        </div>
+                    </a>
                 </div>
-                <div class="col-6 col-md-3 gel-stat-item anim-fade-up delay-1">
-                    <span class="gel-stat-num">500+</span>
-                    <div class="gel-stat-lbl">Cabinets clients</div>
+
+                <div class="col-md-6 col-lg-3">
+                    <a href="/documentation" class="text-decoration-none h-100">
+                        <div class="gel-card anim-fade-up delay-1">
+                            <div class="gel-card-icon"><i class="bi-file-text"></i></div>
+                            <h5 style="color:var(--gel-dark);">Documentation</h5>
+                            <p>Guides complets et manuels d'utilisation de nos modules.</p>
+                        </div>
+                    </a>
                 </div>
-                <div class="col-6 col-md-3 gel-stat-item anim-fade-up delay-2">
-                    <span class="gel-stat-num">50+</span>
-                    <div class="gel-stat-lbl">Experts dédiés</div>
+
+                <div class="col-md-6 col-lg-3">
+                    <a href="/faq" class="text-decoration-none h-100">
+                        <div class="gel-card anim-fade-up delay-2">
+                            <div class="gel-card-icon"><i class="bi-question-circle"></i></div>
+                            <h5 style="color:var(--gel-dark);">FAQ</h5>
+                            <p>Les questions les plus fréquentes posées par nos utilisateurs.</p>
+                        </div>
+                    </a>
                 </div>
-                <div class="col-6 col-md-3 gel-stat-item anim-fade-up delay-3">
-                    <span class="gel-stat-num">98%</span>
-                    <div class="gel-stat-lbl">Satisfaction client</div>
+
+                <div class="col-md-6 col-lg-3">
+                    <a href="/centre-aide" class="text-decoration-none h-100">
+                        <div class="gel-card anim-fade-up delay-3">
+                            <div class="gel-card-icon"><i class="bi-headset"></i></div>
+                            <h5 style="color:var(--gel-dark);">Centre d'aide</h5>
+                            <p>Contactez notre support technique ou ouvrez un ticket d'assistance.</p>
+                        </div>
+                    </a>
                 </div>
+
             </div>
         </div>
     </div>
-
-    <!-- Mission & Valeurs -->
-    <section class="gel-section">
-        <div class="container">
-            <div class="row align-items-center g-5">
-                <div class="col-lg-6 anim-fade-up">
-
-                    <h2 class="gel-section-title">Simplifier la gestion<br>des cabinets d'expertise</h2>
-                    <p class="gel-section-sub" style="max-width:100%;">Chez GEL Cabinet, on met la technologie au service de l'expertise. Notre mission : donner aux cabinets comptables, juridiques et multi-pôles une plateforme qui centralise et simplifie leurs opérations au quotidien.</p>
-                    <p class="gel-section-sub" style="max-width:100%; margin-top:12px;">CRM, GED, comptabilité, pilotage des missions — on accompagne chaque cabinet dans sa transformation digitale.</p>
-                </div>
-                <div class="col-lg-6 anim-fade-up delay-1">
-                    <div class="row g-3">
-                        <div class="col-6">
-                            <div class="gel-card" style="border-top: 3px solid var(--gel-primary);">
-                                <div class="gel-card-icon"><i class="bi-star-fill"></i></div>
-                                <h5>Excellence</h5>
-                                <p>Nous visons l'excellence dans chaque solution que nous déployons.</p>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="gel-card" style="border-top: 3px solid var(--gel-primary);">
-                                <div class="gel-card-icon"><i class="bi-shield-check"></i></div>
-                                <h5>Confiance</h5>
-                                <p>La sécurité et la confidentialité des données sont notre priorité.</p>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="gel-card" style="border-top: 3px solid var(--gel-primary);">
-                                <div class="gel-card-icon"><i class="bi-lightbulb-fill"></i></div>
-                                <h5>Innovation</h5>
-                                <p>Nous innovons constamment pour répondre aux défis du métier.</p>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="gel-card" style="border-top: 3px solid var(--gel-primary);">
-                                <div class="gel-card-icon"><i class="bi-people-fill"></i></div>
-                                <h5>Proximité</h5>
-                                <p>Un accompagnement humain et personnalisé pour chaque client.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Histoire -->
-    <!-- Pourquoi choisir GEL -->
-    <section class="gel-section">
-        <div class="container">
-            <div class="row align-items-center g-5">
-                <div class="col-lg-6 order-lg-2 anim-fade-up">
-
-                    <h2 class="gel-section-title">Pourquoi choisir GEL Cabinet ?</h2>
-                    <p class="gel-section-sub" style="max-width:100%;">Nous ne sommes pas juste un éditeur de logiciel, nous sommes votre partenaire de croissance. Voici ce qui nous différencie.</p>
-                    
-                    <div class="d-flex align-items-start mb-4">
-                        <div class="gel-card-icon me-3" style="min-width:48px; height:48px; background:var(--gel-primary-light); color:var(--gel-primary);"><i class="bi-check-all"></i></div>
-                        <div>
-                            <h5 class="mb-1">Plateforme Tout-en-un</h5>
-                            <p class="text-muted mb-0">De la comptabilité au CRM, tout est centralisé dans un seul écosystème puissant et sécurisé.</p>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-start mb-4">
-                        <div class="gel-card-icon me-3" style="min-width:48px; height:48px; background:var(--gel-primary-light); color:var(--gel-primary);"><i class="bi-check-all"></i></div>
-                        <div>
-                            <h5 class="mb-1">Conçu pour les Experts</h5>
-                            <p class="text-muted mb-0">Développé en collaboration avec des professionnels pour répondre précisément à vos besoins métiers.</p>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-start">
-                        <div class="gel-card-icon me-3" style="min-width:48px; height:48px; background:var(--gel-primary-light); color:var(--gel-primary);"><i class="bi-check-all"></i></div>
-                        <div>
-                            <h5 class="mb-1">Sécurité Bancaire</h5>
-                            <p class="text-muted mb-0">Vos données et celles de vos clients sont protégées par les meilleurs standards de sécurité.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-6 order-lg-1 anim-fade-up delay-1">
-                    <div style="background:linear-gradient(135deg, rgba(249,115,22,0.1), rgba(249,115,22,0.05)); border-radius:24px; padding:40px; text-align:center; height:100%;">
-                        <i class="bi-shield-check text-orange" style="font-size:80px; opacity:0.8;"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Histoire -->
-    <section class="gel-section gel-section-alt">
-        <div class="container">
-            <div class="row justify-content-center mb-5">
-                <div class="col-lg-7 text-center">
-
-                    <h2 class="gel-section-title anim-fade-up delay-1">Du concept à la référence</h2>
-                    <p class="gel-section-sub mx-auto anim-fade-up delay-2">L'histoire de GEL Cabinet est celle d'une vision : créer l'outil ultime pour les cabinets d'expertise.</p>
-                </div>
-            </div>
-            <div class="row g-4">
-                <!-- Atout 1 -->
-                <div class="col-md-4 anim-fade-up">
-                    <div class="gel-value-card text-center">
-                        <div class="gel-value-icon"><i class="bi-shield-check"></i></div>
-                        <h4>Conformité e-MECeF & OHADA</h4>
-                        <p>Émission de factures normalisées DGI et génération des états financiers certifiés SYSCOHADA en toute sérénité.</p>
-                    </div>
-                </div>
-                <!-- Atout 2 -->
-                <div class="col-md-4 anim-fade-up delay-1">
-                    <div class="gel-value-card text-center">
-                        <div class="gel-value-icon"><i class="bi-phone"></i></div>
-                        <h4>Finance Locale & Mobile</h4>
-                        <p>Intégration native des paiements Mobile Money (MTN/Moov) et gestion numérisée des Tontines / Microfinance.</p>
-                    </div>
-                </div>
-                <!-- Atout 3 -->
-                <div class="col-md-4 anim-fade-up delay-2">
-                    <div class="gel-value-card text-center">
-                        <div class="gel-value-icon"><i class="bi-robot"></i></div>
-                        <h4>GEL Intelligence (IA)</h4>
-                        <p>Automatisation de la saisie (OCR), assistance virtuelle et fil d'activité intelligent pour décupler votre productivité.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Domaines d'expertise -->
-    <section class="gel-section">
-        <div class="container">
-            <div class="row justify-content-center mb-5">
-                <div class="col-lg-7 text-center">
-
-                    <h2 class="gel-section-title anim-fade-up delay-1">Une maîtrise à 360°</h2>
-                    <p class="gel-section-sub mx-auto anim-fade-up delay-2">Nos solutions couvrent l'ensemble des besoins de votre cabinet, de la gestion interne à la relation client.</p>
-                </div>
-            </div>
-            <div class="row g-4 justify-content-center">
-                <!-- Pôle 1 -->
-                <div class="col-lg-3 col-md-6 anim-fade-up">
-                    <div class="gel-expertise-card">
-                        <div class="gel-expertise-icon"><i class="bi-calculator"></i></div>
-                        <h4>Comptabilité & Finance</h4>
-                        <p>Saisie automatisée, rapprochement bancaire, liasse fiscale et clôture annuelle certifiée SYSCOHADA.</p>
-                    </div>
-                </div>
-
-                <!-- Pôle 2 -->
-                <div class="col-lg-3 col-md-6 anim-fade-up delay-1">
-                    <div class="gel-expertise-card">
-                        <div class="gel-expertise-icon"><i class="bi-receipt"></i></div>
-                        <h4>Fiscalité & Facturation</h4>
-                        <p>Facturation e-MECeF directe avec la DGI, gestion de la TVA et télédéclarations automatisées.</p>
-                    </div>
-                </div>
-
-                <!-- Pôle 3 -->
-                <div class="col-lg-3 col-md-6 anim-fade-up delay-2">
-                    <div class="gel-expertise-card">
-                        <div class="gel-expertise-icon"><i class="bi-bank2"></i></div>
-                        <h4>Juridique & Conformité</h4>
-                        <p>Secrétariat DAE, gestion des actes, assemblées générales, et workflows de validation stricts.</p>
-                    </div>
-                </div>
-
-                <!-- Pôle 4 -->
-                <div class="col-lg-3 col-md-6 anim-fade-up delay-3">
-                    <div class="gel-expertise-card">
-                        <div class="gel-expertise-icon"><i class="bi-person-vcard"></i></div>
-                        <h4>Social & Paie</h4>
-                        <p>Édition de fiches de paie intégrées aux barèmes IRPP/CNSS du Bénin et suivi des congés.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
 
     <!-- CTA -->
     <section class="gel-cta-band">

@@ -40,8 +40,13 @@ Route::view('/carrieres', 'pages.carrieres')->name('carrieres');
 // Nos Modules
 Route::view('/nos-modules', 'pages.nos-modules')->name('nos-modules');
 
+// Pages Hubs
+Route::view('/a-propos', 'pages.a-propos')->name('a-propos');
+Route::view('/ressources', 'pages.ressources')->name('ressources');
+
 // Pages Ressources
 Route::view('/blogue', 'pages.blog')->name('blogue');
+Route::view('/blogue/article', 'pages.blog-article')->name('blogue.article');
 Route::view('/documentation', 'pages.documentation')->name('documentation');
 Route::view('/faq', 'pages.faq')->name('faq');
 Route::view('/centre-aide', 'pages.centre-aide')->name('centre-aide');
@@ -75,6 +80,13 @@ Route::get('/nos-services/{category_id}/{service_id}', [PublicCatalogueControlle
 
 // Route PUBLIQUE : prÃ©-sauvegarde du service avant connexion/inscription
 Route::post('/commande/preparer', [OrderController::class, 'prepare'])->name('commande.prepare');
+
+// Panier (Cart) - Public
+Route::get('/panier', [App\Http\Controllers\Catalogue\CartController::class, 'view'])->name('catalogue.cart');
+Route::get('/api/cart', [App\Http\Controllers\Catalogue\CartController::class, 'index'])->name('api.cart.index');
+Route::post('/api/cart/add', [App\Http\Controllers\Catalogue\CartController::class, 'add'])->name('api.cart.add');
+Route::delete('/api/cart/remove/{id}', [App\Http\Controllers\Catalogue\CartController::class, 'remove'])->name('api.cart.remove');
+Route::post('/api/cart/clear', [App\Http\Controllers\Catalogue\CartController::class, 'clear'])->name('api.cart.clear');
 
 // â”€â”€â”€ 2FA â€” Challenge avant connexion â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 Route::get('/2fa/challenge', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'challengeForm'])->name('2fa.challenge');
@@ -138,44 +150,44 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client']
     Route::delete('/api/clients/{clientId}/services/{serviceId}', [ClientServiceController::class, 'detach']);
     Route::put('/api/clients/{clientId}/services/{serviceId}/status', [ClientServiceController::class, 'updateStatus']);
 
-        // Comptabilité - module:comptabilite
+    // Comptabilité - module:comptabilite
     Route::middleware('module:comptabilite')->group(function () {
         Route::get('/accounting', fn() => view('app', ['page' => 'gel-accounting']))->name('accounting.dashboard');
 
         // ComptabilitÃ© â€” Budgets (sans clientId â†’ utilise celui de l'utilisateur)
         Route::get('/accounting/budgets', function () {
-        return view('app', ['page' => 'gel-accounting-budgets', 'clientId' => Auth::user()->client_id]);
+            return view('app', ['page' => 'gel-accounting-budgets', 'clientId' => Auth::user()->client_id]);
         })->name('accounting.budgets');
         Route::get('/accounting/tax-declarations', function () {
-        return view('app', ['page' => 'gel-accounting-tax-declarations', 'clientId' => Auth::user()->client_id]);
+            return view('app', ['page' => 'gel-accounting-tax-declarations', 'clientId' => Auth::user()->client_id]);
         })->name('accounting.tax-declarations');
         Route::get('/accounting/closing', function () {
-        return view('app', ['page' => 'gel-accounting-closing', 'clientId' => Auth::user()->client_id]);
+            return view('app', ['page' => 'gel-accounting-closing', 'clientId' => Auth::user()->client_id]);
         })->name('accounting.closing');
 
         // ComptabilitÃ© â€” Plan Comptable
         Route::get('/accounting/accounts/{clientId}', function ($clientId) {
-        return view('app', ['page' => 'gel-accounting-accounts', 'clientId' => $clientId]);
+            return view('app', ['page' => 'gel-accounting-accounts', 'clientId' => $clientId]);
         })->name('accounting.accounts');
 
         // ComptabilitÃ© â€” Journaux
         Route::get('/accounting/journals/{clientId}', function ($clientId) {
-        return view('app', ['page' => 'gel-accounting-journals', 'clientId' => $clientId]);
+            return view('app', ['page' => 'gel-accounting-journals', 'clientId' => $clientId]);
         })->name('accounting.journals');
         Route::get('/accounting/journals/create/{clientId}', [JournalController::class, 'create'])->name('accounting.journals.create');
 
         // ComptabilitÃ© â€” Rapports
         Route::get('/accounting/reports/balance/{clientId}', function ($clientId) {
-        return view('app', ['page' => 'gel-accounting-balance', 'clientId' => $clientId]);
+            return view('app', ['page' => 'gel-accounting-balance', 'clientId' => $clientId]);
         })->name('accounting.balance');
         Route::get('/accounting/reports/grand-livre/{clientId}', function ($clientId) {
-        return view('app', ['page' => 'gel-accounting-ledger', 'clientId' => $clientId]);
+            return view('app', ['page' => 'gel-accounting-ledger', 'clientId' => $clientId]);
         })->name('accounting.ledger');
         Route::get('/accounting/reports/bilan/{clientId}', function ($clientId) {
-        return view('app', ['page' => 'gel-accounting-bilan', 'clientId' => $clientId]);
+            return view('app', ['page' => 'gel-accounting-bilan', 'clientId' => $clientId]);
         })->name('accounting.bilan');
         Route::get('/accounting/reports/resultat/{clientId}', function ($clientId) {
-        return view('app', ['page' => 'gel-accounting-resultat', 'clientId' => $clientId]);
+            return view('app', ['page' => 'gel-accounting-resultat', 'clientId' => $clientId]);
         })->name('accounting.resultat');
 
 
@@ -183,25 +195,25 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client']
     // Dossiers / GED - module:document
     Route::middleware('module:document')->group(function () {
         Route::get('/dossiers', function () {
-        return view('app', ['page' => 'gel-dossiers']);
+            return view('app', ['page' => 'gel-dossiers']);
         })->name('dossiers.index.all');
         Route::get('/dossiers/{clientId}', [FolderController::class, 'index'])->name('dossiers.index');
         Route::post('/dossiers', [FolderController::class, 'store'])->name('dossiers.store');
         Route::put('/dossiers/{id}', [FolderController::class, 'update'])->name('dossiers.update');
         Route::delete('/dossiers/{id}', [FolderController::class, 'destroy'])->name('dossiers.destroy');
-        
+
         // Documents
         Route::get('/documents', function () {
-        return view('app', ['page' => 'gel-documents']);
+            return view('app', ['page' => 'gel-documents']);
         })->name('documents.index.all');
         Route::get('/documents/{clientId}', [DocumentController::class, 'index'])->name('documents.index');
         Route::post('/documents/upload', [DocumentController::class, 'upload'])->name('documents.upload');
         Route::get('/documents/download/{id}', [DocumentController::class, 'download'])->name('documents.download');
         Route::delete('/documents/{id}', [DocumentController::class, 'destroy'])->name('documents.destroy');
-        
-        
+
+
     });
-// RÃ©glages
+    // RÃ©glages
     Route::get('/settings', function () {
         return view('app', ['page' => 'settings']);
     })->name('settings');
@@ -283,13 +295,13 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client']
 
         // ComptabilitÃ© â€” Pages des nouvelles fonctionnalitÃ©s
         Route::get('/accounting/budgets/{clientId}', function ($clientId) {
-        return view('app', ['page' => 'gel-accounting-budgets', 'clientId' => $clientId]);
+            return view('app', ['page' => 'gel-accounting-budgets', 'clientId' => $clientId]);
         })->name('accounting.budgets');
         Route::get('/accounting/tax-declarations/{clientId}', function ($clientId) {
-        return view('app', ['page' => 'gel-accounting-tax-declarations', 'clientId' => $clientId]);
+            return view('app', ['page' => 'gel-accounting-tax-declarations', 'clientId' => $clientId]);
         })->name('accounting.tax-declarations');
         Route::get('/accounting/closing/{clientId}', function ($clientId) {
-        return view('app', ['page' => 'gel-accounting-closing', 'clientId' => $clientId]);
+            return view('app', ['page' => 'gel-accounting-closing', 'clientId' => $clientId]);
         })->name('accounting.closing');
 
         // ComptabilitÃ© â€” API Budgets
@@ -560,35 +572,39 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client']
 
         // Stocks
         Route::get('/api/erp/warehouses', fn() => \App\Models\ErpWarehouse::all());
-        Route::get('/api/erp/movements', fn() => \App\Models\ErpStockMovement::with(['item','warehouse'])->latest()->take(100)->get());
-        Route::get('/api/erp/stock', function() {
-        return \App\Models\ErpItem::with('stockMovements')->get()->map(function($item) {
-        $in  = $item->stockMovements->where('type','entry')->sum('quantity');
-        $out = $item->stockMovements->where('type','exit')->sum('quantity');
-        return [
-        'id' => $item->id, 'reference' => $item->reference,
-        'designation' => $item->designation, 'stock' => $in - $out,
-        'alert' => $item->stock_alert,
-        ];
-        });
+        Route::get('/api/erp/movements', fn() => \App\Models\ErpStockMovement::with(['item', 'warehouse'])->latest()->take(100)->get());
+        Route::get('/api/erp/stock', function () {
+            return \App\Models\ErpItem::with('stockMovements')->get()->map(function ($item) {
+                $in = $item->stockMovements->where('type', 'entry')->sum('quantity');
+                $out = $item->stockMovements->where('type', 'exit')->sum('quantity');
+                return [
+                    'id' => $item->id,
+                    'reference' => $item->reference,
+                    'designation' => $item->designation,
+                    'stock' => $in - $out,
+                    'alert' => $item->stock_alert,
+                ];
+            });
         });
 
         // Facturation
         Route::get('/api/erp/invoices', fn() => \App\Models\ErpInvoice::with('client')->latest()->get());
 
         // TrÃ©sorerie
-        Route::get('/api/erp/accounts', fn() => \App\Models\ErpBankAccount::where('is_active',true)->get());
+        Route::get('/api/erp/accounts', fn() => \App\Models\ErpBankAccount::where('is_active', true)->get());
         Route::get('/api/erp/transactions', fn() => \App\Models\ErpTransaction::with('account')->latest()->take(100)->get());
-        Route::get('/api/erp/balances', function() {
-        return \App\Models\ErpBankAccount::where('is_active',true)->get()->map(function($account) {
-        $income  = $account->transactions()->where('type','income')->sum('amount');
-        $expense = $account->transactions()->where('type','expense')->sum('amount');
-        return [
-        'id' => $account->id, 'name' => $account->name,
-        'type' => $account->type, 'account_number' => $account->account_number,
-        'balance' => (float)$account->initial_balance + $income - $expense,
-        ];
-        });
+        Route::get('/api/erp/balances', function () {
+            return \App\Models\ErpBankAccount::where('is_active', true)->get()->map(function ($account) {
+                $income = $account->transactions()->where('type', 'income')->sum('amount');
+                $expense = $account->transactions()->where('type', 'expense')->sum('amount');
+                return [
+                    'id' => $account->id,
+                    'name' => $account->name,
+                    'type' => $account->type,
+                    'account_number' => $account->account_number,
+                    'balance' => (float) $account->initial_balance + $income - $expense,
+                ];
+            });
         });
 
         // â”€â”€â”€ Demandes entreprise (super admin only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -629,7 +645,7 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client']
     Route::post('/api/company-admins', [\App\Http\Controllers\Gel\CompanyAdminController::class, 'store']);
     Route::put('/api/company-admins/{id}', [\App\Http\Controllers\Gel\CompanyAdminController::class, 'update']);
     Route::delete('/api/company-admins/{id}', [\App\Http\Controllers\Gel\CompanyAdminController::class, 'destroy']);
-    
+
     // â”€â”€â”€ API â€” Articles (Blog) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Route::get("/api/articles", [\App\Http\Controllers\Gel\ArticleController::class, "index"]);
     Route::get("/api/articles/{article}", [\App\Http\Controllers\Gel\ArticleController::class, "show"]);
@@ -1322,7 +1338,7 @@ Route::middleware(['auth', 'not_suspended'])->prefix('context')->name('select.')
     Route::post('/switch', [\App\Http\Controllers\CompanySwitcherController::class, 'switch'])->name('switch');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 // Routes publiques
 Route::post('/demande', [\App\Http\Controllers\Gel\PublicController::class, 'storeDemande'])->name('demande.store');
@@ -1354,4 +1370,5 @@ Route::middleware(['auth', 'verified', 'not_suspended'])->group(function () {
 
 // ─── Routes publiques de signature électronique ─────────────────
 Route::get('/signature/{token}', [\App\Http\Controllers\Gel\DocumentSignatureController::class, 'signByToken'])->name('gel.document-signatures.sign');
+Route::post('/signature/{token}', [\App\Http\Controllers\Gel\DocumentSignatureController::class, 'submitSignature'])->name('gel.document-signatures.submit');
 Route::post('/signature/{token}', [\App\Http\Controllers\Gel\DocumentSignatureController::class, 'submitSignature'])->name('gel.document-signatures.submit');

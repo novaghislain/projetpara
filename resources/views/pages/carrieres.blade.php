@@ -1,179 +1,83 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Carrières | GEL Cabinet</title>
-    <meta name="description" content="Offres d'emploi, stages et opportunités chez GEL Cabinet.">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
+    @include("partials.styles")
+    
     <style>
         :root {
-            --gel-primary: #FF7900; --gel-primary-hov: #e06700; --gel-primary-soft: rgba(255,121,0,0.06);
-            --gel-blue: #3B82F6; --gel-blue-soft: rgba(59,130,246,0.06);
-            --gel-darker: #0F172A; --gel-dark: #111827; --gel-white: #ffffff;
-            --gel-light: #F8FAFC; --gel-light2: #F1F5F9; --gel-border: #E2E8F0;
-            --gel-muted: #64748B; --gel-text: #1E293B;
-            --font-body: 'Inter', sans-serif; --font-heading: 'Outfit', sans-serif;
-            --nav-height: 72px; --radius: 4px;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
-            --shadow-md: 0 4px 20px rgba(0,0,0,0.06);
-            --shadow-lg: 0 12px 40px rgba(0,0,0,0.08);
-            --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: var(--font-body); background: var(--gel-white); color: var(--gel-text); line-height: 1.6; }
-        h1,h2,h3,h4,h5,h6 { font-family: var(--font-heading); font-weight: 700; }
-
-        .anim-fade-up { opacity: 0; transform: translateY(36px); transition: opacity 0.65s var(--transition), transform 0.65s var(--transition); }
-        .anim-visible { opacity: 1 !important; transform: none !important; }
-        .delay-1 { transition-delay: 0.1s !important; } .delay-2 { transition-delay: 0.2s !important; }
-        .delay-3 { transition-delay: 0.3s !important; } .delay-4 { transition-delay: 0.4s !important; }
-
-
-        /* Navbar — identique à l'accueil */
-        .gel-navbar {
-            position: fixed; top: 0; left: 0; right: 0; z-index: 1050;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid transparent;
-            height: var(--nav-height);
-            display: flex; align-items: center;
-            transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
-        }
-        .gel-navbar.scrolled {
-            background: rgba(255,255,255,0.98);
-            border-bottom-color: var(--gel-border);
-            box-shadow: var(--shadow-sm);
-        }
-        .gel-navbar .container-fluid {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 32px; max-width: 1320px; margin: 0 auto; width: 100%;
-        }
-        .gel-brand { display: flex; align-items: center; gap: 11px; text-decoration: none; flex-shrink: 0; }
-        .gel-brand-logo { width: 38px; height: 38px; background: var(--gel-primary); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-family: var(--font-heading); font-size: 13px; font-weight: 900; color: #fff; letter-spacing: -0.5px; flex-shrink: 0; }
-        .gel-brand-text { display: flex; flex-direction: column; line-height: 1.1; }
-        .gel-brand-name { font-family: var(--font-heading); font-weight: 800; font-size: 16px; color: var(--gel-dark); letter-spacing: -0.3px; }
-        .gel-brand-sub { font-size: 8.5px; font-weight: 600; color: var(--gel-muted); letter-spacing: 0.1em; text-transform: uppercase; }
-        .gel-nav-center { display: flex; align-items: center; gap: 0; list-style: none; }
-        .gel-nav-item { position: relative; }
-        .gel-nav-link {
-            display: flex; align-items: center; gap: 3px;
-            padding: 7px 13px;
-            font-size: 13px; font-weight: 500;
-            color: var(--gel-text); text-decoration: none;
-            border-radius: var(--radius);
-            transition: color var(--transition), background var(--transition);
-            white-space: nowrap;
-        }
-        .gel-nav-link:hover, .gel-nav-link.active { color: var(--gel-primary); background: var(--gel-primary-soft); }
-        .gel-nav-link .chevron { font-size: 10px; transition: transform var(--transition); }
-        .gel-nav-item:hover > a .chevron { transform: rotate(180deg); }
-        .gel-dropdown {
-            position: absolute; top: calc(100% + 8px); left: 50%;
-            transform: translateX(-50%);
-            background: var(--gel-white); border: 1px solid var(--gel-border);
-            border-radius: 10px; box-shadow: var(--shadow-lg);
-            padding: 6px; min-width: 220px;
-            opacity: 0; visibility: hidden;
-            transform: translateX(-50%) translateY(-8px);
-            transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
-            list-style: none;
-        }
-        .gel-nav-item:hover .gel-dropdown { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
-        .gel-dropdown li a {
-            display: flex; align-items: center; gap: 10px;
-            padding: 8px 12px; font-size: 13px; font-weight: 500;
-            color: var(--gel-text); text-decoration: none;
-            border-radius: var(--radius);
-            transition: background var(--transition), color var(--transition);
-        }
-        .gel-dropdown li a:hover { background: var(--gel-primary-soft); color: var(--gel-primary); }
-        .gel-dropdown li a .drop-icon { width: 26px; height: 26px; background: var(--gel-light2); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: var(--gel-primary); font-size: 12px; flex-shrink: 0; }
-        .gel-dropdown-divider { border: none; border-top: 1px solid var(--gel-border); margin: 4px 0; }
-        .gel-nav-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-        .gel-phone { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; color: var(--gel-muted); text-decoration: none; padding: 6px 10px; border-radius: var(--radius); transition: color var(--transition); }
-        .gel-phone:hover { color: var(--gel-primary); }
-        .gel-phone i { color: var(--gel-primary); font-size: 13px; }
-        .gel-btn-nav { display: inline-flex; align-items: center; gap: 5px; padding: 7px 16px; font-size: 12.5px; font-weight: 600; border-radius: 6px; text-decoration: none; transition: all var(--transition); border: none; cursor: pointer; }
-        .gel-btn-nav-outline { background: transparent; color: var(--gel-text); border: 1.5px solid var(--gel-border); }
-        .gel-btn-nav-outline:hover { border-color: var(--gel-primary); color: var(--gel-primary); }
-        .gel-btn-nav-primary { background: var(--gel-primary); color: #fff; }
-        .gel-btn-nav-primary:hover { background: var(--gel-primary-hov); color: #fff; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(255,121,0,0.3); }
-        .gel-toggler { display: none; background: none; border: 1.5px solid var(--gel-border); border-radius: var(--radius); padding: 6px 9px; cursor: pointer; color: var(--gel-dark); font-size: 17px; transition: all var(--transition); }
-        .gel-toggler:hover { border-color: var(--gel-primary); color: var(--gel-primary); }
-        .gel-mobile-menu { display: none; position: fixed; top: var(--nav-height); left: 0; right: 0; background: var(--gel-white); border-bottom: 3px solid var(--gel-primary); box-shadow: var(--shadow-md); z-index: 1040; padding: 16px 24px 24px; max-height: calc(100vh - var(--nav-height)); overflow-y: auto; }
-        .gel-mobile-menu.open { display: block; }
-        .gel-mobile-link { display: flex; align-items: center; gap: 10px; padding: 11px 0; font-size: 14px; font-weight: 500; color: var(--gel-text); text-decoration: none; border-bottom: 1px solid var(--gel-border); }
-        .gel-mobile-link:last-child { border-bottom: none; }
-        .gel-mobile-link:hover { color: var(--gel-primary); }
-        @media (max-width: 991px) {
-            .gel-nav-center { display: none; }
-            .gel-phone { display: none; }
-            .gel-toggler { display: flex; }
-            .gel-navbar .container-fluid { padding: 0 16px; }
+            --gel-primary: #f97316;
+            --gel-primary-light: rgba(249, 115, 22, 0.1);
+            --gel-primary-hover: #ea580c;
+            --gel-dark: #0f172a;
+            --gel-muted: #64748b;
+            --gel-bg: #f8fafc;
+            --font-heading: 'Outfit', system-ui, sans-serif;
+            --font-body: 'Inter', system-ui, sans-serif;
+            --nav-height: 80px;
         }
 
-        .gel-page-header { margin-top: var(--nav-height); background: var(--gel-light); padding: 80px 0 60px; border-bottom: 1px solid var(--gel-border); }
-        .gel-page-header h1 { font-family: var(--font-heading); font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 900; color: var(--gel-dark); letter-spacing: -1px; }
-        .gel-page-header p { color: var(--gel-muted); font-size: 15px; max-width: 540px; margin-top: 10px; line-height: 1.7; }
+        body { font-family: var(--font-body); color: #334155; background: var(--gel-bg); line-height: 1.6; }
+        h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); color: var(--gel-dark); font-weight: 700; letter-spacing: -0.02em; }
+        
         .gel-section { padding: 80px 0; }
-        .gel-section-alt { background: var(--gel-light); }
-        .gel-section-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--gel-white); color: var(--gel-primary); font-size: 11px; font-weight: 700; padding: 4px 14px; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; border: 1.5px solid rgba(255,121,0,0.2); }
-        .gel-section-title { font-family: var(--font-heading); font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 800; color: var(--gel-dark); letter-spacing: -0.5px; margin-bottom: 14px; }
-        .gel-section-sub { font-size: 15px; color: var(--gel-muted); max-width: 540px; line-height: 1.7; }
-        .gel-section-sub.mx-auto { margin-left: auto; margin-right: auto; }
+        .gel-section-alt { background: white; }
+        
+        /* Page Header */
+        .gel-page-header {
+            margin-top: var(--nav-height);
+            background: linear-gradient(135deg, #0A1628 0%, #1E293B 25%, #0F172A 50%, #1E293B 75%, #0A1628 100%);
+            background-size: 300% 300%;
+            animation: gelGradientMove 12s ease infinite;
+            padding: 70px 0 50px;
+            position: relative;
+            overflow: hidden;
+        }
+        @keyframes gelGradientMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .gel-page-header::before { content: ''; position: absolute; top: -100px; right: -100px; width: 400px; height: 400px; background: radial-gradient(circle, rgba(249, 115, 22,0.12) 0%, transparent 70%); border-radius: 50%; animation: gelFloatA 8s ease-in-out infinite; }
+        .gel-page-header::after { content: ''; position: absolute; bottom: -60px; left: -60px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(249, 115, 22,0.08) 0%, transparent 70%); border-radius: 50%; animation: gelFloatB 10s ease-in-out infinite; }
+        @keyframes gelFloatA { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(-30px,20px) scale(1.05); } 66% { transform: translate(20px,-10px) scale(0.95); } }
+        @keyframes gelFloatB { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(30px,-20px) scale(1.08); } 66% { transform: translate(-20px,10px) scale(0.92); } }
+        .gel-page-header h1 { font-family: var(--font-heading); font-size: clamp(1.8rem, 3vw, 2.4rem); font-weight: 900; color: #fff; letter-spacing: -1px; position: relative; z-index: 1; }
+        .gel-page-header p { color: rgba(255,255,255,0.6); font-size: 15px; max-width: 620px; margin-top: 12px; line-height: 1.7; position: relative; z-index: 1; }
+        
+        .gel-section-chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; background: var(--gel-primary-light); color: var(--gel-primary); font-size: 14px; font-weight: 600; border-radius: 100px; margin-bottom: 24px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .gel-section-title { font-size: 2.5rem; margin-bottom: 1.5rem; }
+        .gel-section-sub { font-size: 1.15rem; color: var(--gel-muted); margin-bottom: 3rem; max-width: 700px; }
 
-        .gel-stats { background: var(--gel-white); padding: 40px 0; border-bottom: 1px solid var(--gel-border); }
-        .gel-stat-item { text-align: center; padding: 12px 16px; }
-        .gel-stat-num { font-family: var(--font-heading); font-size: 2rem; font-weight: 900; color: var(--gel-primary); display: block; }
-        .gel-stat-lbl { font-size: 12px; font-weight: 500; color: var(--gel-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 4px; }
+        /* Job Card */
+        .gel-job-card { background: white; border-radius: 16px; padding: 32px; border: 1px solid rgba(0,0,0,0.05); transition: all 0.3s ease; height: 100%; display: flex; flex-direction: column; }
+        .gel-job-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.04); border-color: rgba(249,115,22,0.3); }
+        .gel-job-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 8px; color: var(--gel-dark); }
+        .gel-job-meta { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; font-size: 0.9rem; color: var(--gel-muted); }
+        .gel-job-meta span { display: inline-flex; align-items: center; gap: 6px; }
+        .gel-job-desc { flex-grow: 1; color: var(--gel-muted); font-size: 0.95rem; margin-bottom: 24px; }
+        
+        .gel-btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: var(--gel-primary); color: white; font-weight: 600; border-radius: 10px; text-decoration: none; transition: all 0.2s; border: none; cursor: pointer; }
+        .gel-btn:hover { background: var(--gel-primary-hover); color: white; }
+        .gel-btn-outline { background: transparent; color: var(--gel-primary); border: 2px solid var(--gel-primary); }
+        .gel-btn-outline:hover { background: var(--gel-primary); color: white; }
 
-        .gel-job-card { background: var(--gel-white); border: 1px solid var(--gel-border); border-radius: 10px; padding: 24px 22px; height: 100%; transition: transform var(--transition), box-shadow var(--transition); position: relative; }
-        .gel-job-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
-        .gel-job-card h5 { font-size: 14.5px; font-weight: 700; margin-bottom: 6px; }
-        .gel-job-meta { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-bottom: 10px; }
-        .gel-job-tag { font-size: 10.5px; font-weight: 600; padding: 3px 9px; border-radius: 100px; background: var(--gel-light2); color: var(--gel-text); white-space: nowrap; }
-        .gel-job-tag.type { background: var(--gel-primary-soft); color: var(--gel-primary); }
-        .gel-job-tag.remote { background: rgba(59,130,246,0.06); color: var(--gel-blue); }
-        .gel-job-tag.lieu { background: var(--gel-light2); color: var(--gel-muted); }
-        .gel-job-card p { font-size: 12.5px; color: var(--gel-muted); margin-bottom: 14px; line-height: 1.6; }
-        .gel-job-btn { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 6px 16px; border-radius: 6px; background: var(--gel-primary); color: #fff; border: none; text-decoration: none; transition: all var(--transition); cursor: pointer; }
-        .gel-job-btn:hover { background: var(--gel-primary-hov); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,121,0,0.3); }
+        /* Benefit Item */
+        .gel-benefit-item { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 32px; }
+        .gel-benefit-icon { min-width: 48px; height: 48px; border-radius: 12px; background: var(--gel-primary-light); color: var(--gel-primary); display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .gel-benefit-content h5 { font-size: 1.1rem; margin-bottom: 6px; }
+        .gel-benefit-content p { color: var(--gel-muted); font-size: 0.95rem; margin-bottom: 0; }
 
-        .gel-why-item { background: var(--gel-white); border: 1px solid var(--gel-border); border-radius: 10px; padding: 24px 22px; height: 100%; transition: transform var(--transition), box-shadow var(--transition); text-align: center; }
-        .gel-why-item:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
-        .gel-why-icon { width: 44px; height: 44px; background: var(--gel-light2); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-size: 20px; color: var(--gel-primary); transition: background var(--transition); }
-        .gel-why-item:hover .gel-why-icon { background: var(--gel-primary-soft); }
-        .gel-why-item h6 { font-size: 13.5px; font-weight: 700; margin-bottom: 6px; }
-        .gel-why-item p { font-size: 12.5px; color: var(--gel-muted); margin: 0; line-height: 1.6; }
+        /* Form */
+        .gel-form-card { background: white; border-radius: 24px; padding: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.03); }
+        .form-control, .form-select { border-radius: 10px; padding: 14px 20px; border-color: #e2e8f0; font-size: 0.95rem; }
+        .form-control:focus, .form-select:focus { border-color: var(--gel-primary); box-shadow: 0 0 0 4px rgba(249,115,22,0.1); }
+        .form-label { font-weight: 600; color: var(--gel-dark); font-size: 0.9rem; margin-bottom: 8px; }
 
-        .gel-cta-band { background: linear-gradient(135deg, var(--gel-primary) 0%, #ff9a3c 100%); padding: 60px 0; overflow: hidden; }
-        .gel-cta-band h2 { font-size: clamp(1.5rem, 2.5vw, 2rem); font-weight: 900; color: #fff; }
-        .gel-cta-band p { color: rgba(255,255,255,0.85); font-size: 15px; margin-top: 8px; }
-        .gel-btn-white { display: inline-flex; align-items: center; gap: 8px; background: #fff; color: var(--gel-primary); font-size: 14px; font-weight: 700; padding: 12px 28px; border-radius: var(--radius); text-decoration: none; transition: all 0.3s; }
-        .gel-btn-white:hover { background: var(--gel-dark); color: #fff; transform: translateY(-2px); }
-
-        .gel-footer { background: #0A1628; padding: 48px 0 0; border-top: 3px solid var(--gel-primary); }
-        .gel-footer-brand { font-family: var(--font-heading); font-size: 18px; font-weight: 800; color: #fff; }
-        .gel-footer-sub { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.1em; }
-        .gel-footer-desc { font-size: 13px; color: rgba(255,255,255,0.4); line-height: 1.7; margin-top: 12px; max-width: 260px; }
-        .gel-footer-social { display: flex; gap: 10px; margin-top: 16px; }
-        .gel-social-btn { width: 36px; height: 36px; border-radius: 6px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.5); font-size: 15px; text-decoration: none; transition: all var(--transition); }
-        .gel-social-btn:hover { background: var(--gel-primary); border-color: var(--gel-primary); color: #fff; transform: translateY(-2px); }
-        .gel-footer-heading { font-family: var(--font-heading); font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px; }
-        .gel-footer-links { list-style: none; padding: 0; }
-        .gel-footer-links li { margin-bottom: 10px; }
-        .gel-footer-links a { font-size: 13px; color: rgba(255,255,255,0.4); text-decoration: none; transition: color var(--transition); }
-        .gel-footer-links a:hover { color: var(--gel-primary); }
-        .gel-footer-bottom { border-top: 1px solid rgba(255,255,255,0.07); padding: 18px 0; margin-top: 40px; }
-        .gel-footer-bottom p { font-size: 12px; color: rgba(255,255,255,0.25); margin: 0; }
+        /* Animations */
+        .anim-fade-up { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        .anim-fade-up.anim-visible { opacity: 1; transform: translateY(0); }
+        .delay-1 { transition-delay: 0.1s; }
+        .delay-2 { transition-delay: 0.2s; }
+        .delay-3 { transition-delay: 0.3s; }
 
         @media (max-width: 991px) { .gel-section { padding: 60px 0; } .gel-page-header { padding: 60px 0 40px; } }
     </style>
@@ -181,124 +85,187 @@
 <body>
 
     @include('partials.navbar')
-    <div class="gel-page-header">
+
+    <!-- Page Header -->
+    <header class="gel-page-header">
         <div class="container">
             <div class="row">
                 <div class="col-lg-8">
-                    <div class="gel-section-chip"><i class="bi-briefcase-fill"></i> Carrières</div>
-                    <h1>Rejoignez une équipe qui innove</h1>
-                    <p>Vous cherchez à travailler dans un cabinet qui bouge ? Regardez nos offres.</p>
+                    <h1 class="anim-fade-up">Rejoignez l'aventure GEL</h1>
+                    <p class="anim-fade-up delay-1">Découvrez nos opportunités et venez contribuer à la digitalisation des cabinets d'expertise de demain.</p>
                 </div>
             </div>
         </div>
-    </div>
+    </header>
 
-    <div class="gel-stats">
-        <div class="container">
-            <div class="row">
-                <div class="col-6 col-md-3 gel-stat-item anim-fade-up">
-                    <span class="gel-stat-num">12</span>
-                    <div class="gel-stat-lbl">Offres actives</div>
-                </div>
-                <div class="col-6 col-md-3 gel-stat-item anim-fade-up delay-1">
-                    <span class="gel-stat-num">8</span>
-                    <div class="gel-stat-lbl">Stages proposés</div>
-                </div>
-                <div class="col-6 col-md-3 gel-stat-item anim-fade-up delay-2">
-                    <span class="gel-stat-num">95%</span>
-                    <div class="gel-stat-lbl">Taux de rétention</div>
-                </div>
-                <div class="col-6 col-md-3 gel-stat-item anim-fade-up delay-3">
-                    <span class="gel-stat-num">3</span>
-                    <div class="gel-stat-lbl">Jours de délai moyen</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
+    <!-- Avantages -->
     <section class="gel-section">
         <div class="container">
-            <div class="row justify-content-center mb-5">
-                <div class="col-lg-7 text-center">
-                    <div class="gel-section-chip anim-fade-up"><i class="bi-heart-fill"></i> Pourquoi nous ?</div>
-                    <h2 class="gel-section-title anim-fade-up delay-1">Pourquoi choisir GEL Cabinet ?</h2>
-                    <p class="gel-section-sub mx-auto anim-fade-up delay-2">Un environnement de travail stimulant, des valeurs fortes et une vision tournée vers l'avenir.</p>
+            <div class="row align-items-center g-5">
+                <div class="col-lg-6 anim-fade-up">
+                    <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Équipe GEL" class="img-fluid rounded-4 shadow-sm" style="border: 1px solid rgba(0,0,0,0.05);">
                 </div>
-            </div>
-            <div class="row g-4">
-                @foreach([
-                    ['bi-rocket-takeoff-fill','Innovation','Nous utilisons les technologies les plus récentes pour offrir une expérience de travail moderne et efficace.'],
-                    ['bi-people-fill','Esprit d\'équipe','La collaboration et le partage de connaissances sont au cœur de notre culture d\'entreprise.'],
-                    ['bi-graph-up-arrow','Progression','Nous investissons dans la formation continue et offrons de réelles perspectives d\'évolution.'],
-                    ['bi-sliders','Flexibilité','Télétravail, horaires aménagés et équilibre vie pro / perso sont des priorités pour nous.'],
-                ] as $w)
-                <div class="col-md-3 anim-fade-up">
-                    <div class="gel-why-item">
-                        <div class="gel-why-icon"><i class="bi {{ $w[0] }}"></i></div>
-                        <h6>{{ $w[1] }}</h6>
-                        <p>{{ $w[2] }}</p>
+                <div class="col-lg-6 anim-fade-up delay-1">
+
+                    <h2 class="gel-section-title">Pourquoi nous rejoindre ?</h2>
+                    <p class="gel-section-sub">Travailler chez GEL Cabinet, c'est évoluer dans un environnement stimulant qui valorise l'innovation, l'autonomie et le bien-être de chaque collaborateur.</p>
+                    
+                    <div class="gel-benefit-item">
+                        <div class="gel-benefit-icon"><i class="bi-laptop"></i></div>
+                        <div class="gel-benefit-content">
+                            <h5>Télétravail Flexible</h5>
+                            <p>Un équilibre vie pro/perso respecté avec jusqu'à 3 jours de télétravail par semaine.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="gel-benefit-item">
+                        <div class="gel-benefit-icon"><i class="bi-graph-up-arrow"></i></div>
+                        <div class="gel-benefit-content">
+                            <h5>Évolution Continue</h5>
+                            <p>Des formations régulières et des perspectives d'évolution claires au sein de l'entreprise.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="gel-benefit-item mb-0">
+                        <div class="gel-benefit-icon"><i class="bi-cup-hot"></i></div>
+                        <div class="gel-benefit-content">
+                            <h5>Cadre Agréable</h5>
+                            <p>Des locaux modernes, des événements d'équipe mensuels et une excellente mutuelle d'entreprise.</p>
+                        </div>
                     </div>
                 </div>
-                @endforeach
             </div>
         </div>
     </section>
 
+    <!-- Offres -->
     <section class="gel-section gel-section-alt" id="offres">
         <div class="container">
             <div class="row justify-content-center mb-5">
                 <div class="col-lg-7 text-center">
-                    <div class="gel-section-chip anim-fade-up"><i class="bi-files"></i> Nos Offres</div>
-                    <h2 class="gel-section-title anim-fade-up delay-1">Opportunités en cours</h2>
-                    <p class="gel-section-sub mx-auto anim-fade-up delay-2">Nos postes ouverts, du stage au CDI, dans tous les pôles.</p>
+                    <h2 class="gel-section-title anim-fade-up">Postes Ouverts</h2>
+                    <p class="gel-section-sub mx-auto anim-fade-up delay-1">Parcourez nos offres actuelles et trouvez le poste qui correspond à vos ambitions.</p>
                 </div>
             </div>
-            <div class="row g-3">
-                @foreach([
-                    ['Comptable Confirmé','CDI','Cotonou','Présentiel','Préparation des comptes annuels, révision, déclarations fiscales et accompagnement client. Minimum 3 ans d\'expérience en cabinet.','Comptabilité'],
-                    ['Développeur Full Stack','CDI','Cotonou / Remote','Hybride','Développement de la plateforme GEL Cabinet avec Laravel, Vue.js et Vite. Stack moderne, équipe jeune et ambitieuse.','Digital'],
-                    ['Consultant Juridique','CDI','Cotonou','Présentiel','Conseil en droit des affaires, rédaction d\'actes et accompagnement des clients sur les aspects juridiques.','Juridique'],
-                    ['Assistant Paie','CDI','Cotonou','Présentiel','Gestion de la paie, déclarations sociales et relation avec les organismes. Formation assurée en interne.','Social & Paie'],
-                    ['Stagiaire Comptable','Stage','Cotonou','Présentiel','Stage de 3 à 6 mois pour préparer votre DCG/DSCG. Encadrement personnalisé et missions variées.','Comptabilité'],
-                    ['Chargé de Marketing Digital','CDI','Cotonou','Hybride','Stratégie de communication digitale, gestion des réseaux sociaux et campagnes d\'acquisition. Profil créatif et data-driven.','Digital'],
-                ] as $j)
-                <div class="col-md-4 anim-fade-up">
+            
+            <div class="row g-4">
+                <!-- Offre 1 -->
+                <div class="col-md-6 anim-fade-up">
                     <div class="gel-job-card">
-                        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
-                            <h5>{{ $j[0] }}</h5>
-                            <span class="gel-job-tag type" style="flex-shrink:0;">{{ $j[1] }}</span>
-                        </div>
+                        <h4 class="gel-job-title">Développeur Full-Stack (Vue.js / Laravel)</h4>
                         <div class="gel-job-meta">
-                            <span class="gel-job-tag lieu"><i class="bi-geo-alt"></i> {{ $j[2] }}</span>
-                            <span class="gel-job-tag remote"><i class="bi-wifi"></i> {{ $j[3] }}</span>
+                            <span><i class="bi-geo-alt"></i> Cotonou ou Remote</span>
+                            <span><i class="bi-clock"></i> Temps plein (CDI)</span>
+                            <span><i class="bi-tag"></i> Tech / Ingénierie</span>
                         </div>
-                        <p>{{ $j[4] }}</p>
-                        <div class="d-flex align-items-center justify-content-between">
-                            <span style="font-size:11px;color:var(--gel-muted);font-weight:500;">Pôle {{ $j[5] }}</span>
-                            <a href="#" class="gel-job-btn"><i class="bi-send-fill"></i> Postuler</a>
+                        <p class="gel-job-desc">Rejoignez notre équipe technique pour développer de nouveaux modules de la plateforme (Tontine, Mobile Money) et optimiser les performances.</p>
+                        <div>
+                            <a href="#candidature" class="gel-btn gel-btn-outline"><i class="bi-send"></i> Postuler</a>
                         </div>
                     </div>
                 </div>
-                @endforeach
+                
+                <!-- Offre 2 -->
+                <div class="col-md-6 anim-fade-up delay-1">
+                    <div class="gel-job-card">
+                        <h4 class="gel-job-title">Expert-Comptable (Spécialiste SYSCOHADA)</h4>
+                        <div class="gel-job-meta">
+                            <span><i class="bi-geo-alt"></i> Cotonou</span>
+                            <span><i class="bi-clock"></i> Temps plein (CDI)</span>
+                            <span><i class="bi-tag"></i> Expertise Métier</span>
+                        </div>
+                        <p class="gel-job-desc">Apportez votre expertise métier pour améliorer nos algorithmes de liasse fiscale TAFIRE et conseiller nos cabinets clients.</p>
+                        <div>
+                            <a href="#candidature" class="gel-btn gel-btn-outline"><i class="bi-send"></i> Postuler</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Offre 3 -->
+                <div class="col-md-6 anim-fade-up delay-2">
+                    <div class="gel-job-card">
+                        <h4 class="gel-job-title">Customer Success Manager (Conformité DGI)</h4>
+                        <div class="gel-job-meta">
+                            <span><i class="bi-geo-alt"></i> Cotonou (Hybride)</span>
+                            <span><i class="bi-clock"></i> Temps plein (CDI)</span>
+                            <span><i class="bi-tag"></i> Relation Client</span>
+                        </div>
+                        <p class="gel-job-desc">Formez et accompagnez nos clients dans le déploiement de l'outil de facturation e-MECeF et la numérisation de leurs processus.</p>
+                        <div>
+                            <a href="#candidature" class="gel-btn gel-btn-outline"><i class="bi-send"></i> Postuler</a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
-    <section class="gel-cta-band">
+    <!-- Formulaire Candidature -->
+    <section class="gel-section" id="candidature">
         <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-8 anim-fade-up">
-                    <h2>Votre avenir commence ici</h2>
-                    <p>Envoyez-nous votre candidature spontanée. Nous sommes toujours à la recherche de talents exceptionnels.</p>
-                </div>
-                <div class="col-lg-4 text-lg-end mt-4 mt-lg-0 anim-fade-up delay-1">
-                    <a href="#" class="gel-btn-white"><i class="bi-send-plus-fill"></i> Candidature spontanée</a>
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="gel-form-card anim-fade-up">
+                        <div class="text-center mb-5">
+                            <h2 class="gel-section-title" style="font-size: 2rem;">Candidature Spontanée / Offre</h2>
+                            <p class="text-muted">Vous ne trouvez pas d'offre qui vous correspond ? Envoyez-nous votre candidature spontanée.</p>
+                        </div>
+                        
+                        <form action="#" method="POST" @submit.prevent>
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Prénom</label>
+                                    <input type="text" class="form-control" placeholder="Jean" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Nom</label>
+                                    <input type="text" class="form-control" placeholder="Dupont" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-control" placeholder="jean.dupont@email.com" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Téléphone</label>
+                                    <input type="tel" class="form-control" placeholder="+33 6 12 34 56 78">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Poste visé / Offre</label>
+                                    <select class="form-select">
+                                        <option value="" selected disabled>Sélectionnez un poste ou Candidature spontanée</option>
+                                        <option value="dev">Développeur Full-Stack (Vue.js / Laravel)</option>
+                                        <option value="consultant">Consultant Fonctionnel Comptabilité</option>
+                                        <option value="csm">Customer Success Manager (B2B)</option>
+                                        <option value="spontanee">Candidature spontanée</option>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Lien LinkedIn / Portfolio (optionnel)</label>
+                                    <input type="url" class="form-control" placeholder="https://linkedin.com/in/jeandupont">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">CV (Format PDF)</label>
+                                    <input type="file" class="form-control" accept=".pdf" required>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Message de motivation</label>
+                                    <textarea class="form-control" rows="5" placeholder="Parlez-nous de vous, de ce qui vous motive et de ce que vous pouvez apporter à l'équipe..."></textarea>
+                                </div>
+                                <div class="col-12 text-center mt-5">
+                                    <button type="submit" class="gel-btn" style="padding: 16px 40px; font-size: 1.1rem; width: 100%; justify-content: center;">
+                                        <i class="bi-send-fill"></i> Envoyer ma candidature
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
     @include('partials.footer')
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const navbar = document.getElementById('gelNavbar');
@@ -313,12 +280,16 @@
         });
         document.addEventListener('click', (e) => {
             if (!navbar.contains(e.target) && !mobileMenu.contains(e.target)) {
-                mobileMenu.classList.remove('open'); togglerIcon.className = 'bi-list'; document.body.style.overflow = '';
+                mobileMenu.classList.remove('open');
+                togglerIcon.className = 'bi-list';
+                document.body.style.overflow = '';
             }
         });
         const animEls = document.querySelectorAll('.anim-fade-up');
         const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('anim-visible'); observer.unobserve(entry.target); } });
+            entries.forEach(entry => {
+                if (entry.isIntersecting) { entry.target.classList.add('anim-visible'); observer.unobserve(entry.target); }
+            });
         }, { threshold: 0.12 });
         animEls.forEach(el => observer.observe(el));
     </script>

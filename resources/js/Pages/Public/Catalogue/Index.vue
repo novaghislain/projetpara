@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, reactive, onMounted, onUnmounted } from 'vue';
+import { ref, computed, reactive, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { authStore } from '../../../stores/auth';
 
 const props = defineProps({
@@ -7,16 +7,31 @@ const props = defineProps({
 });
 
 const searchQuery = ref('');
+const selectedCategory = ref('');
+
+const filterByCategory = (cat) => {
+    selectedCategory.value = cat;
+};
+
+const csrfToken = computed(() => {
+    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+});
+
 const mobileOpen = ref(false);
 const showAuthModal = ref(false);
 const animated = ref(false);
+const cartCount = ref(0);
 const counters = reactive({ services: 0, categories: 0, started: false });
 let observer = null;
 
 const filteredCategories = computed(() => {
-    if (!searchQuery.value.trim()) return props.categories;
+    let cats = props.categories;
+    if (selectedCategory.value) {
+        cats = cats.filter(c => c.nom === selectedCategory.value);
+    }
+    if (!searchQuery.value.trim()) return cats;
     const q = searchQuery.value.toLowerCase();
-    return props.categories.map(cat => ({
+    return cats.map(cat => ({
         ...cat,
         services: cat.services.filter(s =>
             s.nom?.toLowerCase().includes(q) ||
@@ -33,7 +48,23 @@ const hasNoResults = computed(() =>
     searchQuery.value.trim() && filteredCategories.value.length === 0
 );
 
+const allFilteredServices = computed(() => {
+    let list = [];
+    filteredCategories.value.forEach(cat => {
+        cat.services.forEach(svc => {
+            list.push({
+                ...svc,
+                _category: cat
+            });
+        });
+    });
+    return list;
+});
+
 const initObserver = () => {
+    if (observer) {
+        observer.disconnect();
+    }
     observer = new IntersectionObserver((entries) => {
         entries.forEach(e => {
             if (e.isIntersecting) {
@@ -44,6 +75,12 @@ const initObserver = () => {
     }, { threshold: 0.08 });
     document.querySelectorAll('.sv-anim').forEach(el => observer.observe(el));
 };
+
+watch([selectedCategory, searchQuery], () => {
+    nextTick(() => {
+        initObserver();
+    });
+});
 
 const animateCounters = () => {
     if (counters.started) return;
@@ -80,6 +117,11 @@ onMounted(() => {
         initObserver();
         initCounterObserver();
     });
+    // Charger le nombre d'articles du panier
+    fetch('/api/cart')
+        .then(r => r.json())
+        .then(data => { cartCount.value = data.count || 0; })
+        .catch(() => {});
 });
 
 onUnmounted(() => {
@@ -95,15 +137,7 @@ onMounted(() => window.addEventListener('scroll', handleScroll, { passive: true 
 onUnmounted(() => window.removeEventListener('scroll', handleScroll));
 
 const categoryColor = (name) => {
-    const n = (name || '').toLowerCase();
-    if (n.includes('comptab') || n.includes('fiscal')) return '#FF7900';
-    if (n.includes('jurid')) return '#3B82F6';
-    if (n.includes('social') || n.includes('paie')) return '#8B5CF6';
-    if (n.includes('commerc') || n.includes('crm')) return '#06B6D4';
-    if (n.includes('erp')) return '#10B981';
-    if (n.includes('créat')) return '#F59E0B';
-    if (n.includes('ged')) return '#EC4899';
-    if (n.includes('mission')) return '#6366F1';
+    // Return standard GEL Orange instead of multi-color
     return '#FF7900';
 };
 const categoryIcon = (name) => {
@@ -139,43 +173,66 @@ const categoryIcon = (name) => {
                 </a>
                 <ul class="gel-nav-center" id="gelNavCenter">
                     <li class="gel-nav-item">
-                        <a href="#" class="gel-nav-link">Nos Modules <i class="bi-chevron-down chevron"></i></a>
+                        <a href="/nos-modules" class="gel-nav-link">Nos Modules <i class="bi-chevron-down chevron"></i></a>
                         <ul class="gel-dropdown">
-                            <li><a href="/login"><span class="drop-icon"><i class="bi-people"></i></span> CRM Clients</a></li>
-                            <li><a href="/login"><span class="drop-icon"><i class="bi-folder2-open"></i></span> GED — Documents</a></li>
-                            <li><a href="/login"><span class="drop-icon"><i class="bi-diagram-3"></i></span> Pôles & Missions</a></li>
+                            <li><a href="/nos-modules#pole-administration"><span class="drop-icon"><i class="bi-shield-lock"></i></span> Pôle Administration</a></li>
+                            <li><a href="/nos-modules#pole-comptabilite"><span class="drop-icon"><i class="bi-calculator"></i></span> Pôle Comptabilité / Finance</a></li>
+                            <li><a href="/nos-modules#pole-fiscal"><span class="drop-icon"><i class="bi-receipt"></i></span> Pôle Fiscal</a></li>
+                            <li><a href="/nos-modules#pole-social"><span class="drop-icon"><i class="bi-people"></i></span> Pôle Social & Paie</a></li>
+                            <li><a href="/nos-modules#pole-juridique"><span class="drop-icon"><i class="bi-bank2"></i></span> Pôle Juridique</a></li>
+                            <li><a href="/nos-modules#pole-it"><span class="drop-icon"><i class="bi-laptop"></i></span> Pôle IT</a></li>
                             <li><hr class="gel-dropdown-divider"></li>
-                            <li><a href="/login"><span class="drop-icon"><i class="bi-calculator"></i></span> Comptabilité</a></li>
-                            <li><a href="/login"><span class="drop-icon"><i class="bi-box-seam"></i></span> ERP Intégré</a></li>
+                            <li><a href="/nos-modules"><span class="drop-icon"><i class="bi-grid-3x3-gap"></i></span> Découvrir tous les modules</a></li>
                         </ul>
                     </li>
                     <li class="gel-nav-item">
-                        <a href="/services" class="gel-nav-link active">Services <i class="bi-chevron-down chevron"></i></a>
+                        <a href="/nos-services" class="gel-nav-link active" @click.prevent="filterByCategory('')">Services <i class="bi-chevron-down chevron"></i></a>
                         <ul class="gel-dropdown">
-                            <li><a href="/services/comptabilite"><span class="drop-icon"><i class="bi-calculator"></i></span> Comptabilité</a></li>
-                            <li><a href="/services/juridique"><span class="drop-icon"><i class="bi-bank2"></i></span> Juridique</a></li>
-                            <li><a href="/services/fiscal"><span class="drop-icon"><i class="bi-receipt"></i></span> Fiscal</a></li>
-                            <li><a href="/services/social-paie"><span class="drop-icon"><i class="bi-people"></i></span> Social & Paie</a></li>
+                            <li v-for="cat in props.categories" :key="'nav-'+cat.id">
+                                <a href="#" @click.prevent="filterByCategory(cat.nom)">
+                                    <span class="drop-icon"><i :class="cat.icone"></i></span> {{ cat.nom }}
+                                </a>
+                            </li>
                             <li><hr class="gel-dropdown-divider"></li>
-                            <li><a href="/nos-services"><span class="drop-icon"><i class="bi-grid-3x3-gap"></i></span> Tous les services</a></li>
+                            <li><a href="#" @click.prevent="filterByCategory('')"><span class="drop-icon"><i class="bi-grid-3x3-gap"></i></span> Tous les services</a></li>
                         </ul>
                     </li>
                     <li class="gel-nav-item">
-                        <a href="#" class="gel-nav-link">À propos <i class="bi-chevron-down chevron"></i></a>
+                        <a href="/a-propos" class="gel-nav-link">À propos <i class="bi-chevron-down chevron"></i></a>
                         <ul class="gel-dropdown">
                             <li><a href="/notre-cabinet"><span class="drop-icon"><i class="bi-building"></i></span> Notre Cabinet</a></li>
                             <li><a href="/notre-equipe"><span class="drop-icon"><i class="bi-people-fill"></i></span> Notre Équipe</a></li>
                             <li><a href="/carrieres"><span class="drop-icon"><i class="bi-briefcase-fill"></i></span> Carrières</a></li>
                         </ul>
                     </li>
+                    <li class="gel-nav-item">
+                        <a href="/ressources" class="gel-nav-link">Ressources <i class="bi-chevron-down chevron"></i></a>
+                        <ul class="gel-dropdown">
+                            <li><a href="/blogue"><span class="drop-icon"><i class="bi-pencil-square"></i></span> Blogue</a></li>
+                            <li><a href="/documentation"><span class="drop-icon"><i class="bi-file-text"></i></span> Documentation</a></li>
+                            <li><a href="/faq"><span class="drop-icon"><i class="bi-question-circle"></i></span> FAQ</a></li>
+                            <li><hr class="gel-dropdown-divider"></li>
+                            <li><a href="/centre-aide"><span class="drop-icon"><i class="bi-headset"></i></span> Centre d'aide</a></li>
+                        </ul>
+                    </li>
                     <li class="gel-nav-item"><a href="/tarifs" class="gel-nav-link">Tarifs</a></li>
                     <li class="gel-nav-item"><a href="/contact" class="gel-nav-link">Contact</a></li>
                 </ul>
                 <div class="gel-nav-right">
+                    <!-- Icône Panier -->
+                    <a href="/panier" class="gel-btn-nav gel-btn-nav-outline" style="position:relative;" title="Mon panier">
+                        <i class="bi-cart"></i>
+                        <span v-if="cartCount > 0"
+                              style="position:absolute; top:-6px; right:-8px; background:#FF7900; color:#fff;
+                                     font-size:10px; font-weight:700; padding:1px 5px; border-radius:10px; line-height:1.4;">
+                            {{ cartCount }}
+                        </span>
+                    </a>
+                    
                     <a v-if="authStore.isAuthenticated" href="/dashboard" class="gel-btn-nav gel-btn-nav-outline"><i class="bi-speedometer2"></i> Mon Espace</a>
                     <template v-else>
                         <a href="/register" class="gel-btn-nav gel-btn-nav-outline"><i class="bi-person-plus"></i> S'inscrire</a>
-                        <a href="/login" class="gel-btn-nav gel-btn-nav-primary" id="nav-login-btn"><i class="bi-box-arrow-in-right"></i> Connexion</a>
+                        <a href="/login" class="gel-btn-nav gel-btn-nav-primary"><i class="bi-box-arrow-in-right"></i> Connexion</a>
                     </template>
                     <button class="gel-toggler" @click="mobileOpen = !mobileOpen" aria-label="Menu"><i :class="mobileOpen ? 'bi-x-lg' : 'bi-list'"></i></button>
                 </div>
@@ -186,14 +243,35 @@ const categoryIcon = (name) => {
         <div :class="['gel-mobile-menu', { open: mobileOpen }]" id="gelMobileMenu">
             <a href="/" class="gel-mobile-link"><i class="bi-house text-orange me-2"></i>Accueil</a>
             <a href="/nos-modules" class="gel-mobile-link"><i class="bi-grid-3x3-gap text-orange me-2"></i>Nos Modules</a>
-            <a href="/services/comptabilite" class="gel-mobile-link"><i class="bi-grid-3x3-gap text-orange me-2"></i>Services</a>
+            <a href="/nos-services" class="gel-mobile-link"><i class="bi-grid-3x3-gap text-orange me-2"></i>Services</a>
+            <div style="padding-left:36px;font-size:12px;color:rgba(30,41,59,0.7);margin-bottom:4px;">
+                <a v-for="cat in props.categories" :key="'mob-'+cat.id" :href="'/nos-services?category=' + encodeURIComponent(cat.nom)" @click="mobileOpen = false" style="color:inherit;text-decoration:none;display:block;padding:6px 0;">{{ cat.nom }}</a>
+            </div>
+            <a href="/blogue" class="gel-mobile-link"><i class="bi-pencil-square text-orange me-2"></i>Blogue</a>
+            <a href="/documentation" class="gel-mobile-link"><i class="bi-file-text text-orange me-2"></i>Documentation</a>
+            <a href="/faq" class="gel-mobile-link"><i class="bi-question-circle text-orange me-2"></i>FAQ</a>
+            <a href="/centre-aide" class="gel-mobile-link"><i class="bi-headset text-orange me-2"></i>Centre d'aide</a>
             <a href="/notre-cabinet" class="gel-mobile-link"><i class="bi-building text-orange me-2"></i>Notre Cabinet</a>
             <a href="/notre-equipe" class="gel-mobile-link"><i class="bi-people-fill text-orange me-2"></i>Notre Équipe</a>
             <a href="/carrieres" class="gel-mobile-link"><i class="bi-briefcase-fill text-orange me-2"></i>Carrières</a>
             <a href="/tarifs" class="gel-mobile-link"><i class="bi-currency-dollar text-orange me-2"></i>Tarifs</a>
             <a href="/contact" class="gel-mobile-link"><i class="bi-envelope text-orange me-2"></i>Contact</a>
-            <a v-if="!authStore.isAuthenticated" href="/login" class="gel-mobile-link"><i class="bi-box-arrow-in-right text-orange me-2"></i>Connexion</a>
-            <a v-else href="/dashboard" class="gel-mobile-link"><i class="bi-speedometer2 text-orange me-2"></i>Mon Espace</a>
+            
+            <template v-if="authStore.isAuthenticated">
+                <a v-if="authStore.user?.role === 'client'" href="/client/orders" class="gel-mobile-link"><i class="bi-speedometer2 text-orange me-2"></i>Mon Espace</a>
+                <a v-else-if="authStore.user?.client_id" href="/company/dashboard" class="gel-mobile-link"><i class="bi-speedometer2 text-orange me-2"></i>Portail</a>
+                <a v-else href="/dashboard" class="gel-mobile-link"><i class="bi-speedometer2 text-orange me-2"></i>Tableau de bord</a>
+                <form method="POST" action="/logout" style="display:block; width:100%; margin:0;">
+                    <input type="hidden" name="_token" :value="csrfToken">
+                    <button type="submit" class="gel-mobile-link" style="background:transparent; border:none; text-align:left; width:100%;">
+                        <i class="bi-box-arrow-right text-orange me-2"></i>Déconnexion
+                    </button>
+                </form>
+            </template>
+            <template v-else>
+                <a href="/login" class="gel-mobile-link"><i class="bi-box-arrow-in-right text-orange me-2"></i>Connexion</a>
+                <a href="/register" class="gel-mobile-link"><i class="bi-person-plus text-orange me-2"></i>S'inscrire</a>
+            </template>
         </div>
         <div v-if="mobileOpen" class="sv-overlay" @click="mobileOpen = false"></div>
 
@@ -217,7 +295,7 @@ const categoryIcon = (name) => {
             <div class="container position-relative" style="z-index:2;">
                 <div class="row justify-content-center text-center">
                     <div class="col-lg-8">
-                        <div class="sv-hero-badge" :class="{ 'sv-visible': animated }">Catalogue GEL Cabinet</div>
+
                         <h1 class="sv-hero-title" :class="{ 'sv-visible': animated }">
                             Des services professionnels<br>
                             <span class="sv-hero-accent">pour votre entreprise</span>
@@ -266,10 +344,13 @@ const categoryIcon = (name) => {
             <div class="container">
 
                 <!-- Search info -->
-                <div v-if="searchQuery.trim() && !hasNoResults" class="sv-search-info sv-anim">
+                <div v-if="(searchQuery.trim() || selectedCategory) && !hasNoResults" class="sv-search-info sv-anim">
                     <i class="bi-info-circle"></i>
-                    <span><strong>{{ filteredCategories.reduce((s, c) => s + c.services.length, 0) }}</strong> résultat(s)</span>
-                    <button class="sv-search-info-clear" @click="searchQuery = ''">Effacer</button>
+                    <span>
+                        <template v-if="selectedCategory">Catégorie: <strong>{{ selectedCategory }}</strong> - </template>
+                        <strong>{{ filteredCategories.reduce((s, c) => s + c.services.length, 0) }}</strong> résultat(s)
+                    </span>
+                    <button class="sv-search-info-clear" @click="filterByCategory(''); searchQuery = ''">Effacer</button>
                 </div>
 
                 <!-- Empty state -->
@@ -281,28 +362,66 @@ const categoryIcon = (name) => {
                 </div>
 
                 <!-- Categories -->
-                <div v-for="(cat, ci) in filteredCategories" :key="cat.id" class="sv-cat">
-                    <div class="sv-cat-anchor" :id="'cat-' + cat.id"></div>
-                    <div class="sv-cat-head sv-anim" :style="{ transitionDelay: ci * 0.08 + 's' }">
-                        <h2 class="sv-cat-title">{{ cat.nom }}</h2>
-                        <p v-if="cat.description" class="sv-cat-desc">{{ cat.description }}</p>
-                        <span class="sv-cat-pill" :style="{ background: categoryColor(cat.nom) }">{{ cat.services.length }}</span>
+                <template v-if="selectedCategory">
+                    <div v-for="(cat, ci) in filteredCategories" :key="cat.id" class="sv-cat">
+                        <div class="sv-cat-anchor" :id="'cat-' + cat.id"></div>
+                        <div class="sv-cat-head sv-anim" :style="{ transitionDelay: ci * 0.08 + 's' }">
+                            <h2 class="sv-cat-title">{{ cat.nom }}</h2>
+                            <p v-if="cat.description" class="sv-cat-desc">{{ cat.description }}</p>
+                            <span class="sv-cat-pill" :style="{ background: categoryColor(cat.nom) }">{{ cat.services.length }}</span>
+                        </div>
+                        <div class="sv-cat-grid">
+                            <div v-for="(svc, si) in cat.services" :key="svc.id" class="sv-card-wrap">
+                                <div class="sv-card sv-anim"
+                                     :style="{
+                                         transitionDelay: (ci * 0.08 + si * 0.05) + 's',
+                                         '--card-accent': categoryColor(cat.nom),
+                                         '--card-btn-bg': categoryColor(cat.nom),
+                                     }">
+                                    <div class="sv-card-top">
+                                        <div class="sv-card-icon" :style="{
+                                            background: categoryColor(cat.nom) + '12',
+                                            color: categoryColor(cat.nom),
+                                            borderColor: categoryColor(cat.nom) + '25'
+                                        }">
+                                            <i :class="categoryIcon(cat.nom)"></i>
+                                        </div>
+                                        <span class="sv-card-badge" v-if="svc.tarif_type === 'fixe'">{{ svc.tarif_fcfa?.toLocaleString('fr-FR') }} FCFA</span>
+                                        <span class="sv-card-badge sv-card-badge--ghost" v-else>Sur devis</span>
+                                    </div>
+                                    <h3 class="sv-card-title">{{ svc.nom }}</h3>
+                                    <p class="sv-card-text">{{ svc.description }}</p>
+                                    <div class="sv-card-meta">
+                                        <span><i class="bi-clock"></i> {{ svc.delai_jours || 'Sur mesure' }}</span>
+                                        <span v-if="svc.inclus_json?.length"><i class="bi-check-circle"></i> {{ svc.inclus_json.length }} inclus</span>
+                                    </div>
+                                    <a :href="'/nos-services/' + cat.id + '/' + svc.id" class="sv-card-btn">
+                                        Voir la fiche <i class="bi-arrow-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="!cat.services.length" class="sv-cat-empty sv-anim">
+                            <i class="bi-inbox me-2"></i>Aucun service disponible dans cette catégorie.
+                        </div>
                     </div>
+                </template>
+                <template v-else>
                     <div class="sv-cat-grid">
-                        <div v-for="(svc, si) in cat.services" :key="svc.id" class="sv-card-wrap">
+                        <div v-for="(svc, si) in allFilteredServices" :key="svc.id" class="sv-card-wrap">
                             <div class="sv-card sv-anim"
                                  :style="{
-                                     transitionDelay: (ci * 0.08 + si * 0.05) + 's',
-                                     '--card-accent': categoryColor(cat.nom),
-                                     '--card-btn-bg': categoryColor(cat.nom),
+                                     transitionDelay: ((si % 15) * 0.05) + 's',
+                                     '--card-accent': categoryColor(svc._category.nom),
+                                     '--card-btn-bg': categoryColor(svc._category.nom),
                                  }">
                                 <div class="sv-card-top">
                                     <div class="sv-card-icon" :style="{
-                                        background: categoryColor(cat.nom) + '12',
-                                        color: categoryColor(cat.nom),
-                                        borderColor: categoryColor(cat.nom) + '25'
+                                        background: categoryColor(svc._category.nom) + '12',
+                                        color: categoryColor(svc._category.nom),
+                                        borderColor: categoryColor(svc._category.nom) + '25'
                                     }">
-                                        <i :class="categoryIcon(cat.nom)"></i>
+                                        <i :class="categoryIcon(svc._category.nom)"></i>
                                     </div>
                                     <span class="sv-card-badge" v-if="svc.tarif_type === 'fixe'">{{ svc.tarif_fcfa?.toLocaleString('fr-FR') }} FCFA</span>
                                     <span class="sv-card-badge sv-card-badge--ghost" v-else>Sur devis</span>
@@ -313,16 +432,13 @@ const categoryIcon = (name) => {
                                     <span><i class="bi-clock"></i> {{ svc.delai_jours || 'Sur mesure' }}</span>
                                     <span v-if="svc.inclus_json?.length"><i class="bi-check-circle"></i> {{ svc.inclus_json.length }} inclus</span>
                                 </div>
-                                <a :href="'/nos-services/' + cat.id + '/' + svc.id" class="sv-card-btn">
+                                <a :href="'/nos-services/' + svc._category.id + '/' + svc.id" class="sv-card-btn">
                                     Voir la fiche <i class="bi-arrow-right"></i>
                                 </a>
                             </div>
                         </div>
                     </div>
-                    <div v-if="!cat.services.length" class="sv-cat-empty sv-anim">
-                        <i class="bi-inbox me-2"></i>Aucun service disponible dans cette catégorie.
-                    </div>
-                </div>
+                </template>
             </div>
         </section>
 
