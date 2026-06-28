@@ -185,7 +185,6 @@
     <div class="container">
         <div class="row justify-content-center text-center mb-5">
             <div class="col-lg-8">
-                <span class="gel-section-chip"><i class="bi-cloud-check"></i> SaaS modulaire</span>
                 <h2 class="gel-section-title">Abonnements mensuels en FCFA</h2>
                 <p class="gel-section-sub mx-auto">Activez uniquement les modules dont vous avez besoin. R&eacute;siliez &agrave; tout moment. Paiement par Mobile Money ou virement.</p>
             </div>
@@ -255,7 +254,6 @@
     <div class="container">
         <div class="row justify-content-center text-center mb-5">
             <div class="col-lg-8">
-                <span class="gel-section-chip"><i class="bi-cpu"></i> Licence standalone</span>
                 <h2 class="gel-section-title">Logiciel de Comptabilit&eacute;</h2>
                 <p class="gel-section-sub mx-auto">Notre logiciel de comptabilit&eacute; complet conforme OHADA, en licence perp&eacute;tuelle.</p>
             </div>
@@ -320,7 +318,6 @@
     <div class="container">
         <div class="row justify-content-center text-center mb-5">
             <div class="col-lg-8">
-                <span class="gel-section-chip"><i class="bi-list-check"></i> Comparatif</span>
                 <h2 class="gel-section-title">SaaS vs Licence</h2>
                 <p class="gel-section-sub mx-auto">Lequel choisir ? Tout d&eacute;pend de vos besoins.</p>
             </div>

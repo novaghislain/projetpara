@@ -966,7 +966,6 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-8">
-                    <div class="gel-page-header-badge"><i class="bi-envelope-fill"></i> Contact</div>
                     <h1>Contactez-nous</h1>
                     <p>Une question ? Un besoin spécifique ? Notre équipe est à votre écoute. Laissez-nous un message et
                         nous vous répondrons sous 24h.</p>
