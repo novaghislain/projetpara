@@ -322,7 +322,7 @@
                         <div class="gel-contact-info">
                             <h4>Par téléphone</h4>
                             <p>Du lundi au vendredi, de 9h00 à 18h00.</p>
-                            <a href="tel:+33123456789">+33 1 23 45 67 89</a>
+                            <a href="tel:+33123456789">+229 XXXXXXXXXX</a>
                         </div>
                     </div>
                 </div>
@@ -332,7 +332,7 @@
                         <div class="gel-contact-info">
                             <h4>Par e-mail</h4>
                             <p>Nous nous engageons à répondre sous 24h ouvrées.</p>
-                            <a href="mailto:support@gelcabinet.fr">support@gelcabinet.fr</a>
+                            <a href="mailto:contact@gelcabinet.com">contact@gelcabinet.com</a>
                         </div>
                     </div>
                 </div>
