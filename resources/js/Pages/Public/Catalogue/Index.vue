@@ -8,9 +8,31 @@ const props = defineProps({
 
 const searchQuery = ref('');
 const selectedCategory = ref('');
+const showAllServices = ref(false);
 
 const filterByCategory = (cat) => {
     selectedCategory.value = cat;
+    showAllServices.value = false;
+    if (cat) {
+        nextTick(() => {
+            const el = document.getElementById('services-list-container');
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    }
+};
+
+const showAll = () => {
+    selectedCategory.value = '';
+    searchQuery.value = '';
+    showAllServices.value = true;
+    nextTick(() => {
+        const el = document.getElementById('services-list-container');
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth' });
+        }
+    });
 };
 
 const csrfToken = computed(() => {
@@ -21,6 +43,36 @@ const mobileOpen = ref(false);
 const showAuthModal = ref(false);
 const animated = ref(false);
 const cartCount = ref(0);
+const processingCart = ref({});
+const cartAdded = ref({});
+
+const addToCart = async (serviceId) => {
+    processingCart.value[serviceId] = true;
+    try {
+        const res = await fetch('/api/cart/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken.value,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ id: serviceId, quantity: 1 })
+        });
+        if (res.ok) {
+            const data = await res.json();
+            cartAdded.value[serviceId] = true;
+            cartCount.value = data.count;
+            setTimeout(() => { cartAdded.value[serviceId] = false; }, 2000);
+        } else {
+            alert('Impossible d\'ajouter ce service. Veuillez réessayer.');
+        }
+    } catch (e) {
+        console.error(e);
+    } finally {
+        processingCart.value[serviceId] = false;
+    }
+};
+
 const counters = reactive({ services: 0, categories: 0, started: false });
 let observer = null;
 
@@ -194,7 +246,7 @@ const categoryIcon = (name) => {
                                 </a>
                             </li>
                             <li><hr class="gel-dropdown-divider"></li>
-                            <li><a href="#" @click.prevent="filterByCategory('')"><span class="drop-icon"><i class="bi-grid-3x3-gap"></i></span> Tous les services</a></li>
+                            <li><a href="#" @click.prevent="showAll()"><span class="drop-icon"><i class="bi-grid-3x3-gap"></i></span> Tous les services</a></li>
                         </ul>
                     </li>
                     <li class="gel-nav-item">
@@ -297,16 +349,20 @@ const categoryIcon = (name) => {
                     <div class="col-lg-8">
 
                         <h1 class="sv-hero-title" :class="{ 'sv-visible': animated }">
-                            Des services professionnels<br>
-                            <span class="sv-hero-accent">pour votre entreprise</span>
+                            Des services adaptés à vos<br>
+                            <span class="sv-hero-accent">besoins professionnels</span>
                         </h1>
                         <p class="sv-hero-text" :class="{ 'sv-visible': animated }">
-                            Comptabilité, juridique, fiscal, social, GED, ERP — une gamme complète de
-                            services conçus pour accompagner et développer votre cabinet.
+                            Notre cabinet vous accompagne dans la gestion comptable, fiscale, juridique, sociale et digitale avec des solutions adaptées à votre activité.
                         </p>
+                        
+                        <div class="d-flex align-items-center justify-content-center gap-3 mt-4" :class="{ 'sv-visible': animated }" style="opacity:0; transform:translateY(24px); transition:all 0.6s 0.25s;">
+                            <a href="#services-grid" class="sv-cta-btn" @click.prevent="document.getElementById('services-grid').scrollIntoView({behavior:'smooth'})">Découvrir nos services</a>
+                            <a href="/contact" class="sv-cta-btn" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);">Demander un devis</a>
+                        </div>
                     </div>
                 </div>
-                <div class="row justify-content-center">
+                <div class="row justify-content-center mt-5">
                     <div class="col-lg-6">
                         <div class="sv-search" :class="{ 'sv-visible': animated }">
                             <i class="bi-search sv-search-icon"></i>
@@ -317,16 +373,20 @@ const categoryIcon = (name) => {
                 </div>
                 <div class="sv-stats-row" :class="{ 'sv-visible': animated }">
                     <div class="sv-stat">
-                        <span class="sv-stat-value">{{ totalServices }}</span>
-                        <span class="sv-stat-label">Services</span>
-                    </div>
-                    <div class="sv-stat">
-                        <span class="sv-stat-value">{{ props.categories.length }}</span>
-                        <span class="sv-stat-label">Pôles</span>
+                        <span class="sv-stat-value">7</span>
+                        <span class="sv-stat-label">Pôles d'expertise</span>
                     </div>
                     <div class="sv-stat">
                         <span class="sv-stat-value">24/7</span>
-                        <span class="sv-stat-label">Assistance</span>
+                        <span class="sv-stat-label">Services disponibles</span>
+                    </div>
+                    <div class="sv-stat">
+                        <span class="sv-stat-value"><i class="bi-person-check" style="font-size:28px;"></i></span>
+                        <span class="sv-stat-label">Accompagnement personnalisé</span>
+                    </div>
+                    <div class="sv-stat">
+                        <span class="sv-stat-value"><i class="bi-buildings" style="font-size:28px;"></i></span>
+                        <span class="sv-stat-label">Solutions adaptées</span>
                     </div>
                 </div>
             </div>
@@ -338,19 +398,48 @@ const categoryIcon = (name) => {
         </section>
 
         <!-- ════════════════════════════════════════
+             APPROCHE (RICH SECTION)
+        <!-- ════════════════════════════════════════
+             DOMAINES D'EXPERTISE
+        ════════════════════════════════════════ -->
+        <section class="sv-body" style="padding-top:60px; padding-bottom:20px; background:#f8fafc;" id="services-grid">
+            <div class="container">
+                <div class="text-center mb-5 sv-anim">
+                    <h2 style="font-family:'Outfit',sans-serif; font-size:clamp(1.6rem, 2.5vw, 2.2rem); font-weight:800; color:#0F172A; margin-bottom:12px;">Nos domaines d'expertise</h2>
+                    <p style="color:#64748b; font-size:15px; max-width:600px; margin:0 auto;">Découvrez l'ensemble de nos pôles d'expertise conçus pour répondre à toutes les exigences de votre cabinet.</p>
+                </div>
+                <div class="row g-4 justify-content-center">
+                    <div v-for="(cat, index) in props.categories" :key="'dom-'+cat.id" class="col-md-6 col-lg-4 sv-anim" :style="{ transitionDelay: (index * 0.1) + 's' }">
+                        <div style="background:#fff; border-radius:16px; padding:24px; height:100%; border:1px solid #e2e8f0; transition:all 0.3s; cursor:pointer;" @click="filterByCategory(cat.nom)" class="hover-shadow-sm">
+                            <div style="display:flex; align-items:center; gap:16px; margin-bottom:12px;">
+                                <div :style="{ width:'48px', height:'48px', borderRadius:'12px', background:categoryColor(cat.nom)+'15', color:categoryColor(cat.nom), display:'flex', alignItems:'center', justifyContent:'center', fontSize:'22px' }">
+                                    <i :class="categoryIcon(cat.nom)"></i>
+                                </div>
+                                <h3 style="font-size:17px; font-weight:700; color:#1e293b; margin:0;">{{ cat.nom }}</h3>
+                            </div>
+                            <p style="font-size:13.5px; color:#64748b; line-height:1.6; margin:0;">
+                                {{ cat.description || 'Gérez efficacement vos opérations avec nos outils spécialisés pour ce domaine.' }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ════════════════════════════════════════
              SERVICES
         ════════════════════════════════════════ -->
-        <section class="sv-body">
+        <section class="sv-body" id="services-list-container">
             <div class="container">
 
                 <!-- Search info -->
-                <div v-if="(searchQuery.trim() || selectedCategory) && !hasNoResults" class="sv-search-info sv-anim">
+                <div v-if="searchQuery.trim() && !hasNoResults" class="sv-search-info sv-anim">
                     <i class="bi-info-circle"></i>
                     <span>
                         <template v-if="selectedCategory">Catégorie: <strong>{{ selectedCategory }}</strong> - </template>
                         <strong>{{ filteredCategories.reduce((s, c) => s + c.services.length, 0) }}</strong> résultat(s)
                     </span>
-                    <button class="sv-search-info-clear" @click="filterByCategory(''); searchQuery = ''">Effacer</button>
+                    <button class="sv-search-info-clear" @click="filterByCategory(''); searchQuery = ''; showAllServices = false;">Effacer</button>
                 </div>
 
                 <!-- Empty state -->
@@ -358,7 +447,7 @@ const categoryIcon = (name) => {
                     <div class="sv-empty-icon"><i class="bi-search"></i></div>
                     <h3>Aucun service trouvé</h3>
                     <p>Essayez un autre terme de recherche.</p>
-                    <button class="sv-empty-btn" @click="searchQuery = ''"><i class="bi-x-lg me-2"></i>Voir tous</button>
+                    <button class="sv-empty-btn" @click="searchQuery = ''; showAllServices = true;"><i class="bi-x-lg me-2"></i>Voir tous</button>
                 </div>
 
                 <!-- Categories -->
@@ -395,9 +484,22 @@ const categoryIcon = (name) => {
                                         <span><i class="bi-clock"></i> {{ svc.delai_jours || 'Sur mesure' }}</span>
                                         <span v-if="svc.inclus_json?.length"><i class="bi-check-circle"></i> {{ svc.inclus_json.length }} inclus</span>
                                     </div>
-                                    <a :href="'/nos-services/' + cat.id + '/' + svc.id" class="sv-card-btn">
-                                        Voir la fiche <i class="bi-arrow-right"></i>
-                                    </a>
+                                    <div style="display:flex; gap:10px; margin-top:20px;">
+                                        <a :href="'/nos-services/' + cat.id + '/' + svc.id" class="sv-card-btn" style="flex:1; justify-content:center; padding:10px; font-size:13px;">
+                                            Détails
+                                        </a>
+                                        <button @click="addToCart(svc.id)" class="sv-card-btn" style="flex:1; justify-content:center; padding:10px; font-size:13px; background:#1e293b; color:#fff;" :disabled="processingCart[svc.id]">
+                                            <template v-if="processingCart[svc.id]">
+                                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                            </template>
+                                            <template v-else-if="cartAdded[svc.id]">
+                                                <i class="bi-check2"></i> Ajouté
+                                            </template>
+                                            <template v-else>
+                                                Commander
+                                            </template>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -406,7 +508,7 @@ const categoryIcon = (name) => {
                         </div>
                     </div>
                 </template>
-                <template v-else>
+                <template v-else-if="searchQuery.trim() || showAllServices">
                     <div class="sv-cat-grid">
                         <div v-for="(svc, si) in allFilteredServices" :key="svc.id" class="sv-card-wrap">
                             <div class="sv-card sv-anim"
@@ -432,9 +534,22 @@ const categoryIcon = (name) => {
                                     <span><i class="bi-clock"></i> {{ svc.delai_jours || 'Sur mesure' }}</span>
                                     <span v-if="svc.inclus_json?.length"><i class="bi-check-circle"></i> {{ svc.inclus_json.length }} inclus</span>
                                 </div>
-                                <a :href="'/nos-services/' + svc._category.id + '/' + svc.id" class="sv-card-btn">
-                                    Voir la fiche <i class="bi-arrow-right"></i>
-                                </a>
+                                <div style="display:flex; gap:10px; margin-top:20px;">
+                                    <a :href="'/nos-services/' + svc._category.id + '/' + svc.id" class="sv-card-btn" style="flex:1; justify-content:center; padding:10px; font-size:13px;">
+                                        Détails
+                                    </a>
+                                    <button @click="addToCart(svc.id)" class="sv-card-btn" style="flex:1; justify-content:center; padding:10px; font-size:13px; background:#1e293b; color:#fff;" :disabled="processingCart[svc.id]">
+                                        <template v-if="processingCart[svc.id]">
+                                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                        </template>
+                                        <template v-else-if="cartAdded[svc.id]">
+                                            <i class="bi-check2"></i> Ajouté
+                                        </template>
+                                        <template v-else>
+                                            Commander
+                                        </template>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -443,15 +558,175 @@ const categoryIcon = (name) => {
         </section>
 
         <!-- ════════════════════════════════════════
+             POURQUOI CHOISIR NOS SERVICES
+        ════════════════════════════════════════ -->
+        <section class="sv-body" style="padding-top:80px; padding-bottom:60px;">
+            <div class="container">
+                <div class="row justify-content-center text-center mb-5">
+                    <div class="col-lg-8 sv-anim">
+                        <h2 style="font-family:'Outfit',sans-serif; font-size:clamp(1.6rem, 2.5vw, 2.2rem); font-weight:800; color:#0F172A; margin-bottom:12px;">Pourquoi choisir nos services ?</h2>
+                        <p style="color:#64748b; font-size:15px; max-width:600px; margin:0 auto;">Des atouts majeurs pour vous garantir une expérience optimale et des résultats concrets.</p>
+                    </div>
+                </div>
+                <div class="row g-4 justify-content-center">
+                    <div class="col-md-4 col-sm-6 sv-anim" style="transition-delay: 0.1s;">
+                        <div style="background:#fff; border-radius:16px; padding:24px; text-align:center; height:100%; box-shadow:0 4px 20px rgba(0,0,0,0.04); border:1px solid #e2e8f0;">
+                            <div style="width:56px; height:56px; background:#EFF6FF; color:#3B82F6; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; margin:0 auto 16px;">
+                                <i class="bi-award"></i>
+                            </div>
+                            <h3 style="font-size:16px; font-weight:700; color:#1e293b; margin-bottom:10px;">Expertise métier</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-sm-6 sv-anim" style="transition-delay: 0.2s;">
+                        <div style="background:#fff; border-radius:16px; padding:24px; text-align:center; height:100%; box-shadow:0 4px 20px rgba(0,0,0,0.04); border:1px solid #e2e8f0;">
+                            <div style="width:56px; height:56px; background:#FEF3C7; color:#F59E0B; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; margin:0 auto 16px;">
+                                <i class="bi-stopwatch"></i>
+                            </div>
+                            <h3 style="font-size:16px; font-weight:700; color:#1e293b; margin-bottom:10px;">Gain de temps</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-sm-6 sv-anim" style="transition-delay: 0.3s;">
+                        <div style="background:#fff; border-radius:16px; padding:24px; text-align:center; height:100%; box-shadow:0 4px 20px rgba(0,0,0,0.04); border:1px solid #e2e8f0;">
+                            <div style="width:56px; height:56px; background:#FCE7F3; color:#EC4899; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; margin:0 auto 16px;">
+                                <i class="bi-person-check"></i>
+                            </div>
+                            <h3 style="font-size:16px; font-weight:700; color:#1e293b; margin-bottom:10px;">Suivi personnalisé</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-sm-6 sv-anim" style="transition-delay: 0.4s;">
+                        <div style="background:#fff; border-radius:16px; padding:24px; text-align:center; height:100%; box-shadow:0 4px 20px rgba(0,0,0,0.04); border:1px solid #e2e8f0;">
+                            <div style="width:56px; height:56px; background:#DCFCE7; color:#10B981; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; margin:0 auto 16px;">
+                                <i class="bi-shield-check"></i>
+                            </div>
+                            <h3 style="font-size:16px; font-weight:700; color:#1e293b; margin-bottom:10px;">Sécurité des données</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-sm-6 sv-anim" style="transition-delay: 0.5s;">
+                        <div style="background:#fff; border-radius:16px; padding:24px; text-align:center; height:100%; box-shadow:0 4px 20px rgba(0,0,0,0.04); border:1px solid #e2e8f0;">
+                            <div style="width:56px; height:56px; background:#F3E8FF; color:#8B5CF6; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; margin:0 auto 16px;">
+                                <i class="bi-headset"></i>
+                            </div>
+                            <h3 style="font-size:16px; font-weight:700; color:#1e293b; margin-bottom:10px;">Accompagnement continu</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ════════════════════════════════════════
+             PARCOURS CLIENT
+        ════════════════════════════════════════ -->
+        <section class="sv-body" style="padding-top:40px; padding-bottom:80px; background:#fff;">
+            <div class="container">
+                <div class="row justify-content-center text-center mb-5">
+                    <div class="col-lg-8 sv-anim">
+                        <h2 style="font-family:'Outfit',sans-serif; font-size:clamp(1.6rem, 2.5vw, 2.2rem); font-weight:800; color:#0F172A; margin-bottom:12px;">Comment ça marche ?</h2>
+                        <p style="color:#64748b; font-size:15px; max-width:600px; margin:0 auto;">Un processus simple et transparent pour répondre rapidement à vos besoins.</p>
+                    </div>
+                </div>
+                <div class="row g-4 position-relative">
+                    <div class="col-md-3 text-center sv-anim" style="transition-delay: 0.1s; position:relative;">
+                        <div style="width:64px; height:64px; background:var(--sv-orange); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:bold; margin:0 auto 16px; position:relative; z-index:2; box-shadow:0 4px 15px rgba(255,121,0,0.3);">
+                            1
+                        </div>
+                        <h3 style="font-size:16px; font-weight:700; color:#1e293b; margin-bottom:8px;">Choisissez votre service</h3>
+                    </div>
+                    <div class="col-md-3 text-center sv-anim" style="transition-delay: 0.2s; position:relative;">
+                        <div style="width:64px; height:64px; background:var(--sv-orange); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:bold; margin:0 auto 16px; position:relative; z-index:2; box-shadow:0 4px 15px rgba(255,121,0,0.3);">
+                            2
+                        </div>
+                        <h3 style="font-size:16px; font-weight:700; color:#1e293b; margin-bottom:8px;">Envoyez votre demande</h3>
+                    </div>
+                    <div class="col-md-3 text-center sv-anim" style="transition-delay: 0.3s; position:relative;">
+                        <div style="width:64px; height:64px; background:var(--sv-orange); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:bold; margin:0 auto 16px; position:relative; z-index:2; box-shadow:0 4px 15px rgba(255,121,0,0.3);">
+                            3
+                        </div>
+                        <h3 style="font-size:16px; font-weight:700; color:#1e293b; margin-bottom:8px;">Recevez une proposition</h3>
+                    </div>
+                    <div class="col-md-3 text-center sv-anim" style="transition-delay: 0.4s; position:relative;">
+                        <div style="width:64px; height:64px; background:var(--sv-orange); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:bold; margin:0 auto 16px; position:relative; z-index:2; box-shadow:0 4px 15px rgba(255,121,0,0.3);">
+                            4
+                        </div>
+                        <h3 style="font-size:16px; font-weight:700; color:#1e293b; margin-bottom:8px;">Profitez de l'accompagnement</h3>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ════════════════════════════════════════
+             TEMOIGNAGES
+        ════════════════════════════════════════ -->
+        <section class="sv-body" style="padding-top:40px; padding-bottom:80px; background:linear-gradient(135deg,#ffffff 0%,#f8fafc 100%);">
+            <div class="container">
+                <div class="row justify-content-center text-center mb-5">
+                    <div class="col-lg-8 sv-anim">
+                        <h2 style="font-family:'Outfit',sans-serif; font-size:clamp(1.8rem, 3vw, 2.4rem); font-weight:800; color:#0F172A; margin-bottom:12px;">Ils nous font confiance</h2>
+                        <p style="font-size:15px; color:#64748b; line-height:1.7;">Des cabinets et entreprises béninoises qui ont transformé leur gestion grâce à GEL.</p>
+                    </div>
+                </div>
+                <div class="row g-4">
+                    <div class="col-md-4 sv-anim" style="transition-delay: 0.1s;">
+                        <div style="background:#fff;padding:32px 24px;border-radius:16px;height:100%;position:relative;border:1px solid #e2e8f0;box-shadow:0 4px 20px rgba(0,0,0,0.03);">
+                            <i class="bi-quote" style="position:absolute;top:20px;right:24px;font-size:40px;color:#FF7900;opacity:0.15;"></i>
+                            <div class="d-flex align-items-center gap-2 mb-3" style="color:#FFB800;font-size:13px;">
+                                <i class="bi-star-fill"></i><i class="bi-star-fill"></i><i class="bi-star-fill"></i><i class="bi-star-fill"></i><i class="bi-star-fill"></i>
+                            </div>
+                            <p style="font-size:13.5px;color:#334155;line-height:1.7;margin-bottom:24px;font-style:italic;">"Une solution simple pour gérer nos besoins administratifs."</p>
+                            <div class="d-flex align-items-center gap-3 mt-auto">
+                                <img src="https://ui-avatars.com/api/?name=Aminata+D&background=FF7900&color=fff&bold=true" alt="User" style="width:40px;height:40px;border-radius:50%;">
+                                <div>
+                                    <div style="font-size:13px;font-weight:700;color:#0F172A;">Aminata Dossou</div>
+                                    <div style="font-size:11.5px;color:#64748b;">Gérante, Entreprise AD</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 sv-anim" style="transition-delay: 0.2s;">
+                        <div style="background:#fff;padding:32px 24px;border-radius:16px;height:100%;position:relative;border:1px solid #e2e8f0;box-shadow:0 4px 20px rgba(0,0,0,0.03);">
+                            <i class="bi-quote" style="position:absolute;top:20px;right:24px;font-size:40px;color:#FF7900;opacity:0.15;"></i>
+                            <div class="d-flex align-items-center gap-2 mb-3" style="color:#FFB800;font-size:13px;">
+                                <i class="bi-star-fill"></i><i class="bi-star-fill"></i><i class="bi-star-fill"></i><i class="bi-star-fill"></i><i class="bi-star-fill"></i>
+                            </div>
+                            <p style="font-size:13.5px;color:#334155;line-height:1.7;margin-bottom:24px;font-style:italic;">"Un gain de temps précieux dans notre gestion quotidienne."</p>
+                            <div class="d-flex align-items-center gap-3 mt-auto">
+                                <img src="https://ui-avatars.com/api/?name=Koffi+A&background=3B82F6&color=fff&bold=true" alt="User" style="width:40px;height:40px;border-radius:50%;">
+                                <div>
+                                    <div style="font-size:13px;font-weight:700;color:#0F172A;">Koffi Atrokpo</div>
+                                    <div style="font-size:11.5px;color:#64748b;">Directeur, AutoLoc Bénin</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 sv-anim" style="transition-delay: 0.3s;">
+                        <div style="background:#fff;padding:32px 24px;border-radius:16px;height:100%;position:relative;border:1px solid #e2e8f0;box-shadow:0 4px 20px rgba(0,0,0,0.03);">
+                            <i class="bi-quote" style="position:absolute;top:20px;right:24px;font-size:40px;color:#FF7900;opacity:0.15;"></i>
+                            <div class="d-flex align-items-center gap-2 mb-3" style="color:#FFB800;font-size:13px;">
+                                <i class="bi-star-fill"></i><i class="bi-star-fill"></i><i class="bi-star-fill"></i><i class="bi-star-fill"></i><i class="bi-star-fill"></i>
+                            </div>
+                            <p style="font-size:13.5px;color:#334155;line-height:1.7;margin-bottom:24px;font-style:italic;">"Une expertise pointue et des conseils très utiles. Je recommande fortement."</p>
+                            <div class="d-flex align-items-center gap-3 mt-auto">
+                                <img src="https://ui-avatars.com/api/?name=Sena+K&background=10B981&color=fff&bold=true" alt="User" style="width:40px;height:40px;border-radius:50%;">
+                                <div>
+                                    <div style="font-size:13px;font-weight:700;color:#0F172A;">Sèna Kouassi</div>
+                                    <div style="font-size:11.5px;color:#64748b;">Expert-Comptable</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ════════════════════════════════════════
              CTA
         ════════════════════════════════════════ -->
         <section class="sv-cta">
             <div class="container text-center">
-                <h2 class="sv-cta-title">Prêt à démarrer ?</h2>
-                <p class="sv-cta-text">Créez votre espace client et soumettez votre demande en quelques clics.</p>
+                <h2 class="sv-cta-title">Besoin d’un accompagnement professionnel ?</h2>
+                <p class="sv-cta-text">Découvrez l'ensemble de nos offres et demandez un devis gratuit.</p>
                 <div class="sv-cta-actions">
-                    <a href="/register" class="sv-cta-btn"><i class="bi-person-plus-fill me-2"></i> Créer un compte</a>
-                    <a href="/login" class="sv-cta-link">Déjà inscrit ? Se connecter <i class="bi-arrow-right"></i></a>
+                    <a href="/contact" class="sv-cta-btn"><i class="bi-envelope me-2"></i> Contactez-nous</a>
+                    <a href="/register" class="sv-cta-link">Créer un espace client gratuit <i class="bi-arrow-right"></i></a>
                 </div>
             </div>
         </section>
@@ -746,7 +1021,7 @@ const categoryIcon = (name) => {
 
 .sv-hero-title {
     font-family: 'Outfit', sans-serif;
-    font-size: clamp(2rem, 4vw, 3rem);
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
     font-weight: 800;
     color: #fff;
     letter-spacing: -1px;
@@ -1025,7 +1300,7 @@ const categoryIcon = (name) => {
 }
 .sv-cta-title {
     font-family: 'Outfit', sans-serif;
-    font-size: 30px;
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
     font-weight: 800;
     color: #fff;
     margin-bottom: 10px;

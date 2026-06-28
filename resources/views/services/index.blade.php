@@ -248,7 +248,7 @@
                 <div class="col-lg-8">
                     <div class="gel-page-header-badge"><i class="bi-grid-3x3-gap-fill"></i> Services</div>
                     <h1>Nos Services</h1>
-                    <p>Comptabilité, juridique, fiscal, social — on couvre tous les pôles de votre cabinet.</p>
+                    <p>Découvrez notre gamme complète d'outils et de services d'accompagnement : de la comptabilité pure à l'ERP métier, en passant par le juridique et le social. Une expertise 360° pour dynamiser votre croissance.</p>
                 </div>
             </div>
             <div class="gel-stats-row">
@@ -272,8 +272,55 @@
         </div>
     </div>
 
-    <!-- services grid -->
+    <!-- approche -->
     <section class="gel-section">
+        <div class="container">
+            <div class="row align-items-center g-5">
+                <div class="col-lg-6 anim-fade-right">
+                    <div class="gel-section-chip"><i class="bi-bullseye"></i> Notre approche</div>
+                    <h2 class="gel-section-title">Plus qu'un logiciel, un véritable partenaire de croissance</h2>
+                    <p class="gel-section-sub mb-4" style="font-size:14.5px;">Nous ne nous contentons pas de fournir des outils. Nous vous accompagnons à chaque étape du développement de votre cabinet avec une expertise métier pointue et une connaissance approfondie de l'environnement OHADA.</p>
+                    <ul class="list-unstyled mb-0">
+                        <li class="d-flex align-items-center gap-3 mb-3">
+                            <div style="width:36px;height:36px;background:var(--gel-primary-soft);color:var(--gel-primary);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">
+                                <i class="bi-check-lg"></i>
+                            </div>
+                            <div style="font-size:14px;font-weight:600;color:var(--gel-text);">Conformité fiscale totale (e-MECeF, AIB, TVA)</div>
+                        </li>
+                        <li class="d-flex align-items-center gap-3 mb-3">
+                            <div style="width:36px;height:36px;background:var(--gel-primary-soft);color:var(--gel-primary);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">
+                                <i class="bi-check-lg"></i>
+                            </div>
+                            <div style="font-size:14px;font-weight:600;color:var(--gel-text);">Intégration Mobile Money native (MTN, Moov)</div>
+                        </li>
+                        <li class="d-flex align-items-center gap-3">
+                            <div style="width:36px;height:36px;background:var(--gel-primary-soft);color:var(--gel-primary);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">
+                                <i class="bi-check-lg"></i>
+                            </div>
+                            <div style="font-size:14px;font-weight:600;color:var(--gel-text);">Support local réactif et formation sur site</div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-lg-6 anim-fade-left">
+                    <div style="position:relative;border-radius:24px;overflow:hidden;box-shadow:var(--shadow-lg);">
+                        <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Équipe GEL Cabinet" style="width:100%;height:auto;display:block;">
+                        <div style="position:absolute;bottom:24px;left:24px;background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);padding:16px 24px;border-radius:12px;box-shadow:var(--shadow-md);display:flex;align-items:center;gap:16px;">
+                            <div style="width:48px;height:48px;background:var(--gel-primary);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;">
+                                <i class="bi-award"></i>
+                            </div>
+                            <div>
+                                <div style="font-family:var(--font-heading);font-weight:800;font-size:18px;color:var(--gel-dark);">15+ Ans</div>
+                                <div style="font-size:11px;color:var(--gel-muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">D'expertise locale</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- services grid -->
+    <section class="gel-section gel-section-alt">
         <div class="container">
             <div class="row justify-content-center mb-5">
                 <div class="col-lg-7 text-center">
@@ -394,7 +441,7 @@
     </section>
 
     <!-- domaines couverts (Logiciel Comptabilité) -->
-    <section class="gel-section" style="background:linear-gradient(135deg,#F8FAFC 0%,#EFF6FF 100%);">
+    <section class="gel-section" style="background:linear-gradient(135deg,#ffffff 0%,#f1f5f9 100%);">
         <div class="container">
             <div class="row justify-content-center text-center mb-5">
                 <div class="col-lg-8">
@@ -602,6 +649,69 @@
                         <div class="gel-feature-icon" style="color:#8B5CF6;"><i class="bi-arrow-repeat"></i></div>
                         <h5>Modules Intégrés</h5>
                         <p>Tous vos services communiquent entre eux : la comptabilité alimente le fiscal, les RH alimentent la paie.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="gel-section">
+        <div class="container">
+            <div class="row justify-content-center text-center mb-5">
+                <div class="col-lg-8">
+                    <span class="gel-section-chip"><i class="bi-chat-quote"></i> Témoignages</span>
+                    <h2 class="gel-section-title">Ils nous font confiance</h2>
+                    <p class="gel-section-sub mx-auto">Des cabinets et entreprises béninoises qui ont transformé leur gestion grâce à GEL.</p>
+                </div>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4 anim-fade-up delay-1">
+                    <div style="background:var(--gel-light);padding:32px 24px;border-radius:16px;height:100%;position:relative;border:1px solid var(--gel-border);">
+                        <i class="bi-quote" style="position:absolute;top:20px;right:24px;font-size:40px;color:var(--gel-primary);opacity:0.15;"></i>
+                        <div class="d-flex align-items-center gap-2 mb-3" style="color:#FFB800;font-size:13px;">
+                            <i class="bi-star-fill"></i><i class="bi-star-fill"></i><i class="bi-star-fill"></i><i class="bi-star-fill"></i><i class="bi-star-fill"></i>
+                        </div>
+                        <p style="font-size:13.5px;color:var(--gel-text);line-height:1.7;margin-bottom:24px;font-style:italic;">"Depuis que nous utilisons GEL Cabinet, la gestion de notre paie et de nos déclarations fiscales est devenue un jeu d'enfant. L'intégration e-MECeF est parfaite."</p>
+                        <div class="d-flex align-items-center gap-3 mt-auto">
+                            <img src="https://ui-avatars.com/api/?name=Aminata+D&background=FF7900&color=fff&bold=true" alt="User" style="width:40px;height:40px;border-radius:50%;">
+                            <div>
+                                <div style="font-size:13px;font-weight:700;color:var(--gel-dark);">Aminata Dossou</div>
+                                <div style="font-size:11.5px;color:var(--gel-muted);">Directrice Financière</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 anim-fade-up delay-2">
+                    <div style="background:var(--gel-light);padding:32px 24px;border-radius:16px;height:100%;position:relative;border:1px solid var(--gel-border);">
+                        <i class="bi-quote" style="position:absolute;top:20px;right:24px;font-size:40px;color:var(--gel-primary);opacity:0.15;"></i>
+                        <div class="d-flex align-items-center gap-2 mb-3" style="color:#FFB800;font-size:13px;">
+                            <i class="bi-star-fill"></i><i class="bi-star-fill"></i><i class="bi-star-fill"></i><i class="bi-star-fill"></i><i class="bi-star-fill"></i>
+                        </div>
+                        <p style="font-size:13.5px;color:var(--gel-text);line-height:1.7;margin-bottom:24px;font-style:italic;">"Le module Tontine est une révolution pour notre microfinance. Tout est automatisé et le suivi des adhérents est extrêmement précis. Je recommande vivement !"</p>
+                        <div class="d-flex align-items-center gap-3 mt-auto">
+                            <img src="https://ui-avatars.com/api/?name=Koffi+A&background=3B82F6&color=fff&bold=true" alt="User" style="width:40px;height:40px;border-radius:50%;">
+                            <div>
+                                <div style="font-size:13px;font-weight:700;color:var(--gel-dark);">Koffi Atrokpo</div>
+                                <div style="font-size:11.5px;color:var(--gel-muted);">Gérant de Mutuelle</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 anim-fade-up delay-3">
+                    <div style="background:var(--gel-light);padding:32px 24px;border-radius:16px;height:100%;position:relative;border:1px solid var(--gel-border);">
+                        <i class="bi-quote" style="position:absolute;top:20px;right:24px;font-size:40px;color:var(--gel-primary);opacity:0.15;"></i>
+                        <div class="d-flex align-items-center gap-2 mb-3" style="color:#FFB800;font-size:13px;">
+                            <i class="bi-star-fill"></i><i class="bi-star-fill"></i><i class="bi-star-fill"></i><i class="bi-star-fill"></i><i class="bi-star-fill"></i>
+                        </div>
+                        <p style="font-size:13.5px;color:var(--gel-text);line-height:1.7;margin-bottom:24px;font-style:italic;">"Un ERP complet qui couvre absolument tous nos besoins. Le support technique est très réactif et les formations sur site ont beaucoup aidé nos équipes."</p>
+                        <div class="d-flex align-items-center gap-3 mt-auto">
+                            <img src="https://ui-avatars.com/api/?name=Sena+K&background=10B981&color=fff&bold=true" alt="User" style="width:40px;height:40px;border-radius:50%;">
+                            <div>
+                                <div style="font-size:13px;font-weight:700;color:var(--gel-dark);">Sèna Kouassi</div>
+                                <div style="font-size:11.5px;color:var(--gel-muted);">Expert-Comptable</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
