@@ -44,33 +44,33 @@
         .gel-page-header p { color: rgba(255,255,255,0.6); font-size: 15px; max-width: 620px; margin-top: 12px; line-height: 1.7; position: relative; z-index: 1; }
         
         .gel-section-chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; background: var(--gel-primary-light); color: var(--gel-primary); font-size: 14px; font-weight: 600; border-radius: 100px; margin-bottom: 24px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .gel-section-title { font-size: 2.5rem; margin-bottom: 1.5rem; }
-        .gel-section-sub { font-size: 1.15rem; color: var(--gel-muted); margin-bottom: 3rem; max-width: 700px; }
+        .gel-section-title { font-family: var(--font-heading); font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 800; color: var(--gel-dark); letter-spacing: -0.5px; line-height: 1.2; margin-bottom: 14px; }
+        .gel-section-sub { font-size: 15px; color: var(--gel-muted); margin-bottom: 3rem; max-width: 700px; line-height: 1.7; }
 
         /* Job Card */
         .gel-job-card { background: white; border-radius: 16px; padding: 32px; border: 1px solid rgba(0,0,0,0.05); transition: all 0.3s ease; height: 100%; display: flex; flex-direction: column; }
         .gel-job-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.04); border-color: rgba(249,115,22,0.3); }
-        .gel-job-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 8px; color: var(--gel-dark); }
-        .gel-job-meta { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; font-size: 0.9rem; color: var(--gel-muted); }
+        .gel-job-title { font-size: 15px; font-weight: 800; margin-bottom: 8px; color: var(--gel-dark); }
+        .gel-job-meta { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; font-size: 12px; color: var(--gel-muted); }
         .gel-job-meta span { display: inline-flex; align-items: center; gap: 6px; }
-        .gel-job-desc { flex-grow: 1; color: var(--gel-muted); font-size: 0.95rem; margin-bottom: 24px; }
+        .gel-job-desc { flex-grow: 1; color: var(--gel-muted); font-size: 13px; margin-bottom: 24px; line-height: 1.6; }
         
-        .gel-btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: var(--gel-primary); color: white; font-weight: 600; border-radius: 10px; text-decoration: none; transition: all 0.2s; border: none; cursor: pointer; }
+        .gel-btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px; background: var(--gel-primary); color: white; font-weight: 700; border-radius: 6px; text-decoration: none; transition: all 0.2s; border: none; cursor: pointer; font-size: 14px; }
         .gel-btn:hover { background: var(--gel-primary-hover); color: white; }
-        .gel-btn-outline { background: transparent; color: var(--gel-primary); border: 2px solid var(--gel-primary); }
+        .gel-btn-outline { background: transparent; color: var(--gel-primary); border: 1.5px solid var(--gel-primary); padding: 11px 24px; }
         .gel-btn-outline:hover { background: var(--gel-primary); color: white; }
 
         /* Benefit Item */
         .gel-benefit-item { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 32px; }
-        .gel-benefit-icon { min-width: 48px; height: 48px; border-radius: 12px; background: var(--gel-primary-light); color: var(--gel-primary); display: flex; align-items: center; justify-content: center; font-size: 24px; }
-        .gel-benefit-content h5 { font-size: 1.1rem; margin-bottom: 6px; }
-        .gel-benefit-content p { color: var(--gel-muted); font-size: 0.95rem; margin-bottom: 0; }
+        .gel-benefit-icon { min-width: 44px; height: 44px; border-radius: 10px; background: var(--gel-primary-light); color: var(--gel-primary); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .gel-benefit-content h5 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+        .gel-benefit-content p { color: var(--gel-muted); font-size: 13px; margin-bottom: 0; line-height: 1.6; }
 
         /* Form */
         .gel-form-card { background: white; border-radius: 24px; padding: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.03); }
-        .form-control, .form-select { border-radius: 10px; padding: 14px 20px; border-color: #e2e8f0; font-size: 0.95rem; }
-        .form-control:focus, .form-select:focus { border-color: var(--gel-primary); box-shadow: 0 0 0 4px rgba(249,115,22,0.1); }
-        .form-label { font-weight: 600; color: var(--gel-dark); font-size: 0.9rem; margin-bottom: 8px; }
+        .form-control, .form-select { border-radius: 6px; padding: 11px 14px; border-color: #e2e8f0; font-size: 13.5px; }
+        .form-control:focus, .form-select:focus { border-color: var(--gel-primary); box-shadow: 0 0 0 3px rgba(249,115,22,0.1); }
+        .form-label { font-weight: 600; color: var(--gel-dark); font-size: 12px; margin-bottom: 6px; }
 
         /* Animations */
         .anim-fade-up { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }

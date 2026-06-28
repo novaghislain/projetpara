@@ -55,14 +55,14 @@
         /* Doc Cards */
         .gel-doc-card { background: white; border-radius: 20px; padding: 32px; border: 1px solid rgba(0,0,0,0.04); transition: all 0.3s ease; height: 100%; display: flex; flex-direction: column; text-decoration: none; color: inherit; }
         .gel-doc-card:hover { transform: translateY(-6px); box-shadow: 0 12px 30px rgba(249,115,22,0.08); border-color: rgba(249,115,22,0.15); }
-        .gel-doc-icon { width: 60px; height: 60px; border-radius: 16px; background: var(--gel-bg); display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 24px; color: var(--gel-primary); transition: all 0.3s; }
+        .gel-doc-icon { width: 44px; height: 44px; border-radius: 10px; background: var(--gel-bg); display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 24px; color: var(--gel-primary); transition: all 0.3s; }
         .gel-doc-card:hover .gel-doc-icon { background: var(--gel-primary); color: white; }
-        .gel-doc-title { font-size: 1.25rem; margin-bottom: 12px; }
-        .gel-doc-desc { color: var(--gel-muted); font-size: 0.95rem; margin-bottom: 24px; flex-grow: 1; }
+        .gel-doc-title { font-size: 15px; margin-bottom: 12px; font-weight: 800; }
+        .gel-doc-desc { color: var(--gel-muted); font-size: 13px; margin-bottom: 24px; flex-grow: 1; line-height: 1.6; }
         .gel-doc-links { list-style: none; padding: 0; margin: 0; border-top: 1px solid #f1f5f9; padding-top: 20px; }
         .gel-doc-links li { margin-bottom: 10px; }
         .gel-doc-links li:last-child { margin-bottom: 0; }
-        .gel-doc-links a { color: var(--gel-dark); text-decoration: none; font-weight: 500; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; transition: color 0.2s; }
+        .gel-doc-links a { color: var(--gel-dark); text-decoration: none; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 8px; transition: color 0.2s; }
         .gel-doc-links a:hover { color: var(--gel-primary); }
 
         /* Animations */

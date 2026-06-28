@@ -97,7 +97,7 @@
             background: linear-gradient(135deg, #0A1628 0%, #1E293B 25%, #0F172A 50%, #1E293B 75%, #0A1628 100%);
             background-size: 300% 300%;
             animation: gelGradientMove 12s ease infinite;
-            padding: 100px 0 80px;
+            padding: 70px 0 50px;
             position: relative;
             overflow: hidden;
         }
@@ -106,7 +106,7 @@
         .gel-page-header::after { content: ''; position: absolute; bottom: -60px; left: -60px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%); border-radius: 50%; animation: gelFloatB 10s ease-in-out infinite; }
         @keyframes gelFloatA { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(-30px,20px) scale(1.05); } 66% { transform: translate(20px,-10px) scale(0.95); } }
         @keyframes gelFloatB { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(30px,-20px) scale(1.08); } 66% { transform: translate(-20px,10px) scale(0.92); } }
-        .gel-page-header h1 { font-family: var(--font-heading); font-size: clamp(2.2rem, 4.5vw, 3.2rem); font-weight: 900; color: #fff; letter-spacing: -1px; position: relative; z-index: 1; }
+        .gel-page-header h1 { font-family: var(--font-heading); font-size: clamp(1.8rem, 3vw, 2.4rem); font-weight: 900; color: #fff; letter-spacing: -1px; position: relative; z-index: 1; }
         .gel-page-header p { color: rgba(255,255,255,0.6); font-size: 15px; max-width: 620px; margin-top: 12px; line-height: 1.7; position: relative; z-index: 1; }
         .gel-page-header-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); padding: 5px 14px; border-radius: 100px; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; position: relative; z-index: 1; }
 
@@ -131,17 +131,17 @@
             background: var(--svc-color);
         }
         .gel-svc-card-icon {
-            width: 52px; height: 52px; border-radius: 12px;
+            width: 44px; height: 44px; border-radius: 10px;
             background: var(--svc-light);
             display: flex; align-items: center; justify-content: center;
-            color: var(--svc-color); font-size: 24px;
-            margin-bottom: 16px;
+            color: var(--svc-color); font-size: 20px;
+            margin-bottom: 14px;
             transition: background var(--transition), color var(--transition), transform var(--transition);
         }
         .gel-svc-card:hover .gel-svc-card-icon { background: var(--svc-color); color: #fff; transform: scale(1.05); }
-        .gel-svc-card h4 { font-size: 17px; font-weight: 800; color: var(--gel-dark); margin-bottom: 8px; }
-        .gel-svc-card p { font-size: 13.5px; color: var(--gel-muted); line-height: 1.6; margin-bottom: 14px; }
-        .gel-svc-card-link { font-size: 12.5px; font-weight: 700; color: var(--svc-color); display: inline-flex; align-items: center; gap: 5px; }
+        .gel-svc-card h4 { font-size: 15px; font-weight: 800; color: var(--gel-dark); margin-bottom: 8px; }
+        .gel-svc-card p { font-size: 13px; color: var(--gel-muted); line-height: 1.6; margin-bottom: 14px; }
+        .gel-svc-card-link { font-size: 12px; font-weight: 700; color: var(--svc-color); display: inline-flex; align-items: center; gap: 5px; }
         .gel-svc-card:hover .gel-svc-card-link i { transform: translateX(3px); }
         .gel-svc-card-link i { transition: transform var(--transition); }
         .gel-svc-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; }

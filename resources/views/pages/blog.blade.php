@@ -47,7 +47,7 @@
 
         /* Blog Filters */
         .gel-filters { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 40px; }
-        .gel-filter-btn { padding: 8px 20px; border-radius: 100px; background: white; color: var(--gel-muted); border: 1px solid #e2e8f0; font-weight: 500; font-size: 0.95rem; text-decoration: none; transition: all 0.2s ease; cursor: pointer; }
+        .gel-filter-btn { padding: 8px 20px; border-radius: 100px; background: white; color: var(--gel-muted); border: 1px solid #e2e8f0; font-weight: 500; font-size: 13px; text-decoration: none; transition: all 0.2s ease; cursor: pointer; }
         .gel-filter-btn:hover, .gel-filter-btn.active { background: var(--gel-dark); color: white; border-color: var(--gel-dark); }
 
         /* Featured Article */
@@ -61,14 +61,14 @@
         .gel-article-card:hover { transform: translateY(-6px); box-shadow: 0 12px 30px rgba(249,115,22,0.08); border-color: rgba(249,115,22,0.15); }
         .gel-article-img { width: 100%; height: 200px; object-fit: cover; background: #e2e8f0; }
         .gel-article-body { padding: 24px; flex-grow: 1; display: flex; flex-direction: column; }
-        .gel-article-meta { font-size: 0.85rem; color: var(--gel-muted); margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
+        .gel-article-meta { font-size: 12px; color: var(--gel-muted); margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
         .gel-article-cat { font-weight: 600; color: var(--gel-primary); text-transform: uppercase; letter-spacing: 0.5px; }
-        .gel-article-title { font-size: 1.25rem; margin-bottom: 12px; line-height: 1.4; }
-        .gel-article-excerpt { font-size: 0.95rem; color: var(--gel-muted); margin-bottom: 20px; flex-grow: 1; }
+        .gel-article-title { font-size: 15px; margin-bottom: 12px; line-height: 1.4; font-weight: 800; }
+        .gel-article-excerpt { font-size: 13px; color: var(--gel-muted); margin-bottom: 20px; flex-grow: 1; line-height: 1.6; }
         .gel-article-footer { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #f1f5f9; padding-top: 16px; margin-top: auto; }
-        .gel-article-author { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; font-weight: 500; }
+        .gel-article-author { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; }
         .gel-article-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--gel-primary-light); color: var(--gel-primary); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; }
-        .gel-article-readmore { color: var(--gel-primary); font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 4px; }
+        .gel-article-readmore { color: var(--gel-primary); font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 4px; }
 
         /* Animations */
         .anim-fade-up { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
@@ -119,8 +119,8 @@
                         <span><i class="bi-calendar3"></i> 24 Juin 2026</span>
                         <span><i class="bi-clock"></i> 5 min de lecture</span>
                     </div>
-                    <h2 class="mb-3" style="font-size: 2rem;">Facturation e-MECeF : Comment réussir son intégration avec la DGI</h2>
-                    <p class="gel-article-excerpt" style="font-size: 1.1rem;">Découvrez les bonnes pratiques pour connecter votre cabinet à l'API de la Direction Générale des Impôts du Bénin et automatiser vos factures normalisées.</p>
+                    <h2 class="mb-3" style="font-size: clamp(1.4rem, 2vw, 1.8rem);">Facturation e-MECeF : Comment réussir son intégration avec la DGI</h2>
+                    <p class="gel-article-excerpt" style="font-size: 14px;">Découvrez les bonnes pratiques pour connecter votre cabinet à l'API de la Direction Générale des Impôts du Bénin et automatiser vos factures normalisées.</p>
                     <div class="gel-article-footer mt-4" style="border:none; padding:0;">
                         <div class="gel-article-author">
                             <div class="gel-article-avatar">M</div>

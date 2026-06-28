@@ -44,8 +44,8 @@
         .gel-page-header p { color: rgba(255,255,255,0.6); font-size: 15px; max-width: 620px; margin-top: 12px; line-height: 1.7; position: relative; z-index: 1; }
         
         .gel-section-chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; background: var(--gel-primary-light); color: var(--gel-primary); font-size: 14px; font-weight: 600; border-radius: 100px; margin-bottom: 24px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .gel-section-title { font-size: 2.5rem; margin-bottom: 1.5rem; }
-        .gel-section-sub { font-size: 1.15rem; color: var(--gel-muted); margin-bottom: 3rem; max-width: 700px; }
+        .gel-section-title { font-family: var(--font-heading); font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 800; color: var(--gel-dark); letter-spacing: -0.5px; line-height: 1.2; margin-bottom: 14px; }
+        .gel-section-sub { font-size: 15px; color: var(--gel-muted); margin-bottom: 3rem; max-width: 700px; line-height: 1.7; }
 
         /* Team Card */
         .gel-team-card { background: white; border-radius: 24px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.03); transition: all 0.3s ease; height: 100%; border: 1px solid rgba(0,0,0,0.04); position: relative; }
@@ -53,9 +53,9 @@
         .gel-team-img-wrap { height: 260px; background: #e2e8f0; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
         .gel-team-img-wrap i { font-size: 80px; color: #94a3b8; }
         .gel-team-info { padding: 30px; text-align: center; }
-        .gel-team-name { font-size: 1.25rem; margin-bottom: 4px; }
-        .gel-team-role { color: var(--gel-primary); font-weight: 600; font-size: 0.9rem; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .gel-team-desc { font-size: 0.95rem; color: var(--gel-muted); margin-bottom: 20px; }
+        .gel-team-name { font-size: 15px; margin-bottom: 4px; font-weight: 800; }
+        .gel-team-role { color: var(--gel-primary); font-weight: 600; font-size: 12px; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .gel-team-desc { font-size: 13px; color: var(--gel-muted); margin-bottom: 20px; line-height: 1.6; }
         
         .gel-social-links { display: flex; justify-content: center; gap: 12px; }
         .gel-social-link { width: 36px; height: 36px; border-radius: 50%; background: var(--gel-bg); display: flex; align-items: center; justify-content: center; color: var(--gel-muted); text-decoration: none; transition: all 0.2s ease; }
@@ -65,7 +65,7 @@
         .gel-cta-band { background: var(--gel-dark); padding: 80px 0; color: white; position: relative; overflow: hidden; }
         .gel-cta-band h2 { color: white; margin-bottom: 1rem; }
         .gel-cta-band p { color: rgba(255,255,255,0.7); font-size: 1.15rem; margin-bottom: 0; }
-        .gel-btn-white { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background: white; color: var(--gel-dark); font-weight: 600; border-radius: 12px; text-decoration: none; transition: all 0.3s ease; }
+        .gel-btn-white { display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px; background: white; color: var(--gel-dark); font-weight: 700; border-radius: 6px; text-decoration: none; transition: all 0.3s ease; font-size: 14px; }
         .gel-btn-white:hover { background: var(--gel-primary); color: white; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(249,115,22,0.2); }
 
         /* Animations */

@@ -159,8 +159,13 @@
         }
 
         .gel-section-title {
-            font-size: 2.5rem;
-            margin-bottom: 1.5rem;
+            font-family: var(--font-heading);
+            font-size: clamp(1.6rem, 3vw, 2.2rem);
+            font-weight: 800;
+            color: var(--gel-dark);
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+            margin-bottom: 14px;
         }
 
         /* Contact Cards */
@@ -184,34 +189,35 @@
         }
 
         .gel-contact-icon {
-            width: 56px;
-            height: 56px;
-            border-radius: 14px;
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
             background: var(--gel-primary-light);
             color: var(--gel-primary);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 20px;
             flex-shrink: 0;
         }
 
         .gel-contact-info h4 {
-            font-size: 1.25rem;
+            font-size: 15px;
+            font-weight: 700;
             margin-bottom: 8px;
         }
 
         .gel-contact-info p {
             color: var(--gel-muted);
             margin-bottom: 12px;
-            font-size: 0.95rem;
+            font-size: 13px;
         }
 
         .gel-contact-info a {
             color: var(--gel-primary);
             font-weight: 600;
             text-decoration: none;
-            font-size: 1.1rem;
+            font-size: 14px;
         }
 
         /* Form */
@@ -225,23 +231,23 @@
 
         .form-control,
         .form-select {
-            border-radius: 10px;
-            padding: 14px 20px;
+            border-radius: 6px;
+            padding: 11px 14px;
             border-color: #e2e8f0;
-            font-size: 0.95rem;
+            font-size: 13.5px;
         }
 
         .form-control:focus,
         .form-select:focus {
             border-color: var(--gel-primary);
-            box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1);
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
         }
 
         .form-label {
             font-weight: 600;
             color: var(--gel-dark);
-            font-size: 0.9rem;
-            margin-bottom: 8px;
+            font-size: 12px;
+            margin-bottom: 6px;
         }
 
         .gel-btn {
@@ -249,16 +255,16 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            padding: 16px 32px;
+            padding: 13px;
             background: var(--gel-primary);
             color: white;
-            font-weight: 600;
-            border-radius: 10px;
+            font-weight: 700;
+            border-radius: 6px;
             text-decoration: none;
             transition: all 0.2s;
             border: none;
             cursor: pointer;
-            font-size: 1.1rem;
+            font-size: 14px;
             width: 100%;
         }
 
@@ -342,7 +348,7 @@
                 <div class="col-lg-8">
                     <div class="gel-form-card anim-fade-up">
                         <div class="text-center mb-5">
-                            <h2 class="gel-section-title" style="font-size: 2rem;">Ouvrir un ticket d'assistance</h2>
+                            <h2 class="gel-section-title">Ouvrir un ticket d'assistance</h2>
                             <p class="text-muted">Remplissez le formulaire ci-dessous pour signaler un problème
                                 technique ou poser une question sur l'utilisation d'un module.</p>
                         </div>

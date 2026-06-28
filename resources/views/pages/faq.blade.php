@@ -44,6 +44,7 @@
             background-color: white !important;
             padding: 20px 25px;
             box-shadow: none !important;
+            font-size: 15px;
         }
 
         .accordion-button:not(.collapsed) {
@@ -64,13 +65,14 @@
             line-height: 1.7;
             padding: 0 25px 25px 25px;
             background-color: #f8fafc;
+            font-size: 13px;
         }
 
         .gel-faq-cat-title {
             font-family: var(--font-heading);
             color: var(--gel-primary);
             font-weight: 800;
-            font-size: 1.5rem;
+            font-size: 18px;
             margin-bottom: 25px;
             padding-bottom: 10px;
             border-bottom: 2px solid rgba(2, 132, 199, 0.1);
