@@ -28,7 +28,7 @@ const fetchData = async () => {
     try {
         const [bRes, fyRes] = await Promise.all([
             fetch('/api/accounting/budgets/' + cid),
-            fetch('/api/accounting/fiscal-years?all=true')
+            fetch('/api/accounting/fiscal-years/' + cid)
         ]);
         if (!bRes.ok) throw new Error('Erreur API budgets');
         budgets.value = await bRes.json();

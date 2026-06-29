@@ -97,13 +97,13 @@ class DaeDashboardController extends Controller
         // Conformité en retard
         $conformiteRetard = $query(\App\Models\Dae\DaeConformite::query())
             ->whereIn('statut', ['a_faire', 'en_cours'])
-            ->whereDate('date_limite', '<', now())
+            ->whereDate('date_expiration', '<', now())
             ->get();
         foreach ($conformiteRetard as $c) {
             $alertes->push([
                 'type'    => 'danger',
                 'module'  => 'conformite',
-                'message' => "Conformité « {$c->titre} » en retard (échéance {$c->date_limite->format('d/m/Y')})",
+                'message' => "Conformité « {$c->titre} » en retard (échéance {$c->date_expiration->format('d/m/Y')})",
             ]);
         }
 

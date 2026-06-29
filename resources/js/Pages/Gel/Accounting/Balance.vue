@@ -27,8 +27,8 @@ const fetchBalance = async () => {
     }
 };
 
-const totalDebit = (items) => items?.reduce((s, i) => s + parseFloat(i.total_debit || 0), 0) || 0;
-const totalCredit = (items) => items?.reduce((s, i) => s + parseFloat(i.total_credit || 0), 0) || 0;
+const totalDebit = (items) => items?.reduce((s, i) => s + parseFloat(i.debit || 0), 0) || 0;
+const totalCredit = (items) => items?.reduce((s, i) => s + parseFloat(i.credit || 0), 0) || 0;
 
 onMounted(fetchBalance);
 </script>
@@ -56,11 +56,11 @@ onMounted(fetchBalance);
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="acc in data.accounts" :key="acc.account_number || acc.id">
-                        <td class="fw-medium">{{ acc.account_number }}</td>
+                    <tr v-for="acc in data.accounts" :key="acc.code || acc.id">
+                        <td class="fw-medium">{{ acc.code }}</td>
                         <td>{{ acc.name }}</td>
-                        <td class="text-end">{{ $formatCurrency(acc.total_debit) }}</td>
-                        <td class="text-end">{{ $formatCurrency(acc.total_credit) }}</td>
+                        <td class="text-end">{{ $formatCurrency(acc.debit) }}</td>
+                        <td class="text-end">{{ $formatCurrency(acc.credit) }}</td>
                     </tr>
                 </tbody>
                 <tfoot class="table-light">

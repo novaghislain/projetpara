@@ -43,7 +43,10 @@ return new class extends Migration
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
             $table->softDeletes();
-            $table->fullText(['titre', 'objet']);
+            // Fulltext index uniquement sur les drivers qui le supportent (PostgreSQL, MySQL)
+            if (in_array(DB::getDriverName(), ['pgsql', 'mysql'])) {
+                $table->fullText(['titre', 'objet']);
+            }
             $table->index(['client_id', 'statut', 'date_fin'], 'lc_cli_statut_fin_idx');
         });
     }

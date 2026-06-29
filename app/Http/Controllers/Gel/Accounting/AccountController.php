@@ -29,7 +29,7 @@ class AccountController extends BaseGelAccountingController
         $validated = $request->validate([
             'code' => 'required|string|max:20',
             'name' => 'required|string|max:255',
-            'type' => 'required|string|in:actif,passif,charge,produit,tresorerie',
+            'type' => 'required|string|in:asset,liability,equity,revenue,expense',
             'is_active' => 'boolean',
         ]);
 
@@ -57,7 +57,7 @@ class AccountController extends BaseGelAccountingController
         $validated = $request->validate([
             'code' => 'required|string|max:20',
             'name' => 'required|string|max:255',
-            'type' => 'required|string|in:actif,passif,charge,produit,tresorerie',
+            'type' => 'required|string|in:asset,liability,equity,revenue,expense',
             'is_active' => 'boolean',
         ]);
 

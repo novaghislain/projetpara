@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Company;
 
-use App\Http\Controllers\Controller;
 use App\Models\AccountingHotelFacture;
 use App\Models\AccountingScolaireFacture;
 use App\Models\AccountingQuittance;
@@ -23,15 +22,8 @@ use App\Models\AccountingMobileTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class DomainAccountingController extends Controller
+class DomainAccountingController extends BaseCompanyController
 {
-    private function getClientId()
-    {
-        $user = Auth::user();
-        if (!$user->client_id) abort(403, 'Aucune entreprise associée.');
-        return $user->client_id;
-    }
-
     // ═══════════════════════════════════════════════════════════════
     // HÔTEL — Factures
     // ═══════════════════════════════════════════════════════════════

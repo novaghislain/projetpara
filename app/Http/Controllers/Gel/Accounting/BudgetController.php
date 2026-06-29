@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Gel\Accounting;
 
 use App\Models\AccountingBudget;
 use App\Models\AccountingBudgetLine;
+use App\Models\FiscalYear;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -18,6 +19,18 @@ class BudgetController extends BaseGelAccountingController
             'page' => 'gel-accounting-budgets',
             'clientId' => $clientId,
         ]);
+    }
+
+    /**
+     * API: Liste des exercices fiscaux pour le sélecteur du formulaire budget.
+     */
+    public function fiscalYears($clientId)
+    {
+        $years = FiscalYear::where('client_id', $clientId)
+            ->orderBy('year', 'desc')
+            ->get(['id', 'year', 'date_start', 'date_end', 'status']);
+
+        return response()->json($years);
     }
 
     /**

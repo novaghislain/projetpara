@@ -33,11 +33,11 @@ return [
 
     // ─── Authentification API ──────────────────────────────────────────
     // Token d'API fourni par la DGI pour les appels REST.
-    'api_token'   => env('EMECEF_API_TOKEN'),
+    'api_token'   => env('EMECEF_API_TOKEN', ''),
 
     // NIM (Numéro d'Identification de la Machine) — identifiant unique
     // de l'équipement de facturation électronique.
-    'nim'         => env('EMECEF_NIM'),
+    'nim'         => env('EMECEF_NIM', ''),
 
     // ─── Mode test / production ────────────────────────────────────────
     // En environnement 'production', test_mode est FORCÉMENT à false,

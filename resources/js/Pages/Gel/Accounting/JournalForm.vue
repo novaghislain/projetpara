@@ -17,8 +17,9 @@ const effectiveClientId = computed(() => props.clientId || authStore.user?.clien
 
 const form = ref({
     client_id: effectiveClientId.value,
-    date: new Date().toISOString().substring(0, 10),
-    label: '',
+    journal_type: 'od',
+    entry_date: new Date().toISOString().substring(0, 10),
+    description: '',
     reference: '',
     lines: [{ account_id: '', label: '', debit: '', credit: '' }],
 });
@@ -62,8 +63,9 @@ const submitForm = async () => {
         const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
         const payload = {
             client_id: effectiveClientId.value,
-            date: form.value.date,
-            label: form.value.label,
+            journal_type: form.value.journal_type,
+            entry_date: form.value.entry_date,
+            description: form.value.description,
             reference: form.value.reference,
             lines: form.value.lines.map(l => ({
                 account_id: l.account_id,
@@ -107,17 +109,28 @@ onMounted(async () => {
         <div v-else class="bg-white rounded-lg shadow p-6">
             <form @submit.prevent="submitForm">
                 <div class="row g-3 mb-4">
-                    <div class="col-md-4">
-                        <label class="form-label small">Date *</label>
-                        <input v-model="form.date" type="date" class="form-control form-control-sm" required>
+                    <div class="col-md-3">
+                        <label class="form-label small">Type *</label>
+                        <select v-model="form.journal_type" class="form-select form-select-sm" required>
+                            <option value="recette">Recette</option>
+                            <option value="depense">Dépense</option>
+                            <option value="banque">Banque</option>
+                            <option value="od" selected>OD (Opération diverse)</option>
+                            <option value="achat">Achat</option>
+                            <option value="vente">Vente</option>
+                        </select>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
+                        <label class="form-label small">Date *</label>
+                        <input v-model="form.entry_date" type="date" class="form-control form-control-sm" required>
+                    </div>
+                    <div class="col-md-3">
                         <label class="form-label small">Référence</label>
                         <input v-model="form.reference" class="form-control form-control-sm" placeholder="ex: FAC-2024-001">
                     </div>
                     <div class="col-12">
-                        <label class="form-label small">Libellé *</label>
-                        <input v-model="form.label" class="form-control form-control-sm" required placeholder="Description de l'écriture">
+                        <label class="form-label small">Description *</label>
+                        <input v-model="form.description" class="form-control form-control-sm" required placeholder="Description de l'écriture">
                     </div>
                 </div>
 
@@ -140,7 +153,7 @@ onMounted(async () => {
                                     <select v-model="line.account_id" class="form-select form-select-sm" required>
                                         <option value="">Sélectionner</option>
                                         <option v-for="acc in accounts" :key="acc.id" :value="acc.id">
-                                            {{ acc.account_number }} - {{ acc.name }}
+                                            {{ acc.code }} - {{ acc.name }}
                                         </option>
                                     </select>
                                 </td>

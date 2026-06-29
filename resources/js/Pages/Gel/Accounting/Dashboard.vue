@@ -127,13 +127,13 @@ const statusBadge = (s) => ({
                         <tbody>
                             <tr v-for="c in clients" :key="c.id">
                                 <td>
-                                    <strong>{{ c.nom || c.raison_sociale || c.name || '—' }}</strong>
+                                    <strong>{{ c.company_name || '—' }}</strong>
                                     <div class="text-muted small">{{ c.email }}</div>
                                 </td>
                                 <td>
                                     <span :class="statusBadge(c.statut)">{{ c.statut || 'actif' }}</span>
                                 </td>
-                                <td>{{ c.pole?.nom || c.pole?.name || '—' }}</td>
+                                <td>{{ c.poles?.length ? c.poles.map(p => p.name || p.nom).join(', ') : '—' }}</td>
                                 <td class="text-end">
                                     <a :href="'/accounting/accounts/' + c.id" class="btn btn-sm btn-outline-primary me-1" title="Plan comptable">
                                         <i class="bi-journal-text"></i>

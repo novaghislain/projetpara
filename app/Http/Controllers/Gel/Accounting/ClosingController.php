@@ -161,6 +161,7 @@ class ClosingController extends BaseGelAccountingController
                 'check_tva' => $year->check_tva,
                 'check_cnss' => $year->check_cnss,
                 'check_reconciliation' => $year->check_reconciliation,
+                'closed_at' => $year->closed_at?->format('Y-m-d'),
             ];
         });
 

@@ -27,8 +27,8 @@ const fetchBilan = async () => {
     }
 };
 
-const totalActif = () => data.value?.actif?.reduce((s, i) => s + parseFloat(i.montant || 0), 0) || 0;
-const totalPassif = () => data.value?.passif?.reduce((s, i) => s + parseFloat(i.montant || 0), 0) || 0;
+const totalActif = () => data.value?.actif?.reduce((s, i) => s + parseFloat(i.balance || 0), 0) || 0;
+const totalPassif = () => data.value?.passif?.reduce((s, i) => s + parseFloat(i.balance || 0), 0) || 0;
 
 onMounted(fetchBilan);
 </script>
@@ -62,7 +62,7 @@ onMounted(fetchBilan);
                             <tbody>
                                 <tr v-for="item in data.actif" :key="item.code || item.name">
                                     <td class="small">{{ item.code ? item.code + ' - ' : '' }}{{ item.name }}</td>
-                                    <td class="text-end fw-medium">{{ $formatCurrency(item.montant) }}</td>
+                                    <td class="text-end fw-medium">{{ $formatCurrency(item.balance) }}</td>
                                 </tr>
                             </tbody>
                             <tfoot class="table-light">
@@ -86,7 +86,7 @@ onMounted(fetchBilan);
                             <tbody>
                                 <tr v-for="item in data.passif" :key="item.code || item.name">
                                     <td class="small">{{ item.code ? item.code + ' - ' : '' }}{{ item.name }}</td>
-                                    <td class="text-end fw-medium">{{ $formatCurrency(item.montant) }}</td>
+                                    <td class="text-end fw-medium">{{ $formatCurrency(item.balance) }}</td>
                                 </tr>
                             </tbody>
                             <tfoot class="table-light">

@@ -2,23 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Models\AiSuggestion;
 use App\Models\AiLearningLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class AiSuggestionController extends Controller
+class AiSuggestionController extends BaseApiController
 {
-    private function getClientId(): int
-    {
-        $user = Auth::user();
-        if (!$user || !$user->client_id) {
-            abort(403, 'Aucune entreprise associée.');
-        }
-        return (int) $user->client_id;
-    }
-
     /**
      * Liste des suggestions IA pour l'entreprise connectée.
      */

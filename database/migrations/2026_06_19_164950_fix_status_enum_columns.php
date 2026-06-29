@@ -11,12 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // PostgreSQL : supprimer l'ancienne contrainte CHECK et en créer une avec les nouvelles valeurs
-        DB::statement("ALTER TABLE clients DROP CONSTRAINT IF EXISTS clients_status_check");
-        DB::statement("ALTER TABLE clients ADD CONSTRAINT clients_status_check CHECK (status IN ('actif','inactif','suspendu','prospect'))");
+        // PostgreSQL uniquement : gérer les contraintes CHECK (SQLite ne supporte pas ALTER TABLE DROP/ADD CONSTRAINT)
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("ALTER TABLE clients DROP CONSTRAINT IF EXISTS clients_status_check");
+            DB::statement("ALTER TABLE clients ADD CONSTRAINT clients_status_check CHECK (status IN ('actif','inactif','suspendu','prospect'))");
 
-        DB::statement("ALTER TABLE missions DROP CONSTRAINT IF EXISTS missions_status_check");
-        DB::statement("ALTER TABLE missions ADD CONSTRAINT missions_status_check CHECK (status IN ('a_faire','en_cours','termine','annule','terminee','annulee','en_attente'))");
+            DB::statement("ALTER TABLE missions DROP CONSTRAINT IF EXISTS missions_status_check");
+            DB::statement("ALTER TABLE missions ADD CONSTRAINT missions_status_check CHECK (status IN ('a_faire','en_cours','termine','annule','terminee','annulee','en_attente'))");
+        }
     }
 
     /**
@@ -24,10 +26,12 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("ALTER TABLE clients DROP CONSTRAINT IF EXISTS clients_status_check");
-        DB::statement("ALTER TABLE clients ADD CONSTRAINT clients_status_check CHECK (status IN ('actif','inactif','suspendu'))");
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("ALTER TABLE clients DROP CONSTRAINT IF EXISTS clients_status_check");
+            DB::statement("ALTER TABLE clients ADD CONSTRAINT clients_status_check CHECK (status IN ('actif','inactif','suspendu'))");
 
-        DB::statement("ALTER TABLE missions DROP CONSTRAINT IF EXISTS missions_status_check");
-        DB::statement("ALTER TABLE missions ADD CONSTRAINT missions_status_check CHECK (status IN ('a_faire','en_cours','termine','annule'))");
+            DB::statement("ALTER TABLE missions DROP CONSTRAINT IF EXISTS missions_status_check");
+            DB::statement("ALTER TABLE missions ADD CONSTRAINT missions_status_check CHECK (status IN ('a_faire','en_cours','termine','annule'))");
+        }
     }
 };

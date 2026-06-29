@@ -2,28 +2,17 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Services\FiscalBeninService;
 use App\Models\AiSuggestion;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
-class FiscalAgentController extends Controller
+class FiscalAgentController extends BaseApiController
 {
     protected FiscalBeninService $fiscalBenin;
 
     public function __construct(FiscalBeninService $fiscalBenin)
     {
         $this->fiscalBenin = $fiscalBenin;
-    }
-
-    private function getClientId(): int
-    {
-        $user = Auth::user();
-        if (!$user || !$user->client_id) {
-            abort(403, 'Aucune entreprise associée.');
-        }
-        return (int) $user->client_id;
     }
 
     /**

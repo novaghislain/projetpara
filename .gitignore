@@ -19,4 +19,8 @@ yarn-error.log
 *.bak
 check_storage.php
 config_check.php
+/docs
+/.playwright-mcp
 routes/debug.php
+cequejefais.md
+/.qodo
