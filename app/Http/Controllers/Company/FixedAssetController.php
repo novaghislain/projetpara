@@ -10,15 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-class FixedAssetController extends Controller
+class FixedAssetController extends BaseCompanyController
 {
-    private function getClientId()
-    {
-        $user = Auth::user();
-        if (!$user->client_id) abort(403, 'Aucune entreprise associée.');
-        return $user->client_id;
-    }
-
     /**
      * Liste des immobilisations.
      */

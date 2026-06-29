@@ -17,10 +17,10 @@ const isEditing = ref(false);
 const editingId = ref(null);
 
 const form = ref({
-    account_number: '', name: '', type: 'actif', category: '', description: '', balance: 0,
+    code: '', name: '', type: 'asset', category: '', description: '', balance: 0,
 });
 
-const accountTypes = ['actif', 'passif', 'charge', 'produit', 'tresorerie'];
+const accountTypes = ['asset', 'liability', 'equity', 'revenue', 'expense'];
 
 const fetchAccounts = async () => {
     loading.value = true;
@@ -39,7 +39,7 @@ const fetchAccounts = async () => {
 };
 
 const resetForm = () => {
-    form.value = { account_number: '', name: '', type: 'actif', category: '', description: '', balance: 0 };
+    form.value = { code: '', name: '', type: 'asset', category: '', description: '', balance: 0 };
 };
 
 const openCreateModal = () => {
@@ -51,9 +51,9 @@ const openCreateModal = () => {
 
 const openEditModal = (acc) => {
     form.value = {
-        account_number: acc.account_number || '',
+        code: acc.code || '',
         name: acc.name || '',
-        type: acc.type || 'actif',
+        type: acc.type || 'asset',
         category: acc.category || '',
         description: acc.description || '',
         balance: acc.balance || 0,
@@ -108,7 +108,7 @@ const deleteAccount = async (id) => {
 };
 
 const typeBadgeClass = (type) => {
-    const map = { actif: 'bg-primary', passif: 'bg-info', charge: 'bg-warning', produit: 'bg-success', tresorerie: 'bg-secondary' };
+    const map = { asset: 'bg-primary', liability: 'bg-info', equity: 'bg-dark', expense: 'bg-warning', revenue: 'bg-success' };
     return map[type] || 'bg-secondary';
 };
 
@@ -149,7 +149,7 @@ onMounted(fetchAccounts);
                             <td colspan="6" class="text-center py-4 text-muted">Aucun compte. Créez votre premier compte.</td>
                         </tr>
                         <tr v-for="acc in accounts" :key="acc.id">
-                            <td class="fw-medium">{{ acc.account_number }}</td>
+                            <td class="fw-medium">{{ acc.code }}</td>
                             <td>{{ acc.name }}</td>
                             <td><span class="badge" :class="typeBadgeClass(acc.type)">{{ acc.type }}</span></td>
                             <td class="small">{{ acc.category || '-' }}</td>
@@ -176,7 +176,7 @@ onMounted(fetchAccounts);
                         <div class="row g-2">
                             <div class="col-6">
                                 <label class="form-label small">Numéro de compte *</label>
-                                <input v-model="form.account_number" class="form-control form-control-sm" required>
+                                <input v-model="form.code" class="form-control form-control-sm" required>
                             </div>
                             <div class="col-6">
                                 <label class="form-label small">Type</label>

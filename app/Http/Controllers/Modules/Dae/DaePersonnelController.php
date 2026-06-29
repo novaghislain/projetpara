@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers\Modules\Dae;
 
-use App\Http\Controllers\Controller;
 use App\Models\Dae\DaePersonnelDossier;
 use Illuminate\Http\Request;
 
-class DaePersonnelController extends Controller
+class DaePersonnelController extends BaseDaeController
 {
     public function index(Request $request)
     {
@@ -14,7 +13,7 @@ class DaePersonnelController extends Controller
 
         if ($request->filled('statut')) $query->where('statut', $request->statut);
         if ($request->filled('departement')) $query->where('departement', $request->departement);
-        if ($request->filled('client_id')) $query->where('client_id', $request->client_id);
+        $query->where('client_id', $this->getClientId($request));
         if ($request->filled('recherche')) {
             $s = $request->recherche;
             $query->where(function ($q) use ($s) {
@@ -33,7 +32,6 @@ class DaePersonnelController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'client_id'    => 'required|exists:clients,id',
             'nom'          => 'required|string|max:255',
             'prenom'       => 'required|string|max:255',
             'email'        => 'nullable|email|max:255',
@@ -50,6 +48,7 @@ class DaePersonnelController extends Controller
         ]);
 
         $validated['statut'] ??= 'actif';
+        $validated['client_id'] = $this->getClientId($request);
         $personne = DaePersonnelDossier::create($validated);
 
         if ($request->expectsJson()) return response()->json($personne, 201);
@@ -100,8 +99,7 @@ class DaePersonnelController extends Controller
 
     public function changementsRecent(Request $request)
     {
-        $query = DaePersonnelDossier::whereIn('statut', ['actif', 'conge']);
-        if ($request->filled('client_id')) $query->where('client_id', $request->client_id);
+        $query = DaePersonnelDossier::whereIn('statut', ['actif', 'conge'])->where('client_id', $this->getClientId($request));
 
         return response()->json([
             'effectif' => $query->count(),

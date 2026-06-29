@@ -304,6 +304,8 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client']
             return view('app', ['page' => 'gel-accounting-closing', 'clientId' => $clientId]);
         })->name('accounting.closing');
 
+        // ComptabilitÃ© â€” API Exercices fiscaux
+        Route::get('/api/accounting/fiscal-years/{clientId}', [BudgetController::class, 'fiscalYears']);
         // ComptabilitÃ© â€” API Budgets
         Route::get('/api/accounting/budgets/{clientId}', [BudgetController::class, 'listAll']);
         Route::post('/api/accounting/budgets', [BudgetController::class, 'store']);
@@ -327,12 +329,12 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client']
         Route::delete('/api/accounting/tax-declarations/{clientId}/{id}', [TaxDeclarationController::class, 'destroy']);
 
         // ComptabilitÃ© â€” API ClÃ´ture
+        Route::get('/api/accounting/closing/stats/{clientId}', [ClosingController::class, 'stats']);
         Route::get('/api/accounting/closing/{clientId}', [ClosingController::class, 'listAll']);
         Route::get('/api/accounting/closing/{clientId}/{id}', [ClosingController::class, 'show']);
         Route::post('/api/accounting/closing/cloturer', [ClosingController::class, 'cloturer']);
         Route::post('/api/accounting/closing/rouvrir', [ClosingController::class, 'rouvrir']);
         Route::post('/api/accounting/closing/inventaire', [ClosingController::class, 'inventaire']);
-        Route::get('/api/accounting/closing/stats/{clientId}', [ClosingController::class, 'stats']);
 
         // ComptabilitÃ© â€” API PDF Export
         Route::get('/api/accounting/export/balance/{clientId}', [PdfExportController::class, 'balance']);
@@ -564,6 +566,9 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client']
         // TrÃ©sorerie
         Route::post('/erp/treasury/accounts', [\App\Http\Controllers\Gel\Erp\TreasuryController::class, 'storeAccount']);
         Route::post('/erp/treasury/transactions', [\App\Http\Controllers\Gel\Erp\TreasuryController::class, 'storeTransaction']);
+        // RH / Payroll
+        Route::post('/erp/hr/employees', [\App\Http\Controllers\Gel\Erp\EmployeeController::class, 'storeEmployee']);
+        Route::post('/erp/hr/payrolls', [\App\Http\Controllers\Gel\Erp\EmployeeController::class, 'generatePayroll']);
 
         // â”€â”€â”€ API JSON pour les composants Vue ERP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         // Catalogue
@@ -1030,6 +1035,8 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'ensure.company', 'compa
 
     // Notifications
     Route::get('/notifications', [\App\Http\Controllers\Company\NotificationController::class, 'index'])->name('notifications');
+    # e-MECeF
+    Route::get('/emecef', [\App\Http\Controllers\Company\EmecefController::class, 'index'])->name('emecef');
 
     // â”€â”€â”€ DAE â€” Portail Client â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Route::middleware('module:dae')->prefix('dae')->name('dae.')->group(function () {
@@ -1313,6 +1320,12 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'ensure.company', 'compa
 
     // â”€â”€â”€ Ã‰vÃ©nements / SSE â€” API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Route::get('/api/company/events/check', [\App\Http\Controllers\Company\EventsController::class, 'checkUpdates']);
+
+    // ─── e-MECeF — API ──────────────────────────────────────────────────────
+    Route::get('/api/company/emecef/status', [\App\Http\Controllers\Company\EmecefController::class, 'status']);
+    Route::post('/api/company/emecef/configure', [\App\Http\Controllers\Company\EmecefController::class, 'configure']);
+    Route::post('/api/company/emecef/test', [\App\Http\Controllers\Company\EmecefController::class, 'test']);
+    Route::delete('/api/company/emecef', [\App\Http\Controllers\Company\EmecefController::class, 'destroy']);
 });
 
 

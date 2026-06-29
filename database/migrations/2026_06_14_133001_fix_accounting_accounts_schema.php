@@ -26,10 +26,10 @@ return new class extends Migration
         // Mettre à jour les comptes existants avec leur classe SYSCOHADA
         // La migration est sécurisée : les anciennes données avec type='asset'/'liability' etc. restent lisibles
         DB::statement("UPDATE accounting_accounts SET syscohada_class = '1' WHERE type = 'equity' AND syscohada_class IS NULL");
-        DB::statement("UPDATE accounting_accounts SET syscohada_class = '2' WHERE type = 'asset' AND substring(code from 1 for 1) = '2' AND syscohada_class IS NULL");
-        DB::statement("UPDATE accounting_accounts SET syscohada_class = '3' WHERE type = 'asset' AND substring(code from 1 for 1) = '3' AND syscohada_class IS NULL");
-        DB::statement("UPDATE accounting_accounts SET syscohada_class = '4' WHERE type IN ('asset','liability') AND substring(code from 1 for 1) = '4' AND syscohada_class IS NULL");
-        DB::statement("UPDATE accounting_accounts SET syscohada_class = '5' WHERE type = 'asset' AND substring(code from 1 for 1) = '5' AND syscohada_class IS NULL");
+        DB::statement("UPDATE accounting_accounts SET syscohada_class = '2' WHERE type = 'asset' AND SUBSTR(code, 1, 1) = '2' AND syscohada_class IS NULL");
+        DB::statement("UPDATE accounting_accounts SET syscohada_class = '3' WHERE type = 'asset' AND SUBSTR(code, 1, 1) = '3' AND syscohada_class IS NULL");
+        DB::statement("UPDATE accounting_accounts SET syscohada_class = '4' WHERE type IN ('asset','liability') AND SUBSTR(code, 1, 1) = '4' AND syscohada_class IS NULL");
+        DB::statement("UPDATE accounting_accounts SET syscohada_class = '5' WHERE type = 'asset' AND SUBSTR(code, 1, 1) = '5' AND syscohada_class IS NULL");
         DB::statement("UPDATE accounting_accounts SET syscohada_class = '6' WHERE type = 'expense' AND syscohada_class IS NULL");
         DB::statement("UPDATE accounting_accounts SET syscohada_class = '7' WHERE type = 'revenue' AND syscohada_class IS NULL");
     }

@@ -2,18 +2,17 @@
 
 namespace App\Http\Controllers\Modules\Legal;
 
-use App\Http\Controllers\Controller;
 use App\Models\Legal\LegalCompliance;
 use Illuminate\Http\Request;
 
-class LegalComplianceController extends Controller
+class LegalComplianceController extends BaseLegalController
 {
     public function index(Request $request)
     {
         if (!$request->expectsJson()) {
             return view('app', ['page' => 'legal-conformite']);
         }
-        $clientId = $request->get('client_id', auth()->user()->client_id ?? 0);
+        $clientId = $this->getClientId($request);
         $query = LegalCompliance::byClient($clientId);
 
         if ($request->statut) {
@@ -32,7 +31,6 @@ class LegalComplianceController extends Controller
             return view('app', ['page' => 'legal-conformite-create']);
         }
         $data = $request->validate([
-            'client_id' => 'required|integer',
             'intitule' => 'required|string|max:255',
             'type' => 'required|string',
             'organisme' => 'required|string',
@@ -41,6 +39,7 @@ class LegalComplianceController extends Controller
         ]);
 
         $data['created_by'] = auth()->id();
+        $data['client_id'] = $this->getClientId($request);
         $item = LegalCompliance::create($data);
 
         return response()->json(['success' => true, 'data' => $item]);
@@ -82,7 +81,7 @@ class LegalComplianceController extends Controller
         if (!$request->expectsJson()) {
             return view('app', ['page' => 'legal-conformite-calendrier']);
         }
-        $clientId = $request->get('client_id', auth()->user()->client_id ?? 0);
+        $clientId = $this->getClientId($request);
         $items = LegalCompliance::byClient($clientId)
             ->whereYear('date_echeance', $request->annee ?? date('Y'))
             ->orderBy('date_echeance')

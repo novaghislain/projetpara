@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers\Modules\Dae;
 
-use App\Http\Controllers\Controller;
 use App\Models\Dae\DaeConformite;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class DaeConformiteController extends Controller
+class DaeConformiteController extends BaseDaeController
 {
     public function index(Request $request)
     {
@@ -15,7 +14,7 @@ class DaeConformiteController extends Controller
 
         if ($request->filled('type')) $query->where('type_conformite', $request->type);
         if ($request->filled('statut')) $query->where('statut', $request->statut);
-        if ($request->filled('client_id')) $query->where('client_id', $request->client_id);
+        $query->where('client_id', $this->getClientId($request));
         if ($request->filled('recherche')) {
             $s = $request->recherche;
             $query->where(function ($q) use ($s) {
@@ -32,7 +31,6 @@ class DaeConformiteController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'client_id'             => 'required|exists:clients,id',
             'type_conformite'       => 'required|string|max:200',
             'titre'                 => 'required|string|max:500',
             'description'           => 'nullable|string',
@@ -47,6 +45,7 @@ class DaeConformiteController extends Controller
         ]);
 
         $validated['statut'] ??= 'a_faire';
+        $validated['client_id'] = $this->getClientId($request);
 
         $item = DaeConformite::create($validated);
 

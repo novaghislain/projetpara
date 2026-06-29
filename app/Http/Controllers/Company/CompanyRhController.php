@@ -12,13 +12,8 @@ use App\Models\Rh\RhAlert;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class CompanyRhController extends Controller
+class CompanyRhController extends BaseCompanyController
 {
-    protected function getClientId()
-    {
-        return Auth::user()?->client_id;
-    }
-
     public function index(Request $request)
     {
         if ($request->expectsJson()) {

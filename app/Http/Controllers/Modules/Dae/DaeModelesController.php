@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers\Modules\Dae;
 
-use App\Http\Controllers\Controller;
 use App\Models\Dae\DaeModeleCourrier;
 use Illuminate\Http\Request;
 
-class DaeModelesController extends Controller
+class DaeModelesController extends BaseDaeController
 {
     public function index(Request $request)
     {

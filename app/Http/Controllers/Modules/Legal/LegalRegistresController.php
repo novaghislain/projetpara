@@ -2,18 +2,17 @@
 
 namespace App\Http\Controllers\Modules\Legal;
 
-use App\Http\Controllers\Controller;
 use App\Models\Legal\LegalRegistre;
 use Illuminate\Http\Request;
 
-class LegalRegistresController extends Controller
+class LegalRegistresController extends BaseLegalController
 {
     public function index(Request $request)
     {
         if (!$request->expectsJson()) {
             return view('app', ['page' => 'legal-registres']);
         }
-        $clientId = $request->get('client_id', auth()->user()->client_id ?? 0);
+        $clientId = $this->getClientId($request);
         return response()->json(
             LegalRegistre::byClient($clientId)->orderBy('type')->orderBy('annee', 'desc')->get()
         );
@@ -24,7 +23,7 @@ class LegalRegistresController extends Controller
         if (!$request->expectsJson()) {
             return view('app', ['page' => 'legal-registres-show']);
         }
-        $clientId = $request->get('client_id', auth()->user()->client_id ?? 0);
+        $clientId = $this->getClientId($request);
         $registre = LegalRegistre::byClient($clientId)
             ->where('type', $type)
             ->where('annee', $annee)
@@ -35,7 +34,7 @@ class LegalRegistresController extends Controller
 
     public function addEntry(Request $request, $type, $annee)
     {
-        $clientId = $request->get('client_id', auth()->user()->client_id ?? 0);
+        $clientId = $this->getClientId($request);
 
         $registre = LegalRegistre::firstOrCreate(
             [
@@ -61,7 +60,7 @@ class LegalRegistresController extends Controller
 
     public function export($type, $annee, Request $request)
     {
-        $clientId = $request->get('client_id', auth()->user()->client_id ?? 0);
+        $clientId = $this->getClientId($request);
         $registre = LegalRegistre::byClient($clientId)
             ->where('type', $type)
             ->where('annee', $annee)

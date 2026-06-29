@@ -2,19 +2,13 @@
 
 namespace App\Http\Controllers\Modules\Rh;
 
-use App\Http\Controllers\Controller;
 use App\Models\Rh\RhContract;
 use App\Models\Rh\RhEmployee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class RhContractsController extends Controller
+class RhContractsController extends BaseRhController
 {
-    protected function getClientId(Request $request)
-    {
-        return $request->input('client_id') ?: Auth::user()?->client_id;
-    }
-
     public function index(Request $request)
     {
         if ($request->expectsJson()) {

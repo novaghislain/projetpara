@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers\Modules\Dae;
 
-use App\Http\Controllers\Controller;
 use App\Models\Dae\DaeRapport;
 use Illuminate\Http\Request;
 
-class DaeRapportsController extends Controller
+class DaeRapportsController extends BaseDaeController
 {
     public function index(Request $request)
     {
@@ -14,7 +13,7 @@ class DaeRapportsController extends Controller
 
         if ($request->filled('type_rapport')) $query->where('type_rapport', $request->type_rapport);
         if ($request->filled('statut')) $query->where('statut', $request->statut);
-        if ($request->filled('client_id')) $query->where('client_id', $request->client_id);
+        $query->where('client_id', $this->getClientId($request));
         if ($request->filled('periode_debut')) $query->whereDate('periode_debut', '>=', $request->periode_debut);
         if ($request->filled('periode_fin')) $query->whereDate('periode_fin', '<=', $request->periode_fin);
 
@@ -26,7 +25,6 @@ class DaeRapportsController extends Controller
     public function generer(Request $request)
     {
         $validated = $request->validate([
-            'client_id'     => 'required|exists:clients,id',
             'titre'         => 'required|string|max:500',
             'type_rapport'   => 'required|string|max:200',
             'description'   => 'nullable|string',
@@ -35,6 +33,7 @@ class DaeRapportsController extends Controller
         ]);
 
         $validated['statut'] = 'brouillon';
+        $validated['client_id'] = $this->getClientId($request);
 
         $rapport = DaeRapport::create($validated);
 

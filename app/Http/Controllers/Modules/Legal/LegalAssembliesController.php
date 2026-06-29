@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers\Modules\Legal;
 
-use App\Http\Controllers\Controller;
 use App\Models\Legal\LegalAssembly;
 use App\Services\Legal\AGService;
 use Illuminate\Http\Request;
 
-class LegalAssembliesController extends Controller
+class LegalAssembliesController extends BaseLegalController
 {
     protected AGService $agService;
 
@@ -21,7 +20,7 @@ class LegalAssembliesController extends Controller
         if (!$request->expectsJson()) {
             return view('app', ['page' => 'legal-assemblees']);
         }
-        $clientId = $request->get('client_id', auth()->user()->client_id ?? 0);
+        $clientId = $this->getClientId($request);
         return response()->json(
             LegalAssembly::byClient($clientId)->orderBy('date_tenue', 'desc')->get()
         );
@@ -35,7 +34,6 @@ class LegalAssembliesController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'client_id' => 'required|integer',
             'type' => 'required|string',
             'annee' => 'required|integer',
             'date_tenue' => 'required|date',
@@ -44,6 +42,7 @@ class LegalAssembliesController extends Controller
         ]);
 
         $data['created_by'] = auth()->id();
+        $data['client_id'] = $this->getClientId($request);
         $ag = $this->agService->preparerAG($data);
 
         return response()->json(['success' => true, 'data' => $ag]);

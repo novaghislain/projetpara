@@ -2,13 +2,12 @@
 
 namespace App\Http\Controllers\Gel\Accounting;
 
-use App\Http\Controllers\Controller;
 use App\Models\AccountingTaxDeclaration;
 use App\Models\FiscalYear;
 use App\Services\Accounting\TaxCalculationService;
 use Illuminate\Http\Request;
 
-class TaxDeclarationController extends Controller
+class TaxDeclarationController extends BaseGelAccountingController
 {
     protected TaxCalculationService $taxService;
 
@@ -59,22 +58,29 @@ class TaxDeclarationController extends Controller
      */
     public function calculerTva(Request $request)
     {
+        $clientId = $this->getClientId($request);
         $validated = $request->validate([
-            'client_id' => 'required|exists:clients,id',
             'fiscal_year_id' => 'required|exists:fiscal_years,id',
             'month' => 'required|integer|min:1|max:12',
         ]);
 
         $fiscalYear = FiscalYear::findOrFail($validated['fiscal_year_id']);
         $result = $this->taxService->calculerTva(
-            $validated['client_id'],
+            $clientId,
             $validated['fiscal_year_id'],
             $validated['month']
         );
 
+        // Période mensuelle pour la déclaration TVA (pas l'exercice entier)
+        $periodStart = now()->setYear($fiscalYear->year)->setMonth($validated['month'])->startOfMonth();
+        $periodEnd = min(
+            $fiscalYear->date_end,
+            now()->setYear($fiscalYear->year)->setMonth($validated['month'])->lastOfMonth()
+        );
+
         // Générer la déclaration
         $declaration = $this->taxService->genererDeclaration(
-            $validated['client_id'],
+            $clientId,
             $validated['fiscal_year_id'],
             'tva',
             'mensuel',
@@ -82,8 +88,8 @@ class TaxDeclarationController extends Controller
             null,
             $fiscalYear->year,
             [
-                'date_debut' => $fiscalYear->date_start->format('Y-m-d'),
-                'date_fin' => $fiscalYear->date_end->format('Y-m-d'),
+                'date_debut' => $periodStart->format('Y-m-d'),
+                'date_fin' => $periodEnd->format('Y-m-d'),
                 'base_imposable' => $result['base_imposable'],
                 'taux' => $result['taux'],
                 'montant_dut' => $result['tva_net'],
@@ -102,19 +108,19 @@ class TaxDeclarationController extends Controller
      */
     public function calculerIs(Request $request)
     {
+        $clientId = $this->getClientId($request);
         $validated = $request->validate([
-            'client_id' => 'required|exists:clients,id',
             'fiscal_year_id' => 'required|exists:fiscal_years,id',
         ]);
 
         $fiscalYear = FiscalYear::findOrFail($validated['fiscal_year_id']);
         $result = $this->taxService->calculerIs(
-            $validated['client_id'],
+            $clientId,
             $validated['fiscal_year_id']
         );
 
         $declaration = $this->taxService->genererDeclaration(
-            $validated['client_id'],
+            $clientId,
             $validated['fiscal_year_id'],
             'is',
             'annuel',
@@ -139,8 +145,8 @@ class TaxDeclarationController extends Controller
      */
     public function calculerIts(Request $request)
     {
+        $clientId = $this->getClientId($request);
         $validated = $request->validate([
-            'client_id' => 'required|exists:clients,id',
             'fiscal_year_id' => 'required|exists:fiscal_years,id',
             'salaire_brut_annuel' => 'required|numeric|min:0',
         ]);
@@ -149,7 +155,7 @@ class TaxDeclarationController extends Controller
         $result = $this->taxService->calculerIts($validated['salaire_brut_annuel']);
 
         $declaration = $this->taxService->genererDeclaration(
-            $validated['client_id'],
+            $clientId,
             $validated['fiscal_year_id'],
             'its',
             'annuel',
@@ -174,8 +180,8 @@ class TaxDeclarationController extends Controller
      */
     public function calculerCnss(Request $request)
     {
+        $clientId = $this->getClientId($request);
         $validated = $request->validate([
-            'client_id' => 'required|exists:clients,id',
             'fiscal_year_id' => 'required|exists:fiscal_years,id',
             'salaire_brut_mensuel' => 'required|numeric|min:0',
         ]);
@@ -184,7 +190,7 @@ class TaxDeclarationController extends Controller
         $result = $this->taxService->calculerCnss($validated['salaire_brut_mensuel']);
 
         $declaration = $this->taxService->genererDeclaration(
-            $validated['client_id'],
+            $clientId,
             $validated['fiscal_year_id'],
             'cnss',
             'mensuel',
@@ -209,8 +215,8 @@ class TaxDeclarationController extends Controller
      */
     public function calculerVps(Request $request)
     {
+        $clientId = $this->getClientId($request);
         $validated = $request->validate([
-            'client_id' => 'required|exists:clients,id',
             'fiscal_year_id' => 'required|exists:fiscal_years,id',
             'masse_salariale' => 'required|numeric|min:0',
         ]);
@@ -219,7 +225,7 @@ class TaxDeclarationController extends Controller
         $result = $this->taxService->calculerVps($validated['masse_salariale']);
 
         $declaration = $this->taxService->genererDeclaration(
-            $validated['client_id'],
+            $clientId,
             $validated['fiscal_year_id'],
             'vps',
             'annuel',

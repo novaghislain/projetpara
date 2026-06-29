@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Modules\Legal;
 
-use App\Http\Controllers\Controller;
 use App\Models\Legal\LegalContract;
 use App\Models\Legal\LegalAssembly;
 use App\Models\Legal\LegalLitigation;
@@ -10,7 +9,7 @@ use App\Models\Legal\LegalCompliance;
 use App\Models\Legal\LegalDossier;
 use Illuminate\Http\Request;
 
-class LegalDashboardController extends Controller
+class LegalDashboardController extends BaseLegalController
 {
     public function index()
     {
@@ -19,7 +18,7 @@ class LegalDashboardController extends Controller
 
     public function stats(Request $request)
     {
-        $clientId = $request->get('client_id', auth()->user()->client_id ?? 0);
+        $clientId = $this->getClientId($request);
 
         return response()->json([
             'stats' => [

@@ -10,17 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-class CaisseController extends Controller
+class CaisseController extends BaseCompanyController
 {
-    private function getClientId(): int
-    {
-        $user = Auth::user();
-        if (!$user->client_id) {
-            abort(403, 'Aucune entreprise associée.');
-        }
-        return (int) $user->client_id;
-    }
-
     /**
      * Page de la caisse.
      */

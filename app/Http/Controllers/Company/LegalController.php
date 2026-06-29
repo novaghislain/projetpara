@@ -9,20 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-class LegalController extends Controller
+class LegalController extends BaseCompanyController
 {
-    /**
-     * Récupère le client_id de l'utilisateur authentifié.
-     */
-    private function getClientId()
-    {
-        $user = Auth::user();
-        if (!$user->client_id) {
-            abort(403, 'Aucune entreprise associée.');
-        }
-        return $user->client_id;
-    }
-
     /**
      * Affiche la page Juridique.
      */

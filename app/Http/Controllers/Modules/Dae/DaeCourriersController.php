@@ -2,13 +2,12 @@
 
 namespace App\Http\Controllers\Modules\Dae;
 
-use App\Http\Controllers\Controller;
 use App\Models\Dae\DaeCourrier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
-class DaeCourriersController extends Controller
+class DaeCourriersController extends BaseDaeController
 {
     public function index(Request $request)
     {
@@ -25,9 +24,7 @@ class DaeCourriersController extends Controller
         if ($request->filled('urgence')) {
             $query->where('urgence', $request->urgence);
         }
-        if ($request->filled('client_id')) {
-            $query->where('client_id', $request->client_id);
-        }
+        $query->where('client_id', $this->getClientId($request));
         if ($request->filled('date_debut')) {
             $query->whereDate('date_courrier', '>=', $request->date_debut);
         }
@@ -60,7 +57,6 @@ class DaeCourriersController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'client_id'    => 'required|exists:clients,id',
             'reference'    => 'nullable|string|max:100',
             'expediteur'   => 'nullable|string|max:255',
             'destinataire' => 'nullable|string|max:255',
@@ -77,6 +73,8 @@ class DaeCourriersController extends Controller
 
         $validated['created_by'] = Auth::id();
         $validated['statut'] = $validated['statut'] ?? 'brouillon';
+
+        $validated['client_id'] = $this->getClientId($request);
 
         if (empty($validated['reference'])) {
             $validated['reference'] = 'CR-' . strtoupper(uniqid());
@@ -119,7 +117,6 @@ class DaeCourriersController extends Controller
         $courrier = DaeCourrier::findOrFail($id);
 
         $validated = $request->validate([
-            'client_id'     => 'sometimes|exists:clients,id',
             'reference'     => 'nullable|string|max:100',
             'expediteur'    => 'nullable|string|max:255',
             'destinataire'  => 'nullable|string|max:255',

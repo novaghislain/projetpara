@@ -91,6 +91,42 @@ const emitEmecef = async (invoiceId) => {
     }
 };
 
+const cancelEmecef = async (invoiceId) => {
+    if (!confirm('Annuler cette facture auprès de la DGI (e-MECeF) ? Cette action est irréversible.')) return;
+    try {
+        const res = await fetch(`/emecef/cancel/${invoiceId}`, {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content, 'Accept': 'application/json' },
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert('Facture annulée à la DGI avec succès.');
+            await fetchData();
+        } else {
+            alert('Erreur e-MECeF: ' + (data.error || 'Inconnue'));
+        }
+    } catch (e) {
+        alert('Erreur réseau: ' + e.message);
+    }
+};
+
+const verifyEmecef = async (invoiceId) => {
+    try {
+        const res = await fetch(`/emecef/verify/${invoiceId}`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert('Statut DGI: ' + (data.statut || 'émise') + '\nNIM: ' + (data.nim || '-') + '\nCompteur: ' + (data.compteur || '-'));
+        } else {
+            alert('Erreur vérification DGI: ' + (data.error || 'Inconnue'));
+        }
+    } catch (e) {
+        alert('Erreur réseau: ' + e.message);
+    }
+};
+
 onMounted(fetchData);
 </script>
 
@@ -130,8 +166,14 @@ onMounted(fetchData);
                             <td class="text-end fw-medium">{{ $formatCurrency(inv.total_ttc) }}</td>
                             <td><span class="badge" :class="statusBadgeClass(inv.status)">{{ inv.status }}</span></td>
                             <td class="text-nowrap">
-                                <button v-if="inv.status === 'emise' || inv.status === 'envoyee'" class="btn btn-outline-warning btn-sm" title="Émettre e-MECeF" @click="emitEmecef(inv.id)">
+                                <button v-if="(inv.status === 'emise' || inv.status === 'envoyee') && inv.emecef_statut !== 'emise'" class="btn btn-outline-warning btn-sm" title="Émettre e-MECeF" @click="emitEmecef(inv.id)">
                                     <i class="bi-shield-check"></i>
+                                </button>
+                                <button v-if="inv.emecef_nim" class="btn btn-outline-info btn-sm ms-1" title="Vérifier statut DGI" @click="verifyEmecef(inv.id)">
+                                    <i class="bi-arrow-repeat"></i>
+                                </button>
+                                <button v-if="inv.emecef_statut === 'emise'" class="btn btn-outline-danger btn-sm ms-1" title="Annuler e-MECeF" @click="cancelEmecef(inv.id)">
+                                    <i class="bi-x-circle"></i>
                                 </button>
                                 <span v-if="inv.emecef_statut === 'emise'" class="badge bg-success bg-opacity-10 text-success ms-1 small">DGI</span>
                             </td>

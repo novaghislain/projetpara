@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers\Gel\Accounting;
 
-use App\Http\Controllers\Controller;
 use App\Models\FiscalYear;
 use App\Services\Accounting\BalanceCalculationService;
 use App\Services\Accounting\FinancialStatementService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
-class PdfExportController extends Controller
+class PdfExportController extends BaseGelAccountingController
 {
     protected BalanceCalculationService $balanceService;
     protected FinancialStatementService $financialService;

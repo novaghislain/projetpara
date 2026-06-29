@@ -87,13 +87,13 @@ class DashboardController extends Controller
 
         // Revenus mensuels (factures émises)
         $monthlyRevenue = CompanyInvoice::select(
-            DB::raw("DATE_FORMAT(issue_date, '%Y-%m') as month"),
+            DB::raw("TO_CHAR(issue_date, 'YYYY-MM') as month"),
             DB::raw('SUM(total_ttc) as total')
         )
             ->where('status', '!=', 'cancelled')
             ->whereNotNull('issue_date')
-            ->groupBy(DB::raw("DATE_FORMAT(issue_date, '%Y-%m')"))
-            ->orderBy(DB::raw("DATE_FORMAT(issue_date, '%Y-%m')"))
+            ->groupBy(DB::raw("TO_CHAR(issue_date, 'YYYY-MM')"))
+            ->orderBy(DB::raw("TO_CHAR(issue_date, 'YYYY-MM')"))
             ->take(12)
             ->get()
             ->map(fn($r) => [

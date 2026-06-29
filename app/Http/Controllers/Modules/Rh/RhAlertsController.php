@@ -2,17 +2,11 @@
 
 namespace App\Http\Controllers\Modules\Rh;
 
-use App\Http\Controllers\Controller;
 use App\Models\Rh\RhAlert;
 use Illuminate\Http\Request;
 
-class RhAlertsController extends Controller
+class RhAlertsController extends BaseRhController
 {
-    protected function getClientId(Request $request)
-    {
-        return $request->input('client_id') ?: Auth::user()?->client_id;
-    }
-
     public function listAll(Request $request)
     {
         $query = RhAlert::byClient($this->getClientId($request))

@@ -11,15 +11,8 @@ use App\Services\FiscalService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class TvaController extends Controller
+class TvaController extends BaseCompanyController
 {
-    private function getClientId()
-    {
-        $user = Auth::user();
-        if (!$user->client_id) abort(403, 'Aucune entreprise associée.');
-        return $user->client_id;
-    }
-
     /**
      * Liste des déclarations TVA.
      */

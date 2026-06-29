@@ -1,4 +1,5 @@
 <template>
+<GelLayout>
     <div class="dae-documents-index">
         <!-- ═══ LOADING ═══ -->
         <div v-if="loading" class="dae-loading">
@@ -407,6 +408,7 @@
             </div>
         </div>
     </div>
+</GelLayout>
 </template>
 
 <script>

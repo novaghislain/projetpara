@@ -8,16 +8,12 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // PostgreSQL : ajouter les nouvelles valeurs à l'enum existant
-        $types = ['operations_diverses', 'salaire', 'investissement', 'anouveaux', 'paie', 'hav'];
-        foreach ($types as $t) {
+        // PostgreSQL uniquement : supprimer l'ancienne contrainte CHECK et en recréer une élargie
+        if (DB::getDriverName() === 'pgsql') {
             DB::statement("ALTER TABLE accounting_journals DROP CONSTRAINT IF EXISTS accounting_journals_journal_type_check");
+            DB::statement("ALTER TABLE accounting_journals ADD CONSTRAINT accounting_journals_journal_type_check
+                CHECK (journal_type IN ('achat','vente','banque','caisse','od','operations_diverses','salaire','investissement','anouveaux','paie','hav'))");
         }
-
-        // Remplacer la contrainte check par une nouvelle avec tous les types SYSCOHADA
-        DB::statement("ALTER TABLE accounting_journals DROP CONSTRAINT IF EXISTS accounting_journals_journal_type_check");
-        DB::statement("ALTER TABLE accounting_journals ADD CONSTRAINT accounting_journals_journal_type_check
-            CHECK (journal_type IN ('achat','vente','banque','caisse','od','operations_diverses','salaire','investissement','anouveaux','paie','hav'))");
 
         Schema::table('accounting_journals', function (Blueprint $table) {
             // Exercice comptable

@@ -2,13 +2,10 @@
 
 namespace App\Http\Controllers\Gel\Accounting;
 
-use App\Http\Controllers\Controller;
-use App\Models\AccountingJournal;
 use App\Models\AccountingAccount;
-use App\Models\AccountingJournalLine;
 use Illuminate\Http\Request;
 
-class ReportController extends Controller
+class ReportController extends BaseGelAccountingController
 {
     /**
      * API: Balance des comptes.

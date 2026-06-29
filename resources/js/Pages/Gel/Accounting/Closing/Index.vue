@@ -27,7 +27,7 @@ const fetchData = async () => {
         const [eRes, sRes, fyRes] = await Promise.all([
             fetch('/api/accounting/closing/' + cid),
             fetch('/api/accounting/closing/stats/' + cid),
-            fetch('/api/accounting/fiscal-years?all=true')
+            fetch('/api/accounting/fiscal-years/' + cid)
         ]);
         if (!eRes.ok) throw new Error('Erreur API clôture');
         if (!sRes.ok) throw new Error('Erreur API statistiques');

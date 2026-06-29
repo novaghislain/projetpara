@@ -202,7 +202,7 @@ class TaxCalculationService
 
     private function getSoldeCompte(int $clientId, int $fiscalYearId, string $code, $fiscalYear, int $month): float
     {
-        $dateDebut = $fiscalYear->date_start;
+        $dateDebut = now()->setYear($fiscalYear->year)->setMonth($month)->startOfMonth();
         $dateFin = min(
             $fiscalYear->date_end,
             now()->setYear($fiscalYear->year)->setMonth($month)->lastOfMonth()

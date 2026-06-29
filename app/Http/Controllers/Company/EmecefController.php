@@ -2,23 +2,17 @@
 
 namespace App\Http\Controllers\Company;
 
-use App\Http\Controllers\Controller;
+use App\Models\Client;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Crypt;
 
-class EmecefController extends Controller
+class EmecefController extends BaseCompanyController
 {
     /**
-     * Récupère le client_id de l'utilisateur authentifié.
+     * Récupère le client de l'utilisateur authentifié.
      */
-    private function getClient()
+    private function getClient(): Client
     {
-        $user = Auth::user();
-        if (!$user->client_id) {
-            abort(403, 'Aucune entreprise associée.');
-        }
-        return $user->client;
+        return Client::findOrFail($this->getClientId());
     }
 
     /**

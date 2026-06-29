@@ -22,7 +22,7 @@ class CashflowAgentService
         $revenues = ErpInvoice::where('client_id', $clientId)
             ->whereIn('status', ['paid', 'sent'])
             ->where('created_at', '>=', $now->copy()->subMonths(6))
-            ->select(DB::raw('SUM(total_ttc) as total'), DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month"))
+            ->select(DB::raw('SUM(total_ttc) as total'), DB::raw("TO_CHAR(created_at, 'YYYY-MM') as month"))
             ->groupBy('month')
             ->pluck('total', 'month')
             ->toArray();
@@ -35,7 +35,7 @@ class CashflowAgentService
               ->where('created_at', '>=', now()->subMonths(6));
         })
         ->where('debit', '>', 0)
-        ->select(DB::raw('SUM(debit) as total'), DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month"))
+        ->select(DB::raw('SUM(debit) as total'), DB::raw("TO_CHAR(created_at, 'YYYY-MM') as month"))
         ->groupBy('month')
         ->pluck('total', 'month')
         ->toArray();

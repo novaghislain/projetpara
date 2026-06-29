@@ -14,7 +14,7 @@ use App\Services\Accounting\TaxCalculationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class CompanyAccountingController extends Controller
+class CompanyAccountingController extends BaseCompanyController
 {
     protected TaxCalculationService $taxService;
     protected ClosingService $closingService;
@@ -28,13 +28,6 @@ class CompanyAccountingController extends Controller
         $this->taxService = $taxService;
         $this->closingService = $closingService;
         $this->journalService = $journalService;
-    }
-
-    private function getClientId(): int
-    {
-        $user = Auth::user();
-        if (!$user->client_id) abort(403, 'Aucune entreprise associée.');
-        return $user->client_id;
     }
 
     // ─── Budgets ──────────────────────────────────────────────
@@ -143,11 +136,19 @@ class CompanyAccountingController extends Controller
         ]);
         $fiscalYear = FiscalYear::findOrFail($validated['fiscal_year_id']);
         $result = $this->taxService->calculerTva($clientId, $validated['fiscal_year_id'], $validated['month']);
+
+        // Période mensuelle pour la déclaration TVA (pas l'exercice entier)
+        $periodStart = now()->setYear($fiscalYear->year)->setMonth($validated['month'])->startOfMonth();
+        $periodEnd = min(
+            $fiscalYear->date_end,
+            now()->setYear($fiscalYear->year)->setMonth($validated['month'])->lastOfMonth()
+        );
+
         $declaration = $this->taxService->genererDeclaration(
             $clientId, $validated['fiscal_year_id'], 'tva', 'mensuel',
             $validated['month'], null, $fiscalYear->year, [
-                'date_debut' => $fiscalYear->date_start->format('Y-m-d'),
-                'date_fin' => $fiscalYear->date_end->format('Y-m-d'),
+                'date_debut' => $periodStart->format('Y-m-d'),
+                'date_fin' => $periodEnd->format('Y-m-d'),
                 'base_imposable' => $result['base_imposable'],
                 'taux' => $result['taux'],
                 'montant_dut' => $result['tva_net'],

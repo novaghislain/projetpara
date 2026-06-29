@@ -11,6 +11,7 @@ use App\Models\AccountingAccount;
 use App\Models\Client;
 use Database\Seeders\SyscohadaChartSeeder;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class AccountingDemoSeeder extends Seeder
 {
@@ -27,9 +28,16 @@ class AccountingDemoSeeder extends Seeder
         $userId = 1;
 
         // Ensure SYSCOHADA accounts exist for this client
+        // (app.client_id must remain unset here so the super admin bypass allows
+        // reading base chart accounts with client_id = 0)
         SyscohadaChartSeeder::createForClient($clientId);
 
-        // Create a fiscal year 2025
+        // Contexte RLS PostgreSQL pour les opérations suivantes
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            DB::statement("SET app.client_id = '{$clientId}'");
+        }
+        try {
+            // Create a fiscal year 2025
         $fiscalYear = FiscalYear::firstOrCreate(
             ['client_id' => $clientId, 'year' => 2025],
             [
@@ -258,5 +266,10 @@ class AccountingDemoSeeder extends Seeder
 
             $this->command->info('Demo closing entries created.');
         }
+    } finally {
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            DB::statement("SET app.client_id = '0'");
+        }
     }
+}
 }

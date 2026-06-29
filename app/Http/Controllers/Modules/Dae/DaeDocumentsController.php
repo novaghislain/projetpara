@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers\Modules\Dae;
 
-use App\Http\Controllers\Controller;
 use App\Models\Dae\DaeDocument;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
-class DaeDocumentsController extends Controller
+class DaeDocumentsController extends BaseDaeController
 {
     public function index(Request $request)
     {
@@ -17,7 +16,7 @@ class DaeDocumentsController extends Controller
         if ($request->filled('categorie')) $query->where('categorie', $request->categorie);
         if ($request->filled('dossier_id')) $query->where('dossier_id', $request->dossier_id);
         if ($request->filled('statut')) $query->where('statut', $request->statut);
-        if ($request->filled('client_id')) $query->where('client_id', $request->client_id);
+        $query->where('client_id', $this->getClientId($request));
         if ($request->filled('recherche')) {
             $s = $request->recherche;
             $query->where(function ($q) use ($s) {
@@ -34,7 +33,6 @@ class DaeDocumentsController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'client_id'      => 'required|exists:clients,id',
             'dossier_id'     => 'nullable|exists:dae_document_dossiers,id',
             'titre'          => 'required|string|max:500',
             'type_document'  => 'required|string|max:200',
@@ -51,6 +49,7 @@ class DaeDocumentsController extends Controller
         $validated['statut'] = 'final';
         $validated['version'] = 1;
         $validated['reference'] = 'DOC-' . strtoupper(uniqid());
+        $validated['client_id'] = $this->getClientId($request);
         $validated['fichier'] = $request->file('fichier')->store('dae/documents', 'public');
         $validated['taille_fichier'] = $request->file('fichier')->getSize();
         $validated['mime_type'] = $request->file('fichier')->getMimeType();
@@ -100,10 +99,10 @@ class DaeDocumentsController extends Controller
     public function upload(Request $request)
     {
         $request->validate([
-            'client_id' => 'required|exists:clients,id',
             'fichier'   => 'required|file|max:25600',
         ]);
 
+        $clientId = $this->getClientId($request);
         $path = $request->file('fichier')->store('dae/documents', 'public');
 
         return response()->json([

@@ -166,6 +166,7 @@ onMounted(fetchCourrier);
 </script>
 
 <template>
+<GelLayout>
     <div class="dae-courriers-show">
         <!-- Toast -->
         <div v-if="toast.show"
@@ -445,6 +446,7 @@ onMounted(fetchCourrier);
             </div>
         </template>
     </div>
+</GelLayout>
 </template>
 
 <script>

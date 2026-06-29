@@ -2,18 +2,12 @@
 
 namespace App\Http\Controllers\Modules\Rh;
 
-use App\Http\Controllers\Controller;
 use App\Models\Rh\RhAttendance;
 use App\Models\Rh\RhEmployee;
 use Illuminate\Http\Request;
 
-class RhAttendanceController extends Controller
+class RhAttendanceController extends BaseRhController
 {
-    protected function getClientId(Request $request)
-    {
-        return $request->input('client_id') ?: Auth::user()?->client_id;
-    }
-
     public function index(Request $request)
     {
         if ($request->expectsJson()) {

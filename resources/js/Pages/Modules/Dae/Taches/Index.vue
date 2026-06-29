@@ -1,4 +1,5 @@
 <template>
+<GelLayout>
     <div class="dae-taches-index">
         <!-- Loading State -->
         <div v-if="loading && !taches.length" class="dae-loading">
@@ -383,6 +384,7 @@
             </div>
         </div>
     </div>
+</GelLayout>
 </template>
 
 <script>

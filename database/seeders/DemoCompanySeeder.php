@@ -36,8 +36,8 @@ class DemoCompanySeeder extends Seeder
         if (DB::connection()->getDriverName() === 'pgsql') {
             DB::statement("SET app.client_id = '{$client->id}'");
         }
-
-        // Lier les services (Comptabilité, Fiscal, Social)
+        try {
+            // Lier les services (Comptabilité, Fiscal, Social)
         $services = Service::whereIn('id', [1, 3, 4])->get();
         foreach ($services as $service) {
             $client->services()->attach($service->id, [
@@ -117,5 +117,10 @@ class DemoCompanySeeder extends Seeder
                 'email_verified_at' => now(),
             ]);
         }
+    } finally {
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            DB::statement("SET app.client_id = '0'");
+        }
     }
+}
 }

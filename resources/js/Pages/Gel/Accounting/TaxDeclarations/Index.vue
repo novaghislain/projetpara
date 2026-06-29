@@ -29,7 +29,7 @@ const fetchData = async () => {
     try {
         const [dRes, fyRes] = await Promise.all([
             fetch('/api/accounting/tax-declarations/' + cid),
-            fetch('/api/accounting/fiscal-years?all=true')
+            fetch('/api/accounting/fiscal-years/' + cid)
         ]);
         if (!dRes.ok) throw new Error('Erreur API déclarations fiscales');
         declarations.value = await dRes.json();

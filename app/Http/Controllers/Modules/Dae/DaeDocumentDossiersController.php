@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers\Modules\Dae;
 
-use App\Http\Controllers\Controller;
 use App\Models\Dae\DaeDocumentDossier;
 use Illuminate\Http\Request;
 
-class DaeDocumentDossiersController extends Controller
+class DaeDocumentDossiersController extends BaseDaeController
 {
     /**
      * Retourne l'arbre complet des dossiers pour la sidebar.
@@ -17,9 +16,7 @@ class DaeDocumentDossiersController extends Controller
             $q->orderBy('ordre')->orderBy('nom');
         }])->whereNull('parent_id')->orderBy('ordre')->orderBy('nom');
 
-        if ($request->filled('client_id')) {
-            $query->where('client_id', $request->client_id);
-        }
+        $query->where('client_id', $this->getClientId($request));
 
         $dossiers = $query->get()->map(fn($d) => $this->formatNoeud($d));
 
@@ -32,7 +29,6 @@ class DaeDocumentDossiersController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'client_id'  => 'required|exists:clients,id',
             'nom'        => 'required|string|max:255',
             'parent_id'  => 'nullable|exists:dae_document_dossiers,id',
             'couleur'    => 'nullable|string|max:20',
@@ -40,7 +36,7 @@ class DaeDocumentDossiersController extends Controller
             'ordre'      => 'nullable|integer|min:0',
         ]);
 
-        $dossier = DaeDocumentDossier::create($validated);
+        $dossier = DaeDocumentDossier::create($validated + ['client_id' => $this->getClientId($request)]);
 
         return response()->json($dossier, 201);
     }

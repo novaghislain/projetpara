@@ -2,18 +2,17 @@
 
 namespace App\Http\Controllers\Modules\Legal;
 
-use App\Http\Controllers\Controller;
 use App\Models\Legal\LegalLitigation;
 use Illuminate\Http\Request;
 
-class LegalLitigationsController extends Controller
+class LegalLitigationsController extends BaseLegalController
 {
     public function index(Request $request)
     {
         if (!$request->expectsJson()) {
             return view('app', ['page' => 'legal-contentieux']);
         }
-        $clientId = $request->get('client_id', auth()->user()->client_id ?? 0);
+        $clientId = $this->getClientId($request);
         $query = LegalLitigation::byClient($clientId);
 
         if ($request->statut) {
@@ -32,7 +31,6 @@ class LegalLitigationsController extends Controller
             return view('app', ['page' => 'legal-contentieux-create']);
         }
         $data = $request->validate([
-            'client_id' => 'required|integer',
             'titre' => 'required|string|max:255',
             'type' => 'required|string',
             'nature' => 'required|string',
@@ -42,6 +40,7 @@ class LegalLitigationsController extends Controller
 
         $data['reference'] = 'LIT-' . date('Y') . '-' . str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
         $data['created_by'] = auth()->id();
+        $data['client_id'] = $this->getClientId($request);
 
         $litige = LegalLitigation::create($data);
 

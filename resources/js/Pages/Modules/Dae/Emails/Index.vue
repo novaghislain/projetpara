@@ -1,4 +1,5 @@
 <template>
+<GelLayout>
     <div class="dae-emails-index">
         <!-- ═══ LOADING STATE ═══ -->
         <div v-if="loading" class="dae-loading">
@@ -242,6 +243,7 @@
             </div>
         </div>
     </div>
+</GelLayout>
 </template>
 
 <script>

@@ -55,10 +55,10 @@ onMounted(fetchData);
             <select v-model="selectedAccountId" class="form-select form-select-sm" style="width:auto;" @change="fetchData">
                 <option value="">Tous les comptes</option>
                 <option v-for="acc in accounts" :key="acc.id" :value="acc.id">
-                    {{ acc.account_number }} - {{ acc.name }}
+                    {{ acc.code }} - {{ acc.name }}
                 </option>
             </select>
-            <span class="small text-muted">{{ data?.entries?.length || 0 }} écritures</span>
+            <span class="small text-muted">{{ data?.reduce((s, g) => s + g.lines.length, 0) || 0 }} écritures</span>
         </div>
 
         <div v-if="loading" class="d-flex justify-content-center py-5">
@@ -70,31 +70,28 @@ onMounted(fetchData);
             <div class="card-header bg-white">
                 <div class="d-flex justify-content-between align-items-center">
                     <h6 class="fw-bold mb-0"><i class="bi-journal-text me-2 text-primary"></i>Grand Livre</h6>
-                    <span class="small text-muted">{{ data?.account ? data.account.account_number + ' - ' + data.account.name : 'Tous comptes' }}</span>
+                    <span class="small text-muted">{{ data?.length ? data.length + ' compte(s)' : 'Tous comptes' }}</span>
                 </div>
             </div>
-            <div v-if="!data?.entries?.length" class="text-muted small py-4 text-center">Aucune écriture trouvée.</div>
-            <table v-else class="table table-sm table-hover mb-0" v-for="(group, gIdx) in data.grouped || [{account: data.account, entries: data.entries, account_number: data.account?.account_number}]" :key="gIdx">
-                <thead v-if="data.grouped" class="table-light">
+            <div v-if="!data?.length" class="text-muted small py-4 text-center">Aucune écriture trouvée.</div>
+            <table v-for="(group, gIdx) in data" :key="gIdx" class="table table-sm table-hover mb-3">
+                <thead class="table-light">
                     <tr>
                         <th colspan="5" class="fw-bold small">
-                            {{ group.account_number }} - {{ group.account_name }}
+                            {{ group.account.code }} - {{ group.account.name }}
                         </th>
                     </tr>
                     <tr class="small text-muted">
                         <th>Date</th><th>Libellé</th><th class="text-end">Débit</th><th class="text-end">Crédit</th><th class="text-end">Solde</th>
                     </tr>
                 </thead>
-                <thead v-else class="small text-muted">
-                    <tr><th>Date</th><th>Libellé</th><th class="text-end">Débit</th><th class="text-end">Crédit</th><th class="text-end">Solde</th></tr>
-                </thead>
                 <tbody>
-                    <tr v-for="entry in (data.grouped ? group.entries : data.entries)" :key="entry.id">
-                        <td class="small">{{ $formatDate(entry.date || entry.created_at) }}</td>
-                        <td class="small">{{ entry.label || entry.description }}</td>
+                    <tr v-for="(entry, eIdx) in group.lines" :key="gIdx + '-' + eIdx">
+                        <td class="small">{{ $formatDate(entry.date) }}</td>
+                        <td class="small">{{ entry.label }}</td>
                         <td class="text-end small">{{ entry.debit ? $formatCurrency(entry.debit) : '-' }}</td>
                         <td class="text-end small">{{ entry.credit ? $formatCurrency(entry.credit) : '-' }}</td>
-                        <td class="text-end small fw-medium">{{ $formatCurrency(entry.balance || entry.solde) }}</td>
+                        <td class="text-end small fw-medium">{{ $formatCurrency(entry.balance) }}</td>
                     </tr>
                 </tbody>
             </table>

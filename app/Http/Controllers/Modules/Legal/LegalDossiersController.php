@@ -2,18 +2,17 @@
 
 namespace App\Http\Controllers\Modules\Legal;
 
-use App\Http\Controllers\Controller;
 use App\Models\Legal\LegalDossier;
 use Illuminate\Http\Request;
 
-class LegalDossiersController extends Controller
+class LegalDossiersController extends BaseLegalController
 {
     public function index(Request $request)
     {
         if (!$request->expectsJson()) {
             return view('app', ['page' => 'legal-dossiers']);
         }
-        $clientId = $request->get('client_id', auth()->user()->client_id ?? 0);
+        $clientId = $this->getClientId($request);
         $query = LegalDossier::byClient($clientId);
 
         if ($request->statut) {
@@ -32,7 +31,6 @@ class LegalDossiersController extends Controller
             return view('app', ['page' => 'legal-dossiers-create']);
         }
         $data = $request->validate([
-            'client_id' => 'required|integer',
             'titre' => 'required|string|max:255',
             'type' => 'required|string',
             'description' => 'nullable|string',
@@ -41,6 +39,7 @@ class LegalDossiersController extends Controller
 
         $data['reference'] = 'DOS-' . date('Y') . '-' . str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
         $data['created_by'] = auth()->id();
+        $data['client_id'] = $this->getClientId($request);
 
         $dossier = LegalDossier::create($data);
 
