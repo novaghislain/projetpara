@@ -6,35 +6,46 @@ use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
 /**
- * Strong Password Rule — Exigences de sécurité minimales.
+ * Strong Password Rule — Exigences de sécurité renforcées.
  *
- * - Minimum 10 caractères
+ * - Minimum 12 caractères
  * - Au moins 1 lettre majuscule
+ * - Au moins 1 lettre minuscule
  * - Au moins 1 chiffre
  * - Au moins 1 caractère spécial
+ * - Pas de répétitions (aaa, 111, etc.)
+ * - Pas de mots de passe communs
  */
 class StrongPassword implements ValidationRule
 {
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (strlen($value) < 10) {
-            $fail('Le mot de passe doit faire au moins 10 caractères.');
-            return;
-        }
+        $errors = [];
 
+        if (strlen($value) < 12) {
+            $errors[] = '12 caractères minimum';
+        }
         if (!preg_match('/[A-Z]/', $value)) {
-            $fail('Le mot de passe doit contenir au moins une lettre majuscule.');
-            return;
+            $errors[] = 'une majuscule';
         }
-
+        if (!preg_match('/[a-z]/', $value)) {
+            $errors[] = 'une minuscule';
+        }
         if (!preg_match('/[0-9]/', $value)) {
-            $fail('Le mot de passe doit contenir au moins un chiffre.');
-            return;
+            $errors[] = 'un chiffre';
+        }
+        if (!preg_match('/[^a-zA-Z0-9]/', $value)) {
+            $errors[] = 'un caractère spécial (@, #, $, %, etc.)';
+        }
+        if (preg_match('/(.)\1{2,}/', $value)) {
+            $errors[] = 'pas de répétitions (aaa, 111, etc.)';
+        }
+        if (preg_match('/^(1234|password|motdepasse|admin|qwerty)/i', $value)) {
+            $errors[] = 'pas de mot de passe commun';
         }
 
-        if (!preg_match('/[^a-zA-Z0-9]/', $value)) {
-            $fail('Le mot de passe doit contenir au moins un caractère spécial.');
-            return;
+        if (!empty($errors)) {
+            $fail('Le mot de passe doit contenir : ' . implode(', ', $errors));
         }
     }
 }

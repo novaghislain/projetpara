@@ -1,0 +1,21 @@
+<template>
+    <GelLayout>
+        <div class="container-fluid py-4">
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <div>
+                    <h1 class="page-title">Fiscalité</h1>
+                    <p class="page-subtitle">Gestion de la fiscalité et des obligations fiscales.</p>
+                </div>
+            </div>
+            <div class="card-dashboard">
+                <div class="card-body text-center py-5 text-muted">
+                    <i class="bi bi-file-earmark-text" style="font-size:3rem;"></i>
+                    <p class="mt-3">Module de fiscalité en cours de déploiement.</p>
+                </div>
+            </div>
+        </div>
+    </GelLayout>
+</template>
+<script setup>
+import GelLayout from '../../../Layouts/GelLayout.vue';
+</script>

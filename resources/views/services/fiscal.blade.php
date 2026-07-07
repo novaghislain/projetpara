@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Fiscal | GEL Cabinet</title>
-    <meta name="description" content="Module Fiscal GEL Cabinet : déclarations TVA, BIC, IS, IRPP, optimisation fiscale, gestion des échéances et accompagnement contrôle fiscal.">
+    <title>Fiscalité &amp; Facturation | GEL Cabinet</title>
+    <meta name="description" content="Module Fiscalité &amp; Facturation GEL Cabinet : facturation e-MECeF directe avec la DGI, gestion de la TVA et télédéclarations automatisées.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -171,6 +171,32 @@
         .gel-modal-divider::before, .gel-modal-divider::after { content: ''; flex: 1; height: 1px; background: var(--gel-border); }
 
         @media (max-width: 991px) { .gel-section { padding: 60px 0; } .gel-page-header { padding: 80px 0 60px; } }
+        /* ====== CHAT IA ====== */
+        .chat-fab { position:fixed; bottom:24px; right:24px; width:56px; height:56px; border-radius:50%; background:#FF7900; color:white; border:none; font-size:24px; cursor:pointer; box-shadow:0 4px 20px rgba(255,121,0,0.3); transition:all 0.3s; z-index:1060; display:flex; align-items:center; justify-content:center; }
+        .chat-fab:hover { transform:scale(1.05); background:#e06700; }
+        .chat-window { position:fixed; bottom:90px; right:24px; width:380px; height:560px; background:#fff; border-radius:16px; box-shadow:0 8px 40px rgba(0,0,0,0.15); z-index:1060; display:flex; flex-direction:column; overflow:hidden; border:1px solid rgba(0,0,0,0.06); }
+        .chat-window.minimized { height:56px; }
+        .chat-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:#0B1120; color:white; flex-shrink:0; }
+        .chat-header-left { display:flex; align-items:center; gap:10px; }
+        .chat-avatar { width:32px; height:32px; background:#FF7900; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; }
+        .chat-header h4 { font-size:14px; font-weight:600; margin:0; color:white; }
+        .chat-status { font-size:11px; color:rgba(255,255,255,0.55); display:flex; align-items:center; gap:4px; }
+        .status-dot { width:6px; height:6px; background:#10b981; border-radius:50%; display:inline-block; }
+        .chat-header-actions { display:flex; gap:4px; }
+        .chat-header-actions button { background:none; border:none; color:rgba(255,255,255,0.6); cursor:pointer; padding:4px 6px; border-radius:4px; font-size:14px; }
+        .chat-header-actions button:hover { background:rgba(255,255,255,0.1); color:white; }
+        .chat-messages { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:8px; background:#F9FAFB; }
+        .message { display:flex; max-width:85%; }
+        .message-assistant { align-self:flex-start; }
+        .message-user { align-self:flex-end; }
+        .message-content { padding:10px 14px; border-radius:12px; font-size:13.5px; line-height:1.5; }
+        .message-assistant .message-content { background:white; border:1px solid rgba(0,0,0,0.06); color:#1F2937; border-bottom-left-radius:4px; }
+        .message-user .message-content { background:#FF7900; color:white; border-bottom-right-radius:4px; }
+        .chat-input-area { display:flex; align-items:center; gap:8px; padding:12px 16px; border-top:1px solid rgba(0,0,0,0.06); background:white; }
+        .chat-input-area input { flex:1; border:none; outline:none; font-size:13px; padding:8px 0; color:#1F2937; background:transparent; }
+        .chat-input-area input::placeholder { color:#9CA3AF; }
+        .chat-input-area button { background:#FF7900; color:white; border:none; width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px; }
+        .chat-input-area button:hover { background:#e06700; }
     </style>
 </head>
 <body>
@@ -182,9 +208,9 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-8">
-                    <div class="gel-page-header-badge"><i class="bi-receipt-fill"></i> Service</div>
-                    <h1>Fiscal</h1>
-                    <p>Gérez l'intégralité de vos obligations fiscales — TVA, BIC, IS, IRPP — avec un module intelligent qui pré-remplit vos déclarations depuis vos écritures comptables.</p>
+                    <div class="gel-page-header-badge"><i class="bi-receipt-cutoff"></i> Service</div>
+                    <h1>Fiscalité &amp; Facturation</h1>
+                    <p>Facturation e-MECeF directe avec la DGI, gestion de la TVA et télédéclarations automatisées.</p>
                 </div>
             </div>
         </div>
@@ -195,51 +221,51 @@
         <div class="container">
             <div class="row justify-content-center mb-5">
                 <div class="col-lg-7 text-center">
-                    <h2 class="gel-section-title anim-fade-up">Fiscalité simplifiée</h2>
-                    <p class="gel-section-sub mx-auto anim-fade-up delay-1">Un module conçu pour automatiser vos déclarations et optimiser votre gestion fiscale.</p>
+                    <h2 class="gel-section-title anim-fade-up">Facturation &amp; Fiscalité connectées</h2>
+                    <p class="gel-section-sub mx-auto anim-fade-up delay-1">Facturez en conformité avec la DGI et automatisez l'intégralité de vos déclarations fiscales.</p>
                 </div>
             </div>
             <div class="row g-4">
                 <div class="col-md-4 anim-fade-up delay-1">
                     <div class="gel-feature-card">
-                        <div class="gel-feature-icon"><i class="bi-file-earmark-text"></i></div>
-                        <h5>Déclarations TVA</h5>
-                        <p>Déclarations CA3, CA12, TVA sur encaissement ou débit. Pré-remplissage automatique depuis les écritures.</p>
+                        <div class="gel-feature-icon"><i class="bi-globe2"></i></div>
+                        <h5>Facturation e-MECeF</h5>
+                        <p>Facturation électronique conforme e-MECeF avec transmission directe à la DGI. Génération et archivage des flux.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-2">
                     <div class="gel-feature-card">
-                        <div class="gel-feature-icon"><i class="bi-file-earmark-bar-graph"></i></div>
-                        <h5>BIC & IS</h5>
-                        <p>Déclarations de résultats BIC et IS. Liasse fiscale complète générée automatiquement.</p>
+                        <div class="gel-feature-icon"><i class="bi-calculator"></i></div>
+                        <h5>Gestion de la TVA</h5>
+                        <p>Calcul automatique de la TVA collectée et déductible. Déclarations CA3, CA12 pré-remplies depuis les écritures.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-3">
                     <div class="gel-feature-card">
-                        <div class="gel-feature-icon"><i class="bi-people"></i></div>
-                        <h5>IRPP</h5>
-                        <p>Déclarations d'impôt sur le revenu des personnes physiques. Calcul et simulation intégrés.</p>
+                        <div class="gel-feature-icon"><i class="bi-send"></i></div>
+                        <h5>Télédéclarations</h5>
+                        <p>Déclarations fiscales automatisées : TVA, BIC, IS, IRPP. Transmission électronique avec accusé de réception.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-1">
                     <div class="gel-feature-card">
-                        <div class="gel-feature-icon"><i class="bi-calendar-check"></i></div>
-                        <h5>Échéances & Rappels</h5>
-                        <p>Calendrier fiscal personnalisé avec rappels automatiques des échéances déclaratives et de paiement.</p>
+                        <div class="gel-feature-icon"><i class="bi-file-earmark-text"></i></div>
+                        <h5>Factures électroniques</h5>
+                        <p>Génération de factures conformes aux normes en vigueur. Cachet électronique, signature et horodatage.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-2">
                     <div class="gel-feature-card">
-                        <div class="gel-feature-icon"><i class="bi-graph-up"></i></div>
-                        <h5>Optimisation fiscale</h5>
-                        <p>Analyse et conseil en optimisation fiscale. Simulation de scenarios pour minimiser votre charge fiscale.</p>
+                        <div class="gel-feature-icon"><i class="bi-calendar-event"></i></div>
+                        <h5>Échéances &amp; Rappels</h5>
+                        <p>Calendrier fiscal intelligent avec alertes personnalisées. Plus aucune échéance déclarative ou de paiement oubliée.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-3">
                     <div class="gel-feature-card">
-                        <div class="gel-feature-icon"><i class="bi-shield"></i></div>
-                        <h5>Contrôle fiscal</h5>
-                        <p>Accompagnement en cas de contrôle fiscal. Documentation complète et historique des déclarations accessible.</p>
+                        <div class="gel-feature-icon"><i class="bi-graph-up-arrow"></i></div>
+                        <h5>Optimisation fiscale</h5>
+                        <p>Analyse et simulation fiscale. Scénarios comparatifs pour minimiser votre charge et sécuriser vos déclarations.</p>
                     </div>
                 </div>
             </div>
@@ -252,29 +278,29 @@
             <div class="row justify-content-center mb-5">
                 <div class="col-lg-7 text-center">
                     <h2 class="gel-section-title anim-fade-up">Comment ça marche</h2>
-                    <p class="gel-section-sub mx-auto anim-fade-up delay-1">Une chaîne comptable fluide de la saisie à la déclaration.</p>
+                    <p class="gel-section-sub mx-auto anim-fade-up delay-1">De la facturation à la déclaration, un processus 100% automatisé.</p>
                 </div>
             </div>
             <div class="row g-4 justify-content-center">
                 <div class="col-md-4 anim-fade-up delay-1">
                     <div class="gel-process-step">
                         <div class="gel-process-num">1</div>
-                        <h5>Collecte & Saisie</h5>
-                        <p>Collecte des données fiscales et saisie dans le module. Import automatique depuis la comptabilité.</p>
+                        <h5>Facturation conforme</h5>
+                        <p>Générez des factures e-MECeF conformes et transmettez-les directement à la DGI en un clic.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-2">
                     <div class="gel-process-step">
                         <div class="gel-process-num">2</div>
-                        <h5>Déclaration & Simulation</h5>
-                        <p>Génération des déclarations, simulation fiscale et validation avant transmission.</p>
+                        <h5>Déclaration automatisée</h5>
+                        <p>Déclarations TVA, BIC, IS pré-remplies depuis votre comptabilité. Validez et télédéclarez.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-3">
                     <div class="gel-process-step">
                         <div class="gel-process-num">3</div>
-                        <h5>Suivi & Optimisation</h5>
-                        <p>Suivi des échéances, optimisation fiscale continue et accompagnement personnalisé.</p>
+                        <h5>Suivi &amp; Optimisation</h5>
+                        <p>Suivez vos échéances, analysez votre performance fiscale et optimisez votre stratégie.</p>
                     </div>
                 </div>
             </div>
@@ -286,8 +312,8 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-8 anim-fade-up">
-                    <h2>Prêt à optimiser votre fiscalité ?</h2>
-                    <p>Créez un compte et testez le module Fiscal.</p>
+                    <h2>Prêt à digitaliser votre facturation ?</h2>
+                    <p>Créez un compte et testez le module Fiscalité &amp; Facturation.</p>
                 </div>
                 <div class="col-lg-4 text-lg-end mt-4 mt-lg-0 anim-fade-up delay-1">
                     <a href="javascript:void(0)" onclick="openModal()" class="gel-btn-white me-2"><i class="bi-person-plus"></i> Créer un compte</a>
@@ -302,8 +328,8 @@
         <div class="gel-modal-box">
             <button class="gel-modal-close" onclick="closeModal()">&times;</button>
             <div class="gel-modal-icon"><i class="bi-person-plus-fill"></i></div>
-            <h3>Accédez au service Fiscal</h3>
-            <p>Créez un compte gratuitement pour utiliser le module Fiscal.</p>
+            <h3>Accédez au service Fiscalité &amp; Facturation</h3>
+            <p>Créez un compte gratuitement pour utiliser le module Fiscalité &amp; Facturation.</p>
             <a href="/register" class="gel-modal-btn gel-modal-btn-primary"><i class="bi-person-plus"></i> Créer un compte</a>
             <div class="gel-modal-divider">ou</div>
             <a href="/login" class="gel-modal-btn gel-modal-btn-outline"><i class="bi-box-arrow-in-right"></i> Se connecter</a>
@@ -330,5 +356,6 @@
         const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('anim-visible'); observer.unobserve(entry.target); } }); }, { threshold: 0.12 });
         animEls.forEach(el => observer.observe(el));
     </script>
+@include('partials.ai-chat-floating')
 </body>
 </html>

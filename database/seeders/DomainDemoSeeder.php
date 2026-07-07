@@ -15,10 +15,14 @@ use Illuminate\Support\Facades\Log;
 class DomainDemoSeeder extends Seeder
 {
     /**
-     * Crée 3 clients de démonstration avec des domaines différents :
+     * Crée 7 clients de démonstration couvrant 7 domaines d'activité :
      * - Ets. Koudjo & Fils  → Commerce
      * - Hôtel Beau Rivage   → Hotel
      * - Collège Saint-Michel → Scolaire
+     * - Agence Lokossa Immobilier → Location
+     * - Transport Rapide Express → Transport
+     * - Le Gourmet Restaurant → Restauration
+     * - Clinique La Miséricorde → Santé
      */
     public function run(): void
     {
@@ -63,6 +67,58 @@ class DomainDemoSeeder extends Seeder
                 'email'         => 'contact@saintmichel.bj',
                 'admin_name'    => 'Admin Saint-Michel',
                 'admin_email'   => 'admin@saintmichel.bj',
+            ],
+            [
+                'company_name'  => 'Agence Lokossa Immobilier',
+                'domain_code'   => 'location',
+                'legal_form'    => 'SARL',
+                'rccm'          => 'RB/MONO/2025/00147',
+                'ifu'           => '0202333444555',
+                'address'       => '12 Rue des Bailleurs, Centre-Ville',
+                'city'          => 'Lokossa',
+                'phone'         => '+229 01 10 11 12',
+                'email'         => 'contact@lokossaimmo.bj',
+                'admin_name'    => 'Admin Lokossa Immo',
+                'admin_email'   => 'admin@lokossaimmo.bj',
+            ],
+            [
+                'company_name'  => 'Transport Rapide Express',
+                'domain_code'   => 'transport',
+                'legal_form'    => 'SA',
+                'rccm'          => 'RB/COT/2025/00999',
+                'ifu'           => '0202666777888',
+                'address'       => 'Gare Routière, Boulevard de l\'Indépendance',
+                'city'          => 'Cotonou',
+                'phone'         => '+229 01 20 21 22',
+                'email'         => 'contact@trexpress.bj',
+                'admin_name'    => 'Admin Transport Express',
+                'admin_email'   => 'admin@trexpress.bj',
+            ],
+            [
+                'company_name'  => 'Le Gourmet Restaurant',
+                'domain_code'   => 'restauration',
+                'legal_form'    => 'EURL',
+                'rccm'          => 'RB/COT/2025/00150',
+                'ifu'           => '0202777888999',
+                'address'       => '5 Rue des Saveurs, Quartier Gourmet',
+                'city'          => 'Cotonou',
+                'phone'         => '+229 01 30 31 32',
+                'email'         => 'contact@legourmet.bj',
+                'admin_name'    => 'Admin Le Gourmet',
+                'admin_email'   => 'admin@legourmet.bj',
+            ],
+            [
+                'company_name'  => 'Clinique La Miséricorde',
+                'domain_code'   => 'sante',
+                'legal_form'    => 'SARL',
+                'rccm'          => 'RB/COT/2025/00177',
+                'ifu'           => '0202888999000',
+                'address'       => '42 Avenue de la Santé, Quartier Médical',
+                'city'          => 'Cotonou',
+                'phone'         => '+229 01 40 41 42',
+                'email'         => 'contact@lamisericorde.bj',
+                'admin_name'    => 'Admin La Miséricorde',
+                'admin_email'   => 'admin@lamisericorde.bj',
             ],
         ];
 
@@ -123,8 +179,10 @@ class DomainDemoSeeder extends Seeder
                         'role'              => 'company_admin',
                         'is_company_admin'  => true,
                         'client_id'         => $client->id,
+                        'active_client_id'  => $client->id,
+                        'email_verified_at' => now(),
                         'is_active'         => true,
-                        'must_change_password' => true,
+                        'must_change_password' => false,
                     ]);
 
                     // 3. Associer l'admin au client
@@ -157,11 +215,15 @@ class DomainDemoSeeder extends Seeder
             }
         }
 
-        $this->command?->info('┌──────────────────────────────────────────────┐');
-        $this->command?->info('│  Identifiants de démonstration :              │');
-        $this->command?->info('│  admin@koudjo.bj / admin123 (Commerce)        │');
-        $this->command?->info('│  admin@beaurivage.bj / admin123 (Hôtel)       │');
-        $this->command?->info('│  admin@saintmichel.bj / admin123 (Scolaire)   │');
-        $this->command?->info('└──────────────────────────────────────────────┘');
+        $this->command?->info('┌──────────────────────────────────────────────────────────────────┐');
+        $this->command?->info('│  Identifiants de démonstration :                                  │');
+        $this->command?->info('│  admin@koudjo.bj / admin123      (Commerce)                       │');
+        $this->command?->info('│  admin@beaurivage.bj / admin123  (Hôtel)                          │');
+        $this->command?->info('│  admin@saintmichel.bj / admin123 (Scolaire)                       │');
+        $this->command?->info('│  admin@lokossaimmo.bj / admin123 (Location)                       │');
+        $this->command?->info('│  admin@trexpress.bj / admin123   (Transport)                      │');
+        $this->command?->info('│  admin@legourmet.bj / admin123   (Restauration)                   │');
+        $this->command?->info('│  admin@lamisericorde.bj / admin123 (Santé)                        │');
+        $this->command?->info('└──────────────────────────────────────────────────────────────────┘');
     }
 }

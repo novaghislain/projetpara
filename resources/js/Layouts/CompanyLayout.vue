@@ -28,10 +28,10 @@ const navItems = [
     { name: 'Commandes',      icon: 'bi-cart-check',     route: '/mes-commandes',        key: 'mes-commandes' },
     { name: 'Finance',        icon: 'bi-cash-stack',     route: '/company/invoices',     key: 'company-invoices',  module: 'facturation' },
     { name: 'Caisse',         icon: 'bi-cash-coin',      route: '/company/caisse',       key: 'company-caisse',    module: 'caisse' },
-    { name: 'Comptabilité',   icon: 'bi-calculator',     route: '/company/accounting',   key: 'company-accounting', module: 'comptabilite' },
+    { name: 'Comptabilite',   icon: 'bi-calculator',     route: '/company/accounting',   key: 'company-accounting', module: 'comptabilite' },
     { name: 'CRM',            icon: 'bi-people',         route: '/company/crm',          key: 'company-crm',       module: 'crm' },
     { name: 'GED',            icon: 'bi-folder',          route: '/company/ged',          key: 'company-ged',       module: 'document' },
-    { name: 'Secrétariat',    icon: 'bi-file-text',      route: '/company/dae',          key: 'company-dae',       module: 'dae' },
+    { name: 'Secretariat',    icon: 'bi-file-text',      route: '/company/dae',          key: 'company-dae',       module: 'dae' },
     { name: 'Juridique',      icon: 'bi-briefcase',      route: '/company/legal',        key: 'company-legal',     module: 'juridique' },
     { name: 'Projets',        icon: 'bi-kanban',         route: '/company/projects',     key: 'company-projects',  module: 'projets' },
     { name: 'RH',             icon: 'bi-people',         route: '/company/rh',           key: 'company-rh',        module: 'rh' },
@@ -61,22 +61,21 @@ function hasSidebarAccess(href) {
     return !mod || authStore.hasModule(mod);
 }
 
-// ── Sous-fonctionnalités contextuelles ──
+// ── Sous-fonctionnalites contextuelles ──
 const sidebarBySection = {
     'company-dashboard': [
         { group: '', items: [
+            { label: 'Comptabilite',      href: '/company/accounting',   icon: 'bi-calculator' },
             { label: 'Mes commandes',     href: '/mes-commandes',       icon: 'bi-cart-check' },
-            { label: 'Catalogue GEL',     href: '/nos-services',       icon: 'bi-shop' },
             { label: 'Notifications',     href: '/company/notifications', icon: 'bi-bell' },
             { label: 'Services actifs',   href: '/company/services',   icon: 'bi-grid-3x3-gap' },
-            { label: 'Documents (GED)',   href: '/company/ged',        icon: 'bi-folder2-open' },
+            { label: 'Mon Profil',        href: '/company/profile',     icon: 'bi-person-circle' },
         ]},
     ],
     'mes-commandes': [
         { group: '', items: [
             { label: 'Mes commandes',     href: '/mes-commandes',       icon: 'bi-cart-check' },
             { label: 'Catalogue GEL',     href: '/nos-services',       icon: 'bi-shop' },
-            { label: 'Suivi des demandes',href: '/company/notifications', icon: 'bi-envelope' },
         ]},
     ],
     'company-caisse': [
@@ -96,8 +95,24 @@ const sidebarBySection = {
         ]},
     ],
     'company-accounting': [
-        { group: '', items: [
-            { label: 'Comptabilité',      href: '/company/accounting', icon: 'bi-calculator' },
+        { group: 'Comptabilite', items: [
+            { label: 'Tableau de bord',   href: '/company/accounting',              icon: 'bi-speedometer2' },
+            { label: 'Plan comptable',    href: '/company/comptabilite/comptes',     icon: 'bi-journal' },
+            { label: 'Journaux',          href: '/company/comptabilite/journaux',    icon: 'bi-journal-text' },
+            { label: 'Ecritures',        href: '/company/comptabilite/ecritures',    icon: 'bi-pencil-square' },
+            { label: 'Balance',           href: '/company/comptabilite/balance',     icon: 'bi-bar-chart' },
+            { label: 'Grand Livre',       href: '/company/comptabilite/grand-livre', icon: 'bi-book' },
+        ]},
+        { group: 'Gestion', items: [
+            { label: 'Factures',          href: '/company/comptabilite/factures',        icon: 'bi-receipt' },
+            { label: 'Banque',            href: '/company/comptabilite/banque',           icon: 'bi-bank' },
+            { label: 'TVA',               href: '/company/comptabilite/tva/taux',         icon: 'bi-percent' },
+        ]},
+        { group: 'Rapports', items: [
+            { label: 'Bilan',             href: '/company/comptabilite/rapports/bilan',           icon: 'bi-file-earmark-bar-graph' },
+            { label: 'Resultat',          href: '/company/comptabilite/rapports/resultat',        icon: 'bi-graph-up' },
+            { label: 'TFT (Tresorerie)',  href: '/company/comptabilite/rapports/tft',             icon: 'bi-cash-coin' },
+            { label: 'Balance agee',      href: '/company/comptabilite/rapports/aging-clients',   icon: 'bi-clock-history' },
         ]},
     ],
     'company-ged': [
@@ -118,14 +133,14 @@ const sidebarBySection = {
             { label: 'Courriers',         href: '/company/dae/courriers',  icon: 'bi-envelope' },
             { label: 'Documents',         href: '/company/dae/documents',  icon: 'bi-folder' },
             { label: 'Contrats',          href: '/company/dae/contrats',   icon: 'bi-file-text' },
-            { label: 'Tâches',            href: '/company/dae/taches',     icon: 'bi-list-task' },
+            { label: 'Taches',            href: '/company/dae/taches',     icon: 'bi-list-task' },
         ]},
     ],
     'company-rh': [
         { group: '', items: [
             { label: 'Tableau de bord',   href: '/company/rh',              icon: 'bi-speedometer2' },
-            { label: 'Employés',          href: '/company/rh/employees',    icon: 'bi-people' },
-            { label: 'Congés',            href: '/company/rh/leaves',       icon: 'bi-calendar-check' },
+            { label: 'Employes',          href: '/company/rh/employees',    icon: 'bi-people' },
+            { label: 'Congs',            href: '/company/rh/leaves',       icon: 'bi-calendar-check' },
             { label: 'Notes de frais',    href: '/company/rh/expenses',     icon: 'bi-cash-stack' },
             { label: 'Paie',              href: '/company/rh/payrolls',     icon: 'bi-calculator' },
             { label: 'Formations',        href: '/company/rh/trainings',    icon: 'bi-book' },
@@ -142,7 +157,7 @@ const sidebarBySection = {
         { group: '', items: [
             { label: 'Tableau de bord',   href: '/company/projects',         icon: 'bi-speedometer2' },
             { label: 'Projets',           href: '/company/projects',         icon: 'bi-kanban' },
-            { label: 'Tâches',            href: '/company/projects/tasks',   icon: 'bi-list-check' },
+            { label: 'Taches',            href: '/company/projects/tasks',   icon: 'bi-list-check' },
         ]},
     ],
 };
@@ -156,11 +171,11 @@ const sidebarLinks = computed(() => {
 });
 
 /**
- * Construit dynamiquement la sidebar comptabilité selon les modules
- * actifs pour le domaine d'activité du client.
+ * Construit dynamiquement la sidebar comptabilite selon les modules
+ * actifs pour le domaine d'activite du client.
  */
 function buildAccountingSidebar() {
-    return []; // Déplacé dans les onglets de la page Comptabilité
+    return []; // Deplace dans les onglets de la page Comptabilite
 }
 
 const flatLinks = computed(() =>
@@ -172,10 +187,10 @@ const sectionTitles = {
     'mes-commandes': 'Commandes',
     'company-invoices': 'Finance',
     'company-caisse': 'Caisse',
-    'company-accounting': 'Comptabilité',
+    'company-accounting': 'Comptabilite',
     'company-crm': 'CRM',
     'company-ged': 'GED',
-    'company-dae': 'Secrétariat DAE',
+    'company-dae': 'Secretariat DAE',
     'company-legal': 'Juridique',
     'company-projects': 'Projets',
     'company-rh': 'Ressources Humaines',
@@ -191,18 +206,20 @@ const pageKey = computed(() => {
     if (path.startsWith('/company/profile')) return 'company-profile';
     if (path.startsWith('/company/caisse')) return 'company-caisse';
     if (path.startsWith('/company/accounting')) return 'company-accounting';
+    if (path.startsWith('/company/comptabilite')) return 'company-accounting';
+    if (path.startsWith('/company/compta')) return 'company-accounting';
     if (path.startsWith('/company/invoices')) return 'company-invoices';
     if (path.startsWith('/company/crm')) return 'company-crm';
     if (path.startsWith('/company/rh')) return 'company-rh';
     if (path.startsWith('/company/legal')) return 'company-legal';
     if (path.startsWith('/company/projects')) return 'company-projects';
-    if (path.startsWith('/company/ai')) return 'company-dashboard';
     if (path.startsWith('/company/notifications')) return 'company-profile';
     if (path.startsWith('/company/ged')) return 'company-ged';
     if (path.startsWith('/company/dae')) return 'company-dae';
     if (path.startsWith('/company/emecef')) return 'company-emecef';
     if (path.startsWith('/mes-commandes')) return 'mes-commandes';
     if (path.startsWith('/nos-services')) return 'mes-commandes';
+    if (path.startsWith('/company/ai')) return 'company-dashboard';
     return 'company-dashboard';
 });
 
@@ -236,7 +253,7 @@ const logout = async () => {
     }
 };
 
-// Carte page → module requis
+// Carte page -> module requis
 const pageModuleMap = {
     'company-caisse': 'caisse',
     'company-ged': 'document',
@@ -277,7 +294,7 @@ onMounted(async () => {
     stopPermissionPolling = startPermissionPolling();
 });
 
-// ─── Notifications ─────────────────────────────
+// --- Notifications --------------------------------
 const notifications = ref([]);
 const unreadCount = ref(0);
 let pollInterval = null;
@@ -291,7 +308,7 @@ function relativeDate(dateStr) {
     if (!dateStr) return '';
     const diff = Date.now() - new Date(dateStr).getTime();
     const mins = Math.floor(diff / 60000);
-    if (mins < 1) return "à l'instant";
+    if (mins < 1) return "a l'instant";
     if (mins < 60) return 'il y a ' + mins + ' min';
     const hours = Math.floor(mins / 60);
     if (hours < 24) return 'il y a ' + hours + ' h';
@@ -348,11 +365,11 @@ onUnmounted(() => {
 <template>
     <div class="g-shell d-flex flex-column" style="min-height:100vh; background:#f0f4f8;">
 
-        <!-- ═══ TOP BAR — Logo + User ═══ -->
+        <!-- === TOP BAR --- Logo + User === -->
         <header class="g-topbar d-flex align-items-center justify-content-between px-3">
             <div class="d-flex align-items-center gap-2">
                 <div class="g-logo-icon"><i class="bi-gem"></i></div>
-                <span class="g-logo-text">Portail Client — GEL</span>
+                <span class="g-logo-text">Portail Client -- GEL</span>
             </div>
 
             <div class="d-none d-md-flex flex-grow-1 justify-content-center px-4">
@@ -397,7 +414,7 @@ onUnmounted(() => {
                 </div>
 
                 <span class="g-role-badge d-none d-sm-inline">{{ userRoleLabel }}</span>
-                <button class="g-toggle-btn" @click="sidebarOpen = !sidebarOpen" title="Afficher/Masquer le panneau latéral">
+                <button class="g-toggle-btn" @click="sidebarOpen = !sidebarOpen" title="Afficher/Masquer le panneau lateral">
                     <i :class="sidebarOpen ? 'bi-x-lg' : 'bi-list'"></i>
                 </button>
                 <div class="dropdown">
@@ -409,7 +426,7 @@ onUnmounted(() => {
                     <ul class="dropdown-menu dropdown-menu-end g-dropdown">
                         <li>
                             <div class="g-dd-user px-3 py-2 border-bottom">
-                                <div class="fw-bold" style="font-size:13px; color:#163A5E;">{{ company?.name }} — {{ authStore.user?.name }}</div>
+                                <div class="fw-bold" style="font-size:13px; color:#163A5E;">{{ company?.name }} -- {{ authStore.user?.name }}</div>
                                 <div style="font-size:11px; color:#888;">{{ authStore.user?.email }}</div>
                             </div>
                         </li>
@@ -418,7 +435,7 @@ onUnmounted(() => {
             </div>
         </header>
 
-        <!-- ═══ MAIN LAYOUT: Sidebar + Contenu ═══ -->
+        <!-- === MAIN LAYOUT: Sidebar + Contenu === -->
         <div class="g-body d-flex flex-grow-1" style="min-height:0;">
 
             <!-- Sidebar : Navigation principale -->
@@ -434,16 +451,16 @@ onUnmounted(() => {
                     </a>
                 </div>
 
-                <!-- ══ BAS DE SIDEBAR — Compte ══ -->
+                <!-- == BAS DE SIDEBAR --- Compte == -->
                 <div class="gs-sidebar-divider"></div>
                 <div class="gs-sidebar-bottom">
                     <a href="/company/profile" class="gs-nav-item">
                         <i class="bi-gear gs-nav-icon"></i>
-                        <span class="gs-nav-label">Paramètres</span>
+                        <span class="gs-nav-label">Parametres</span>
                     </a>
                     <a href="#" class="gs-nav-item gs-nav-logout" @click.prevent="logout">
                         <i class="bi-box-arrow-right gs-nav-icon"></i>
-                        <span class="gs-nav-label">Déconnexion</span>
+                        <span class="gs-nav-label">Deconnexion</span>
                     </a>
                 </div>
             </aside>
@@ -453,16 +470,18 @@ onUnmounted(() => {
 
             <!-- Contenu principal -->
             <main class="g-main flex-grow-1 d-flex flex-column" style="min-width:0;">
-                <!-- Barre des sous-fonctionnalités -->
+                <!-- Barre des sous-fonctionnalites -->
                 <div class="gs-subnav" v-if="flatLinks.length">
                     <div class="gs-subnav-title">{{ sectionTitles[pageKey] || '' }}</div>
                     <div class="gs-subnav-links">
-                        <a v-for="link in flatLinks" :key="link.label"
-                           :href="link.href"
-                           class="gs-subnav-link">
-                            <i :class="link.icon"></i>
-                            {{ link.label }}
-                        </a>
+                        <template v-for="link in flatLinks" :key="link.label">
+                            <span v-if="link.group" class="gs-subnav-group">{{ link.group }}</span>
+                            <a :href="link.href"
+                               class="gs-subnav-link">
+                                <i :class="link.icon"></i>
+                                {{ link.label }}
+                            </a>
+                        </template>
                     </div>
                 </div>
                 <!-- Contenu de la page -->
@@ -479,9 +498,9 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-/* ══ PORTAL CLIENT LAYOUT — Sidebar verticale + Subnav ══ */
+/* == PORTAL CLIENT LAYOUT --- Sidebar verticale + Subnav == */
 
-/* ── Top bar simplifiée ─────────────────────── */
+/* -- Top bar simplifiee ------------------------ */
 .g-topbar {
     background: #163A5E;
     height: 52px;
@@ -518,7 +537,7 @@ onUnmounted(() => {
     color: #fff;
 }
 
-/* ── User / Notifs ───────────────────────── */
+/* -- User / Notifs -------------------------- */
 .g-icon-btn {
     background: rgba(255,255,255,0.1);
     border: 1px solid rgba(255,255,255,0.2);
@@ -550,7 +569,7 @@ onUnmounted(() => {
     display: flex; align-items: center; justify-content: center;
 }
 
-/* ── Dropdowns ───────────────────────────── */
+/* -- Dropdowns ------------------------------ */
 .g-dropdown { border-radius: 4px !important; min-width: 210px; margin-top: 6px; border: 1px solid #dce3ee !important; box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important; }
 .g-dd-user { background: #f8fbff; }
 .g-dd-item { font-size: 13px; padding: 9px 16px; color: #333; }
@@ -564,7 +583,7 @@ onUnmounted(() => {
 }
 .g-notif-all:hover { background: #FFE0B2; color: #e06700; }
 
-/* ── Sidebar ──────────────────────────────────── */
+/* -- Sidebar ------------------------------------- */
 .g-body { position: relative; }
 .g-sidebar {
     width: 240px;
@@ -584,7 +603,7 @@ onUnmounted(() => {
     padding: 0;
 }
 
-/* ── Navigation principale ────────────────────── */
+/* -- Navigation principale -------------------------- */
 .gs-nav {
     padding: 8px 0;
     flex: 1;
@@ -622,7 +641,7 @@ onUnmounted(() => {
 .gs-nav-active .gs-nav-icon { color: #FF7900; }
 .gs-nav-label { line-height: 1; }
 
-/* ── Bas de sidebar — Compte ─────────────── */
+/* -- Bas de sidebar --- Compte --------------- */
 .gs-sidebar-divider {
     height: 1px;
     background: rgba(255,255,255,0.08);
@@ -639,7 +658,7 @@ onUnmounted(() => {
     background: rgba(231, 76, 60, 0.12) !important;
 }
 
-/* ── Subnav (sous-fonctionnalités en haut du contenu) ── */
+/* -- Subnav (sous-fonctionnalites en haut du contenu) -- */
 .gs-subnav {
     background: #fff;
     border-bottom: 1px solid #dce3ee;
@@ -698,10 +717,10 @@ onUnmounted(() => {
 }
 .gs-subnav-link:hover i { color: #FF7900; }
 
-/* ── Main ────────────────────────────────── */
+/* -- Main -------------------------------------- */
 .g-main { background: #f0f4f8; min-width: 0; }
 
-/* ── Mobile overlay ──────────────────────── */
+/* -- Mobile overlay ---------------------------- */
 .g-overlay {
     position: fixed;
     inset: 0;
@@ -709,7 +728,7 @@ onUnmounted(() => {
     z-index: 1040;
 }
 
-/* ── Deep overrides ──────────────────── */
+/* -- Deep overrides ------------------------ */
 :deep(.btn) { border-radius: 4px !important; font-size: 13px; }
 :deep(.btn-primary) {
     background: #FF7900 !important; border-color: #FF7900 !important;
@@ -746,7 +765,7 @@ onUnmounted(() => {
 :deep(.border-primary) { border-color: #FF7900 !important; }
 :deep(.progress-bar) { background: #FF7900; }
 
-/* ══ RESPONSIVE ══ */
+/* == RESPONSIVE == */
 @media (max-width: 991.98px) {
     .g-topbar { padding-left: 10px !important; padding-right: 10px !important; }
     .g-main > .p-4 { padding: 12px !important; }

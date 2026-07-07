@@ -34,7 +34,11 @@ class DatabaseSeeder extends Seeder
         // Le seeder de rôles et permissions DOIT être appelé avant AdminSeeder
         // car les utilisateurs Admin et Company Admin ont besoin des rôles.
         $this->call([
-            RoleAndPermissionSeeder::class, // ← ajouté en premier
+            // ─── ACL : Rôles & Permissions (Spatie) ────────────────────
+            RoleSeeder::class,
+            PermissionSeeder::class,
+
+            // ─── Référentiels ──────────────────────────────────────────
             PoleSeeder::class,
             AdminSeeder::class,
             ServiceSeeder::class,
@@ -58,8 +62,13 @@ class DatabaseSeeder extends Seeder
             DemoRelanceSeeder::class,
             DemoApprovalWorkflowSeeder::class,
             DemoCostCenterSeeder::class,
+            PlanComptableSyscohadaSeeder::class, // ← Plan comptable SYSCOHADA OHADA
             UsersSeeder::class, // ← Comptes utilisateurs complets
             DomainDemoSeeder::class,       // ← 3 clients démo par domaine
+
+            // ─── GEL Cabinet ─────────────────────────────────────────
+            \Database\Seeders\Gel\AccountTypesSeeder::class,
+            \Database\Seeders\Gel\PlanComptableSyscohadaSeeder::class,
         ]);
     }
 }

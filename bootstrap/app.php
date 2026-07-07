@@ -23,6 +23,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
@@ -32,11 +33,23 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('relance:send')->dailyAt('09:00');
         // Vérification des alertes d'actifs IT chaque lundi à 08h00
         $schedule->command('it:asset-alerts')->weeklyOn(1, '08:00');
+        // Sauvegarde automatique de la base de données chaque jour à 02h00
+        $schedule->command('db:backup --compress')->dailyAt('02:00');
     })
     ->withMiddleware(function (Middleware $middleware): void {
         // ─── Middleware global (appliqué à TOUTES les requêtes) ────────
         // LogRedirects : enregistre les redirections HTTP pour débogage
         $middleware->append(\App\Http\Middleware\LogRedirects::class);
+        // SecurityHeaders : en-têtes de sécurité (CSP, HSTS, X-Frame-Options...)
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        // AuditMiddleware : enregistre toutes les mutations dans audit_logs
+        $middleware->append(\App\Http\Middleware\AuditMiddleware::class);
+
+        // ─── Exclusion CSRF (routes d'API qui utilisent le middleware 'web' pour la session) ─
+        $middleware->validateCsrfTokens(except: [
+            'api/login',
+            'api/auth/login',
+        ]);
 
         // ─── Alias de middlewares ──────────────────────────────────────
         // Chaque alias peut être utilisé dans les routes :
@@ -65,8 +78,17 @@ return Application::configure(basePath: dirname(__DIR__))
             'not_suspended'  => \App\Http\Middleware\CheckNotSuspended::class,
             'can.action'     => \App\Http\Middleware\CheckActionPermission::class,
             'redirect.client'=> \App\Http\Middleware\RedirectIfClient::class,
+            // Sécurité — limitation de débit
+            'throttle.api'    => \App\Http\Middleware\ApiRateLimiter::class,
+            'throttle.login'  => \App\Http\Middleware\LoginThrottle::class,
             // Comptabilité par domaine d'activité
-            'compta.domain' => \App\Http\Middleware\CheckComptaDomainModule::class,
+            'compta.domain'   => \App\Http\Middleware\CheckComptaDomainModule::class,
+            'tenant'          => \App\Http\Middleware\TenantMiddleware::class,
+            // ACL multi-tenant (Spatie Permission)
+            'tenant.resolve'  => \App\Http\Middleware\TenantResolver::class,
+            'tenant.permission' => \App\Http\Middleware\CheckTenantPermission::class,
+            // Spatie Permission — middleware intégré
+            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
         ]);
 
         // ─── Middleware applicatif (exécuté après les globaux) ─────────

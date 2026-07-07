@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Comptabilité | GEL Cabinet</title>
-    <meta name="description" content="Module Comptabilité GEL Cabinet : plan comptable SYSCOA/OHADA, journaux, balance, bilan, compte de résultat et déclarations fiscales.">
+    <title>Comptabilité &amp; Finance | GEL Cabinet</title>
+    <meta name="description" content="Module Comptabilité &amp; Finance GEL Cabinet : saisie automatisée, rapprochement bancaire, liasse fiscale et clôture annuelle certifiée SYSCOHADA.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,7 +16,7 @@
     <style>
         :root {
             --gel-primary: #FF7900; --gel-primary-hov: #e06700; --gel-primary-soft: rgba(255,121,0,0.06);
-            --gel-svc: #FF7900; --gel-svc-rgb: 255,121,0;
+            --gel-svc: #163A5E; --gel-svc-rgb: 22,58,94;
             --gel-darker: #0F172A; --gel-dark: #111827; --gel-white: #ffffff;
             --gel-light: #F8FAFC; --gel-light2: #F1F5F9; --gel-border: #E2E8F0;
             --gel-muted: #64748B; --gel-text: #1E293B;
@@ -171,6 +171,32 @@
         .gel-modal-divider::before, .gel-modal-divider::after { content: ''; flex: 1; height: 1px; background: var(--gel-border); }
 
         @media (max-width: 991px) { .gel-section { padding: 60px 0; } .gel-page-header { padding: 80px 0 60px; } }
+        /* ====== CHAT IA ====== */
+        .chat-fab { position:fixed; bottom:24px; right:24px; width:56px; height:56px; border-radius:50%; background:#FF7900; color:white; border:none; font-size:24px; cursor:pointer; box-shadow:0 4px 20px rgba(255,121,0,0.3); transition:all 0.3s; z-index:1060; display:flex; align-items:center; justify-content:center; }
+        .chat-fab:hover { transform:scale(1.05); background:#e06700; }
+        .chat-window { position:fixed; bottom:90px; right:24px; width:380px; height:560px; background:#fff; border-radius:16px; box-shadow:0 8px 40px rgba(0,0,0,0.15); z-index:1060; display:flex; flex-direction:column; overflow:hidden; border:1px solid rgba(0,0,0,0.06); }
+        .chat-window.minimized { height:56px; }
+        .chat-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:#0B1120; color:white; flex-shrink:0; }
+        .chat-header-left { display:flex; align-items:center; gap:10px; }
+        .chat-avatar { width:32px; height:32px; background:#FF7900; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; }
+        .chat-header h4 { font-size:14px; font-weight:600; margin:0; color:white; }
+        .chat-status { font-size:11px; color:rgba(255,255,255,0.55); display:flex; align-items:center; gap:4px; }
+        .status-dot { width:6px; height:6px; background:#10b981; border-radius:50%; display:inline-block; }
+        .chat-header-actions { display:flex; gap:4px; }
+        .chat-header-actions button { background:none; border:none; color:rgba(255,255,255,0.6); cursor:pointer; padding:4px 6px; border-radius:4px; font-size:14px; }
+        .chat-header-actions button:hover { background:rgba(255,255,255,0.1); color:white; }
+        .chat-messages { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:8px; background:#F9FAFB; }
+        .message { display:flex; max-width:85%; }
+        .message-assistant { align-self:flex-start; }
+        .message-user { align-self:flex-end; }
+        .message-content { padding:10px 14px; border-radius:12px; font-size:13.5px; line-height:1.5; }
+        .message-assistant .message-content { background:white; border:1px solid rgba(0,0,0,0.06); color:#1F2937; border-bottom-left-radius:4px; }
+        .message-user .message-content { background:#FF7900; color:white; border-bottom-right-radius:4px; }
+        .chat-input-area { display:flex; align-items:center; gap:8px; padding:12px 16px; border-top:1px solid rgba(0,0,0,0.06); background:white; }
+        .chat-input-area input { flex:1; border:none; outline:none; font-size:13px; padding:8px 0; color:#1F2937; background:transparent; }
+        .chat-input-area input::placeholder { color:#9CA3AF; }
+        .chat-input-area button { background:#FF7900; color:white; border:none; width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px; }
+        .chat-input-area button:hover { background:#e06700; }
     </style>
 </head>
 <body>
@@ -182,9 +208,9 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-8">
-                    <div class="gel-page-header-badge"><i class="bi-calculator-fill"></i> Service</div>
-                    <h1>Comptabilité</h1>
-                    <p>Gérez l'intégralité de la chaîne comptable — du journal au bilan — avec une automatisation poussée, un plan comptable SYSCOA/OHADA personnalisable et des déclarations fiscales intégrées.</p>
+                    <div class="gel-page-header-badge"><i class="bi-graph-up-arrow"></i> Service</div>
+                    <h1>Comptabilité &amp; Finance</h1>
+                    <p>Saisie automatisée, rapprochement bancaire, liasse fiscale et clôture annuelle certifiée SYSCOHADA.</p>
                 </div>
             </div>
         </div>
@@ -195,51 +221,51 @@
         <div class="container">
             <div class="row justify-content-center mb-5">
                 <div class="col-lg-7 text-center">
-                    <h2 class="gel-section-title anim-fade-up">Toute la chaîne comptable</h2>
-                    <p class="gel-section-sub mx-auto anim-fade-up delay-1">Un module complet pour centraliser et automatiser l'ensemble de vos opérations comptables.</p>
+                    <h2 class="gel-section-title anim-fade-up">Pilotage financier complet</h2>
+                    <p class="gel-section-sub mx-auto anim-fade-up delay-1">Automatisez votre chaîne comptable du journal au bilan avec une clôture certifiée aux normes SYSCOHADA.</p>
                 </div>
             </div>
             <div class="row g-4">
                 <div class="col-md-4 anim-fade-up delay-1">
                     <div class="gel-feature-card">
-                        <div class="gel-feature-icon"><i class="bi-journal-text"></i></div>
-                        <h5>Plan comptable personnalisable</h5>
-                        <p>Plan comptable SYSCOA / OHADA avec possibilité de créer des comptes personnalisés et des sections analytiques.</p>
+                        <div class="gel-feature-icon"><i class="bi-robot"></i></div>
+                        <h5>Saisie automatisée</h5>
+                        <p>Capture intelligente des pièces comptables avec reconnaissance de documents et suggestion automatique des écritures.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-2">
                     <div class="gel-feature-card">
-                        <div class="gel-feature-icon"><i class="bi-pencil-square"></i></div>
-                        <h5>Saisie des journaux</h5>
-                        <p>Saisie intuitive des pièces comptables avec validation automatique du lettrage et justification des comptes.</p>
+                        <div class="gel-feature-icon"><i class="bi-bank"></i></div>
+                        <h5>Rapprochement bancaire</h5>
+                        <p>Import des relevés bancaires, rapprochement automatique et lettrage intelligent. Écarts détectés en temps réel.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-3">
                     <div class="gel-feature-card">
-                        <div class="gel-feature-icon"><i class="bi-files"></i></div>
-                        <h5>Balance & Grand livre</h5>
-                        <p>Balance générale, balance auxiliaire, grand livre, brouillard — tous les états comptables à portée de clic.</p>
+                        <div class="gel-feature-icon"><i class="bi-file-earmark-spreadsheet"></i></div>
+                        <h5>Liasse fiscale</h5>
+                        <p>Génération complète de la liasse fiscale aux normes OHADA/SYSCOA. Bilan, CRP et annexes automatisés.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-1">
                     <div class="gel-feature-card">
-                        <div class="gel-feature-icon"><i class="bi-bar-chart-line"></i></div>
-                        <h5>Bilan & Compte de résultat</h5>
-                        <p>Génération automatisée du bilan, du compte de résultat et de l'annexe aux normes OHADA/SYSCOA.</p>
+                        <div class="gel-feature-icon"><i class="bi-calendar-check"></i></div>
+                        <h5>Clôture SYSCOHADA</h5>
+                        <p>Clôture annuelle certifiée conforme au plan comptable SYSCOHADA avec inventaire, amortissements et provisions.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-2">
                     <div class="gel-feature-card">
-                        <div class="gel-feature-icon"><i class="bi-file-earmark-text"></i></div>
-                        <h5>Déclarations fiscales</h5>
-                        <p>Déclarations TVA, BIC, IS, IRPP pré-remplies à partir des écritures comptables. Échéances et rappels intégrés.</p>
+                        <div class="gel-feature-icon"><i class="bi-book"></i></div>
+                        <h5>Plan comptable OHADA</h5>
+                        <p>Plan comptable SYSCOA/OHADA complet avec comptes personnalisables, sections analytiques et budget.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-3">
                     <div class="gel-feature-card">
-                        <div class="gel-feature-icon"><i class="bi-arrow-repeat"></i></div>
-                        <h5>Lettrage & Rapprochement</h5>
-                        <p>Lettrage automatique et manuel, rapprochement bancaire intégré avec import des relevés.</p>
+                        <div class="gel-feature-icon"><i class="bi-pie-chart"></i></div>
+                        <h5>Balance &amp; Grand livre</h5>
+                        <p>Balance générale et auxiliaire, grand livre, brouillard — tous les états comptables avec export PDF et Excel.</p>
                     </div>
                 </div>
             </div>
@@ -252,29 +278,29 @@
             <div class="row justify-content-center mb-5">
                 <div class="col-lg-7 text-center">
                     <h2 class="gel-section-title anim-fade-up">Comment ça marche</h2>
-                    <p class="gel-section-sub mx-auto anim-fade-up delay-1">Une chaîne comptable fluide de la saisie à la déclaration.</p>
+                    <p class="gel-section-sub mx-auto anim-fade-up delay-1">Une chaîne comptable fluide de la saisie automatisée à la clôture certifiée.</p>
                 </div>
             </div>
             <div class="row g-4 justify-content-center">
                 <div class="col-md-4 anim-fade-up delay-1">
                     <div class="gel-process-step">
                         <div class="gel-process-num">1</div>
-                        <h5>Saisie des écritures</h5>
-                        <p>Saisissez vos pièces comptables dans les journaux appropriés (achats, ventes, banque, caisse). Validation en temps réel.</p>
+                        <h5>Saisie &amp; Automatisation</h5>
+                        <p>Importez vos pièces comptables, laissez l'IA suggérer les écritures et validez en un clic.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-2">
                     <div class="gel-process-step">
                         <div class="gel-process-num">2</div>
-                        <h5>Lettrage & Contrôle</h5>
-                        <p>Lettrez les comptes, rapprochez les relevés bancaires et vérifiez la balance avant clôture.</p>
+                        <h5>Traitement &amp; Rapprochement</h5>
+                        <p>Lettrez les comptes, rapprochez les relevés bancaires et suivez votre trésorerie en temps réel.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-3">
                     <div class="gel-process-step">
                         <div class="gel-process-num">3</div>
-                        <h5>États & Déclarations</h5>
-                        <p>Générez le bilan, le compte de résultat et les déclarations fiscales en un clic. Export PDF/Excel.</p>
+                        <h5>Clôture &amp; Déclarations</h5>
+                        <p>Générez le bilan, la liasse fiscale et les déclarations. Clôture certifiée SYSCOHADA en un clic.</p>
                     </div>
                 </div>
             </div>
@@ -287,7 +313,7 @@
             <div class="row align-items-center">
                 <div class="col-lg-8 anim-fade-up">
                     <h2>Prêt à simplifier votre comptabilité ?</h2>
-                    <p>Créez un compte et testez le module Comptabilité.</p>
+                    <p>Créez un compte et testez le module Comptabilité &amp; Finance.</p>
                 </div>
                 <div class="col-lg-4 text-lg-end mt-4 mt-lg-0 anim-fade-up delay-1">
                     <a href="javascript:void(0)" onclick="openModal()" class="gel-btn-white me-2"><i class="bi-person-plus"></i> Créer un compte</a>
@@ -302,8 +328,8 @@
         <div class="gel-modal-box">
             <button class="gel-modal-close" onclick="closeModal()">&times;</button>
             <div class="gel-modal-icon"><i class="bi-person-plus-fill"></i></div>
-            <h3>Accédez au service Comptabilité</h3>
-            <p>Créez un compte gratuitement pour utiliser le module Comptabilité.</p>
+            <h3>Accédez au service Comptabilité &amp; Finance</h3>
+            <p>Créez un compte gratuitement pour utiliser le module Comptabilité &amp; Finance.</p>
             <a href="/register" class="gel-modal-btn gel-modal-btn-primary"><i class="bi-person-plus"></i> Créer un compte</a>
             <div class="gel-modal-divider">ou</div>
             <a href="/login" class="gel-modal-btn gel-modal-btn-outline"><i class="bi-box-arrow-in-right"></i> Se connecter</a>
@@ -330,5 +356,6 @@
         const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('anim-visible'); observer.unobserve(entry.target); } }); }, { threshold: 0.12 });
         animEls.forEach(el => observer.observe(el));
     </script>
+@include('partials.ai-chat-floating')
 </body>
 </html>

@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Devis;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Client extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'company_name',
@@ -16,6 +19,8 @@ class Client extends Model
         'ifu',
         'address',
         'city',
+        'secteur',
+        'score',
         'country',
         'phone',
         'email',
@@ -134,5 +139,38 @@ class Client extends Model
     public function companyAdmins()
     {
         return $this->hasMany(User::class)->where('is_company_admin', true);
+    }
+
+    public function devis(): HasMany
+    {
+        return $this->hasMany(Devis::class);
+    }
+
+    public function scopeActif($query)
+    {
+        return $query->where('status', 'actif');
+    }
+
+    public function getActiveModulesAttribute(): array
+    {
+        $domainModules = $this->domain?->getAllModules() ?? [];
+        $disabled = $this->disabled_modules ?? [];
+        return array_values(array_diff($domainModules, $disabled));
+    }
+
+    /**
+     * Relation : écritures comptables GEL liées à ce client.
+     */
+    public function gelEcritures()
+    {
+        return $this->hasMany(\App\Models\Gel\Comptabilite\EcritureComptable::class, 'client_id');
+    }
+
+    /**
+     * Relation : exercices comptables GEL liés à ce client.
+     */
+    public function gelExercices()
+    {
+        return $this->hasMany(\App\Models\Gel\Comptabilite\ExerciceComptable::class, 'client_id');
     }
 }

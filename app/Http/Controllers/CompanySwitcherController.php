@@ -25,6 +25,13 @@ class CompanySwitcherController extends Controller
             })
             ->filter();
 
+        if ($companies->isEmpty() && $user->client_id) {
+            $primaryCompany = \App\Models\Client::find($user->client_id);
+            if ($primaryCompany) {
+                $companies = collect([$primaryCompany]);
+            }
+        }
+
         if ($companies->isEmpty()) {
             // Éviter la boucle infinie : si l'utilisateur est company_admin,
             // le middleware CheckCompanyAccess (GEL) le renverrait vers company.dashboard.

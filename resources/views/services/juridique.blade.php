@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Juridique | GEL Cabinet</title>
-    <meta name="description" content="Module Juridique GEL Cabinet : suivi des dossiers, veille juridique, gestion des formalités et constitution de sociétés.">
+    <title>Juridique &amp; Conformité | GEL Cabinet</title>
+    <meta name="description" content="Module Juridique &amp; Conformité GEL Cabinet : secrétariat DAE, gestion des actes, assemblées générales et workflows de validation stricts.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,7 +16,7 @@
     <style>
         :root {
             --gel-primary: #FF7900; --gel-primary-hov: #e06700; --gel-primary-soft: rgba(255,121,0,0.06);
-            --gel-svc: #3B82F6; --gel-svc-rgb: 59,130,246;
+            --gel-svc: #1E40AF; --gel-svc-rgb: 30,64,175;
             --gel-darker: #0F172A; --gel-dark: #111827; --gel-white: #ffffff;
             --gel-light: #F8FAFC; --gel-light2: #F1F5F9; --gel-border: #E2E8F0;
             --gel-muted: #64748B; --gel-text: #1E293B;
@@ -171,6 +171,32 @@
         .gel-modal-divider::before, .gel-modal-divider::after { content: ''; flex: 1; height: 1px; background: var(--gel-border); }
 
         @media (max-width: 991px) { .gel-section { padding: 60px 0; } .gel-page-header { padding: 80px 0 60px; } }
+        /* ====== CHAT IA ====== */
+        .chat-fab { position:fixed; bottom:24px; right:24px; width:56px; height:56px; border-radius:50%; background:#FF7900; color:white; border:none; font-size:24px; cursor:pointer; box-shadow:0 4px 20px rgba(255,121,0,0.3); transition:all 0.3s; z-index:1060; display:flex; align-items:center; justify-content:center; }
+        .chat-fab:hover { transform:scale(1.05); background:#e06700; }
+        .chat-window { position:fixed; bottom:90px; right:24px; width:380px; height:560px; background:#fff; border-radius:16px; box-shadow:0 8px 40px rgba(0,0,0,0.15); z-index:1060; display:flex; flex-direction:column; overflow:hidden; border:1px solid rgba(0,0,0,0.06); }
+        .chat-window.minimized { height:56px; }
+        .chat-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:#0B1120; color:white; flex-shrink:0; }
+        .chat-header-left { display:flex; align-items:center; gap:10px; }
+        .chat-avatar { width:32px; height:32px; background:#FF7900; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; }
+        .chat-header h4 { font-size:14px; font-weight:600; margin:0; color:white; }
+        .chat-status { font-size:11px; color:rgba(255,255,255,0.55); display:flex; align-items:center; gap:4px; }
+        .status-dot { width:6px; height:6px; background:#10b981; border-radius:50%; display:inline-block; }
+        .chat-header-actions { display:flex; gap:4px; }
+        .chat-header-actions button { background:none; border:none; color:rgba(255,255,255,0.6); cursor:pointer; padding:4px 6px; border-radius:4px; font-size:14px; }
+        .chat-header-actions button:hover { background:rgba(255,255,255,0.1); color:white; }
+        .chat-messages { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:8px; background:#F9FAFB; }
+        .message { display:flex; max-width:85%; }
+        .message-assistant { align-self:flex-start; }
+        .message-user { align-self:flex-end; }
+        .message-content { padding:10px 14px; border-radius:12px; font-size:13.5px; line-height:1.5; }
+        .message-assistant .message-content { background:white; border:1px solid rgba(0,0,0,0.06); color:#1F2937; border-bottom-left-radius:4px; }
+        .message-user .message-content { background:#FF7900; color:white; border-bottom-right-radius:4px; }
+        .chat-input-area { display:flex; align-items:center; gap:8px; padding:12px 16px; border-top:1px solid rgba(0,0,0,0.06); background:white; }
+        .chat-input-area input { flex:1; border:none; outline:none; font-size:13px; padding:8px 0; color:#1F2937; background:transparent; }
+        .chat-input-area input::placeholder { color:#9CA3AF; }
+        .chat-input-area button { background:#FF7900; color:white; border:none; width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px; }
+        .chat-input-area button:hover { background:#e06700; }
     </style>
 </head>
 <body>
@@ -182,9 +208,9 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-8">
-                    <div class="gel-page-header-badge"><i class="bi-bank2-fill"></i> Service</div>
-                    <h1>Juridique</h1>
-                    <p>Suivez vos dossiers juridiques de bout en bout — veille juridique, gestion des formalités, constitution de sociétés et accompagnement contractuel.</p>
+                    <div class="gel-page-header-badge"><i class="bi-shield-check"></i> Service</div>
+                    <h1>Juridique &amp; Conformité</h1>
+                    <p>Secrétariat DAE, gestion des actes, assemblées générales, et workflows de validation stricts.</p>
                 </div>
             </div>
         </div>
@@ -195,51 +221,51 @@
         <div class="container">
             <div class="row justify-content-center mb-5">
                 <div class="col-lg-7 text-center">
-                    <h2 class="gel-section-title anim-fade-up">Accompagnement juridique complet</h2>
-                    <p class="gel-section-sub mx-auto anim-fade-up delay-1">Une solution dédiée pour centraliser et sécuriser l'ensemble de vos activités juridiques.</p>
+                    <h2 class="gel-section-title anim-fade-up">Sécurisez votre conformité</h2>
+                    <p class="gel-section-sub mx-auto anim-fade-up delay-1">Une plateforme dédiée au secrétariat juridique, à la gestion documentaire et aux circuits de validation sécurisés.</p>
                 </div>
             </div>
             <div class="row g-4">
                 <div class="col-md-4 anim-fade-up delay-1">
                     <div class="gel-feature-card">
-                        <div class="gel-feature-icon"><i class="bi-shield"></i></div>
-                        <h5>Constitution de sociétés</h5>
-                        <p>Accompagnement complet dans la création de sociétés (SARL, SA, SAS, SCI) avec rédaction des statuts et formalités.</p>
+                        <div class="gel-feature-icon"><i class="bi-folder2-open"></i></div>
+                        <h5>Secrétariat DAE</h5>
+                        <p>Gestion complète du secrétariat du Département des Actes de l'Entreprise. Dépôt, suivi et archivage des actes.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-2">
                     <div class="gel-feature-card">
-                        <div class="gel-feature-icon"><i class="bi-file-text"></i></div>
-                        <h5>Veille juridique</h5>
-                        <p>Actualité législative et réglementaire suivie en temps réel. Alertes personnalisées par domaine d'activité.</p>
+                        <div class="gel-feature-icon"><i class="bi-file-earmark-text"></i></div>
+                        <h5>Gestion des actes</h5>
+                        <p>Création, validation et archivage des actes juridiques : statuts, PV, décisions, procès-verbaux et contrats.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-3">
                     <div class="gel-feature-card">
-                        <div class="gel-feature-icon"><i class="bi-folder"></i></div>
-                        <h5>Gestion des dossiers</h5>
-                        <p>Centralisation de tous vos dossiers juridiques avec suivi des échéances, des tribunaux et des avocats.</p>
+                        <div class="gel-feature-icon"><i class="bi-people"></i></div>
+                        <h5>Assemblées générales</h5>
+                        <p>Organisation et suivi des AG : convocations, ordre du jour, feuille de présence, votes et PV dématérialisés.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-1">
                     <div class="gel-feature-card">
-                        <div class="gel-feature-icon"><i class="bi-pen"></i></div>
-                        <h5>Rédaction de contrats</h5>
-                        <p>Modèles de contrats intelligents, baux, conventions, pactes d'actionnaires. Personnalisables et conformes.</p>
+                        <div class="gel-feature-icon"><i class="bi-check2-circle"></i></div>
+                        <h5>Workflows de validation</h5>
+                        <p>Circuits de validation stricts avec signatures électroniques, notifications et historique complet des approbations.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-2">
                     <div class="gel-feature-card">
-                        <div class="gel-feature-icon"><i class="bi-building"></i></div>
-                        <h5>Formalités légales</h5>
-                        <p>Dépôt au greffe, publication au journal officiel, déclarations obligatoires — tout est suivi et programmé.</p>
+                        <div class="gel-feature-icon"><i class="bi-journal-check"></i></div>
+                        <h5>Conformité réglementaire</h5>
+                        <p>Suivi des obligations légales et réglementaires. Alertes automatiques sur les échéances et dépôts obligatoires.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-3">
                     <div class="gel-feature-card">
-                        <div class="gel-feature-icon"><i class="bi-search"></i></div>
-                        <h5>Recherche & Documentation</h5>
-                        <p>Base documentaire juridique complète. Codes, lois, jurisprudences accessibles depuis la plateforme.</p>
+                        <div class="gel-feature-icon"><i class="bi-building"></i></div>
+                        <h5>Registres &amp; Déclarations</h5>
+                        <p>Registres obligatoires tenus à jour : registre des actionnaires, des décisions, des agréments. Déclarations au greffe.</p>
                     </div>
                 </div>
             </div>
@@ -252,29 +278,29 @@
             <div class="row justify-content-center mb-5">
                 <div class="col-lg-7 text-center">
                     <h2 class="gel-section-title anim-fade-up">Comment ça marche</h2>
-                    <p class="gel-section-sub mx-auto anim-fade-up delay-1">Une chaîne comptable fluide de la saisie à la déclaration.</p>
+                    <p class="gel-section-sub mx-auto anim-fade-up delay-1">Du document à la validation, un circuit sécurisé et tracé.</p>
                 </div>
             </div>
             <div class="row g-4 justify-content-center">
                 <div class="col-md-4 anim-fade-up delay-1">
                     <div class="gel-process-step">
                         <div class="gel-process-num">1</div>
-                        <h5>Consultation & Analyse</h5>
-                        <p>Analyse de votre situation juridique, identification des besoins et conseil personnalisé.</p>
+                        <h5>Création &amp; Documentation</h5>
+                        <p>Générez vos actes et documents juridiques à partir de modèles intelligents et conformes.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-2">
                     <div class="gel-process-step">
                         <div class="gel-process-num">2</div>
-                        <h5>Rédaction & Formalités</h5>
-                        <p>Rédaction des documents, constitution des dossiers et accomplissement des formalités.</p>
+                        <h5>Validation &amp; Signature</h5>
+                        <p>Workflows de validation stricts, signature électronique et approbations hiérarchiques tracées.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-3">
                     <div class="gel-process-step">
                         <div class="gel-process-num">3</div>
-                        <h5>Suivi & Veille</h5>
-                        <p>Suivi continu des dossiers, veille juridique proactive et mise à jour réglementaire.</p>
+                        <h5>Archivage &amp; Conformité</h5>
+                        <p>Archivage sécurisé, registres à jour et veille réglementaire proactive pour une conformité totale.</p>
                     </div>
                 </div>
             </div>
@@ -287,7 +313,7 @@
             <div class="row align-items-center">
                 <div class="col-lg-8 anim-fade-up">
                     <h2>Prêt à sécuriser votre juridique ?</h2>
-                    <p>Créez un compte et testez nos services juridiques.</p>
+                    <p>Créez un compte et testez le module Juridique &amp; Conformité.</p>
                 </div>
                 <div class="col-lg-4 text-lg-end mt-4 mt-lg-0 anim-fade-up delay-1">
                     <a href="javascript:void(0)" onclick="openModal()" class="gel-btn-white me-2"><i class="bi-person-plus"></i> Créer un compte</a>
@@ -302,8 +328,8 @@
         <div class="gel-modal-box">
             <button class="gel-modal-close" onclick="closeModal()">&times;</button>
             <div class="gel-modal-icon"><i class="bi-person-plus-fill"></i></div>
-            <h3>Accédez au service Juridique</h3>
-            <p>Créez un compte gratuitement pour utiliser nos services juridiques.</p>
+            <h3>Accédez au service Juridique &amp; Conformité</h3>
+            <p>Créez un compte gratuitement pour utiliser le module Juridique &amp; Conformité.</p>
             <a href="/register" class="gel-modal-btn gel-modal-btn-primary"><i class="bi-person-plus"></i> Créer un compte</a>
             <div class="gel-modal-divider">ou</div>
             <a href="/login" class="gel-modal-btn gel-modal-btn-outline"><i class="bi-box-arrow-in-right"></i> Se connecter</a>
@@ -330,5 +356,6 @@
         const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('anim-visible'); observer.unobserve(entry.target); } }); }, { threshold: 0.12 });
         animEls.forEach(el => observer.observe(el));
     </script>
+@include('partials.ai-chat-floating')
 </body>
 </html>

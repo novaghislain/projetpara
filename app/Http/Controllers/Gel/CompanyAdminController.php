@@ -5,8 +5,12 @@ namespace App\Http\Controllers\Gel;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Models\UserClient;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
 class CompanyAdminController extends Controller
 {
@@ -51,8 +55,181 @@ class CompanyAdminController extends Controller
     }
 
     /**
-     * API: Crée un nouvel administrateur entreprise.
+     * API: Retourne tous les utilisateurs du cabinet (pour la vue admin).
      */
+    public function listUsers()
+    {
+        $users = User::with(['roles', 'permissions'])
+            ->latest()
+            ->paginate(50)
+            ->through(fn($u) => [
+                'id' => $u->id,
+                'name' => $u->name,
+                'email' => $u->email,
+                'is_active' => $u->is_active,
+                'last_login' => $u->last_login_at,
+                'roles' => $u->roles->pluck('label_fr', 'name')->map(fn($l, $n) => $l ?: $n)->values(),
+                'permissions' => $u->getAllPermissions()->pluck('name'),
+            ]);
+
+        return response()->json($users->items());
+    }
+
+    /**
+     * API: Met à jour les rôles d'un utilisateur.
+     */
+    public function updateRoles(Request $request, $id)
+    {
+        $request->validate([
+            'roles' => 'required|array',
+            'roles.*' => 'string|exists:gel_roles,name',
+        ]);
+
+        $user = User::findOrFail($id);
+        $user->syncRoles($request->roles);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Rôles mis à jour avec succès.',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'roles' => $user->roles->pluck('name'),
+            ],
+        ]);
+    }
+
+    /**
+     * API: Retourne la liste des rôles disponibles (pour la vue admin).
+     */
+    public function listRoles()
+    {
+        $roles = Role::withCount('users')
+            ->orderBy('level')
+            ->get()
+            ->map(fn($r) => [
+                'id' => $r->id,
+                'name' => $r->name,
+                'label_fr' => $r->label_fr ?? $r->name,
+                'description' => $r->description,
+                'portail' => $r->portail ?? 'gel',
+                'level' => $r->level,
+                'users_count' => $r->users_count,
+            ]);
+
+        return response()->json($roles);
+    }
+
+    /**
+     * API: Retourne la liste des permissions disponibles.
+     */
+    public function listPermissions()
+    {
+        $permissions = Permission::orderBy('name')
+            ->get()
+            ->map(fn($p) => [
+                'id' => $p->id,
+                'name' => $p->name,
+                'label_fr' => $p->label_fr ?? $p->name,
+                'module' => $p->module ?? 'general',
+                'description' => $p->description,
+                'portail' => $p->portail ?? 'gel',
+            ]);
+
+        return response()->json($permissions);
+    }
+
+    /**
+     * API: Crée un nouveau rôle.
+     */
+    public function storeRole(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:gel_roles,name',
+            'label_fr' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'portail' => 'nullable|string|in:gel,entreprise,cpa',
+            'level' => 'nullable|integer|min:0|max:5',
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'string|exists:gel_permissions,name',
+        ]);
+
+        $role = Role::create([
+            'name' => $validated['name'],
+            'label_fr' => $validated['label_fr'],
+            'description' => $validated['description'] ?? null,
+            'portail' => $validated['portail'] ?? 'gel',
+            'level' => $validated['level'] ?? 3,
+            'guard_name' => 'web',
+        ]);
+
+        if (!empty($validated['permissions'])) {
+            $role->syncPermissions($validated['permissions']);
+        }
+
+        return response()->json([
+            'success' => true,
+            'role' => $role,
+            'message' => 'Rôle créé avec succès.',
+        ], 201);
+    }
+
+    /**
+     * API: Met à jour les permissions d'un rôle.
+     */
+    public function updateRolePermissions(Request $request, $name)
+    {
+        $role = Role::findByName($name);
+
+        $validated = $request->validate([
+            'label_fr' => 'sometimes|string|max:255',
+            'description' => 'sometimes|nullable|string',
+            'portail' => 'sometimes|string|in:gel,entreprise,cpa',
+            'level' => 'sometimes|integer|min:0|max:5',
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'string|exists:gel_permissions,name',
+        ]);
+
+        $role->update([
+            'label_fr' => $validated['label_fr'] ?? $role->label_fr,
+            'description' => $validated['description'] ?? $role->description,
+            'portail' => $validated['portail'] ?? $role->portail,
+            'level' => $validated['level'] ?? $role->level,
+        ]);
+
+        if (isset($validated['permissions'])) {
+            $role->syncPermissions($validated['permissions']);
+        }
+
+        return response()->json([
+            'success' => true,
+            'role' => $role->fresh(),
+            'message' => 'Rôle mis à jour avec succès.',
+        ]);
+    }
+
+    /**
+     * API: Supprime un rôle.
+     */
+    public function destroyRole($name)
+    {
+        // Empêcher la suppression des rôles système
+        $protectedRoles = ['super_admin', 'gestionnaire_cabinet'];
+        if (in_array($name, $protectedRoles)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ce rôle système ne peut pas être supprimé.',
+            ], 403);
+        }
+
+        $role = Role::findByName($name);
+        $role->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Rôle supprimé avec succès.',
+        ]);
+    }
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -72,6 +249,20 @@ class CompanyAdminController extends Controller
             'role'             => 'company_admin',
             'is_active'        => true,
         ]);
+
+        // Associer l'admin à l'entreprise dans user_clients
+        // Obligatoire pour que le middleware ensure.company autorise l'accès au dashboard
+        UserClient::firstOrCreate(
+            [
+                'user_id'   => $user->id,
+                'client_id' => $validated['client_id'],
+            ],
+            [
+                'role'      => 'company_admin',
+                'is_active' => true,
+                'joined_at' => now(),
+            ]
+        );
 
         return response()->json($user->load('client'), 201);
     }

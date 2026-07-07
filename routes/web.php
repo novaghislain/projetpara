@@ -52,6 +52,7 @@ Route::view('/faq', 'pages.faq')->name('faq');
 Route::view('/centre-aide', 'pages.centre-aide')->name('centre-aide');
 Route::view('/contact', 'contact')->name('contact');
 Route::view('/tarifs', 'tarifs')->name('tarifs');
+Route::view('/ia', 'ia')->name('ia');
 Route::view('/logiciel-comptabilite', 'logiciel-comptabilite')->name('logiciel-comptabilite');
 
 // Pages Services
@@ -109,6 +110,210 @@ Route::middleware(['auth', 'not_suspended'])->group(function () {
 Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client'])->group(function () {
     // Tableau de bord
     Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Routes GEL Cabinet — vues Blade avec layout gel
+    |--------------------------------------------------------------------------
+    | Ces routes utilisent le layout gel.blade.php (Stripe-inspired) et chargent
+    | les pages via l'application Vue (view 'app') ou des vues Blade dédiées.
+    | Les noms de routes suivent la convention gel.{section} pour correspondre
+    | aux liens de la sidebar.
+    */
+    Route::prefix('gel')->name('gel.')->group(function () {
+        // ── Général ──────────────────────────────────────────────
+        Route::get('/dashboard', function () {
+            // Factures du mois en cours via le modèle Invoice
+            $monthInvoices = \App\Models\Invoice::whereMonth('created_at', now()->month);
+            $revenue = (clone $monthInvoices)->where('status', 'paid')->sum('total');
+
+            return view('gel.dashboard', [
+                'stats' => [
+                    'clients' => \App\Models\Client::count(),
+                    'new_clients' => \App\Models\Client::whereMonth('created_at', now()->month)->count(),
+                    'invoices' => (clone $monthInvoices)->count(),
+                    'revenue' => $revenue,
+                    'pending_entries' => \App\Models\Gel\Comptabilite\LigneEcriture::whereHas('ecriture', fn($q) => $q->where('valide', false))->count(),
+                    'alerts' => \App\Models\AuditTrail::where('created_at', '>=', now()->subDays(7))->count(),
+                ],
+                'activities' => \App\Models\AuditTrail::latest()->take(10)->get()->map(fn($a) => [
+                    'user' => $a->user?->name ?? 'Système',
+                    'action' => $a->description,
+                    'target' => class_basename($a->auditable_type ?? ''),
+                    'time' => $a->created_at->diffForHumans(),
+                    'color' => '#635bff',
+                ]),
+            ]);
+        })->name('dashboard');
+
+        Route::get('/activite', function () {
+            $activities = \App\Models\AuditTrail::with('user')->latest()->take(50)->get();
+            $notifications = \App\Models\Notification::where('user_id', Auth::id())->latest()->take(20)->get();
+            return view('gel.activity', compact('activities', 'notifications'));
+        })->name('activity');
+
+        // ── Comptabilité ─────────────────────────────────────────
+        // Routes Vue (SPA)
+        Route::get('/journal', fn() => view('app', ['page' => 'gel-accounting-journals']))
+            ->name('journal');
+        Route::get('/balance', fn() => view('app', ['page' => 'gel-accounting-balance']))
+            ->name('balance');
+        Route::get('/grand-livre', fn() => view('app', ['page' => 'gel-accounting-ledger']))
+            ->name('grand-livre');
+        Route::get('/etats-financiers', fn() => view('app', ['page' => 'gel-accounting-bilan']))
+            ->name('etats-financiers');
+        Route::get('/plan-comptable', fn() => view('app', ['page' => 'gel-accounting-accounts']))
+            ->name('plan-comptable');
+
+        // Routes Blade (Comptabilité — layout gel)
+        Route::prefix('comptabilite')->name('comptabilite.')->group(function () {
+            // Plan comptable
+            Route::get('/plan-comptable', [\App\Http\Controllers\Gel\Comptabilite\PlanComptableController::class, 'index'])
+                ->middleware('permission:comptabilite.voir')->name('plan-comptable.index');
+            Route::get('/plan-comptable/create', [\App\Http\Controllers\Gel\Comptabilite\PlanComptableController::class, 'create'])
+                ->middleware('permission:comptabilite.creer')->name('plan-comptable.create');
+            Route::post('/plan-comptable', [\App\Http\Controllers\Gel\Comptabilite\PlanComptableController::class, 'store'])
+                ->middleware('permission:comptabilite.creer')->name('plan-comptable.store');
+            Route::get('/plan-comptable/{id}', [\App\Http\Controllers\Gel\Comptabilite\PlanComptableController::class, 'show'])
+                ->middleware('permission:comptabilite.voir')->name('plan-comptable.show');
+            Route::get('/plan-comptable/{id}/edit', [\App\Http\Controllers\Gel\Comptabilite\PlanComptableController::class, 'edit'])
+                ->middleware('permission:comptabilite.modifier')->name('plan-comptable.edit');
+            Route::put('/plan-comptable/{id}', [\App\Http\Controllers\Gel\Comptabilite\PlanComptableController::class, 'update'])
+                ->middleware('permission:comptabilite.modifier')->name('plan-comptable.update');
+            Route::delete('/plan-comptable/{id}', [\App\Http\Controllers\Gel\Comptabilite\PlanComptableController::class, 'destroy'])
+                ->middleware('permission:comptabilite.supprimer')->name('plan-comptable.destroy');
+            // API endpoints
+            Route::get('/api/comptes/by-classe/{classe}', [\App\Http\Controllers\Gel\Comptabilite\PlanComptableController::class, 'byClasse'])
+                ->middleware('permission:comptabilite.voir')->name('plan-comptable.by-classe');
+            Route::get('/api/comptes/tree', [\App\Http\Controllers\Gel\Comptabilite\PlanComptableController::class, 'tree'])
+                ->middleware('permission:comptabilite.voir')->name('plan-comptable.tree');
+            Route::get('/api/comptes/search', [\App\Http\Controllers\Gel\Comptabilite\PlanComptableController::class, 'search'])
+                ->middleware('permission:comptabilite.voir')->name('plan-comptable.search');
+
+            // Journaux
+            Route::get('/journaux', [\App\Http\Controllers\Gel\Comptabilite\JournalController::class, 'index'])
+                ->middleware('permission:comptabilite.voir')->name('journaux.index');
+            Route::get('/journaux/create', [\App\Http\Controllers\Gel\Comptabilite\JournalController::class, 'create'])
+                ->middleware('permission:comptabilite.creer')->name('journaux.create');
+            Route::post('/journaux', [\App\Http\Controllers\Gel\Comptabilite\JournalController::class, 'store'])
+                ->middleware('permission:comptabilite.creer')->name('journaux.store');
+            Route::get('/journaux/{id}', [\App\Http\Controllers\Gel\Comptabilite\JournalController::class, 'show'])
+                ->middleware('permission:comptabilite.voir')->name('journaux.show');
+            Route::get('/journaux/{id}/edit', [\App\Http\Controllers\Gel\Comptabilite\JournalController::class, 'edit'])
+                ->middleware('permission:comptabilite.modifier')->name('journaux.edit');
+            Route::put('/journaux/{id}', [\App\Http\Controllers\Gel\Comptabilite\JournalController::class, 'update'])
+                ->middleware('permission:comptabilite.modifier')->name('journaux.update');
+            Route::delete('/journaux/{id}', [\App\Http\Controllers\Gel\Comptabilite\JournalController::class, 'destroy'])
+                ->middleware('permission:comptabilite.supprimer')->name('journaux.destroy');
+            Route::post('/journaux/create-defaults', [\App\Http\Controllers\Gel\Comptabilite\JournalController::class, 'createDefaults'])
+                ->middleware('permission:comptabilite.creer')->name('journaux.create-defaults');
+
+            // Écritures
+            Route::get('/ecritures', [\App\Http\Controllers\Gel\Comptabilite\EcritureController::class, 'index'])
+                ->middleware('permission:comptabilite.voir')->name('ecritures.index');
+            Route::get('/ecritures/create', [\App\Http\Controllers\Gel\Comptabilite\EcritureController::class, 'create'])
+                ->middleware('permission:comptabilite.creer')->name('ecritures.create');
+            Route::post('/ecritures', [\App\Http\Controllers\Gel\Comptabilite\EcritureController::class, 'store'])
+                ->middleware('permission:comptabilite.creer')->name('ecritures.store');
+            Route::get('/ecritures/{id}', [\App\Http\Controllers\Gel\Comptabilite\EcritureController::class, 'show'])
+                ->middleware('permission:comptabilite.voir')->name('ecritures.show');
+            Route::get('/ecritures/{id}/edit', [\App\Http\Controllers\Gel\Comptabilite\EcritureController::class, 'edit'])
+                ->middleware('permission:comptabilite.modifier')->name('ecritures.edit');
+            Route::put('/ecritures/{id}', [\App\Http\Controllers\Gel\Comptabilite\EcritureController::class, 'update'])
+                ->middleware('permission:comptabilite.modifier')->name('ecritures.update');
+            Route::delete('/ecritures/{id}', [\App\Http\Controllers\Gel\Comptabilite\EcritureController::class, 'destroy'])
+                ->middleware('permission:comptabilite.supprimer')->name('ecritures.destroy');
+            Route::post('/ecritures/{id}/valider', [\App\Http\Controllers\Gel\Comptabilite\EcritureController::class, 'valider'])
+                ->middleware('permission:comptabilite.valider')->name('ecritures.valider');
+            Route::get('/ecritures/{id}/pdf', [\App\Http\Controllers\Gel\Comptabilite\EcritureController::class, 'pdf'])
+                ->middleware('permission:comptabilite.voir')->name('ecritures.pdf');
+            Route::get('/ecritures/export/csv', [\App\Http\Controllers\Gel\Comptabilite\EcritureController::class, 'export'])
+                ->middleware('permission:comptabilite.exporter')->name('ecritures.export');
+
+            // Grand Livre
+            Route::get('/grand-livre', [\App\Http\Controllers\Gel\Comptabilite\GrandLivreController::class, 'index'])
+                ->middleware('permission:comptabilite.voir')->name('grand-livre.index');
+            Route::get('/grand-livre/export', [\App\Http\Controllers\Gel\Comptabilite\GrandLivreController::class, 'export'])
+                ->middleware('permission:comptabilite.voir')->name('grand-livre.export');
+
+            // Balance
+            Route::get('/balance', [\App\Http\Controllers\Gel\Comptabilite\GrandLivreController::class, 'balance'])
+                ->middleware('permission:comptabilite.voir')->name('balance.index');
+
+            // États financiers
+            Route::get('/etats-financiers', [\App\Http\Controllers\Gel\Comptabilite\GrandLivreController::class, 'etatsFinanciers'])
+                ->middleware('permission:comptabilite.voir')->name('etats-financiers.index');
+        });
+
+        // ── Facturation ──────────────────────────────────────────
+        Route::get('/factures', fn() => view('app', ['page' => 'gel-factures']))
+            ->name('factures');
+        Route::get('/devis', fn() => view('app', ['page' => 'gel-devis']))
+            ->name('devis');
+        Route::get('/relances', fn() => view('app', ['page' => 'gel-relances']))
+            ->name('relances');
+
+        // ── Paie & RH ────────────────────────────────────────────
+        Route::get('/paie', fn() => view('app', ['page' => 'gel-paie']))
+            ->name('paie');
+        Route::get('/employes', fn() => view('app', ['page' => 'gel-employes']))
+            ->name('employes');
+
+        // ── Clients ──────────────────────────────────────────────
+        Route::get('/clients', fn() => view('app', ['page' => 'gel-clients']))
+            ->name('clients');
+
+        // ── Trésorerie ───────────────────────────────────────────
+        Route::get('/tresorerie', fn() => view('app', ['page' => 'gel-tresorerie']))
+            ->name('tresorerie');
+        Route::get('/rapprochement', fn() => view('app', ['page' => 'gel-rapprochement']))
+            ->name('rapprochement');
+
+        // ── Fiscalité ────────────────────────────────────────────
+        Route::get('/fiscalite', fn() => view('app', ['page' => 'gel-fiscalite']))
+            ->name('fiscalite');
+        Route::get('/declarations', fn() => view('app', ['page' => 'gel-declarations']))
+            ->name('declarations');
+
+        // ── GED / Documents ──────────────────────────────────────
+        Route::get('/documents', fn() => view('app', ['page' => 'gel-documents']))
+            ->name('ged');
+
+        // ── IA ───────────────────────────────────────────────────
+        Route::get('/ia/chat', [\App\Http\Controllers\Gel\ChatIAController::class, 'index'])
+            ->middleware('permission:ia.consulter')->name('ia.chat');
+        Route::get('/ia/suggestions', fn() => view('app', ['page' => 'gel-ia-suggestions']))
+            ->name('ia.suggestions');
+        Route::get('/ia/finance', [\App\Http\Controllers\Gel\FinanceAgentController::class, 'index'])
+            ->name('ia.finance');
+        Route::get('/ia/customer', [\App\Http\Controllers\Gel\CustomerAIController::class, 'index'])
+            ->name('ia.customer');
+        Route::get('/ia/accounting', [\App\Http\Controllers\Gel\AccountingAIController::class, 'index'])
+            ->name('ia.accounting');
+
+        // ── Rapports ─────────────────────────────────────────────
+        Route::get('/rapports', fn() => view('app', ['page' => 'gel-reports']))
+            ->name('reports');
+
+        // ── Administration ───────────────────────────────────────
+        Route::get('/admin/utilisateurs', fn() => view('gel.admin.users'))
+            ->name('admin.utilisateurs');
+        Route::get('/admin/roles', fn() => view('gel.admin.roles'))
+            ->name('admin.roles');
+        Route::get('/admin/audit-logs', fn() => view('app', ['page' => 'gel-admin-audit']))
+            ->name('admin.audit-logs');
+        Route::get('/admin/modules', fn() => view('app', ['page' => 'gel-admin-modules']))
+            ->name('admin.modules');
+        Route::get('/admin/cabinet', [\App\Http\Controllers\Gel\Admin\CabinetController::class, 'index'])
+            ->name('admin.cabinet');
+        Route::get('/admin/audit-logs/data', function () {
+            return response()->json(\App\Models\AuditTrail::with('user')->latest()->paginate(50));
+        })->name('admin.audit-logs.data');
+
+        // ── Recherche ────────────────────────────────────────────
+        Route::get('/recherche', fn() => view('app', ['page' => 'gel-search']))
+            ->name('search');
+    });
 
     // CRM Clients - module:crm
     Route::middleware('module:crm')->group(function () {
@@ -247,9 +452,58 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client']
     Route::get('/api/ai/agents/dashboard', [\App\Http\Controllers\Ai\AgentController::class, 'dashboard']);
     Route::post('/api/ai/agents/run/{agent}', [\App\Http\Controllers\Ai\AgentController::class, 'runAgent']);
 
+    // ── IA — Chat ────────────────────────────────────────────────
+    Route::post('/api/ai/chat/conversations', [\App\Http\Controllers\Gel\ChatIAController::class, 'createConversation']);
+    Route::get('/api/ai/chat/conversations', [\App\Http\Controllers\Gel\ChatIAController::class, 'index']);
+    Route::post('/api/ai/chat/conversations/{id}/messages', [\App\Http\Controllers\Gel\ChatIAController::class, 'sendMessage']);
+    Route::get('/api/ai/chat/conversations/{id}/history', [\App\Http\Controllers\Gel\ChatIAController::class, 'getHistory']);
+    Route::delete('/api/ai/chat/conversations/{id}', [\App\Http\Controllers\Gel\ChatIAController::class, 'deleteConversation']);
+    Route::get('/api/ai/chat/suggestions', [\App\Http\Controllers\Gel\ChatIAController::class, 'getSuggestions']);
+    Route::get('/api/ai/chat/conversations/{id}/export/{format?}', [\App\Http\Controllers\Gel\ChatIAController::class, 'exportConversation']);
+
+    // ── IA — Comptabilité ─────────────────────────────────────────
+    Route::post('/api/ai/accounting/analyze', [\App\Http\Controllers\Gel\AccountingAIController::class, 'analyzeEntry']);
+    Route::post('/api/ai/accounting/suggest-accounts', [\App\Http\Controllers\Gel\AccountingAIController::class, 'suggestAccounts']);
+    Route::get('/api/ai/accounting/anomalies', [\App\Http\Controllers\Gel\AccountingAIController::class, 'detectAnomalies']);
+    Route::post('/api/ai/accounting/generate-entry', [\App\Http\Controllers\Gel\AccountingAIController::class, 'generateEntry']);
+    Route::get('/api/ai/accounting/forecast', [\App\Http\Controllers\Gel\AccountingAIController::class, 'forecast']);
+
+    // ── IA — Client ─────────────────────────────────────────────
+    Route::get('/api/ai/customer/clients/{id}/analyze', [\App\Http\Controllers\Gel\CustomerAIController::class, 'analyzeClient']);
+    Route::get('/api/ai/customer/churn-prediction', [\App\Http\Controllers\Gel\CustomerAIController::class, 'churnPrediction']);
+    Route::get('/api/ai/customer/relance-recommendations', [\App\Http\Controllers\Gel\CustomerAIController::class, 'relanceRecommendations']);
+    Route::get('/api/ai/customer/segmentation', [\App\Http\Controllers\Gel\CustomerAIController::class, 'segmentation']);
+    Route::get('/api/ai/customer/clients/{id}/suggest-action', [\App\Http\Controllers\Gel\CustomerAIController::class, 'suggestAction']);
+
+    // ── IA — Finance ─────────────────────────────────────────────
+    Route::get('/api/ai/finance/cashflow-forecast', [\App\Http\Controllers\Gel\FinanceAgentController::class, 'cashFlowForecast']);
+    Route::get('/api/ai/finance/profitability', [\App\Http\Controllers\Gel\FinanceAgentController::class, 'profitability']);
+    Route::get('/api/ai/finance/tax-optimization', [\App\Http\Controllers\Gel\FinanceAgentController::class, 'taxOptimization']);
+    Route::get('/api/ai/finance/fraud-detection', [\App\Http\Controllers\Gel\FinanceAgentController::class, 'fraudDetection']);
+    Route::get('/api/ai/finance/benchmarking', [\App\Http\Controllers\Gel\FinanceAgentController::class, 'benchmarking']);
+    Route::post('/api/ai/finance/generate-report', [\App\Http\Controllers\Gel\FinanceAgentController::class, 'generateReport']);
+    Route::get('/api/ai/finance/realtime-alerts', [\App\Http\Controllers\Gel\FinanceAgentController::class, 'realtimeAlerts']);
+
+    // ── Activité / Notifications ───────────────────────────────────
+    Route::get('/api/activity/recent', [\App\Http\Controllers\Gel\ActivityFeedController::class, 'recent']);
+    Route::post('/api/notifications/{id}/read', [\App\Http\Controllers\Gel\ActivityFeedController::class, 'markAsRead']);
+    Route::post('/api/notifications/mark-all-read', [\App\Http\Controllers\Gel\ActivityFeedController::class, 'markAllRead']);
+    Route::get('/api/notifications/unread-count', [\App\Http\Controllers\Gel\ActivityFeedController::class, 'unreadCount']);
+    Route::delete('/api/notifications/{id}', [\App\Http\Controllers\Gel\ActivityFeedController::class, 'deleteNotification']);
+    Route::delete('/api/notifications/clean-old', [\App\Http\Controllers\Gel\ActivityFeedController::class, 'cleanOld']);
+
+    // ── Admin Cabinet ──────────────────────────────────────────────
+    Route::get('/api/admin/cabinet', [\App\Http\Controllers\Gel\Admin\CabinetController::class, 'index']);
+    Route::put('/api/admin/cabinet', [\App\Http\Controllers\Gel\Admin\CabinetController::class, 'update']);
+    Route::post('/api/admin/cabinet/modules/{id}/toggle', [\App\Http\Controllers\Gel\Admin\CabinetController::class, 'toggleModule']);
+    Route::put('/api/admin/cabinet/limits', [\App\Http\Controllers\Gel\Admin\CabinetController::class, 'updateLimits']);
+
+    // ── Admin — Utilisateurs, Rôles & Permissions (routes via api.php) ──
+
+    Route::get('/api/clients', [ClientController::class, 'listAll']);
+    Route::get('/api/clients/{id}', [ClientController::class, 'getClient']);
+
     Route::middleware('module:crm')->group(function () {
-        Route::get('/api/clients', [ClientController::class, 'listAll']);
-        Route::get('/api/clients/{id}', [ClientController::class, 'getClient']);
         Route::put('/api/clients/{id}/modules', [ClientController::class, 'updateModules']);
     });
     Route::get('/api/poles', [PoleController::class, 'listAll']);
@@ -992,6 +1246,160 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'ensure.company', 'compa
         Route::get('/caisse', [\App\Http\Controllers\Company\CaisseController::class, 'index'])->name('caisse');
     });
 
+    // ─── Comptabilité - module:comptabilite ──────────────────────────────────
+    Route::middleware('module:comptabilite')->prefix('comptabilite')->name('compta.')->group(function () {
+
+        // Dashboard comptable
+        Route::get('/', [\App\Http\Controllers\Company\Compta\DashboardController::class, 'index'])->name('dashboard');
+
+        // Plan comptable (SYSCOHADA Classes 1-9)
+        Route::get('/comptes', [\App\Http\Controllers\Company\Compta\CompteController::class, 'index'])->name('comptes.index');
+        Route::post('/comptes', [\App\Http\Controllers\Company\Compta\CompteController::class, 'store'])->name('comptes.store');
+        Route::put('/comptes/{id}', [\App\Http\Controllers\Company\Compta\CompteController::class, 'update'])->name('comptes.update');
+        Route::delete('/comptes/{id}', [\App\Http\Controllers\Company\Compta\CompteController::class, 'destroy'])->name('comptes.destroy');
+        Route::post('/comptes/import', [\App\Http\Controllers\Company\Compta\CompteController::class, 'import'])->name('comptes.import');
+
+        // Journaux (VTE, ACH, BNQ, CA, OD...)
+        Route::get('/journaux', [\App\Http\Controllers\Company\Compta\JournalController::class, 'index'])->name('journaux.index');
+        Route::post('/journaux', [\App\Http\Controllers\Company\Compta\JournalController::class, 'store'])->name('journaux.store');
+        Route::put('/journaux/{id}', [\App\Http\Controllers\Company\Compta\JournalController::class, 'update'])->name('journaux.update');
+        Route::delete('/journaux/{id}', [\App\Http\Controllers\Company\Compta\JournalController::class, 'destroy'])->name('journaux.destroy');
+
+        // Écritures comptables (partie double)
+        Route::get('/ecritures', [\App\Http\Controllers\Company\Compta\EcritureController::class, 'index'])->name('ecritures.index');
+        Route::get('/ecritures/{id}', [\App\Http\Controllers\Company\Compta\EcritureController::class, 'show'])->name('ecritures.show');
+        Route::post('/ecritures', [\App\Http\Controllers\Company\Compta\EcritureController::class, 'store'])->name('ecritures.store');
+        Route::put('/ecritures/{id}', [\App\Http\Controllers\Company\Compta\EcritureController::class, 'update'])->name('ecritures.update');
+        Route::delete('/ecritures/{id}', [\App\Http\Controllers\Company\Compta\EcritureController::class, 'destroy'])->name('ecritures.destroy');
+        Route::post('/ecritures/{id}/validate', [\App\Http\Controllers\Company\Compta\EcritureController::class, 'validateEntry'])->name('ecritures.validate');
+
+        // Grand livre & Balance
+        Route::get('/grand-livre', [\App\Http\Controllers\Company\Compta\EcritureController::class, 'grandLivre'])->name('grand-livre');
+        Route::get('/balance', [\App\Http\Controllers\Company\Compta\EcritureController::class, 'balance'])->name('balance');
+
+        // Factures Clients
+        Route::get('/factures', [\App\Http\Controllers\Company\Compta\FactureController::class, 'index'])->name('factures.index');
+        Route::get('/factures/{id}', [\App\Http\Controllers\Company\Compta\FactureController::class, 'show'])->name('factures.show');
+        Route::post('/factures', [\App\Http\Controllers\Company\Compta\FactureController::class, 'store'])->name('factures.store');
+        Route::put('/factures/{id}', [\App\Http\Controllers\Company\Compta\FactureController::class, 'update'])->name('factures.update');
+        Route::delete('/factures/{id}', [\App\Http\Controllers\Company\Compta\FactureController::class, 'destroy'])->name('factures.destroy');
+        Route::post('/factures/{id}/send', [\App\Http\Controllers\Company\Compta\FactureController::class, 'send'])->name('factures.send');
+        Route::post('/factures/{id}/pay', [\App\Http\Controllers\Company\Compta\FactureController::class, 'pay'])->name('factures.pay');
+        Route::get('/factures/{id}/pdf', [\App\Http\Controllers\Company\Compta\FactureController::class, 'pdf'])->name('factures.pdf');
+        Route::post('/factures/{id}/cancel', [\App\Http\Controllers\Company\Compta\FactureController::class, 'cancel'])->name('factures.cancel');
+
+        // Banque & Rapprochement bancaire
+        Route::get('/banque', [\App\Http\Controllers\Company\Compta\BanqueController::class, 'index'])->name('banque.index');
+        Route::post('/banque/link', [\App\Http\Controllers\Company\Compta\BanqueController::class, 'link'])->name('banque.link');
+        Route::post('/banque/import-statement', [\App\Http\Controllers\Company\Compta\BanqueController::class, 'importStatement'])->name('banque.import');
+        Route::get('/banque/rapprochements', [\App\Http\Controllers\Company\Compta\BanqueController::class, 'rapprochements'])->name('banque.rapprochements');
+        Route::post('/banque/rapprochements', [\App\Http\Controllers\Company\Compta\BanqueController::class, 'storeRapprochement'])->name('banque.rapprochements.store');
+        Route::post('/banque/rapprochements/{id}/auto-match', [\App\Http\Controllers\Company\Compta\BanqueController::class, 'autoMatch'])->name('banque.rapprochements.auto-match');
+        Route::post('/banque/rapprochements/{id}/verify', [\App\Http\Controllers\Company\Compta\BanqueController::class, 'verify'])->name('banque.rapprochements.verify');
+
+        // TVA & Déclarations fiscales (OHADA)
+        Route::get('/tva/taux', [\App\Http\Controllers\Company\Compta\TvaController::class, 'taux'])->name('tva.taux');
+        Route::post('/tva/taux', [\App\Http\Controllers\Company\Compta\TvaController::class, 'storeTaux'])->name('tva.taux.store');
+        Route::get('/tva/declaration/{period}', [\App\Http\Controllers\Company\Compta\TvaController::class, 'declaration'])->name('tva.declaration');
+        Route::post('/tva/declaration/{period}/submit', [\App\Http\Controllers\Company\Compta\TvaController::class, 'submitDeclaration'])->name('tva.declaration.submit');
+
+        // États financiers (Rapports SYSCOHADA)
+        Route::get('/rapports/bilan', [\App\Http\Controllers\Company\Compta\RapportController::class, 'bilan'])->name('rapports.bilan');
+        Route::get('/rapports/resultat', [\App\Http\Controllers\Company\Compta\RapportController::class, 'resultat'])->name('rapports.resultat');
+        Route::get('/rapports/tft', [\App\Http\Controllers\Company\Compta\RapportController::class, 'tft'])->name('rapports.tft');
+        Route::get('/rapports/grand-livre', [\App\Http\Controllers\Company\Compta\RapportController::class, 'grandLivre'])->name('rapports.grand-livre');
+        Route::get('/rapports/balance', [\App\Http\Controllers\Company\Compta\RapportController::class, 'balance'])->name('rapports.balance');
+        Route::get('/rapports/aging-clients', [\App\Http\Controllers\Company\Compta\RapportController::class, 'agingClients'])->name('rapports.aging-clients');
+        Route::get('/rapports/aging-fournisseurs', [\App\Http\Controllers\Company\Compta\RapportController::class, 'agingFournisseurs'])->name('rapports.aging-fournisseurs');
+        Route::get('/rapports/journal/{type}', [\App\Http\Controllers\Company\Compta\RapportController::class, 'journal'])->name('rapports.journal');
+
+        // â”€â”€â”€ Modules mÃ©tier protÃ©gÃ©s par domaine â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+        // Stock (Commerce, Industrie, SantÃ©)
+        Route::middleware('compta.domain:stock')->prefix('stock')->name('stock.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Company\Compta\Modules\StockController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\Company\Compta\Modules\StockController::class, 'store'])->name('store');
+            Route::put('/{id}', [\App\Http\Controllers\Company\Compta\Modules\StockController::class, 'update'])->name('update');
+            Route::delete('/{id}', [\App\Http\Controllers\Company\Compta\Modules\StockController::class, 'destroy'])->name('destroy');
+            Route::post('/{id}/movement', [\App\Http\Controllers\Company\Compta\Modules\StockController::class, 'movement'])->name('movement');
+            Route::get('/alerts', [\App\Http\Controllers\Company\Compta\Modules\StockController::class, 'alerts'])->name('alerts');
+        });
+
+        // HÃ´tel — Gestion des chambres
+        Route::middleware('compta.domain:gestion_chambres')->prefix('hotel')->name('hotel.')->group(function () {
+            Route::get('/chambres', [\App\Http\Controllers\Company\Compta\Modules\HotelChambreController::class, 'index'])->name('chambres');
+            Route::post('/chambres', [\App\Http\Controllers\Company\Compta\Modules\HotelChambreController::class, 'store'])->name('chambres.store');
+            Route::put('/chambres/{id}', [\App\Http\Controllers\Company\Compta\Modules\HotelChambreController::class, 'update'])->name('chambres.update');
+            Route::get('/reservations', [\App\Http\Controllers\Company\Compta\Modules\HotelChambreController::class, 'reservations'])->name('reservations');
+            Route::post('/reservations', [\App\Http\Controllers\Company\Compta\Modules\HotelChambreController::class, 'storeReservation'])->name('reservations.store');
+        });
+
+        // Scolaire — Gestion des classes et Ã©lÃ¨ves
+        Route::middleware('compta.domain:gestion_eleves')->prefix('scolaire')->name('scolaire.')->group(function () {
+            Route::get('/eleves', [\App\Http\Controllers\Company\Compta\Modules\ScolaireController::class, 'eleves'])->name('eleves');
+            Route::post('/eleves', [\App\Http\Controllers\Company\Compta\Modules\ScolaireController::class, 'storeEleve'])->name('eleves.store');
+            Route::get('/classes', [\App\Http\Controllers\Company\Compta\Modules\ScolaireController::class, 'classes'])->name('classes');
+            Route::post('/classes', [\App\Http\Controllers\Company\Compta\Modules\ScolaireController::class, 'storeClasse'])->name('classes.store');
+            Route::get('/factures', [\App\Http\Controllers\Company\Compta\Modules\ScolaireController::class, 'factures'])->name('factures');
+        });
+
+        // Location ImmobiliÃ¨re
+        Route::middleware('compta.domain:gestion_biens')->prefix('location')->name('location.')->group(function () {
+            Route::get('/biens', [\App\Http\Controllers\Company\Compta\Modules\LocationController::class, 'biens'])->name('biens');
+            Route::post('/biens', [\App\Http\Controllers\Company\Compta\Modules\LocationController::class, 'storeBien'])->name('biens.store');
+            Route::get('/locataires', [\App\Http\Controllers\Company\Compta\Modules\LocationController::class, 'locataires'])->name('locataires');
+            Route::get('/quittances', [\App\Http\Controllers\Company\Compta\Modules\LocationController::class, 'quittances'])->name('quittances');
+            Route::post('/quittances', [\App\Http\Controllers\Company\Compta\Modules\LocationController::class, 'storeQuittance'])->name('quittances.store');
+        });
+
+        // Tontine
+        Route::middleware('compta.domain:gestion_tontines')->prefix('tontine')->name('tontine.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Company\Compta\Modules\TontineController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\Company\Compta\Modules\TontineController::class, 'store'])->name('store');
+            Route::post('/{id}/cotisation', [\App\Http\Controllers\Company\Compta\Modules\TontineController::class, 'cotisation'])->name('cotisation');
+            Route::post('/{id}/attribution', [\App\Http\Controllers\Company\Compta\Modules\TontineController::class, 'attribution'])->name('attribution');
+        });
+
+        // Pressing
+        Route::middleware('compta.domain:facturation_pressing')->prefix('pressing')->name('pressing.')->group(function () {
+            Route::get('/commandes', [\App\Http\Controllers\Company\Compta\Modules\PressingController::class, 'commandes'])->name('commandes');
+            Route::post('/commandes', [\App\Http\Controllers\Company\Compta\Modules\PressingController::class, 'storeCommande'])->name('commandes.store');
+            Route::put('/commandes/{id}', [\App\Http\Controllers\Company\Compta\Modules\PressingController::class, 'updateCommande'])->name('commandes.update');
+            Route::post('/commandes/{id}/statut', [\App\Http\Controllers\Company\Compta\Modules\PressingController::class, 'changeStatut'])->name('commandes.statut');
+        });
+
+        // Transport & Transit
+        Route::middleware('compta.domain:transit_dossiers')->prefix('transport')->name('transport.')->group(function () {
+            Route::get('/dossiers', [\App\Http\Controllers\Company\Compta\Modules\TransportController::class, 'dossiers'])->name('dossiers');
+            Route::post('/dossiers', [\App\Http\Controllers\Company\Compta\Modules\TransportController::class, 'storeDossier'])->name('dossiers.store');
+            Route::get('/vehicules', [\App\Http\Controllers\Company\Compta\Modules\TransportController::class, 'vehicules'])->name('vehicules');
+            Route::post('/vehicules', [\App\Http\Controllers\Company\Compta\Modules\TransportController::class, 'storeVehicule'])->name('vehicules.store');
+            Route::get('/tournees', [\App\Http\Controllers\Company\Compta\Modules\TransportController::class, 'tournees'])->name('tournees');
+        });
+
+        // Morgue
+        Route::middleware('compta.domain:gestion_depots')->prefix('morgue')->name('morgue.')->group(function () {
+            Route::get('/depots', [\App\Http\Controllers\Company\Compta\Modules\MorgueController::class, 'depots'])->name('depots');
+            Route::post('/depots', [\App\Http\Controllers\Company\Compta\Modules\MorgueController::class, 'storeDepot'])->name('depots.store');
+            Route::put('/depots/{id}', [\App\Http\Controllers\Company\Compta\Modules\MorgueController::class, 'updateDepot'])->name('depots.update');
+            Route::get('/factures', [\App\Http\Controllers\Company\Compta\Modules\MorgueController::class, 'factures'])->name('factures');
+        });
+
+        // Restauration
+        Route::middleware('compta.domain:gestion_menus')->prefix('restauration')->name('restauration.')->group(function () {
+            Route::get('/menus', [\App\Http\Controllers\Company\Compta\Modules\RestaurationController::class, 'menus'])->name('menus');
+            Route::post('/menus', [\App\Http\Controllers\Company\Compta\Modules\RestaurationController::class, 'storeMenu'])->name('menus.store');
+            Route::get('/commandes', [\App\Http\Controllers\Company\Compta\Modules\RestaurationController::class, 'commandes'])->name('commandes');
+        });
+
+        // Industrie
+        Route::middleware('compta.domain:stock')->prefix('industrie')->name('industrie.')->group(function () {
+            Route::get('/production', [\App\Http\Controllers\Company\Compta\Modules\IndustrieController::class, 'production'])->name('production');
+            Route::post('/production', [\App\Http\Controllers\Company\Compta\Modules\IndustrieController::class, 'storeProduction'])->name('production.store');
+            Route::get('/nomenclature', [\App\Http\Controllers\Company\Compta\Modules\IndustrieController::class, 'nomenclature'])->name('nomenclature');
+        });
+    });
+
     // GED - module:document
     Route::middleware('module:document')->group(function () {
         Route::get('/ged', [\App\Http\Controllers\Company\GedController::class, 'index'])->name('ged');
@@ -1007,6 +1415,24 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'ensure.company', 'compa
         Route::get('/accounting/budgets', [\App\Http\Controllers\Company\AccountingController::class, 'index'])->name('accounting.budgets');
         Route::get('/accounting/tax-declarations', [\App\Http\Controllers\Company\AccountingController::class, 'index'])->name('accounting.tax-declarations');
         Route::get('/accounting/closing', [\App\Http\Controllers\Company\AccountingController::class, 'index'])->name('accounting.closing');
+    });
+
+    // ─── Pages Compta (flat paths) ─────────────────────────────────
+    Route::middleware('module:comptabilite')->prefix('compta')->name('compta.alt.')->group(function () {
+        Route::get('/dashboard', function () { return view('company', ['page' => 'compta-dashboard-alt']); })->name('dashboard');
+        Route::get('/ecritures', function () { return view('company', ['page' => 'comptabilite-journal-entries']); })->name('ecritures');
+        Route::get('/ecritures/nouvelle', function () { return view('company', ['page' => 'comptabilite-create-entry']); })->name('ecritures.create');
+        Route::get('/ecritures/{id}', function () { return view('company', ['page' => 'comptabilite-entry-detail']); })->name('ecritures.show');
+        Route::get('/banque', function () { return view('company', ['page' => 'banque-bank-accounts']); })->name('banque');
+        Route::get('/banque/compte/{id}', function () { return view('company', ['page' => 'banque-bank-account-detail']); })->name('banque.detail');
+        Route::get('/banque/rapprochement', function () { return view('company', ['page' => 'banque-reconciliation-wizard']); })->name('banque.reconciliation');
+        Route::get('/banque/rapprochement/{id}', function () { return view('company', ['page' => 'banque-reconciliation-wizard']); })->name('banque.reconciliation.show');
+        Route::get('/rapports/trial-balance', function () { return view('company', ['page' => 'rapports-trial-balance']); })->name('rapports.trial-balance');
+        Route::get('/rapports/grand-livre', function () { return view('company', ['page' => 'rapports-general-ledger']); })->name('rapports.grand-livre');
+        Route::get('/rapports/bilan', function () { return view('company', ['page' => 'rapports-balance-sheet']); })->name('rapports.bilan');
+        Route::get('/rapports/resultat', function () { return view('company', ['page' => 'rapports-income-statement']); })->name('rapports.resultat');
+        Route::get('/rapports/tresorerie', function () { return view('company', ['page' => 'rapports-cash-flow']); })->name('rapports.cash-flow');
+        Route::get('/rapports/aging', function () { return view('company', ['page' => 'rapports-aging-report']); })->name('rapports.aging');
     });
 
     // Facturation - module:facturation
@@ -1194,6 +1620,7 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'ensure.company', 'compa
         Route::get('/api/company/accounting/reports/bilan', [\App\Http\Controllers\Company\AccountingController::class, 'bilan']);
         Route::get('/api/company/accounting/reports/resultat', [\App\Http\Controllers\Company\AccountingController::class, 'resultat']);
         Route::get('/api/company/accounting/stats', [\App\Http\Controllers\Company\AccountingController::class, 'stats']);
+        Route::get('/api/company/accounting/domain-kpis', [\App\Http\Controllers\Company\AccountingController::class, 'domainKpis']);
 
         // Exercices fiscaux
         Route::get('/api/company/fiscal-years', [\App\Http\Controllers\Company\FiscalYearController::class, 'index']);
@@ -1345,11 +1772,39 @@ Route::middleware(['auth', 'not_suspended'])->group(function () {
     Route::post('/api/me/switch-context', [\App\Http\Controllers\MeController::class, 'switchContext'])->name('api.me.switch-context');
 });
 
+// —— Wizard d'inscription entreprise (5 étapes) ———————————————-
+Route::prefix('register/company')->name('register.company.')->group(function () {
+    Route::get('/step/{step}', [\App\Http\Controllers\Auth\CompanyRegistrationController::class, 'step'])->name('step');
+    Route::post('/step/{step}', [\App\Http\Controllers\Auth\CompanyRegistrationController::class, 'process'])->name('process');
+});
+
+// —— API pour le wizard d'inscription ——————————————————————
+Route::middleware(['web'])->prefix('api/register')->group(function () {
+    Route::get('/company/data', function () {
+        return response()->json(session('company_registration', []));
+    })->name('api.register.company.data');
+    Route::get('/domains', [\App\Http\Controllers\Auth\CompanyRegistrationController::class, 'getDomains'])->name('api.register.domains');
+    Route::get('/domains/{id}', function ($id) {
+        $domain = \App\Models\BusinessDomain::find($id);
+        if (!$domain) return response()->json(['message' => 'Domaine introuvable.'], 404);
+        return response()->json(['id' => $domain->id, 'label' => $domain->label, 'modules_count' => count($domain->modules_comptables ?? [])]);
+    })->name('api.register.domains.show');
+});
+
 // —— Selecteur de contexte entreprise ———————————————————-
 Route::middleware(['auth', 'not_suspended'])->prefix('context')->name('select.')->group(function () {
     Route::get('/', [\App\Http\Controllers\CompanySwitcherController::class, 'showSelector'])->name('context');
     Route::post('/switch', [\App\Http\Controllers\CompanySwitcherController::class, 'switch'])->name('switch');
 });
+
+// ─── GEL Accountant — Interface cabinet comptable ─────────────────
+require __DIR__ . '/gel-accountant.php';
+
+// ─── GEL Business — Interface entreprise ─────────────────────────
+require __DIR__ . '/gel-business.php';
+
+// ─── GEL Comptabilité — API interne ─────────────────────────────
+require __DIR__ . '/gel-comptabilite.php';
 
 require __DIR__ . '/auth.php';
 
@@ -1364,6 +1819,25 @@ Route::get('/cpa-login', function () {
 Route::get('/cpa-register', function () {
     return view('app', ['page' => 'cpa-register']);
 })->name('cpa.register');
+
+// ─── Inscription libre-service ComptaSaaS ──────────────────────
+Route::get('/register', function () {
+    return view('app', ['page' => 'comptasaas-register']);
+})->name('register');
+
+// ─── Pages légales (CGU, Confidentialité) ──────────────────────
+Route::get('/conditions', function () {
+    return view('app', ['page' => 'legal-terms']);
+})->name('terms');
+
+Route::get('/confidentialite', function () {
+    return view('app', ['page' => 'legal-privacy']);
+})->name('privacy');
+
+// ─── Connexion ComptaSaaS ─────────────────────────────────────
+Route::get('/login', function () {
+    return view('app', ['page' => 'comptasaas-login']);
+})->name('login');
 
 // ─── Dashboard Crescendo CPA ────────────────────────────────────
 Route::middleware(['auth', 'verified', 'not_suspended'])->group(function () {

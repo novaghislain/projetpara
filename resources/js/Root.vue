@@ -53,6 +53,21 @@ const pageComponent = computed(() => {
         'gel-accounting-budgets': 'gel-accounting-budgets',
         'gel-accounting-tax-declarations': 'gel-accounting-tax-declarations',
         'gel-accounting-closing': 'gel-accounting-closing',
+        // ─── Pages métier GEL manquantes ────────────────────────────
+        'gel-factures': 'gel-factures',
+        'gel-devis': 'gel-devis',
+        'gel-relances': 'gel-relances',
+        'gel-employes': 'gel-employes',
+        'gel-tresorerie': 'gel-tresorerie',
+        'gel-rapprochement': 'gel-rapprochement',
+        'gel-fiscalite': 'gel-fiscalite',
+        'gel-declarations': 'gel-declarations',
+        'gel-ia-suggestions': 'gel-ia-suggestions',
+        'gel-reports': 'gel-reports',
+        'gel-admin-audit': 'gel-admin-audit',
+        'gel-admin-modules': 'gel-admin-modules',
+        'gel-search': 'gel-search',
+
         'erp-catalogue': 'erp-catalogue',
         'erp-stock': 'erp-stock',
         'erp-invoice': 'erp-invoice',
@@ -76,6 +91,10 @@ const pageComponent = computed(() => {
         'cpa-register': 'cpa-register',
         'cpa-test': 'cpa-test',
         'cpa-dashboard': 'cpa-dashboard',
+        'comptasaas-register': 'comptasaas-register',
+        'comptasaas-login': 'comptasaas-login',
+        'legal-terms': 'legal-terms',
+        'legal-privacy': 'legal-privacy',
         'company-dashboard': 'company-dashboard',
         'company-services': 'company-services',
         'company-profile': 'company-profile',
@@ -89,6 +108,46 @@ const pageComponent = computed(() => {
         'company-crm': 'company-crm',
         'company-ai-assistant': 'company-ai-assistant',
         'company-accounting': 'company-accounting',
+
+        // ─── Compta (portail entreprise) ───────────────────────────
+        'compta-dashboard': 'Company/Compta/Dashboard',
+        'compta-comptes': 'Company/Compta/Comptes/Index',
+        'compta-ecritures': 'Company/Compta/Ecritures/Index',
+        'compta-balance': 'Company/Compta/Balance',
+        'compta-bilan': 'Company/Compta/Rapports/Bilan',
+        'compta-grand-livre': 'Company/Compta/Rapports/GrandLivre',
+        'compta-resultat': 'Company/Compta/Rapports/Resultat',
+        'compta-factures': 'Company/Compta/Factures/Index',
+        'compta-journaux': 'Company/Compta/Journaux/Index',
+        'compta-tva': 'Company/Compta/Tva/Index',
+        'compta-banque': 'Company/Compta/Banque/Index',
+        'compta-immobilisations': 'Company/Compta/Immobilisations/Index',
+        'compta-exercices': 'Company/Compta/Exercices/Index',
+        'compta-trial-balance': 'Company/Compta/Rapports/TrialBalance',
+        'compta-cash-flow': 'Company/Compta/Rapports/CashFlow',
+        'compta-aging': 'Company/Compta/Rapports/Aging',
+
+        // Pages Comptabilite (flat paths)
+        'comptabilite-journal-entries': 'comptabilite-journal-entries',
+        'comptabilite-create-entry': 'comptabilite-create-entry',
+        'comptabilite-entry-detail': 'comptabilite-entry-detail',
+
+        // Pages Banque (flat paths)
+        'banque-bank-accounts': 'banque-bank-accounts',
+        'banque-bank-account-detail': 'banque-bank-account-detail',
+        'banque-reconciliation-wizard': 'banque-reconciliation-wizard',
+
+        // Pages Rapports (flat paths)
+        'rapports-trial-balance': 'rapports-trial-balance',
+        'rapports-general-ledger': 'rapports-general-ledger',
+        'rapports-balance-sheet': 'rapports-balance-sheet',
+        'rapports-income-statement': 'rapports-income-statement',
+        'rapports-cash-flow': 'rapports-cash-flow',
+        'rapports-aging-report': 'rapports-aging-report',
+
+        // Dashboard alt
+        'compta-dashboard-alt': 'compta-dashboard-alt',
+
         'company-caisse': 'company-caisse',
         'company-emecef': 'company-emecef',
         'company-dae-dashboard': 'company-dae-dashboard',

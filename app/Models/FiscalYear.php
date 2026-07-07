@@ -38,6 +38,11 @@ class FiscalYear extends Model
         return $this->belongsTo(User::class, 'closed_by');
     }
 
+    public function periods(): HasMany
+    {
+        return $this->hasMany(FiscalPeriod::class, 'fiscal_year_id');
+    }
+
     public function journals(): HasMany
     {
         return $this->hasMany(AccountingJournal::class, 'fiscal_year_id');

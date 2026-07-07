@@ -46,7 +46,10 @@ export default defineConfig({
         // Plugin Laravel officiel : injecte les balises <script>/<link>
         // vers les bons fichiers compilés (HMR en dev, versionnés en prod).
         laravel({
-            input: 'resources/js/app.js',
+            input: [
+                'resources/js/app.js',
+                'resources/css/app.css',
+            ],
             refresh: true,
         }),
 
@@ -96,6 +99,7 @@ export default defineConfig({
             // Configuration Workbox : stratégies de cache pour les assets
             // et les appels API.
             workbox: {
+                maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MiB
                 globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
                 runtimeCaching: [
                     {

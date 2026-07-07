@@ -1,3 +1,4 @@
+{{-- resources/views/pages/nos-modules.blade.php --}}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -5,638 +6,238 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Nos Modules | GEL Cabinet</title>
-    <meta name="description" content="Modules GEL Cabinet : CRM Clients, GED, Pôles & Missions, Comptabilité et ERP Intégré.">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
+    <meta name="description" content="Modules GEL Cabinet : CRM Clients, GED, Pôles & Missions, Comptabilité et ERP Intégré. Plateforme multi-portail conforme OHADA.">
+    @include('partials.styles')
+    @vite(['resources/css/app.css'])
     <style>
-        :root {
-            --gel-primary: #FF7900; --gel-primary-hov: #e06700; --gel-primary-soft: rgba(255,121,0,0.06);
-            --gel-blue: #3B82F6; --gel-blue-dark: #1E3A5F; --gel-blue-soft: rgba(59,130,246,0.06);
-            --gel-darker: #0F172A; --gel-dark: #111827; --gel-white: #ffffff;
-            --gel-light: #F8FAFC; --gel-light2: #F1F5F9; --gel-border: #E2E8F0;
-            --gel-muted: #64748B; --gel-text: #1E293B;
-            --font-body: 'Inter', sans-serif; --font-heading: 'Outfit', sans-serif;
-            --nav-height: 72px; --radius: 4px;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
-            --shadow-md: 0 4px 20px rgba(0,0,0,0.06);
-            --shadow-lg: 0 12px 40px rgba(0,0,0,0.08);
-            --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
+        .page-hero {
+            background: linear-gradient(135deg, #0B1120 0%, #162044 100%);
+            padding: 140px 0 80px; position: relative; overflow: hidden; text-align: center;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: var(--font-body); background: var(--gel-white); color: var(--gel-text); line-height: 1.6; }
-        h1,h2,h3,h4,h5,h6 { font-family: var(--font-heading); font-weight: 700; }
+        .page-hero::before {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(circle at 30% 50%, rgba(255,121,0,0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 30%, rgba(255,121,0,0.05) 0%, transparent 50%);
+        }
+        .page-hero * { position: relative; z-index: 2; }
+        .page-hero h1 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 900; color: white; }
+        .page-hero p { color: rgba(255,255,255,0.6); max-width: 600px; margin: 16px auto 0; font-size: 1.05rem; }
+        .gradient-text { background: linear-gradient(135deg, #FF7900 0%, #FF9A3C 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 
-        .anim-fade-up { opacity: 0; transform: translateY(36px); transition: opacity 0.65s var(--transition), transform 0.65s var(--transition); }
-        .anim-fade-left { opacity: 0; transform: translateX(-36px); transition: opacity 0.65s var(--transition), transform 0.65s var(--transition); }
-        .anim-fade-right { opacity: 0; transform: translateX(36px); transition: opacity 0.65s var(--transition), transform 0.65s var(--transition); }
-        .anim-scale { opacity: 0; transform: scale(0.92); transition: opacity 0.55s var(--transition), transform 0.55s var(--transition); }
-        .anim-visible { opacity: 1 !important; transform: none !important; }
-        .delay-1 { transition-delay: 0.1s !important; }
-        .delay-2 { transition-delay: 0.2s !important; }
-        .delay-3 { transition-delay: 0.3s !important; }
-        .delay-4 { transition-delay: 0.4s !important; }
-        .delay-5 { transition-delay: 0.5s !important; }
-
-        /* Navbar */
-        .gel-navbar {
-            position: fixed; top: 0; left: 0; right: 0; z-index: 1050;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid transparent;
-            height: var(--nav-height);
-            display: flex; align-items: center;
-            transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
-        }
-        .gel-navbar.scrolled {
-            background: rgba(255,255,255,0.98);
-            border-bottom-color: var(--gel-border);
-            box-shadow: var(--shadow-sm);
-        }
-        .gel-navbar .container-fluid {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 32px; max-width: 1320px; margin: 0 auto; width: 100%;
-        }
-        .gel-brand { display: flex; align-items: center; gap: 11px; text-decoration: none; flex-shrink: 0; }
-        .gel-brand-logo { width: 38px; height: 38px; background: var(--gel-primary); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-family: var(--font-heading); font-size: 13px; font-weight: 900; color: #fff; letter-spacing: -0.5px; flex-shrink: 0; }
-        .gel-brand-text { display: flex; flex-direction: column; line-height: 1.1; }
-        .gel-brand-name { font-family: var(--font-heading); font-weight: 800; font-size: 16px; color: var(--gel-dark); letter-spacing: -0.3px; }
-        .gel-brand-sub { font-size: 8.5px; font-weight: 600; color: var(--gel-muted); letter-spacing: 0.1em; text-transform: uppercase; }
-        .gel-nav-center { display: flex; align-items: center; gap: 0; list-style: none; }
-        .gel-nav-item { position: relative; }
-        .gel-nav-link {
-            display: flex; align-items: center; gap: 3px;
-            padding: 7px 13px;
-            font-size: 13px; font-weight: 500;
-            color: var(--gel-text); text-decoration: none;
-            border-radius: var(--radius);
-            transition: color var(--transition), background var(--transition);
-            white-space: nowrap;
-        }
-        .gel-nav-link:hover, .gel-nav-link.active { color: var(--gel-primary); background: var(--gel-primary-soft); }
-        .gel-nav-link .chevron { font-size: 10px; transition: transform var(--transition); }
-        .gel-nav-item:hover > a .chevron { transform: rotate(180deg); }
-        .gel-dropdown {
-            position: absolute; top: calc(100% + 8px); left: 50%;
-            transform: translateX(-50%);
-            background: var(--gel-white); border: 1px solid var(--gel-border);
-            border-radius: 10px; box-shadow: var(--shadow-lg);
-            padding: 6px; min-width: 220px;
-            opacity: 0; visibility: hidden;
-            transform: translateX(-50%) translateY(-8px);
-            transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
-            list-style: none;
-        }
-        .gel-nav-item:hover .gel-dropdown { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
-        .gel-dropdown li a {
-            display: flex; align-items: center; gap: 10px;
-            padding: 8px 12px; font-size: 13px; font-weight: 500;
-            color: var(--gel-text); text-decoration: none;
-            border-radius: var(--radius);
-            transition: background var(--transition), color var(--transition);
-        }
-        .gel-dropdown li a:hover { background: var(--gel-primary-soft); color: var(--gel-primary); }
-        .gel-dropdown li a .drop-icon { width: 26px; height: 26px; background: var(--gel-light2); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: var(--gel-primary); font-size: 12px; flex-shrink: 0; }
-        .gel-dropdown-divider { border: none; border-top: 1px solid var(--gel-border); margin: 4px 0; }
-        .gel-nav-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-        .gel-phone { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; color: var(--gel-muted); text-decoration: none; padding: 6px 10px; border-radius: var(--radius); transition: color var(--transition); }
-        .gel-phone:hover { color: var(--gel-primary); }
-        .gel-phone i { color: var(--gel-primary); font-size: 13px; }
-        .gel-btn-nav { display: inline-flex; align-items: center; gap: 5px; padding: 7px 16px; font-size: 12.5px; font-weight: 600; border-radius: 6px; text-decoration: none; transition: all var(--transition); border: none; cursor: pointer; }
-        .gel-btn-nav-outline { background: transparent; color: var(--gel-text); border: 1.5px solid var(--gel-border); }
-        .gel-btn-nav-outline:hover { border-color: var(--gel-primary); color: var(--gel-primary); }
-        .gel-btn-nav-primary { background: var(--gel-primary); color: #fff; }
-        .gel-btn-nav-primary:hover { background: var(--gel-primary-hov); color: #fff; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(255,121,0,0.3); }
-        .gel-toggler { display: none; background: none; border: 1.5px solid var(--gel-border); border-radius: var(--radius); padding: 6px 9px; cursor: pointer; color: var(--gel-dark); font-size: 17px; transition: all var(--transition); }
-        .gel-toggler:hover { border-color: var(--gel-primary); color: var(--gel-primary); }
-        .gel-mobile-menu { display: none; position: fixed; top: var(--nav-height); left: 0; right: 0; background: var(--gel-white); border-bottom: 3px solid var(--gel-primary); box-shadow: var(--shadow-md); z-index: 1040; padding: 16px 24px 24px; max-height: calc(100vh - var(--nav-height)); overflow-y: auto; }
-        .gel-mobile-menu.open { display: block; }
-        .gel-mobile-link { display: flex; align-items: center; gap: 10px; padding: 11px 0; font-size: 14px; font-weight: 500; color: var(--gel-text); text-decoration: none; border-bottom: 1px solid var(--gel-border); }
-        .gel-mobile-link:last-child { border-bottom: none; }
-        .gel-mobile-link:hover { color: var(--gel-primary); }
-        .text-orange { color: var(--gel-primary); }
-        @media (max-width: 991px) {
-            .gel-nav-center { display: none; }
-            .gel-phone { display: none; }
-            .gel-toggler { display: flex; }
-            .gel-navbar .container-fluid { padding: 0 16px; }
-        }
-
-        /* Page Header */
-        .gel-page-header {
-            margin-top: var(--nav-height);
-            background: linear-gradient(135deg, #0A1628 0%, #1E293B 25%, #0F172A 50%, #1E293B 75%, #0A1628 100%);
-            background-size: 300% 300%;
-            animation: gelGradientMove 12s ease infinite;
-            padding: 70px 0 50px;
-            position: relative;
-            overflow: hidden;
-        }
-        @keyframes gelGradientMove {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        .gel-page-header::before {
-            content: '';
-            position: absolute;
-            top: -100px; right: -100px;
-            width: 400px; height: 400px;
-            background: radial-gradient(circle, rgba(255,121,0,0.12) 0%, transparent 70%);
-            border-radius: 50%;
-            animation: gelFloatA 8s ease-in-out infinite;
-        }
-        .gel-page-header::after {
-            content: '';
-            position: absolute;
-            bottom: -60px; left: -60px;
-            width: 200px; height: 200px;
-            background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);
-            border-radius: 50%;
-            animation: gelFloatB 10s ease-in-out infinite;
-        }
-        @keyframes gelFloatA {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(-30px, 20px) scale(1.05); }
-            66% { transform: translate(20px, -10px) scale(0.95); }
-        }
-        @keyframes gelFloatB {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(30px, -20px) scale(1.08); }
-            66% { transform: translate(-20px, 10px) scale(0.92); }
-        }
-        .gel-page-header h1 {
-            font-family: var(--font-heading);
-            font-size: clamp(1.8rem, 3vw, 2.4rem);
-            font-weight: 900;
-            color: #fff;
-            letter-spacing: -1px;
-            position: relative;
-            z-index: 1;
-        }
-        .gel-page-header p {
-            color: rgba(255,255,255,0.6);
-            font-size: 15px;
-            max-width: 580px;
-            margin-top: 12px;
-            line-height: 1.7;
-            position: relative;
-            z-index: 1;
-        }
-        .gel-page-header-badge {
-            display: inline-flex; align-items: center; gap: 6px;
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 5px 14px;
-            border-radius: 100px;
-            font-size: 11px;
-            font-weight: 600;
-            color: rgba(255,255,255,0.7);
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            margin-bottom: 14px;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Sections */
-        .gel-section { padding: 80px 0; }
-        .gel-section-alt { background: var(--gel-light); }
-        .gel-section-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--gel-white); color: var(--gel-primary); font-size: 11px; font-weight: 700; padding: 4px 14px; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; border: 1.5px solid rgba(255,121,0,0.2); }
-        .gel-section-title { font-family: var(--font-heading); font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 800; color: var(--gel-dark); letter-spacing: -0.5px; line-height: 1.2; margin-bottom: 14px; }
-        .gel-section-sub { font-size: 15px; color: var(--gel-muted); max-width: 540px; line-height: 1.7; }
-
-        /* Module Cards */
-        .gel-module-card {
-            background: var(--gel-white);
-            border: 1px solid var(--gel-border);
-            border-radius: 12px;
-            padding: 32px 28px;
+        .pole-card {
+            background: white; border-radius: 16px; padding: 36px 28px;
+            transition: all 0.3s ease; border: 1px solid rgba(0,0,0,0.04);
             height: 100%;
-            transition: transform 0.3s var(--transition), box-shadow 0.3s var(--transition), border-color 0.3s var(--transition);
-            position: relative;
-            overflow: hidden;
         }
-        .gel-module-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 3px;
-            border-radius: 12px 12px 0 0;
+        .pole-card:hover {
+            transform: translateY(-6px); box-shadow: var(--shadow-lg);
+            border-color: rgba(255,121,0,0.1);
         }
-        .gel-module-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-md);
-            border-color: transparent;
-        }
-        .gel-module-card .module-top {
-            display: flex; align-items: flex-start; gap: 16px; margin-bottom: 16px;
-        }
-        .gel-module-card .module-icon {
-            width: 50px; height: 50px;
-            border-radius: 12px;
+        .pole-icon {
+            width: 56px; height: 56px; border-radius: 14px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 24px;
-            flex-shrink: 0;
+            font-size: 24px; margin-bottom: 18px;
         }
-        .gel-module-card .module-icon.orange { background: rgba(255,121,0,0.1); color: var(--gel-primary); }
-        .gel-module-card .module-icon.blue { background: rgba(59,130,246,0.1); color: #3B82F6; }
-        .gel-module-card .module-icon.green { background: rgba(16,185,129,0.1); color: #10B981; }
-        .gel-module-card .module-icon.purple { background: rgba(139,92,246,0.1); color: #8B5CF6; }
-        .gel-module-card .module-icon.teal { background: rgba(20,184,166,0.1); color: #14B8A6; }
-        .gel-module-card h3 { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
-        .gel-module-card .module-sub { font-size: 12px; color: var(--gel-muted); margin-bottom: 12px; }
-        .gel-module-card p { font-size: 13px; color: var(--gel-muted); line-height: 1.6; }
-        .gel-module-card .module-features { list-style: none; padding: 0; margin: 14px 0 0; }
-        .gel-module-card .module-features li {
-            font-size: 12.5px;
-            color: var(--gel-text);
-            padding: 5px 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border-bottom: 1px solid var(--gel-light2);
-        }
-        .gel-module-card .module-features li:last-child { border-bottom: none; }
-        .gel-module-card .module-features li i { color: var(--gel-primary); font-size: 11px; }
-        .gel-module-card .module-link {
-            display: inline-flex; align-items: center; gap: 5px;
-            font-size: 12.5px; font-weight: 600;
-            color: var(--gel-primary);
-            text-decoration: none;
-            margin-top: 12px;
-            transition: gap var(--transition);
-        }
-        .gel-module-card .module-link:hover { gap: 10px; }
-
-        /* CTA */
-        .gel-cta-band { background: linear-gradient(135deg, var(--gel-primary) 0%, #ff9a3c 100%); padding: 60px 0; overflow: hidden; position: relative; }
-        .gel-cta-band h2 { font-size: clamp(1.5rem, 2.5vw, 2rem); font-weight: 900; color: #fff; }
-        .gel-cta-band p { color: rgba(255,255,255,0.85); font-size: 15px; margin-top: 8px; }
-        .gel-btn-white { display: inline-flex; align-items: center; gap: 8px; background: #fff; color: var(--gel-primary); font-size: 14px; font-weight: 700; padding: 12px 28px; border-radius: var(--radius); text-decoration: none; transition: all 0.3s; }
-        .gel-btn-white:hover { background: var(--gel-dark); color: #fff; transform: translateY(-2px); }
-
-        /* Footer */
-        .gel-footer { background: #0A1628; padding: 48px 0 0; border-top: 3px solid var(--gel-primary); }
-        .gel-footer-brand { font-family: var(--font-heading); font-size: 18px; font-weight: 800; color: #fff; }
-        .gel-footer-sub { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.1em; }
-        .gel-footer-desc { font-size: 13px; color: rgba(255,255,255,0.4); line-height: 1.7; margin-top: 12px; max-width: 260px; }
-        .gel-footer-social { display: flex; gap: 10px; margin-top: 16px; }
-        .gel-social-btn { width: 36px; height: 36px; border-radius: 6px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.5); font-size: 15px; text-decoration: none; transition: all var(--transition); }
-        .gel-social-btn:hover { background: var(--gel-primary); border-color: var(--gel-primary); color: #fff; transform: translateY(-2px); }
-        .gel-footer-heading { font-family: var(--font-heading); font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px; }
-        .gel-footer-links { list-style: none; padding: 0; }
-        .gel-footer-links li { margin-bottom: 10px; }
-        .gel-footer-links a { font-size: 13px; color: rgba(255,255,255,0.4); text-decoration: none; transition: color var(--transition); }
-        .gel-footer-links a:hover { color: var(--gel-primary); }
-        .gel-footer-bottom { border-top: 1px solid rgba(255,255,255,0.07); padding: 18px 0; margin-top: 40px; }
-        .gel-footer-bottom p { font-size: 12px; color: rgba(255,255,255,0.25); margin: 0; }
-
-        /* Modal Inscription */
-        .gel-modal-overlay {
-            display: none;
-            position: fixed; inset: 0; z-index: 2000;
-            background: rgba(15,23,42,0.6);
-            backdrop-filter: blur(6px);
-            align-items: center; justify-content: center;
-            padding: 20px;
-        }
-        .gel-modal-overlay.open { display: flex; }
-        .gel-modal-box {
-            background: var(--gel-white);
-            border-radius: 16px;
-            padding: 40px 36px 36px;
-            max-width: 420px; width: 100%;
-            text-align: center;
-            box-shadow: 0 24px 80px rgba(0,0,0,0.2);
-            animation: modalPop 0.3s ease;
-            position: relative;
-        }
-        @keyframes modalPop {
-            from { opacity: 0; transform: scale(0.92) translateY(20px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        .gel-modal-close {
-            position: absolute; top: 14px; right: 18px;
-            background: none; border: none;
-            font-size: 20px; color: var(--gel-muted);
-            cursor: pointer; transition: color var(--transition);
-            padding: 4px;
-        }
-        .gel-modal-close:hover { color: var(--gel-dark); }
-        .gel-modal-icon {
-            width: 64px; height: 64px;
-            background: var(--gel-primary-soft);
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 16px;
-            font-size: 28px;
-            color: var(--gel-primary);
-        }
-        .gel-modal-box h3 { font-size: 20px; font-weight: 800; color: var(--gel-dark); margin-bottom: 6px; }
-        .gel-modal-box > p { font-size: 13.5px; color: var(--gel-muted); margin-bottom: 24px; line-height: 1.6; }
-        .gel-modal-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 13px; border-radius: 8px; font-size: 14px; font-weight: 700; text-decoration: none; transition: all 0.3s; border: none; cursor: pointer; margin-bottom: 10px; }
-        .gel-modal-btn-primary { background: var(--gel-primary); color: #fff; }
-        .gel-modal-btn-primary:hover { background: var(--gel-primary-hov); color: #fff; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255,121,0,0.3); }
-        .gel-modal-btn-outline { background: transparent; color: var(--gel-text); border: 1.5px solid var(--gel-border); }
-        .gel-modal-btn-outline:hover { border-color: var(--gel-primary); color: var(--gel-primary); }
-        .gel-modal-divider {
-            display: flex; align-items: center; gap: 12px;
-            margin: 16px 0;
-            color: var(--gel-muted);
-            font-size: 11px; font-weight: 500;
-            text-transform: uppercase;
-        }
-        .gel-modal-divider::before,
-        .gel-modal-divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--gel-border);
+        .pole-card h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; }
+        .pole-card p { color: var(--gel-muted); font-size: 14px; line-height: 1.7; margin-bottom: 16px; }
+        .pole-modules { display: flex; flex-wrap: wrap; gap: 6px; }
+        .pole-module-tag {
+            background: var(--gel-primary-soft); color: var(--gel-primary);
+            padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
         }
 
-        @media (max-width: 991px) { .gel-section { padding: 60px 0; } .gel-page-header { padding: 80px 0 60px; } }
+        .stats-section {
+            background: linear-gradient(135deg, #0B1120 0%, #162044 100%); color: white;
+            position: relative; overflow: hidden; padding: 60px 0;
+        }
+        .stats-section::before {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(255,121,0,0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        .stat-item { text-align: center; position: relative; z-index: 1; }
+        .stat-item h3 {
+            font-size: 2.4rem; font-weight: 800; margin: 0;
+            background: linear-gradient(135deg, #FF7900 0%, #FF9A3C 100%); -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .stat-item p { opacity: 0.7; font-size: 14px; margin: 4px 0 0; }
+
+        .cta-section {
+            background: linear-gradient(135deg, #0B1120 0%, #162044 100%); color: white;
+            padding: 80px 0; text-align: center; position: relative; overflow: hidden;
+        }
+        .cta-section::before {
+            content: ''; position: absolute; top: -50%; right: -20%;
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(255,121,0,0.12) 0%, transparent 70%);
+            border-radius: 50%; pointer-events: none;
+        }
+        .cta-section * { position: relative; z-index: 1; }
+        .cta-section h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 800; }
+        .cta-section p { color: rgba(255,255,255,0.6); max-width: 500px; margin: 12px auto 32px; }
+
+        .btn-primary-gel {
+            background: linear-gradient(135deg, #FF7900 0%, #FF9A3C 100%); border: none; color: white;
+            padding: 14px 36px; border-radius: 50px; font-weight: 700; font-size: 15px;
+            transition: all 0.3s ease; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 8px;
+            box-shadow: 0 4px 16px rgba(255,121,0,0.3);
+        }
+        .btn-primary-gel:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,121,0,0.4); color: white; }
+
+        @media (max-width: 768px) {
+            .page-hero { padding: 110px 0 60px; }
+            .gel-section { padding: 60px 0; }
+        }
     </style>
 </head>
 <body>
 
     @include('partials.navbar')
 
-    <!-- Page Header -->
-    <div class="gel-page-header">
+    <section class="page-hero">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-8">
-                    <div class="gel-page-header-badge" style="display:none;"><i class="bi-grid-3x3-gap-fill"></i> Plateforme modulaire</div>
-                    <h1>Nos Modules</h1>
-                    <p>Cinq modules complémentaires pour couvrir l'intégralité des besoins de votre cabinet — CRM, GED, Pôles, Comptabilité et ERP — dans une seule plateforme unifiée.</p>
-                </div>
-            </div>
+            <div class="hero-badge anim-fade-up anim-visible"><i class="bi bi-grid-3x3-gap"></i> Plateforme modulaire</div>
+            <h1 class="anim-fade-up anim-visible delay-1">Explorez nos <span class="gradient-text">modules</span></h1>
+            <p class="anim-fade-up anim-visible delay-2">Activez les modules selon les besoins de votre cabinet. Chaque pôle regroupe des fonctionnalités interconnectées.</p>
         </div>
-    </div>
+    </section>
 
-
-    <!-- Modules Grid -->
-    <section class="gel-section">
+    <section class="section-padding">
         <div class="container">
             <div class="row g-4">
-
-                <!-- CRM Clients -->
-                <div class="col-lg-4 col-md-6 anim-fade-up" id="module-crm">
-                    <div class="gel-module-card" style="border-top: 3px solid #FF7900;">
-                        <div class="module-top">
-                            <div class="module-icon orange"><i class="bi-people-fill"></i></div>
-                            <div>
-                                <h3>CRM Clients</h3>
-                                <div class="module-sub">Gestion de la relation client</div>
-                            </div>
+                <div class="col-lg-4 col-md-6 anim-fade-up delay-1">
+                    <div class="pole-card">
+                        <div class="pole-icon" style="background:#DBEAFE;color:#2563EB;"><i class="bi bi-shield-lock"></i></div>
+                        <h3>Pôle Administration</h3>
+                        <p>Gestion centralisée des clients, fournisseurs, contrats et documents. Tableau de bord complet avec indicateurs clés.</p>
+                        <div class="pole-modules">
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> CRM</span>
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> GED</span>
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> Messagerie</span>
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> Planning</span>
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> Rapports</span>
                         </div>
-                        <p>Centralisez toutes les informations de vos clients (particuliers, entreprises, associations) et accédez à un historique complet de vos interactions.</p>
-                        <ul class="module-features">
-                            <li><i class="bi-check-lg"></i> Fiches clients complètes avec données personnalisées</li>
-                            <li><i class="bi-check-lg"></i> Historique des échanges et documents associés</li>
-                            <li><i class="bi-check-lg"></i> Suivi des rendez-vous, appels et tâches</li>
-                            <li><i class="bi-check-lg"></i> Segmentation par type de client et secteur</li>
-                            <li><i class="bi-check-lg"></i> Export des données et mailing intégré</li>
-                        </ul>
-                        <a href="javascript:void(0)" onclick="openModal()" class="module-link">Accéder au module <i class="bi-arrow-right"></i></a>
                     </div>
                 </div>
-
-                <!-- GED -->
-                <div class="col-lg-4 col-md-6 anim-fade-up delay-1" id="module-ged">
-                    <div class="gel-module-card" style="border-top: 3px solid #3B82F6;">
-                        <div class="module-top">
-                            <div class="module-icon blue"><i class="bi-folder2-open"></i></div>
-                            <div>
-                                <h3>GED — Documents</h3>
-                                <div class="module-sub">Gestion électronique de documents</div>
-                            </div>
+                <div class="col-lg-4 col-md-6 anim-fade-up delay-2">
+                    <div class="pole-card">
+                        <div class="pole-icon" style="background:#FEF3C7;color:#D97706;"><i class="bi bi-calculator"></i></div>
+                        <h3>Pôle Comptabilité / Finance</h3>
+                        <p>Plan comptable SYSCOHADA complet, journaux, balance, bilan et compte de résultat. Génération automatique des états financiers.</p>
+                        <div class="pole-modules">
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> Plan comptable</span>
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> Journaux</span>
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> Balance</span>
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> Bilan/CRP</span>
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> TVA</span>
                         </div>
-                        <p>Stockez, organisez et retrouvez instantanément tous vos documents grâce à une indexation intelligente et des espaces de classement partagés.</p>
-                        <ul class="module-features">
-                            <li><i class="bi-check-lg"></i> Arborescence de dossiers personnalisable</li>
-                            <li><i class="bi-check-lg"></i> Indexation multi-critères et recherche full-text</li>
-                            <li><i class="bi-check-lg"></i> Versions des documents avec historique</li>
-                            <li><i class="bi-check-lg"></i> Partage sécurisé par lien ou dossier</li>
-                            <li><i class="bi-check-lg"></i> Signature électronique intégrée</li>
-                        </ul>
-                        <a href="javascript:void(0)" onclick="openModal()" class="module-link">Accéder au module <i class="bi-arrow-right"></i></a>
                     </div>
                 </div>
-
-                <!-- Pôles & Missions -->
-                <div class="col-lg-4 col-md-6 anim-fade-up delay-2" id="module-poles">
-                    <div class="gel-module-card" style="border-top: 3px solid #10B981;">
-                        <div class="module-top">
-                            <div class="module-icon green"><i class="bi-diagram-3"></i></div>
-                            <div>
-                                <h3>Pôles & Missions</h3>
-                                <div class="module-sub">Organisation et suivi d'activité</div>
-                            </div>
-                        </div>
-                        <p>Structurez votre cabinet en pôles d'expertise (Comptabilité, Juridique, Fiscal, Social) et suivez chaque mission de bout en bout.</p>
-                        <ul class="module-features">
-                            <li><i class="bi-check-lg"></i> Création de pôles et équipes dédiées</li>
-                            <li><i class="bi-check-lg"></i> Missions avec étapes, deadlines et jalons</li>
-                            <li><i class="bi-check-lg"></i> Tableaux de bord par pôle et par collaborateur</li>
-                            <li><i class="bi-check-lg"></i> Workflows de validation automatisés</li>
-                            <li><i class="bi-check-lg"></i> Rapports de productivité et facturation</li>
-                        </ul>
-                        <a href="javascript:void(0)" onclick="openModal()" class="module-link">Accéder au module <i class="bi-arrow-right"></i></a>
-                    </div>
-                </div>
-
-                <!-- Comptabilité -->
-                <div class="col-lg-4 col-md-6 anim-fade-up delay-1" id="module-compta">
-                    <div class="gel-module-card" style="border-top: 3px solid #8B5CF6;">
-                        <div class="module-top">
-                            <div class="module-icon purple"><i class="bi-calculator-fill"></i></div>
-                            <div>
-                                <h3>Comptabilité</h3>
-                                <div class="module-sub">Chaîne comptable complète</div>
-                            </div>
-                        </div>
-                        <p>Gérez l'intégralité de la chaîne comptable — du journal au bilan — avec une automatisation poussée et un plan comptable personnalisable.</p>
-                        <ul class="module-features">
-                            <li><i class="bi-check-lg"></i> Plan comptable SYSCOA / OHADA personnalisable</li>
-                            <li><i class="bi-check-lg"></i> Saisie des journaux et pièces comptables</li>
-                            <li><i class="bi-check-lg"></i> Balance, grand livre, brouillard</li>
-                            <li><i class="bi-check-lg"></i> Bilan et compte de résultat automatisés</li>
-                            <li><i class="bi-check-lg"></i> Déclarations fiscales intégrées (TVA, BIC, IS)</li>
-                        </ul>
-                        <a href="javascript:void(0)" onclick="openModal()" class="module-link">Accéder au module <i class="bi-arrow-right"></i></a>
-                    </div>
-                </div>
-
-                <!-- ERP Intégré -->
-                <div class="col-lg-4 col-md-6 anim-fade-up delay-2" id="module-erp">
-                    <div class="gel-module-card" style="border-top: 3px solid #14B8A6;">
-                        <div class="module-top">
-                            <div class="module-icon teal"><i class="bi-box-seam-fill"></i></div>
-                            <div>
-                                <h3>ERP Intégré</h3>
-                                <div class="module-sub">Gestion d'entreprise complète</div>
-                            </div>
-                        </div>
-                        <p>Un ERP complet qui dépasse la gestion de cabinet : stocks, factures, RH, trésorerie et reporting — le tout synchronisé en temps réel.</p>
-                        <ul class="module-features">
-                            <li><i class="bi-check-lg"></i> Gestion des stocks et approvisionnements</li>
-                            <li><i class="bi-check-lg"></i> Facturation et relances automatisées</li>
-                            <li><i class="bi-check-lg"></i> RH & Paie : contrats, absences, fiches de paie</li>
-                            <li><i class="bi-check-lg"></i> Trésorerie et rapprochement bancaire</li>
-                            <li><i class="bi-check-lg"></i> Tableaux de bord financiers et KPI</li>
-                        </ul>
-                        <a href="javascript:void(0)" onclick="openModal()" class="module-link">Accéder au module <i class="bi-arrow-right"></i></a>
-                    </div>
-                </div>
-
-                <!-- Intégration — carte spéciale -->
                 <div class="col-lg-4 col-md-6 anim-fade-up delay-3">
-                    <div class="gel-module-card" style="border: 2px dashed var(--gel-border); background: var(--gel-light);" onmouseover="this.style.borderColor='#FF7900';this.style.borderStyle='solid'" onmouseout="this.style.borderColor='var(--gel-border)';this.style.borderStyle='dashed'">
-                        <div class="module-top">
-                            <div class="module-icon" style="background:rgba(255,121,0,0.08);color:var(--gel-primary);font-size:22px;"><i class="bi-puzzle-fill"></i></div>
-                            <div>
-                                <h3>Tout est intégré</h3>
-                                <div class="module-sub">Modules interconnectés</div>
-                            </div>
+                    <div class="pole-card">
+                        <div class="pole-icon" style="background:#FEE2E2;color:#DC2626;"><i class="bi bi-receipt"></i></div>
+                        <h3>Pôle Fiscal</h3>
+                        <p>Déclarations fiscales intégrées, calcul automatique TVA/IRPP/IS/CNSS, échéancier avec alertes J-15, J-7, J-1.</p>
+                        <div class="pole-modules">
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> TVA</span>
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> IRPP</span>
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> CNSS</span>
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> IS</span>
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> e-MECeF</span>
                         </div>
-                        <p>L'avantage unique de GEL Cabinet : tous les modules communiquent entre eux. Un dossier client créé dans le CRM est accessible depuis la GED, la Comptabilité et l'ERP — sans duplication.</p>
-                        <ul class="module-features">
-                            <li><i class="bi-check-lg"></i> Données synchronisées en temps réel</li>
-                            <li><i class="bi-check-lg"></i> Interface unique et navigation fluide</li>
-                            <li><i class="bi-check-lg"></i> Pas de double saisie ni d'incohérences</li>
-                            <li><i class="bi-check-lg"></i> Mise à jour automatique de tous les modules</li>
-                            <li><i class="bi-check-lg"></i> API ouverte pour intégrations tierces</li>
-                        </ul>
-                        <a href="javascript:void(0)" onclick="openModal()" class="module-link">Démarrez maintenant <i class="bi-arrow-right"></i></a>
                     </div>
                 </div>
-
+                <div class="col-lg-4 col-md-6 anim-fade-up delay-1">
+                    <div class="pole-card">
+                        <div class="pole-icon" style="background:#D1FAE5;color:#059669;"><i class="bi bi-people"></i></div>
+                        <h3>Pôle Social & Paie</h3>
+                        <p>Gestion des employés, contrats, paie avec barèmes Bénin intégrés. Tableau de bord RH, congés, absences, planning.</p>
+                        <div class="pole-modules">
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> Employés</span>
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> Contrats</span>
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> Paie</span>
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> Congés</span>
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> CNSS</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 anim-fade-up delay-2">
+                    <div class="pole-card">
+                        <div class="pole-icon" style="background:#E0E7FF;color:#4F46E5;"><i class="bi bi-bank2"></i></div>
+                        <h3>Pôle Juridique</h3>
+                        <p>Constitution de sociétés, rédaction de contrats, suivi des contentieux, assemblées générales, bibliothèque d'actes.</p>
+                        <div class="pole-modules">
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> Sociétés</span>
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> Contrats</span>
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> Contentieux</span>
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> Assemblées</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 anim-fade-up delay-3">
+                    <div class="pole-card">
+                        <div class="pole-icon" style="background:#F3E8FF;color:#9333EA;"><i class="bi bi-laptop"></i></div>
+                        <h3>Pôle IT</h3>
+                        <p>Support technique, maintenance, tickets d'incidents, gestion des accès, monitoring des serveurs et sauvegardes.</p>
+                        <div class="pole-modules">
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> Tickets</span>
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> Maintenance</span>
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> Monitoring</span>
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> Sauvegardes</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
-    <section class="gel-section gel-section-alt">
+    <section class="stats-section">
         <div class="container">
-            <div class="row justify-content-center mb-5">
-                <div class="col-lg-8 text-center">
-                    <div class="gel-section-chip anim-fade-up"><i class="bi-lightning-charge-fill"></i> Pourquoi une plateforme intégrée ?</div>
-                    <h2 class="gel-section-title anim-fade-up delay-1">Unifier, c'est gagner</h2>
-                    <p class="gel-section-sub mx-auto anim-fade-up delay-2">Chaque module est puissant seul. Ensemble, ils transforment votre façon de travailler.</p>
-                </div>
-            </div>
             <div class="row g-4">
-                <div class="col-md-4 anim-fade-up delay-1">
-                    <div class="gel-module-card" style="text-align:center; padding:36px 24px;">
-                        <div style="font-size:36px; color:var(--gel-primary); margin-bottom:12px;"><i class="bi-clock-fill"></i></div>
-                        <h3 style="font-size:17px;">Gain de temps</h3>
-                        <p style="font-size:13px; color:var(--gel-muted); margin:8px 0 0;">Finies les doubles saisies. Un seul outil pour tout gérer, c'est jusqu'à 40% de temps gagné sur l'administratif.</p>
-                    </div>
+                <div class="col-6 col-md-3 stat-item anim-fade-up">
+                    <h3>15+</h3>
+                    <p>Modules interconnectés</p>
                 </div>
-                <div class="col-md-4 anim-fade-up delay-2">
-                    <div class="gel-module-card" style="text-align:center; padding:36px 24px;">
-                        <div style="font-size:36px; color:var(--gel-primary); margin-bottom:12px;"><i class="bi-shield-fill-check"></i></div>
-                        <h3 style="font-size:17px;">Fiabilité</h3>
-                        <p style="font-size:13px; color:var(--gel-muted); margin:8px 0 0;">Toutes vos données sont centralisées et cohérentes. Plus de risque d'erreur entre deux logiciels séparés.</p>
-                    </div>
+                <div class="col-6 col-md-3 stat-item anim-fade-up delay-1">
+                    <h3>6</h3>
+                    <p>Pôles métier</p>
                 </div>
-                <div class="col-md-4 anim-fade-up delay-3">
-                    <div class="gel-module-card" style="text-align:center; padding:36px 24px;">
-                        <div style="font-size:36px; color:var(--gel-primary); margin-bottom:12px;"><i class="bi-graph-up-arrow"></i></div>
-                        <h3 style="font-size:17px;">Visibilité globale</h3>
-                        <p style="font-size:13px; color:var(--gel-muted); margin:8px 0 0;">Un tableau de bord unique qui vous donne une vue d'ensemble sur l'activité complète de votre cabinet.</p>
-                    </div>
+                <div class="col-6 col-md-3 stat-item anim-fade-up delay-2">
+                    <h3>100%</h3>
+                    <p>Conforme OHADA</p>
+                </div>
+                <div class="col-6 col-md-3 stat-item anim-fade-up delay-3">
+                    <h3>3</h3>
+                    <p>Pays couverts</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- CTA -->
-    <section class="gel-cta-band">
+    <section class="cta-section">
         <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-8 anim-fade-up">
-                    <h2>Prêt à découvrir tous nos modules en action ?</h2>
-                    <p>Inscrivez-vous gratuitement ou demandez une démonstration personnalisée.</p>
-                </div>
-                <div class="col-lg-4 text-lg-end mt-4 mt-lg-0 anim-fade-up delay-1">
-                    <a href="/register" class="gel-btn-white me-2"><i class="bi-person-plus"></i> Créer un compte</a>
-                    <a href="/login" class="gel-btn-white" style="background:rgba(255,255,255,0.15);color:#fff;border:2px solid rgba(255,255,255,0.5);margin-top:8px;display:inline-flex;"><i class="bi-box-arrow-in-right"></i> Connexion</a>
-                </div>
+            <h2 class="anim-fade-up">Prêt à activer vos modules ?</h2>
+            <p class="anim-fade-up delay-1">Configurez votre espace en quelques minutes et activez les modules selon vos besoins.</p>
+            <div class="anim-fade-up delay-2">
+                <a href="/register" class="btn btn-primary-gel">
+                    <i class="bi bi-rocket-takeoff"></i> Commencer gratuitement
+                </a>
             </div>
         </div>
     </section>
-
-    <!-- ════════════════════════════════════════════════════
-         MODAL INSCRIPTION / CONNEXION
-    ════════════════════════════════════════════════════ -->
-    <div class="gel-modal-overlay" id="authModal">
-        <div class="gel-modal-box">
-            <button class="gel-modal-close" onclick="closeModal()" aria-label="Fermer">&times;</button>
-            <div class="gel-modal-icon"><i class="bi-person-plus-fill"></i></div>
-            <h3>Accédez à tous les modules</h3>
-            <p>Créez un compte gratuitement pour découvrir l'ensemble des fonctionnalités de GEL Cabinet.</p>
-            <a href="/register" class="gel-modal-btn gel-modal-btn-primary">
-                <i class="bi-person-plus"></i> Créer un compte
-            </a>
-            <div class="gel-modal-divider">ou</div>
-            <a href="/login" class="gel-modal-btn gel-modal-btn-outline">
-                <i class="bi-box-arrow-in-right"></i> Se connecter
-            </a>
-            <p style="font-size:11px; color:var(--gel-muted); margin-top:14px;">Gratuit — Sans engagement — 1 clic</p>
-        </div>
-    </div>
 
     @include('partials.footer')
+    @include('partials.ai-chat-floating')
 
-    <script>
-        // Modal Inscription/Connexion
-        function openModal() {
-            document.getElementById('authModal').classList.add('open');
-            document.body.style.overflow = 'hidden';
-        }
-        function closeModal() {
-            document.getElementById('authModal').classList.remove('open');
-            document.body.style.overflow = '';
-        }
-        document.getElementById('authModal').addEventListener('click', function(e) {
-            if (e.target === this) closeModal();
+<script>
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) entry.target.classList.add('anim-visible');
         });
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') closeModal();
-        });
-
-        const navbar = document.getElementById('gelNavbar');
-        window.addEventListener('scroll', () => { navbar.classList.toggle('scrolled', window.scrollY > 20); }, { passive: true });
-
-        const toggler = document.getElementById('gelToggler');
-        const mobileMenu = document.getElementById('gelMobileMenu');
-        const togglerIcon = document.getElementById('togglerIcon');
-        toggler.addEventListener('click', () => {
-            const isOpen = mobileMenu.classList.toggle('open');
-            togglerIcon.className = isOpen ? 'bi-x-lg' : 'bi-list';
-            document.body.style.overflow = isOpen ? 'hidden' : '';
-        });
-        document.addEventListener('click', (e) => {
-            if (!navbar.contains(e.target) && !mobileMenu.contains(e.target)) {
-                mobileMenu.classList.remove('open');
-                togglerIcon.className = 'bi-list';
-                document.body.style.overflow = '';
-            }
-        });
-
-        const animEls = document.querySelectorAll('.anim-fade-up');
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) { entry.target.classList.add('anim-visible'); observer.unobserve(entry.target); }
-            });
-        }, { threshold: 0.12 });
-        animEls.forEach(el => observer.observe(el));
-    </script>
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.anim-fade-up:not(.anim-visible)').forEach(el => observer.observe(el));
+</script>
 </body>
 </html>

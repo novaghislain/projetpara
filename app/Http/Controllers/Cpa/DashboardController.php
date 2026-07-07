@@ -13,9 +13,8 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        return view('app', [
-            'page' => 'cpa-dashboard',
-        ]);
+        // Archivé : redirige vers le nouveau GEL Accountant Blade
+        return redirect()->to(route('gel-accountant.dashboard'));
     }
 
     /**

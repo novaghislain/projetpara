@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 import TaxSummaryCard from '../../../../Components/Accounting/TaxSummaryCard.vue';
 import { authStore } from '../../../../stores/auth';
+import AccountingClientSelector from '../../../../Components/Gel/AccountingClientSelector.vue';
 
 const props = defineProps({
     clientId: { type: [Number, String], default: null }
@@ -17,12 +18,18 @@ const selectedFy = ref(null);
 const selectedMonth = ref(new Date().getMonth() + 1);
 const salaireInput = ref(0);
 const masseSalariale = ref(0);
+const activeClientId = ref(props.clientId || authStore.user?.active_client_id || authStore.user?.client_id || null);
+
+const onClientSelected = (cid) => {
+    activeClientId.value = cid;
+    fetchData();
+};
 
 const fetchData = async () => {
     loading.value = true;
-    const cid = props.clientId || authStore.user?.client_id;
+    error.value = null;
+    const cid = activeClientId.value;
     if (!cid) {
-        error.value = 'Aucun client sélectionné. Veuillez accéder à cette page depuis le dossier d\'un client.';
         loading.value = false;
         return;
     }
@@ -40,7 +47,7 @@ const fetchData = async () => {
 };
 
 const compute = async (type) => {
-    const cid = props.clientId || authStore.user?.client_id;
+    const cid = activeClientId.value;
     if (!cid) { alert('Aucun client sélectionné.'); return; }
     let payload = { client_id: cid, fiscal_year_id: selectedFy.value };
     if (type === 'tva') payload.month = selectedMonth.value;
@@ -65,7 +72,7 @@ const compute = async (type) => {
 };
 
 const updateStatus = async (id, status) => {
-    const cid = props.clientId || authStore.user?.client_id;
+    const cid = activeClientId.value;
     if (!cid) return;
     const res = await fetch(`/api/accounting/tax-declarations/${cid}/${id}/status`, {
         method: 'PATCH',
@@ -77,7 +84,7 @@ const updateStatus = async (id, status) => {
 
 const remove = async (id) => {
     if (!confirm('Supprimer cette déclaration ?')) return;
-    const cid = props.clientId || authStore.user?.client_id;
+    const cid = activeClientId.value;
     if (!cid) return;
     await fetch(`/api/accounting/tax-declarations/${cid}/${id}`, { method: 'DELETE' });
     await fetchData();
@@ -93,10 +100,18 @@ onMounted(fetchData);
 
 <template>
     <GelLayout page-title="Déclarations Fiscales">
+        <!-- Sélecteur de client pour les comptables GEL -->
+        <AccountingClientSelector v-if="!activeClientId" @select="onClientSelected" />
+
         <div v-if="loading" class="d-flex justify-content-center py-5">
             <div class="spinner-border text-primary"><span class="visually-hidden">Chargement...</span></div>
         </div>
         <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
+
+        <div v-else-if="!activeClientId" class="text-center py-5 text-muted">
+            <i class="bi bi-arrow-up-circle fs-1 d-block mb-2"></i>
+            Sélectionnez un client ci-dessus pour afficher les déclarations.
+        </div>
 
         <div v-else>
             <h5 class="fw-bold mb-4"><i class="bi bi-file-earmark-text me-2 text-primary"></i>Déclarations Fiscales</h5>

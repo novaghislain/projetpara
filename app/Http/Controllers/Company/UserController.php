@@ -70,7 +70,7 @@ class UserController extends BaseCompanyController
             });
 
         // Rôles disponibles pour l'entreprise
-        $availableRoles = Role::whereNotIn('slug', ['super_admin', 'company_admin'])
+        $availableRoles = Role::whereNotIn('slug', ['super_admin', 'company_admin', 'comptable', 'client'])
             ->orderBy('level', 'desc')
             ->get(['id', 'name', 'slug', 'description']);
 
@@ -126,7 +126,7 @@ class UserController extends BaseCompanyController
         // Vérifier que le rôle n'est pas interdit
         if ($validated['role_id'] ?? null) {
             $role = Role::findOrFail($validated['role_id']);
-            if (in_array($role->slug, ['super_admin', 'company_admin'])) {
+            if (in_array($role->slug, ['super_admin', 'company_admin', 'comptable', 'client'])) {
                 return response()->json(['message' => 'Ce rôle ne peut pas être attribué.'], 403);
             }
         }
@@ -191,7 +191,7 @@ class UserController extends BaseCompanyController
         if (isset($validated['role_id'])) {
             if ($validated['role_id']) {
                 $role = Role::find($validated['role_id']);
-                if ($role && in_array($role->slug, ['super_admin', 'company_admin'])) {
+                if ($role && in_array($role->slug, ['super_admin', 'company_admin', 'comptable', 'client'])) {
                     return response()->json(['message' => 'Ce rôle ne peut pas être attribué.'], 403);
                 }
                 if ($role) {

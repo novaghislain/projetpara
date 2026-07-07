@@ -13,10 +13,48 @@ use Illuminate\Validation\Rule;
 class PersonnelController extends Controller
 {
     /**
+     * Vérifie si l'utilisateur courant peut gérer le personnel GEL.
+     */
+    private function authorizeManager($targetUser = null): void
+    {
+        $currentUser = Auth::user();
+
+        // Les employés d'entreprise n'ont pas accès
+        if ($currentUser->client_id !== null) {
+            abort(403, 'Accès réservé au personnel interne du cabinet.');
+        }
+
+        // Vérifier les rôles autorisés à gérer le personnel
+        if (!$currentUser->isSuperAdmin() && !in_array($currentUser->role, ['rh', 'director'])) {
+            abort(403, 'Vous n\'avez pas les droits pour gérer le personnel.');
+        }
+
+        // Protection de la hiérarchie pour la modification/suppression
+        if ($targetUser && !$currentUser->isSuperAdmin()) {
+            $hierarchy = [
+                'collaborator' => 0, 'secretaire' => 0, 'juriste' => 0, 
+                'gestionnaire_projet' => 0, 'comptable' => 0, 
+                'rh' => 1, 'pole_responsible' => 1, 
+                'director' => 2, 'super_admin' => 3
+            ];
+            
+            $currentLevel = $hierarchy[$currentUser->role] ?? 0;
+            $targetLevel = $hierarchy[$targetUser->role] ?? 0;
+
+            // Un utilisateur ne peut modifier que des utilisateurs de niveau STRICTEMENT INFÉRIEUR,
+            // ou lui-même (s'il modifiait son propre compte, bien que l'update profile soit fait ailleurs)
+            if ($targetLevel >= $currentLevel && $currentUser->id !== $targetUser->id) {
+                abort(403, 'Vous ne pouvez pas modifier ou supprimer cet utilisateur (privilèges insuffisants).');
+            }
+        }
+    }
+
+    /**
      * Affiche la page de gestion du personnel GEL.
      */
     public function index()
     {
+        $this->authorizeManager();
         return view('app', ['page' => 'gel-personnel']);
     }
 
@@ -25,6 +63,8 @@ class PersonnelController extends Controller
      */
     public function listAll()
     {
+        $this->authorizeManager();
+        
         // Personnel GEL = pas client_id (pas rattaché à une entreprise cliente)
         // et rôle interne au cabinet
         $staff = User::whereNull('client_id')
@@ -64,6 +104,8 @@ class PersonnelController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorizeManager();
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
@@ -113,6 +155,8 @@ class PersonnelController extends Controller
     public function update(Request $request, $id)
     {
         $user = User::whereNull('client_id')->findOrFail($id);
+        $this->authorizeManager($user);
+
 
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
@@ -161,6 +205,8 @@ class PersonnelController extends Controller
     public function destroy($id)
     {
         $user = User::whereNull('client_id')->findOrFail($id);
+        $this->authorizeManager($user);
+
 
         if ((int) $user->id === (int) Auth::id()) {
             return response()->json(['message' => 'Vous ne pouvez pas supprimer votre propre compte.'], 403);

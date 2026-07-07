@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 import { authStore } from '../../../../stores/auth';
+import AccountingClientSelector from '../../../../Components/Gel/AccountingClientSelector.vue';
 
 const props = defineProps({
     clientId: { type: [Number, String], default: null }
@@ -14,14 +15,20 @@ const showModal = ref(false);
 const editing = ref(null);
 const form = ref({ name: '', type: 'depense', fiscal_year_id: '', montant_prevu: 0, notes: '' });
 const fiscalYears = ref([]);
+const activeClientId = ref(props.clientId || authStore.user?.active_client_id || authStore.user?.client_id || null);
 
 const withCsrf = () => document.querySelector('meta[name=csrf-token]')?.content;
 
+const onClientSelected = (cid) => {
+    activeClientId.value = cid;
+    fetchData();
+};
+
 const fetchData = async () => {
     loading.value = true;
-    const cid = props.clientId || authStore.user?.client_id;
+    error.value = null;
+    const cid = activeClientId.value;
     if (!cid) {
-        error.value = 'Aucun client sélectionné. Veuillez accéder à cette page depuis le dossier d\'un client.';
         loading.value = false;
         return;
     }
@@ -44,7 +51,7 @@ const openCreate = () => {
 };
 
 const save = async () => {
-    const cid = props.clientId || authStore.user?.client_id;
+    const cid = activeClientId.value;
     if (!cid) { alert('Aucun client sélectionné.'); return; }
     const res = await fetch('/api/accounting/budgets', {
         method: 'POST',
@@ -55,7 +62,7 @@ const save = async () => {
 };
 
 const validate = async (id) => {
-    const cid = props.clientId || authStore.user?.client_id;
+    const cid = activeClientId.value;
     if (!cid) return;
     await fetch(`/api/accounting/budgets/${cid}/${id}/valider`, {
         method: 'POST',
@@ -66,7 +73,7 @@ const validate = async (id) => {
 
 const remove = async (id) => {
     if (!confirm('Supprimer ce budget ?')) return;
-    const cid = props.clientId || authStore.user?.client_id;
+    const cid = activeClientId.value;
     if (!cid) return;
     await fetch(`/api/accounting/budgets/${cid}/${id}`, {
         method: 'DELETE',
@@ -83,10 +90,18 @@ onMounted(fetchData);
 
 <template>
     <GelLayout page-title="Budgets Prévisionnels">
+        <!-- Sélecteur de client pour les comptables GEL -->
+        <AccountingClientSelector v-if="!activeClientId" @select="onClientSelected" />
+
         <div v-if="loading" class="d-flex justify-content-center py-5">
             <div class="spinner-border text-primary"><span class="visually-hidden">Chargement...</span></div>
         </div>
         <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
+
+        <div v-else-if="!activeClientId" class="text-center py-5 text-muted">
+            <i class="bi bi-arrow-up-circle fs-1 d-block mb-2"></i>
+            Sélectionnez un client ci-dessus pour afficher les budgets.
+        </div>
 
         <div v-else>
             <div class="d-flex justify-content-between align-items-center mb-4">

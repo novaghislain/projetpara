@@ -49,7 +49,7 @@ class EnsureCompanyAccess
         }
 
         // Vérifier que l'utilisateur est bien rattaché à cette entreprise
-        $exists = \App\Models\UserClient::where('user_id', $user->id)
+        $exists = ((int)$user->client_id === (int)$clientId) || \App\Models\UserClient::where('user_id', $user->id)
             ->where('client_id', $clientId)
             ->where('is_active', true)
             ->exists();

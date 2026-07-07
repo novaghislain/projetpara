@@ -44,7 +44,7 @@ class CompanyRegistrationController extends Controller
 
         return view('app', [
             'page' => $pageMap[$step],
-            'pageProps' => $props,
+            'props' => $props,
         ]);
     }
 

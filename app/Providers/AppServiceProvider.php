@@ -11,6 +11,9 @@
 
 namespace App\Providers;
 
+use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -32,6 +35,32 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // ─── Redirection intelligente des utilisateurs authentifiés ──────
+        // Lorsqu'un utilisateur déjà connecté visite /login, le middleware
+        // 'guest' (RedirectIfAuthenticated) intercepte. On personnalise
+        // la destination pour envoyer les comptables vers le bon dashboard.
+        RedirectIfAuthenticated::redirectUsing(function (Request $request) {
+            $user = Auth::user();
+
+            // Comptable → nouveau GEL Accountant (Blade)
+            if ($user && ($user->isComptable() || $user->role === 'comptable')) {
+                return route('gel-accountant.dashboard');
+            }
+
+            // Super Admin → GEL dashboard
+            if ($user && $user->isSuperAdmin()) {
+                return route('dashboard');
+            }
+
+            // Company admin / manager → GEL Business dashboard
+            if ($user && ($user->isCompanyAdmin() || $user->role === 'company_admin')) {
+                return route('gel-business.dashboard');
+            }
+
+            // Par défaut
+            return route('dashboard');
+        });
+
         // Précharge les assets Vite (3 en parallèle) pour des pages plus rapides
         Vite::prefetch(concurrency: 3);
 

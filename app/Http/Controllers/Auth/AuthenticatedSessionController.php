@@ -197,9 +197,9 @@ class AuthenticatedSessionController extends Controller
             return redirect()->intended(route('dashboard'));
         }
 
-        // Comptable → CPA dashboard
-        if ($user->isComptable()) {
-            return redirect()->intended(route('cpa.dashboard'));
+        // Comptable → GEL Accountant dashboard (Blade)
+        if ($user->isComptable() || $user->role === 'comptable' || $user->roleModel?->slug === 'comptable') {
+            return redirect()->to(route('gel-accountant.dashboard'));
         }
 
         // Vérifier si l'utilisateur a plusieurs entreprises → sélecteur de contexte
@@ -211,9 +211,9 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('select.context');
         }
 
-        // Company admin / manager / employee → company dashboard
+        // Company admin / manager / employee → GEL Business dashboard
         if ($user->isCompanyAdmin() || $user->isCompanyManager() || $user->roleModel?->slug === 'company_employee') {
-            return redirect()->intended(route('company.dashboard'));
+            return redirect()->to(route('gel-business.dashboard'));
         }
 
         // Clients purs (role=client)

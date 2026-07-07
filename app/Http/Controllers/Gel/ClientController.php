@@ -298,7 +298,8 @@ class ClientController extends Controller
         ]);
 
         // Filtre par rôle
-        if (!in_array($user->role, ['super_admin', 'director'])) {
+        // super_admin, director et comptable voient tous les clients
+        if (!in_array($user->role, ['super_admin', 'director', 'comptable'])) {
             $query->whereHas('poles', fn($q) => $q->where('pole_id', $user->pole_id));
         }
 

@@ -6,13 +6,21 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
+use App\Traits\Auditable;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, \App\Traits\Auditable;
+    use HasApiTokens, HasFactory, Notifiable, Auditable;
+    use HasRoles {
+        hasRole as spatieHasRole;
+        permissions as spatiePermissions;
+    }
 
     protected $fillable = [
+        'tenant_id',
         'name',
         'email',
         'password',
@@ -39,6 +47,7 @@ class User extends Authenticatable
         'suspended_at',
         'suspended_reason',
         'must_change_password',
+        'cabinet_id',
     ];
 
     protected $hidden = [
@@ -67,10 +76,10 @@ class User extends Authenticatable
         ];
     }
 
-    // ─── Relations Rôle / Permission ─────────────────────────────────────
+    // ─── Relations Rôle / Permission (Legacy) ──────────────────────────
 
     /**
-     * Le rôle principal de l'utilisateur (FK vers roles).
+     * Le rôle principal de l'utilisateur (FK vers roles legacy).
      */
     public function roleModel()
     {
@@ -78,9 +87,9 @@ class User extends Authenticatable
     }
 
     /**
-     * Toutes les permissions de l'utilisateur, via son rôle.
+     * Toutes les permissions de l'utilisateur, via son rôle legacy.
      */
-    public function permissions()
+    public function rolePermissions()
     {
         return $this->hasManyThrough(
             Permission::class,
@@ -152,18 +161,27 @@ class User extends Authenticatable
         return $this->userClients()->where('is_active', true);
     }
 
-    // ─── Vérifications de rôle ──────────────────────────────────────────
+    // ─── Vérifications de rôle (Spatie + Legacy) ────────────────────────
 
     /**
-     * Vérifie si l'utilisateur a un rôle spécifique (string).
+     * Vérifie si l'utilisateur a un rôle spécifique.
+     * Délègue à Spatie HasRoles par défaut.
      */
-    public function hasRole(string $role): bool
+    public function hasRole($roles, string $guard = null): bool
+    {
+        return $this->spatieHasRole($roles, $guard);
+    }
+
+    /**
+     * Vérifie le legacy role string de l'utilisateur.
+     */
+    public function hasRoleName(string $role): bool
     {
         return $this->role === $role;
     }
 
     /**
-     * Vérifie si l'utilisateur a au moins le rôle donné (hiérarchie).
+     * Vérifie si l'utilisateur a au moins le rôle donné (hiérarchie legacy).
      */
     public function hasMinRole(string $role): bool
     {
@@ -174,13 +192,13 @@ class User extends Authenticatable
     }
 
     /**
-     * Vérifie si l'utilisateur est Super Admin (via le système de rôles ou l'ancien champ).
+     * Vérifie si l'utilisateur est Super Admin (via Spatie ou legacy).
      */
     public function isSuperAdmin(): bool
     {
         if ($this->role === 'super_admin') return true;
         if ($this->roleModel && $this->roleModel->slug === 'super_admin') return true;
-        return false;
+        return $this->hasRole('super_admin');
     }
 
     /**
@@ -190,7 +208,7 @@ class User extends Authenticatable
     {
         if ($this->is_company_admin) return true;
         if ($this->roleModel && $this->roleModel->slug === 'company_admin') return true;
-        return false;
+        return $this->hasRole('entreprise_admin');
     }
 
     /**
@@ -198,7 +216,10 @@ class User extends Authenticatable
      */
     public function isComptable(): bool
     {
-        if ($this->roleModel && $this->roleModel->slug === 'comptable') return true;
+        if ($this->roleModel && $this->roleModel->slug === 'comptable') {
+            return is_null($this->client_id);
+        }
+        if ($this->hasRole(['comptable_senior', 'chef_comptable', 'comptable_junior'])) return true;
         return false;
     }
 
@@ -218,6 +239,7 @@ class User extends Authenticatable
     public function isCompanyManager(): bool
     {
         if ($this->roleModel && $this->roleModel->slug === 'company_manager') return true;
+        if ($this->hasRole('entreprise_admin')) return true;
         return false;
     }
 
@@ -252,6 +274,12 @@ class User extends Authenticatable
             return $this->isModuleEnabledForClient($module);
         }
 
+        // Vérifier via Spatie
+        $modulePerms = \Spatie\Permission\Models\Permission::where('module', $module)->pluck('name')->toArray();
+        if ($this->hasAnyPermission($modulePerms)) {
+            return $this->isModuleEnabledForClient($module);
+        }
+
         // Si l'utilisateur possède des permissions directes, elles surchargent le rôle
         $hasDirect = $this->directPermissionModels()->exists();
         if ($hasDirect) {
@@ -260,7 +288,7 @@ class User extends Authenticatable
                 ->exists() && $this->isModuleEnabledForClient($module);
         }
 
-        // Sinon, vérifier dans les permissions du rôle
+        // Sinon, vérifier dans les permissions du rôle legacy
         if ($this->roleModel && $this->roleModel->hasModule($module)) {
             return $this->isModuleEnabledForClient($module);
         }
@@ -269,7 +297,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Vérifie si l'utilisateur a une permission spécifique (module + action).
+     * Vérifie si l'utilisateur a une permission spécifique (module.action).
      */
     public function canModule(string $module, string $action): bool
     {
@@ -278,6 +306,10 @@ class User extends Authenticatable
 
         // Admin entreprise a accès à tout ce qui concerne son entreprise
         if ($this->isCompanyAdmin()) return true;
+
+        // Vérifier via Spatie
+        $permName = $module . '.' . $action;
+        if ($this->hasPermissionTo($permName)) return true;
 
         // Si l'utilisateur possède des permissions directes, elles surchargent le rôle
         $hasDirect = $this->directPermissionModels()->exists();
@@ -288,7 +320,7 @@ class User extends Authenticatable
                 ->exists();
         }
 
-        // Sinon, vérifier dans les permissions du rôle
+        // Sinon, vérifier dans les permissions du rôle legacy
         if ($this->roleModel && $this->roleModel->hasPermission($module, $action)) {
             return true;
         }
@@ -298,8 +330,6 @@ class User extends Authenticatable
 
     /**
      * Alias pour vérifier une permission (module:action).
-     * NOTE: ne s'appelle pas « can » car Laravel\Authorizable::can($abilities, $arguments = [])
-     * aurait un conflit de signature.
      */
     public function hasModuleAction(string $module, string $action): bool
     {
@@ -312,11 +342,11 @@ class User extends Authenticatable
     public function getAccessibleModules(): array
     {
         if ($this->isSuperAdmin()) {
-            return Permission::distinct()->pluck('module')->toArray();
+            return \Spatie\Permission\Models\Permission::distinct()->pluck('module')->toArray();
         }
 
         if ($this->isCompanyAdmin()) {
-            $allModules = Permission::distinct()->pluck('module')->toArray();
+            $allModules = \Spatie\Permission\Models\Permission::distinct()->pluck('module')->toArray();
             if ($this->active_client_id) {
                 $client = Client::find($this->active_client_id);
                 $disabled = $client ? ($client->disabled_modules ?? []) : [];
@@ -325,17 +355,25 @@ class User extends Authenticatable
             return $allModules;
         }
 
-        // Si l'utilisateur possède des permissions directes, elles surchargent le rôle
-        $hasDirect = $this->directPermissionModels()->exists();
-        if ($hasDirect) {
-            $modules = $this->directPermissionModels()
-                ->distinct()
-                ->pluck('module')
-                ->toArray();
-        } else {
-            $modules = $this->roleModel
-                ? $this->roleModel->permissions()->distinct()->pluck('module')->toArray()
-                : [];
+        // Via Spatie
+        $modules = \Spatie\Permission\Models\Permission::whereIn('name', $this->getAllPermissions()->pluck('name'))
+            ->distinct()
+            ->pluck('module')
+            ->toArray();
+
+        if (empty($modules)) {
+            // Fallback legacy
+            $hasDirect = $this->directPermissionModels()->exists();
+            if ($hasDirect) {
+                $modules = $this->directPermissionModels()
+                    ->distinct()
+                    ->pluck('module')
+                    ->toArray();
+            } else {
+                $modules = $this->roleModel
+                    ? $this->roleModel->permissions()->distinct()->pluck('module')->toArray()
+                    : [];
+            }
         }
 
         // Filtrer par modules activés client
@@ -408,26 +446,26 @@ class User extends Authenticatable
     }
 
     /**
-     * Récupère les permissions formatées pour le frontend (module:action).
+     * Récupère les permissions formatées pour le frontend (module.action).
      */
     public function getFormattedPermissions(): array
     {
         if ($this->isSuperAdmin()) {
-            return Permission::all()
-                ->map(fn($p) => $p->module . ':' . $p->action)
+            return \Spatie\Permission\Models\Permission::all()
+                ->map(fn($p) => $p->name)
                 ->toArray();
         }
 
         if ($this->isCompanyAdmin()) {
             $modules = $this->getAccessibleModules();
-            return Permission::whereIn('module', $modules)
+            return \Spatie\Permission\Models\Permission::whereIn('module', $modules)
                 ->get()
-                ->map(fn($p) => $p->module . ':' . $p->action)
+                ->map(fn($p) => $p->name)
                 ->toArray();
         }
 
-        return $this->effectivePermissions()
-            ->map(fn($p) => $p->module . ':' . $p->action)
+        return $this->getAllPermissions()
+            ->map(fn($p) => $p->name)
             ->values()
             ->toArray();
     }
@@ -456,7 +494,7 @@ class User extends Authenticatable
             return true;
         }
 
-        $exists = $this->activeUserClients()
+        $exists = ($clientId === (int)$this->client_id) || $this->activeUserClients()
             ->where('client_id', $clientId)
             ->exists();
 
@@ -573,6 +611,11 @@ class User extends Authenticatable
     public function uploadedDocuments()
     {
         return $this->hasMany(Document::class, 'uploaded_by');
+    }
+
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class);
     }
 
     public function client()

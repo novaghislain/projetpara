@@ -33,6 +33,14 @@ const statusBadge = (s) => ({
     inactif: 'badge bg-secondary',
     suspendu: 'badge bg-warning text-dark',
 }[s] || 'badge bg-light text-dark');
+const switchAndGo = async (clientId) => {
+    try {
+        await authStore.switchToCompany(clientId);
+        window.location.href = '/company/accounting';
+    } catch (e) {
+        alert("Erreur lors de l'accès au dossier client.");
+    }
+};
 </script>
 
 <template>
@@ -144,6 +152,9 @@ const statusBadge = (s) => ({
                                     <a :href="'/accounting/reports/balance/' + c.id" class="btn btn-sm btn-outline-primary" title="Balance">
                                         <i class="bi-file-earmark-bar-graph"></i>
                                     </a>
+                                    <button @click="switchAndGo(c.id)" class="btn btn-sm btn-outline-success ms-1" title="Accès complet (Budgets, Clôture...)">
+                                        <i class="bi-box-arrow-in-right"></i>
+                                    </button>
                                 </td>
                             </tr>
                         </tbody>

@@ -27,7 +27,7 @@ class CheckCompanyAccess
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (Auth::check() && Auth::user()->is_company_admin) {
+        if (Auth::check() && Auth::user()->client_id !== null) {
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Accès réservé au personnel du cabinet.'], 403);
             }

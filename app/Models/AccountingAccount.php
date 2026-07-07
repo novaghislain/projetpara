@@ -2,14 +2,17 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AccountingAccount extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
-        'client_id', 'code', 'name', 'type', 'is_active',
+        'tenant_id', 'client_id', 'code', 'name', 'type', 'is_active',
         'syscohada_class', 'parent_id', 'is_syscohada',
         'tva_rate', 'has_tva',
     ];
@@ -25,6 +28,11 @@ class AccountingAccount extends Model
     }
 
     // Relations
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+
     public function client()
     {
         return $this->belongsTo(Client::class);

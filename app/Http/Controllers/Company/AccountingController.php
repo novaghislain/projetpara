@@ -8,6 +8,7 @@ use App\Models\AccountingJournal;
 use App\Models\AccountingJournalLine;
 use App\Models\AccountingJournalSequence;
 use App\Models\FiscalYear;
+use App\Services\Accounting\DomainKpiService;
 use App\Services\AuditTrailService;
 use App\Services\TenantDomainService;
 use Illuminate\Http\Request;
@@ -834,132 +835,39 @@ class AccountingController extends BaseCompanyController
                 ];
             }),
             'domaine' => $client?->domain_code,
-            'domain_kpis' => $client ? $this->getDomainKpis($client) : [],
+            'domain_kpis' => $client ? app(DomainKpiService::class)->getKpis($client) : [],
         ];
 
         return response()->json($stats);
     }
 
     /**
-     * Retourne les KPIs adaptés au domaine d'activité du client.
+     * API: Retourne les KPI spécifiques au domaine pour le tableau de bord.
+     */
+    public function domainKpis()
+    {
+        $clientId = $this->getClientId();
+        $client = \App\Models\Client::find($clientId);
+
+        if (!$client) {
+            return response()->json(['error' => 'Client introuvable.'], 404);
+        }
+
+        $kpis = app(DomainKpiService::class)->getKpis($client);
+
+        return response()->json([
+            'domain_code' => $client->domain_code,
+            'domain_label' => $client->domain?->label,
+            'kpis' => $kpis,
+        ]);
+    }
+
+    /**
+     * Retourne les KPIs adaptés au domaine (utilisé en interne).
      */
     private function getDomainKpis(\App\Models\Client $client): array
     {
-        $clientId = $client->id;
-        $domainCode = $client->domain_code;
-
-        // Soldes des comptes de résultat via journaux
-        $compteSolde = function ($prefix) use ($clientId) {
-            $accounts = AccountingAccount::where('client_id', $clientId)
-                ->where('code', 'like', $prefix . '%')
-                ->get();
-            return (float) $accounts->reduce(function ($carry, $a) {
-                return $carry + ((float) $a->debit_total) - ((float) $a->credit_total);
-            }, 0);
-        };
-
-        $soldeCompte = function ($code) use ($clientId) {
-            $account = AccountingAccount::where('client_id', $clientId)
-                ->where('code', $code)->first();
-            if (!$account) return 0;
-            return (float) $account->balance;
-        };
-
-        // Soldes trésorerie (521 + 571)
-        $tresorerie = $compteSolde('5');
-        if ($tresorerie == 0) $tresorerie = ($soldeCompte('521') ?: 0) + ($soldeCompte('571') ?: 0);
-
-        // Compte clients (411)
-        $creances = $soldeCompte('411') ?: $compteSolde('41');
-
-        // Compte fournisseurs (401)
-        $dettes = $soldeCompte('401') ?: $compteSolde('40');
-
-        switch ($domainCode) {
-            case 'commerce':
-                $ca = $compteSolde('701') ?: $compteSolde('70');
-                $achats = $compteSolde('601') ?: $compteSolde('60');
-                return [
-                    'ca_mensuel'          => round($ca, 2),
-                    'achats_mensuel'      => round($achats, 2),
-                    'marge_brute'         => round($ca - $achats, 2),
-                    'tresorerie'          => round($tresorerie, 2),
-                    'creances_clients'    => round($creances, 2),
-                    'dettes_fournisseurs' => round($dettes, 2),
-                    'stock_valorise'      => round($compteSolde('3'), 2),
-                    'tva_a_payer'         => round($soldeCompte('441'), 2),
-                ];
-
-            case 'hotel':
-                $recettes = $compteSolde('706');
-                return [
-                    'recettes_nuitees'    => round($recettes, 2),
-                    'taux_occupation'     => null, // nécessite données chambres
-                    'revpar'              => null,
-                    'taxe_nuitee_due'     => round($soldeCompte('447'), 2),
-                    'tresorerie'          => round($tresorerie, 2),
-                    'creances_clients'    => round($creances, 2),
-                    'tva_a_payer'         => round($soldeCompte('441'), 2),
-                ];
-
-            case 'scolaire':
-                $recettes = $compteSolde('706');
-                return [
-                    'recettes_scolarite'  => round($recettes, 2),
-                    'frais_percus'        => round($recettes, 2),
-                    'impayes'             => round($creances, 2),
-                    'tresorerie'          => round($tresorerie, 2),
-                    'charges_totales'     => round($compteSolde('6'), 2),
-                    'tva_a_payer'         => round($soldeCompte('441'), 2),
-                ];
-
-            case 'location':
-                $loyers = $compteSolde('703');
-                return [
-                    'loyers_du_mois'      => round($loyers, 2),
-                    'loyers_encaisses'     => round($loyers - $creances, 2),
-                    'taux_recouvrement'   => $loyers > 0 ? round(($loyers - $creances) / $loyers * 100, 1) : null,
-                    'impayes_total'       => round($creances, 2),
-                    'tresorerie'          => round($tresorerie, 2),
-                ];
-
-            case 'tontine':
-                $cotisations = $compteSolde('70');
-                return [
-                    'cotisations_mois'    => round($cotisations, 2),
-                    'total_cagnotte'      => round($cotisations, 2),
-                    'tresorerie'          => round($tresorerie, 2),
-                ];
-
-            case 'transport':
-                $ca = $compteSolde('706');
-                $carburant = $compteSolde('605') ?: $compteSolde('606');
-                return [
-                    'ca_fret_mois'        => round($ca, 2),
-                    'charges_carburant'   => round($carburant, 2),
-                    'marge_transport'     => round($ca - $carburant, 2),
-                    'tresorerie'          => round($tresorerie, 2),
-                    'creances'            => round($creances, 2),
-                ];
-
-            case 'cabinet_comptable':
-                $honoraires = $compteSolde('706');
-                return [
-                    'honoraires_mois'     => round($honoraires, 2),
-                    'tresorerie'          => round($tresorerie, 2),
-                    'creances_clients'    => round($creances, 2),
-                ];
-
-            default:
-                // KPIs génériques pour les autres domaines
-                return [
-                    'ca_total'            => round($compteSolde('7'), 2),
-                    'charges_total'       => round($compteSolde('6'), 2),
-                    'resultat'            => round($compteSolde('7') - $compteSolde('6'), 2),
-                    'tresorerie'          => round($tresorerie, 2),
-                    'creances_clients'    => round($creances, 2),
-                ];
-        }
+        return app(DomainKpiService::class)->getKpis($client);
     }
 
     // ═══════════════════════════════════════════════════════════════

@@ -67,6 +67,21 @@ import GelCompanyAdmins from './Pages/Gel/CompanyAdmins/Index.vue';
 import GelRequests from './Pages/Gel/Admin/Requests/Index.vue';
 import GelSettings from './Pages/Gel/Settings.vue';
 
+// Pages mÃ©tier manquantes
+import GelFactures from './Pages/Gel/Rh/Factures.vue';
+import GelDevis from './Pages/Gel/Rh/Devis.vue';
+import GelRelances from './Pages/Gel/Rh/Relances.vue';
+import GelEmployes from './Pages/Gel/Rh/Employes.vue';
+import GelTresorerie from './Pages/Gel/Finance/Tresorerie.vue';
+import GelRapprochement from './Pages/Gel/Finance/Rapprochement.vue';
+import GelFiscalite from './Pages/Gel/Finance/Fiscalite.vue';
+import GelDeclarations from './Pages/Gel/Finance/Declarations.vue';
+import GelIASuggestions from './Pages/Gel/Ai/Suggestions.vue';
+import GelRapports from './Pages/Gel/Rapports/Index.vue';
+import GelAdminAuditLogs from './Pages/Gel/Admin/AuditLogs.vue';
+import GelAdminModules from './Pages/Gel/Admin/Modules.vue';
+import GelRecherche from './Pages/Gel/Recherche.vue';
+
 const app = createApp(Root);
 
 // Global formatting helpers
@@ -118,6 +133,21 @@ app.component('GelPersonnel', GelPersonnel);
 app.component('GelCompanyAdmins', GelCompanyAdmins);
 app.component('GelRequests', GelRequests);
 app.component('GelSettings', GelSettings);
+
+// Pages mÃ©tier manquantes
+app.component('gel-factures', GelFactures);
+app.component('gel-devis', GelDevis);
+app.component('gel-relances', GelRelances);
+app.component('gel-employes', GelEmployes);
+app.component('gel-tresorerie', GelTresorerie);
+app.component('gel-rapprochement', GelRapprochement);
+app.component('gel-fiscalite', GelFiscalite);
+app.component('gel-declarations', GelDeclarations);
+app.component('gel-ia-suggestions', GelIASuggestions);
+app.component('gel-reports', GelRapports);
+app.component('gel-admin-audit', GelAdminAuditLogs);
+app.component('gel-admin-modules', GelAdminModules);
+app.component('gel-search', GelRecherche);
 
 // Commerce / POS
 app.component('commerce-dashboard', CommerceDashboard);
@@ -192,6 +222,76 @@ app.component('company-accounting', CompanyAccounting);
 app.component('company-caisse', CompanyCaisse);
 app.component('company-emecef', CompanyEmecef);
 
+// ─── Compta (Company Portal) Components ────────────────────
+import ComptaDashboard from './Pages/Company/Compta/Dashboard.vue';
+import ComptaComptesIndex from './Pages/Company/Compta/Comptes/Index.vue';
+import ComptaEcrituresIndex from './Pages/Company/Compta/Ecritures/Index.vue';
+import ComptaBalance from './Pages/Company/Compta/Balance.vue';
+import ComptaRapportsBilan from './Pages/Company/Compta/Rapports/Bilan.vue';
+import ComptaRapportsGrandLivre from './Pages/Company/Compta/Rapports/GrandLivre.vue';
+import ComptaRapportsResultat from './Pages/Company/Compta/Rapports/Resultat.vue';
+import ComptaRapportsTrialBalance from './Pages/Company/Compta/Rapports/TrialBalance.vue';
+import ComptaRapportsCashFlow from './Pages/Company/Compta/Rapports/CashFlow.vue';
+import ComptaRapportsAging from './Pages/Company/Compta/Rapports/Aging.vue';
+import ComptaFacturesIndex from './Pages/Company/Compta/Factures/Index.vue';
+import ComptaJournauxIndex from './Pages/Company/Compta/Journaux/Index.vue';
+import ComptaTvaIndex from './Pages/Company/Compta/Tva/Index.vue';
+import ComptaBanqueIndex from './Pages/Company/Compta/Banque/Index.vue';
+import ComptaImmobilisationsIndex from './Pages/Company/Compta/Immobilisations/Index.vue';
+import ComptaExercicesIndex from './Pages/Company/Compta/Exercices/Index.vue';
+
+app.component('Company/Compta/Dashboard', ComptaDashboard);
+app.component('Company/Compta/Comptes/Index', ComptaComptesIndex);
+app.component('Company/Compta/Ecritures/Index', ComptaEcrituresIndex);
+app.component('Company/Compta/Balance', ComptaBalance);
+app.component('Company/Compta/Rapports/Bilan', ComptaRapportsBilan);
+app.component('Company/Compta/Rapports/GrandLivre', ComptaRapportsGrandLivre);
+app.component('Company/Compta/Rapports/Resultat', ComptaRapportsResultat);
+app.component('Company/Compta/Rapports/TrialBalance', ComptaRapportsTrialBalance);
+app.component('Company/Compta/Rapports/CashFlow', ComptaRapportsCashFlow);
+app.component('Company/Compta/Rapports/Aging', ComptaRapportsAging);
+app.component('Company/Compta/Factures/Index', ComptaFacturesIndex);
+app.component('Company/Compta/Journaux/Index', ComptaJournauxIndex);
+app.component('Company/Compta/Tva/Index', ComptaTvaIndex);
+app.component('Company/Compta/Banque/Index', ComptaBanqueIndex);
+app.component('Company/Compta/Immobilisations/Index', ComptaImmobilisationsIndex);
+app.component('Company/Compta/Exercices/Index', ComptaExercicesIndex);
+
+// ─── Pages Comptabilite (flat paths) ────────────────
+import PagesComptabiliteJournalEntries from './Pages/Comptabilite/JournalEntries.vue';
+import PagesComptabiliteCreateEntry from './Pages/Comptabilite/CreateEntry.vue';
+import PagesComptabiliteEntryDetail from './Pages/Comptabilite/EntryDetail.vue';
+
+// ─── Pages Banque (flat paths) ──────────────────────
+import PagesBanqueBankAccounts from './Pages/Banque/BankAccounts.vue';
+import PagesBanqueBankAccountDetail from './Pages/Banque/BankAccountDetail.vue';
+import PagesBanqueReconciliationWizard from './Pages/Banque/ReconciliationWizard.vue';
+
+// ─── Pages Rapports (flat paths) ────────────────────
+import PagesRapportsTrialBalance from './Pages/Rapports/TrialBalance.vue';
+import PagesRapportsGeneralLedger from './Pages/Rapports/GeneralLedger.vue';
+import PagesRapportsBalanceSheet from './Pages/Rapports/BalanceSheet.vue';
+import PagesRapportsIncomeStatement from './Pages/Rapports/IncomeStatement.vue';
+import PagesRapportsCashFlow from './Pages/Rapports/CashFlow.vue';
+import PagesRapportsAgingReport from './Pages/Rapports/AgingReport.vue';
+
+// ─── Dashboard (flat path) ──────────────────────────
+import PagesDashboard from './Pages/Dashboard.vue';
+
+app.component('comptabilite-journal-entries', PagesComptabiliteJournalEntries);
+app.component('comptabilite-create-entry', PagesComptabiliteCreateEntry);
+app.component('comptabilite-entry-detail', PagesComptabiliteEntryDetail);
+app.component('banque-bank-accounts', PagesBanqueBankAccounts);
+app.component('banque-bank-account-detail', PagesBanqueBankAccountDetail);
+app.component('banque-reconciliation-wizard', PagesBanqueReconciliationWizard);
+app.component('rapports-trial-balance', PagesRapportsTrialBalance);
+app.component('rapports-general-ledger', PagesRapportsGeneralLedger);
+app.component('rapports-balance-sheet', PagesRapportsBalanceSheet);
+app.component('rapports-income-statement', PagesRapportsIncomeStatement);
+app.component('rapports-cash-flow', PagesRapportsCashFlow);
+app.component('rapports-aging-report', PagesRapportsAgingReport);
+app.component('compta-dashboard-alt', PagesDashboard);
+
 // CPA (Crescendo) Dashboard Components
 import CpaDashboard from './Pages/Cpa/Dashboard.vue';
 import CpaLogin from './Pages/Auth/CpaLogin.vue';
@@ -201,6 +301,20 @@ app.component('cpa-dashboard', CpaDashboard);
 app.component('cpa-login', CpaLogin);
 app.component('cpa-register', CpaRegister);
 app.component('cpa-test', CpaTest);
+
+// ─── Inscription libre-service ComptaSaaS ───────────────────
+import ComptasaasRegister from './Pages/Auth/Register.vue';
+app.component('comptasaas-register', ComptasaasRegister);
+
+// ─── Connexion ComptaSaaS ──────────────────────────────────
+import ComptasaasLogin from './Pages/Auth/Login.vue';
+app.component('comptasaas-login', ComptasaasLogin);
+
+// ─── Pages légales (CGU, Confidentialité) ───────────────────
+import LegalTerms from './Pages/Legal/Terms.vue';
+import LegalPrivacy from './Pages/Legal/Privacy.vue';
+app.component('legal-terms', LegalTerms);
+app.component('legal-privacy', LegalPrivacy);
 
 // ─── DAE Module Components ─────────────────────────────
 import DaeDashboard from './Pages/Modules/Dae/Dashboard.vue';

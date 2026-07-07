@@ -1,0 +1,2 @@
+- [Conversion NestJS→Laravel Auth + SYSCOHADA](nestjs-laravel-auth-chartaccounts.md) — Sanctum, 2FA, fiscal periods, 345 comptes SYSCOHADA en arbre
+- [Design : Ne pas modifier](design-ne-pas-modifier.md) — Règle stricte : garder le design carrousel intact

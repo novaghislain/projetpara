@@ -23,9 +23,22 @@ class DashboardController extends Controller
 
     /**
      * Affiche le tableau de bord (authentifié).
+     * Redirige les comptables vers le nouveau GEL Accountant.
      */
     public function dashboard()
     {
+        $user = Auth::user();
+
+        // Comptable → nouveau dashboard GEL Accountant (Blade)
+        if ($user && ($user->isComptable() || $user->role === 'comptable')) {
+            return redirect()->to(route('gel-accountant.dashboard'));
+        }
+
+        // Super Admin → dashboard GEL (Vue SPA)
+        if ($user && $user->isSuperAdmin()) {
+            return view('app', ['page' => 'gel-dashboard']);
+        }
+
         return view('app', ['page' => 'gel-dashboard']);
     }
 
@@ -87,13 +100,13 @@ class DashboardController extends Controller
 
         // Revenus mensuels (factures émises)
         $monthlyRevenue = CompanyInvoice::select(
-            DB::raw("TO_CHAR(issue_date, 'YYYY-MM') as month"),
+            DB::raw("DATE_FORMAT(issue_date, '%Y-%m') as month"),
             DB::raw('SUM(total_ttc) as total')
         )
             ->where('status', '!=', 'cancelled')
             ->whereNotNull('issue_date')
-            ->groupBy(DB::raw("TO_CHAR(issue_date, 'YYYY-MM')"))
-            ->orderBy(DB::raw("TO_CHAR(issue_date, 'YYYY-MM')"))
+            ->groupBy(DB::raw("DATE_FORMAT(issue_date, '%Y-%m')"))
+            ->orderBy(DB::raw("DATE_FORMAT(issue_date, '%Y-%m')"))
             ->take(12)
             ->get()
             ->map(fn($r) => [

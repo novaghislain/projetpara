@@ -184,6 +184,8 @@
         .gel-footer-bottom p { font-size: 12px; color: rgba(255,255,255,0.25); margin: 0; }
 
         @media (max-width: 991px) { .gel-section { padding: 60px 0; } .gel-page-header { padding: 60px 0 40px; } }
+        /* AI Chat Styles */
+        .chat-fab{position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;background:#FF7900;color:white;border:none;font-size:24px;cursor:pointer;box-shadow:0 4px 20px rgba(255,121,0,0.3);transition:all 0.3s;z-index:1060;display:flex;align-items:center;justify-content:center}.chat-fab:hover{transform:scale(1.05);background:#e06700}.chat-window{position:fixed;bottom:90px;right:24px;width:380px;height:560px;background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,0.15);z-index:1060;display:flex;flex-direction:column;overflow:hidden;border:1px solid rgba(0,0,0,0.06)}.chat-window.minimized{height:56px}.chat-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#0B1120;color:white;flex-shrink:0}.chat-header-left{display:flex;align-items:center;gap:10px}.chat-avatar{width:32px;height:32px;background:#FF7900;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}.chat-header h4{font-size:14px;font-weight:600;margin:0;color:white}.chat-status{font-size:11px;color:rgba(255,255,255,0.55);display:flex;align-items:center;gap:4px}.status-dot{width:6px;height:6px;background:#10b981;border-radius:50%;display:inline-block}.chat-header-actions{display:flex;gap:4px}.chat-header-actions button{background:none;border:none;color:rgba(255,255,255,0.6);cursor:pointer;padding:4px 6px;border-radius:4px;font-size:14px}.chat-header-actions button:hover{background:rgba(255,255,255,0.1);color:white}.chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px;background:#F9FAFB}.message{display:flex;max-width:85%}.message-assistant{align-self:flex-start}.message-user{align-self:flex-end}.message-content{padding:10px 14px;border-radius:12px;font-size:13.5px;line-height:1.5}.message-assistant .message-content{background:white;border:1px solid rgba(0,0,0,0.06);color:#1F2937;border-bottom-left-radius:4px}.message-user .message-content{background:#FF7900;color:white;border-bottom-right-radius:4px}.chat-input-area{display:flex;align-items:center;gap:8px;padding:12px 16px;border-top:1px solid rgba(0,0,0,0.06);background:white}.chat-input-area input{flex:1;border:none;outline:none;font-size:13px;padding:8px 0;color:#1F2937;background:transparent}.chat-input-area input::placeholder{color:#9CA3AF}.chat-input-area button{background:#FF7900;color:white;border:none;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px}.chat-input-area button:hover{background:#e06700}
     </style>
 </head>
 <body>
@@ -295,5 +297,6 @@
         }, { threshold: 0.12 });
         animEls.forEach(el => observer.observe(el));
     </script>
+    @include('partials.ai-chat-floating')
 </body>
 </html>

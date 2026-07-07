@@ -1,8 +1,8 @@
 # Cahier des Charges — GEL Cabinet
 
 > **Projet :** Plateforme multi-portail de gestion de cabinet
-> **Version :** 2.1.1
-> **Date :** 21 juin 2026
+> **Version :** 2.2.0
+> **Date :** 04 juillet 2026
 > **Contexte :** Bénin — conformité fiscale et comptable OHADA
 
 ---
@@ -1804,12 +1804,37 @@ POST /login → AuthenticatedSessionController::store
 
 ### 5.4 Pages d'authentification
 
-| Page | URL | Fichier |
-|------|-----|---------|
-| Connexion (standard) | `/login` | `auth/login.blade.php` |
-| Connexion (CPA) | `/cpa-login` | `resources/js/Pages/Auth/CpaLogin.vue` |
-| Inscription | `/register` | `auth/register.blade.php` |
-| Mot de passe oublié | `/forgot-password` | Standard Laravel |
+| Page | URL | Fichier (Vue SPA / Blade) |
+|------|-----|--------------------------|
+| Connexion ComptaSaaS | `/login` | `resources/js/Pages/Auth/Login.vue` (SPA) |
+| Inscription libre-service | `/register` | `resources/js/Pages/Auth/Register.vue` (SPA) |
+| Connexion CPA | `/cpa-login` | `resources/js/Pages/Auth/CpaLogin.vue` (SPA) |
+| Conditions d'utilisation | `/conditions` | `resources/js/Pages/Legal/Terms.vue` (SPA) |
+| Politique de confidentialité | `/confidentialite` | `resources/js/Pages/Legal/Privacy.vue` (SPA) |
+| Mot de passe oublié | `/forgot-password` | Standard Laravel Blade |
+
+**Détail des pages SPA :**
+
+| Composant | Fichier | Description |
+|-----------|---------|-------------|
+| `Login.vue` | `resources/js/Pages/Auth/Login.vue` | Formulaire email + mot de passe + checkbox "Se souvenir de moi". POST vers `/api/login`, stocke le token JWT dans localStorage, redirige vers `/company/dashboard`. Animations : fond avec orbes flottantes, transitions Vue `<Transition name="fade">`. Branding Para (orange `#FF7900`). |
+| `Register.vue` | `resources/js/Pages/Auth/Register.vue` | Inscription en une étape avec section Entreprise (nom, slug, email, téléphone, pays OHADA, adresse) + section Administrateur (nom, email, mot de passe, confirmation). Auto-génération du slug. Acceptation des CGU obligatoire. POST vers `/api/register`, stocke le token, affiche écran de succès avec lien vers le dashboard. Animations : orbes flottantes, `<Transition name="scale">` pour l'écran de succès. |
+| `Terms.vue` | `resources/js/Pages/Legal/Terms.vue` | Contenu des conditions d'utilisation. Lien email en `text-primary`. Animations `animate-slide-up` / `animate-fade-in`. |
+| `Privacy.vue` | `resources/js/Pages/Legal/Privacy.vue` | Politique de confidentialité. Même design que Terms.vue. |
+
+**Composant AuthNavbar :**
+- Fichier : `resources/js/Components/AuthNavbar.vue`
+- Navbar complète réutilisée du catalogue public, avec 6 entrées :
+  - **Nos Modules** (dropdown : Pôle Administration, Comptabilité/Finance, Fiscal, Social & Paie, Juridique, IT, + "Découvrir tous les modules")
+  - **Services** (dropdown : Comptabilité, Fiscal, Juridique, Social & Paie, + "Tous les services")
+  - **À propos** (dropdown : Notre Cabinet, Notre Équipe, Carrières)
+  - **Ressources** (dropdown : Blogue, Documentation, FAQ, Centre d'aide)
+  - **Tarifs** (lien simple)
+  - **Contact** (lien simple)
+- Bouton conditionnel : S'inscrire (page login) / Se connecter (page register)
+- Menu mobile complet avec tous les liens et sous-liens
+- Classes CSS : `gel-navbar`, `gel-dropdown`, `gel-nav-link` (glassmorphism + orange #FF7900)
+- Breakpoint responsive : `max-width: 991px` → menu burger
 
 ### 5.5 Système de permissions (Vue)
 
@@ -2280,9 +2305,30 @@ Tous les seeders utilisent `firstOrCreate()` / `updateOrCreate()` pour garantir 
 - Loader avec spinner double bordure + glow
 - Design : palette bleu `#163A5E` + orange `#FF7900`, fond blanc dominant
 
-### 8.6 Catalogue public (Pages/Public/Catalogue/Index.vue)
+### 8.6 Auth pages — Connexion & Inscription (Auth/Login.vue, Auth/Register.vue)
 
-- Navbar glassmorphism réutilisée depuis la landing page
+- **AuthNavbar** : Navbar complète réutilisée du catalogue (voir section 5.4) avec logo GEL, navigation dropdowns, bouton conditionnel
+- Fond avec gradient `from-orange-50 via-white to-orange-100` et 3 orbes flottantes animées (`animate-blob`)
+- Cartes blanches avec `rounded-xl` et `shadow-lg`, animation `animate-slide-up` à l'entrée
+- Titres dans une bande orange `bg-primary` en haut de la carte
+- Champs de formulaire avec `focus:ring-primary` et `focus:border-primary`
+- Bouton submit `w-full bg-primary` avec `hover:bg-brand-orange-dark` et effet `active:scale-[0.98]`
+- Transitions Vue `<Transition name="fade">` pour messages d'erreur et chargement
+- `<Transition name="scale">` pour l'écran de succès (register)
+- Formulaires POST vers `/api/login` / `/api/register`
+- Lien vers `/register` (login) et `/login` (register)
+
+### 8.7 Pages légales (Legal/Terms.vue, Legal/Privacy.vue)
+
+- Même fond gradient que les pages auth
+- Cartes blanches avec animation `animate-slide-up`
+- Titre de page avec `animate-fade-in`
+- Liens email en `text-primary` (orange #FF7900)
+- Contenu structuré en sections with titres semi-gras
+
+### 8.8 Catalogue public (Pages/Public/Catalogue/Index.vue)
+
+- Navbar glassmorphism réutilisée depuis la landing page (identique à AuthNavbar)
 - Hero sombre avec gradient animé, orbes floues, particules
 - Titre + sous-titre avec animation de fondu au chargement
 - Barre de recherche avec focus glow
@@ -2297,7 +2343,7 @@ Tous les seeders utilisent `firstOrCreate()` / `updateOrCreate()` pour garantir 
 - CTA section avec gradient + orbe décorative
 - Footer sombre identique à la landing page
 
-### 8.7 Système de classes partagées (isup-*)
+### 8.9 Système de classes partagées (isup-*)
 
 Les classes `isup-*` dans `resources/css/company.css` fournissent un design system unifié :
 
@@ -2316,7 +2362,7 @@ Les classes `isup-*` dans `resources/css/company.css` fournissent un design syst
 | `.isup-modal-*` | Système de modales |
 | `.isup-alert-*` | Messages d'alerte (success/error/warning) |
 
-### 8.8 Responsive
+### 8.10 Responsive
 
 | Breakpoint | Comportement |
 |------------|--------------|
@@ -2324,7 +2370,7 @@ Les classes `isup-*` dans `resources/css/company.css` fournissent un design syst
 | 768-1024px (Tablette) | Sidebar rétractable, grille 2 colonnes |
 | > 1024px (Desktop) | Sidebar fixe 240px, grille 3-4 colonnes |
 
-### 8.9 Sidebar avec sous-menus dépliants
+### 8.11 Sidebar avec sous-menus dépliants
 
 Regrouper les ~30 items de navigation en catégories repliables avec chevrons :
 
@@ -2346,14 +2392,14 @@ Regrouper les ~30 items de navigation en catégories repliables avec chevrons :
 - État mémorisé dans localStorage
 - Badge de notification par catégorie (ex: "CRM (3)")
 
-### 8.10 Bouton "+ Nouveau" rapide
+### 8.12 Bouton "+ Nouveau" rapide
 
 Bouton flottant en haut de la sidebar (sous le logo) avec dropdown d'actions rapides :
 - Nouveau client, Nouvelle facture, Nouvelle écriture, Nouveau document
 - Nouveau ticket IT, Nouvelle mission, Nouveau contrat juridique
 - Raccourci clavier : `N` (quand pas dans un input)
 
-### 8.11 Filtres en chips supprimables
+### 8.13 Filtres en chips supprimables
 
 Dans TOUS les tableaux du projet, afficher les filtres actifs sous forme de chips/tags avec bouton × pour les retirer.
 
@@ -2361,13 +2407,13 @@ Dans TOUS les tableaux du projet, afficher les filtres actifs sous forme de chip
 **Props :** `filters` (array d'objets `{label, value, key}`)
 **Emit :** `@remove(key)` pour retirer un filtre
 
-### 8.12 Signets / Favoris personnalisables
+### 8.14 Signets / Favoris personnalisables
 
 Section "SIGNETS" dans la sidebar avec bouton ✏️ pour éditer. L'utilisateur peut ajouter/retirer des pages en favoris.
 
 **Table :** `user_bookmarks` (user_id, label, url, icon, sort_order) — max 10 signets par utilisateur
 
-### 8.13 Dashboard widgetisable
+### 8.15 Dashboard widgetisable
 
 Le dashboard principal (GEL et Company) affiche des widgets réarrangeables par drag & drop.
 

@@ -32,8 +32,9 @@ class EnsureIsCompanyAdmin
         if (Auth::check()) {
             $user = Auth::user();
 
-            // Tout utilisateur rattaché à une entreprise peut accéder au portail
-            if (!$user->client_id) {
+            // Tout utilisateur rattaché à une entreprise, 
+            // OU un utilisateur du cabinet ayant sélectionné un contexte (active_client_id)
+            if (!$user->client_id && !$user->active_client_id) {
                 if ($request->expectsJson()) {
                     return response()->json(['message' => 'Accès réservé aux utilisateurs d\'entreprise.'], 403);
                 }

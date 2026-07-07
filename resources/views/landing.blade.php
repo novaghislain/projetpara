@@ -537,8 +537,8 @@
                     <div class="container">
                         <div class="row">
                             <div class="col-lg-7">
-                                <h1>Gérez votre cabinet.<br><span>Vendez votre expertise.</span></h1>
-                                <p class="gel-slide-sub">CRM, GED, Comptabilité OHADA, ERP, RH — la plateforme SaaS tout-en-un pour les cabinets d'expertise comptable au Bénin.</p>
+                                <h1>Gérez votre cabinet<br><span>comme un géant</span></h1>
+                                <p class="gel-slide-sub">La première plateforme multi-portail au Bénin pour cabinets comptables, juridiques et fiscaux. 15+ modules intégrés, IA embarquée, conformité totale OHADA.</p>
                                 <div class="gel-slide-actions">
                                     <a href="/register" class="gel-slide-btn gel-slide-btn-primary">
                                         <i class="bi-rocket-takeoff"></i> Démarrer l'essai gratuit
@@ -564,8 +564,8 @@
                     <div class="container">
                         <div class="row">
                             <div class="col-lg-7">
-                                <h1>Le logiciel de comptabilité<br><span>pour les pros</span></h1>
-                                <p class="gel-slide-sub">Plan SYSCOA, journaux, bilan, CRP, déclarations fiscales — conforme aux normes OHADA. Licence standalone ou en SaaS.</p>
+                                <h1>Comptabilité conforme<br><span>aux normes SYSCOHADA</span></h1>
+                                <p class="gel-slide-sub">Plan comptable SYSCOHADA complet, journaux, balance, bilan, TVA, IR, CF. Multi-exercices et déclarations fiscales intégrées.</p>
                                 <div class="gel-slide-actions">
                                     <a href="/logiciel-comptabilite" class="gel-slide-btn gel-slide-btn-primary">
                                         <i class="bi-cpu"></i> Découvrir le logiciel
@@ -591,9 +591,9 @@
                     <div class="container">
                         <div class="row">
                             <div class="col-lg-7">
-                                <span class="gel-slide-badge"><i class="bi-shield-check"></i> Sécurité &amp; Conformité</span>
-                                <h1>Des données<br><span>toujours protégées</span></h1>
-                                <p class="gel-slide-sub">Authentification multi-facteurs, rôles personnalisés, chiffrement et audit : votre cabinet est protégé à chaque niveau.</p>
+                                <span class="gel-slide-badge"><i class="bi-robot"></i> Intelligence Artificielle embarquée</span>
+                                <h1>Votre assistant IA<br><span>qui travaille 24h/24</span></h1>
+                                <p class="gel-slide-sub">6 agents IA spécialisés analysent vos données, détectent les anomalies et suggèrent des actions. Vous gardez le contrôle à chaque étape.</p>
                                 <div class="gel-slide-actions">
                                     <a href="/register" class="gel-slide-btn gel-slide-btn-primary">
                                         <i class="bi-rocket-takeoff"></i> Commencer maintenant
@@ -635,20 +635,20 @@
         <div class="container">
             <div class="gel-stats-grid">
                 <div class="gel-stat-item anim-fade-up">
-                    <span class="gel-stat-number" data-target="9">0</span>
+                    <span class="gel-stat-number" data-target="15">0</span>
                     <div class="gel-stat-label">Modules intégrés</div>
                 </div>
                 <div class="gel-stat-item anim-fade-up delay-1">
-                    <span class="gel-stat-number" data-target="1500" data-suffix="+">0</span>
-                    <div class="gel-stat-label">Clients accompagnés</div>
+                    <span class="gel-stat-number" data-target="500" data-suffix="+">0</span>
+                    <div class="gel-stat-label">Cabinets clients</div>
                 </div>
                 <div class="gel-stat-item anim-fade-up delay-2">
-                    <span class="gel-stat-number" data-target="99" data-suffix="%">0</span>
+                    <span class="gel-stat-number" data-target="99" data-suffix=".9%">0</span>
                     <div class="gel-stat-label">Disponibilité</div>
                 </div>
                 <div class="gel-stat-item anim-fade-up delay-3">
-                    <span class="gel-stat-number" data-target="3">0</span>
-                    <div class="gel-stat-label">Pays couverts</div>
+                    <span class="gel-stat-number" data-target="50" data-suffix="M+">0</span>
+                    <div class="gel-stat-label">Écritures traitées</div>
                 </div>
             </div>
         </div>
@@ -694,16 +694,16 @@
         <div class="container">
             <div class="row justify-content-center mb-5">
                 <div class="col-lg-7 text-center">
-                    <h2 class="gel-section-title anim-fade-up delay-1">Ce qu'on vous propose</h2>
-                    <p class="gel-section-sub mx-auto anim-fade-up delay-2">Six bonnes raisons de travailler avec GEL Cabinet.</p>
+                    <h2 class="gel-section-title anim-fade-up delay-1">Pourquoi choisir GEL Cabinet ?</h2>
+                    <p class="gel-section-sub mx-auto anim-fade-up delay-2">La plateforme tout-en-un pensée pour les professionnels du chiffre et du droit.</p>
                 </div>
             </div>
             <div class="row g-4">
                 <div class="col-md-4 anim-fade-up delay-1">
                     <div class="gel-why-card">
                         <div class="gel-why-icon"><i class="bi-boxes"></i></div>
-                        <h6>Une plateforme, tout-en-un</h6>
-                        <p>CRM, GED, Comptabilité, ERP, Missions — plus besoin de jongler entre 5 outils. Tout est intégré.</p>
+                        <h6>15+ modules intégrés</h6>
+                        <p>Comptabilité SYSCOHADA, CRM, GED, Paie, ERP, IA — plus besoin de jongler entre plusieurs outils. Tout est centralisé.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-2">
@@ -716,22 +716,22 @@
                 <div class="col-md-4 anim-fade-up delay-3">
                     <div class="gel-why-card">
                         <div class="gel-why-icon"><i class="bi-shield-check"></i></div>
-                        <h6>Sécurité & Conformité</h6>
-                        <p>Authentification, chiffrement, permissions et audit — vos données sont sous contrôle.</p>
+                        <h6>Conforme OHADA / SYSCOHADA</h6>
+                        <p>Plan comptable SYSCOHADA complet, TVA, IR, CF, e-MECeF, CNSS. Tout est à jour avec la réglementation béninoise.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-1">
                     <div class="gel-why-card">
                         <div class="gel-why-icon"><i class="bi-people-fill"></i></div>
-                        <h6>Multi-utilisateurs & Rôles</h6>
-                        <p>Des comptes pour toute l'équipe avec des rôles personnalisés. Chacun voit ce qui le concerne.</p>
+                        <h6>Multi-portail</h6>
+                        <p>Trois interfaces distinctes : super admin, portail entreprise, portail client. Chacun avec ses données et ses accès.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-2">
                     <div class="gel-why-card">
-                        <div class="gel-why-icon"><i class="bi-cloud-arrow-up"></i></div>
-                        <h6>Accessible partout</h6>
-                        <p>100% cloud : ordinateur, tablette ou smartphone — votre cabinet vous suit.</p>
+                        <div class="gel-why-icon"><i class="bi-robot"></i></div>
+                        <h6>IA intelligente embarquée</h6>
+                        <p>6 agents IA analysent vos données, détectent les anomalies et suggèrent des actions. Vous validez avant d'appliquer.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-3">
@@ -750,8 +750,8 @@
         <div class="container">
             <div class="row justify-content-center mb-4">
                 <div class="col-lg-8 text-center">
-                    <h2 class="gel-section-title anim-fade-up delay-1">Tout ce qu'il faut pour<br>votre cabinet</h2>
-                    <p class="gel-section-sub mx-auto anim-fade-up delay-2" style="max-width:680px;">Tous les services comptables, fiscaux, juridiques et RH pour vous accompagner au quotidien dans la gestion de votre entreprise. Épargnez du temps et de l'argent. Faites équipe avec des techniciens et des professionnels passionnés et dynamiques, prêts à transformer votre façon de travailler.</p>
+                    <h2 class="gel-section-title anim-fade-up delay-1">Des services conçus pour<br><span style="color:var(--gel-primary);">les professionnels du chiffre</span></h2>
+                    <p class="gel-section-sub mx-auto anim-fade-up delay-2" style="max-width:680px;">Que vous soyez expert-comptable, avocat fiscaliste ou commissaire aux comptes, GEL Cabinet vous offre une suite complète d'outils et de services pour piloter votre activité en toute sérénité.</p>
                 </div>
             </div>
 
@@ -1093,15 +1093,15 @@
             <div class="row align-items-center">
                 <div class="col-lg-8 anim-fade-left">
                     <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.12);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.15);padding:4px 14px;border-radius:100px;font-size:11px;font-weight:600;color:rgba(255,255,255,0.9);margin-bottom:14px;"><i class="bi-lightning-fill"></i> Prêt à passer à l'action ?</span>
-                    <h2>Prêt à transformer<br>votre cabinet ?</h2>
-                    <p>Rejoignez les cabinets comptables qui pilotent déjà leur activité avec GEL Cabinet. Essayez gratuitement pendant 30 jours.</p>
+                    <h2>Prêt à moderniser<br>votre cabinet ?</h2>
+                    <p>Rejoignez plus de 500 cabinets qui nous font déjà confiance. Essayez GEL Cabinet gratuitement pendant 14 jours, sans engagement.</p>
                 </div>
                 <div class="col-lg-4 text-lg-end mt-4 mt-lg-0 anim-fade-right">
                     <a href="/register" class="gel-btn-white me-3" style="margin-bottom:8px;">
-                        <i class="bi-rocket-takeoff"></i> Essai gratuit 30 jours
+                        <i class="bi-rocket-takeoff"></i> Essai gratuit 14 jours
                     </a>
-                    <a href="/tarifs" class="gel-btn-white" style="background:rgba(255,255,255,0.15); color:#fff; border:2px solid rgba(255,255,255,0.5);">
-                        <i class="bi-currency-dollar"></i> Voir les tarifs
+                    <a href="/contact" class="gel-btn-white" style="background:rgba(255,255,255,0.15); color:#fff; border:2px solid rgba(255,255,255,0.5);">
+                        <i class="bi-telephone"></i> Demander une démo
                     </a>
                 </div>
             </div>
