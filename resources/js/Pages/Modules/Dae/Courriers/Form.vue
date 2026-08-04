@@ -277,6 +277,14 @@
 </template>
 
 <script>
+/*
+ * Composant : DaeCourriersForm
+ * Role : Formulaire de creation et modification d'un courrier dans le module DAE.
+ * Inclut un editeur WYSIWYG pour le contenu, la gestion des fichiers joints,
+ * la selection du client et les champs d'information generaux.
+ * Props : courrier (Object) - donnees du courrier en mode edition, isEditing (Boolean) - mode creation/edition
+ * Evenements : aucun
+ */
 import axios from 'axios';
 
 export default {
@@ -325,6 +333,7 @@ export default {
 
     methods: {
         async initialize() {
+            // Chargement initial : clients puis pre-remplissage si edition
             await this.fetchClients();
             if (this.isEditing && this.courrier) {
                 this.populateForm();
@@ -367,16 +376,19 @@ export default {
         },
 
         handleFileChange(event) {
+            // Recupere le fichier selectionne par l'utilisateur
             const file = event.target.files[0];
             this.form.fichier_joint = file || null;
         },
 
         execCmd(command) {
+            // Execute une commande de l'editeur WYSIWYG (gras, italique, etc.)
             document.execCommand(command, false, null);
             this.$refs.editorRef?.focus();
         },
 
         syncEditorContent() {
+            // Synchronise le contenu du WYSIWYG avec le champ de formulaire
             this.form.contenu = this.$refs.editorRef?.innerHTML || '';
         },
 
@@ -396,6 +408,7 @@ export default {
                     'Accept': 'application/json',
                 };
 
+                // Si un fichier est present, on utilise FormData pour l'envoi
                 if (hasFile) {
                     payload = new FormData();
                     for (const key of Object.keys(this.form)) {
@@ -411,6 +424,7 @@ export default {
                         payload.append('_method', 'PUT');
                     }
                 } else {
+                    // Pas de fichier : envoi en JSON standard
                     headers['Content-Type'] = 'application/json';
                     payload = { ...this.form };
                     delete payload.fichier_joint;

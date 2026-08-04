@@ -1,7 +1,12 @@
+<!--
+ * Feed.vue - Fil d'activité intelligent des agents IA
+ * Timeline centralisée des événements, suggestions et alertes
+ * Actions : approbation, rejet, exécution, marquage lecture
+-->
 <template>
   <GelLayout pageTitle="Fil d'Activité Intelligent">
     <div class="ia-activity-feed">
-      <!-- En-tête -->
+      <!-- En-tête : titre, compteur non-lus et boutons d'action globaux -->
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
           <h4 class="mb-1">
@@ -98,7 +103,7 @@
         </div>
       </div>
 
-      <!-- Loading -->
+      <!-- État : indicateur de chargement -->
       <div v-if="loading" class="text-center py-5">
         <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">Chargement...</span>
@@ -106,12 +111,13 @@
         <p class="mt-2 text-muted small">Mise à jour du fil d'activité...</p>
       </div>
 
-      <!-- Timeline -->
+      <!-- État : liste vide -->
       <div v-else-if="items.length === 0" class="text-center py-5 text-muted">
         <i class="bi bi-inbox fs-1 d-block mb-2"></i>
         <p>Aucun événement trouvé pour ces critères.</p>
       </div>
 
+      <!-- État : affichage de la timeline avec les événements -->
       <template v-else>
         <div class="feed-timeline">
           <div v-for="item in items" :key="item.id" class="feed-item mb-3"
@@ -129,7 +135,7 @@
                     <i :class="agentIcon(item.agent)"></i>
                   </div>
 
-                  <!-- Contenu principal -->
+                  <!-- Contenu principal : titre, badges, description -->
                   <div class="flex-grow-1 min-w-0">
                     <div class="d-flex justify-content-between align-items-start mb-1">
                       <div class="d-flex flex-wrap align-items-center gap-1">
@@ -147,7 +153,7 @@
 
                     <p class="small text-muted mb-1">{{ item.description }}</p>
 
-                    <!-- Métadonnées -->
+                    <!-- Métadonnées : client, confiance, date de traitement, motif de rejet -->
                     <div class="d-flex flex-wrap gap-3 small text-muted mt-1">
                       <span v-if="item.client">
                         <i class="bi bi-building me-1"></i>{{ item.client.company_name }}
@@ -164,7 +170,7 @@
                       </span>
                     </div>
 
-                    <!-- Actions one-click (suggestions en attente) -->
+                    <!-- Actions one-click disponibles pour les suggestions en attente -->
                     <div v-if="item.status === 'pending'" class="mt-2 d-flex gap-1 flex-wrap">
                       <button class="btn btn-sm btn-success" @click="approveItem(item)"
                         :disabled="actionLoading === item.id">
@@ -197,7 +203,7 @@
                     </div>
                   </div>
 
-                  <!-- Indicateur non lu -->
+                  <!-- Indicateur visuel de non-lecture (pastille bleue) -->
                   <div v-if="!item.read_at" class="flex-shrink-0 align-self-center">
                     <span class="d-inline-block rounded-pill bg-primary"
                       style="width:10px;height:10px;"></span>
@@ -208,7 +214,7 @@
           </div>
         </div>
 
-        <!-- Pagination -->
+      <!-- Pagination avec numérotation et navigation -->
         <div class="d-flex justify-content-between align-items-center mt-3">
           <small class="text-muted">
             Page {{ pagination.current_page }} / {{ pagination.last_page }}
@@ -235,7 +241,7 @@
         </div>
       </template>
 
-      <!-- Modal de rejet -->
+      <!-- Modal de rejet : formulaire de motif obligatoire -->
       <div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-sm modal-dialog-centered">
           <div class="modal-content">
@@ -267,6 +273,7 @@
 </template>
 
 <script setup>
+/* ===== Logique métier du composant ===== */
 import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import axios from 'axios'
 import { Modal } from 'bootstrap'

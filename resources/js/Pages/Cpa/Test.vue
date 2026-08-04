@@ -11,9 +11,21 @@
 </template>
 
 <script setup>
+/*
+ * Test.vue - Page de test basique sans le layout CPA
+ *
+ * Utilisée pour vérifier l'authentification et le rôle de l'utilisateur
+ * connecté en affichant les valeurs brutes du store. Utile pour le
+ * débogage rapide des permissions sans la surcharge du layout principal.
+ *
+ * NOTE : Ce composant n'utilise PAS CpaLayout et n'a pas de styles
+ * scoped — tout est en inline pour un rendu minimaliste.
+ */
+
 import { computed } from 'vue';
 import { authStore } from '../../stores/auth';
 
+// Récupération du rôle utilisateur depuis le store d'authentification
 const role = computed(() => authStore.user?.role || 'inconnu');
 const isSuperAdmin = computed(() => role.value === 'super_admin');
 </script>

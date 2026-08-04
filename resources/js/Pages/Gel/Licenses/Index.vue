@@ -1,28 +1,39 @@
+/*
+ * Composant : Licenses/Index.vue
+ * Description : Page de gestion des licences du module GEL.
+ *              Permet de creer, modifier, supprimer des licences
+ *              et d'afficher la liste avec le statut, la duree, le prix
+ *              et les dates de debut/fin.
+ */
 <script setup>
 import { ref, onMounted, nextTick } from 'vue';
-import GelLayout from '../../../Layouts/GelLayout.vue';
+import GelLayout from '../../../Layouts/GelLayout.vue';   /* Layout principal du module GEL */
 
-const licenses = ref([]);
-const clients = ref([]);
-const services = ref([]);
-const loading = ref(true);
-const error = ref(null);
-const submitting = ref(false);
+/* ─── Donnees ─── */
+const licenses = ref([]);   /* Liste des licences chargee depuis l'API */
+const clients = ref([]);    /* Liste des entreprises pour le formulaire */
+const services = ref([]);   /* Liste des services pour le formulaire */
+const loading = ref(true);  /* Indicateur de chargement */
+const error = ref(null);    /* Message d'erreur */
+const submitting = ref(false); /* Indicateur de soumission du formulaire */
 
-const showModal = ref(false);
-const isEditing = ref(false);
-const editingId = ref(null);
-const modalEl = ref(null);
-const modalInstance = ref(null);
+/* ─── Gestion de la modale ─── */
+const showModal = ref(false);     /* Visibilite de la modale */
+const isEditing = ref(false);     /* Mode edition ou creation */
+const editingId = ref(null);      /* Identifiant de la licence en cours d'edition */
+const modalEl = ref(null);        /* Reference a l'element DOM de la modale */
+const modalInstance = ref(null);  /* Instance Bootstrap de la modale */
 
+/* ─── Formulaire ─── */
 const form = ref({
-    client_id: '',
-    service_id: '',
-    duration_months: 12,
-    start_date: '',
-    price: '',
+    client_id: '',         /* Identifiant de l'entreprise */
+    service_id: '',        /* Identifiant du service */
+    duration_months: 12,   /* Duree en mois (12, 24 ou 36) */
+    start_date: '',        /* Date de debut */
+    price: '',             /* Prix en FCFA */
 });
 
+/* ─── Formateurs ─── */
 const statusLabel = (status) => {
     const map = { active: 'Actif', expired: 'Expiré', revoked: 'Révoqué' };
     return map[status] || status;
@@ -44,6 +55,7 @@ const formatCurrency = (value) => {
     return Number(value).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' FCFA';
 };
 
+/* ─── API : chargement des donnees ─── */
 const fetchLicenses = async () => {
     loading.value = true;
     error.value = null;
@@ -58,6 +70,7 @@ const fetchLicenses = async () => {
     }
 };
 
+/* Chargement de la liste des entreprises pour le select du formulaire */
 const fetchClients = async () => {
     try {
         const res = await fetch('/api/clients');
@@ -65,6 +78,7 @@ const fetchClients = async () => {
     } catch (e) { /* non-critique */ }
 };
 
+/* Chargement de la liste des services pour le select du formulaire */
 const fetchServices = async () => {
     try {
         const res = await fetch('/api/services');
@@ -72,6 +86,7 @@ const fetchServices = async () => {
     } catch (e) { /* non-critique */ }
 };
 
+/* ─── Gestion du formulaire ─── */
 const resetForm = () => {
     form.value = {
         client_id: '',
@@ -82,6 +97,7 @@ const resetForm = () => {
     };
 };
 
+/* Ouverture de la modale en mode creation */
 const openCreateModal = async () => {
     await nextTick();
     resetForm();
@@ -94,6 +110,7 @@ const openCreateModal = async () => {
     modalInstance.value?.show();
 };
 
+/* Ouverture de la modale en mode edition (charge les donnees existantes) */
 const openEditModal = async (id) => {
     try {
         const res = await fetch('/api/licenses/' + id);
@@ -119,11 +136,13 @@ const openEditModal = async (id) => {
     }
 };
 
+/* Fermeture de la modale */
 const closeModal = () => {
     modalInstance.value?.hide();
     showModal.value = false;
 };
 
+/* ─── Envoi du formulaire (creation ou mise a jour) ─── */
 const submitForm = async () => {
     submitting.value = true;
     try {
@@ -154,6 +173,7 @@ const submitForm = async () => {
     }
 };
 
+/* ─── Suppression d'une licence ─── */
 const deleteLicense = async (id) => {
     if (!confirm('Confirmer la suppression de cette licence ?')) return;
     try {

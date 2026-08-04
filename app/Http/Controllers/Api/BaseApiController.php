@@ -6,15 +6,17 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * Base controller pour les endpoints API.
+ * Classe de base pour les contrôleurs API.
  *
- * Centralise la récupération du client_id pour les API appelées
- * dans le contexte d'une entreprise (Company).
+ * Centralise la récupération de l'ID du client connecté pour
+ * les endpoints API opérant dans un contexte d'entreprise.
  */
 abstract class BaseApiController extends Controller
 {
     /**
      * Récupère le client_id de l'utilisateur authentifié.
+     *
+     * @return int
      */
     protected function getClientId(): int
     {

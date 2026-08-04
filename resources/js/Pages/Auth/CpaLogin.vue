@@ -1,25 +1,68 @@
+/*
+ * CpaLogin.vue - Page de connexion pour le portail CPA GEL Cabinet.
+ *
+ * Role     : Point d'entree authentifie de la plateforme GEL Cabinet.
+ *            Interface a deux panneaux : formulaire a gauche, visuel a droite.
+ *            Inclut une section "Comptes de demonstration" pour faciliter les tests.
+ *            Propose aussi une modale "Mot de passe oublie" avec envoi de lien.
+ * Props    : Aucune (composant autonome).
+ * Emits    : Aucun (soumission par formulaire HTML natif pour eviter les erreurs CSRF).
+ * Store    : Aucun (soumission directe via formulaire cache).
+ *
+ * Fonctionnalites :
+ * - Connexion email + mot de passe avec option "Se souvenir de moi"
+ * - Soumission via formulaire HTML cache (approche Laravel standard, evite les erreurs 419 CSRF)
+ * - Affichage/masquage du mot de passe (icone oeil)
+ * - Section "Comptes de demonstration" : Admin, Client, Comptable, Entreprise
+ * - Badge "Espace securise -- Connexion chiffree SSL" rassurant
+ * - Modale "Mot de passe oublie" : saisie email + envoi POST /forgot-password
+ * - Pied de page avec liens CGU et Confidentialite
+ * - Panneau droit hero avec statistiques (500+ clients, 2500+ declarations, 99.9% dispo)
+ * - Temoignage client dans le panneau droit
+ *
+ * Flux type :
+ *   1. L'utilisateur saisit email + mot de passe (ou clique sur un compte demo)
+ *   2. Clic "Se connecter" : validation cote client (champs non vides)
+ *   3. Creation d'un formulaire HTML cache soumis en POST vers /login
+ *   4. Le navigateur suit la redirection Laravel (succes ou echec)
+ */
+
 <script setup>
 import { ref, onMounted } from 'vue';
 
+// ─── Etat du formulaire de connexion ───
 const form = ref({
     email: '',
     password: '',
-    remember: false,
+    remember: false,   // Option "Se souvenir de moi"
 });
 
-const loading = ref(false);
-const error = ref('');
-const showPassword = ref(false);
-const showForgotModal = ref(false);
-const forgotEmail = ref('');
-const forgotLoading = ref(false);
-const forgotSuccess = ref(false);
-const forgotError = ref('');
+// ─── Etats reactifs ───
+const loading = ref(false);         // Indicateur de chargement (desactive le bouton)
+const error = ref('');              // Message d'erreur a afficher
+const showPassword = ref(false);    // Afficher/masquer le mot de passe (icone oeil)
+const showForgotModal = ref(false); // Affichage de la modale "Mot de passe oublie"
+const forgotEmail = ref('');        // Email saisi dans la modale de reinitialisation
+const forgotLoading = ref(false);   // Etat d'envoi du lien de reinitialisation
+const forgotSuccess = ref(false);   // Succes de l'envoi du lien
+const forgotError = ref('');        // Erreur lors de l'envoi du lien
 
+/**
+ * login - Authentifie l'utilisateur via soumission d'un formulaire HTML cache.
+ *
+ * Particularite : au lieu d'un appel fetch/ajax, cette fonction cree un formulaire
+ * HTML <form> avec des champs caches et le soumet. C'est l'approche recommandee par
+ * Laravel pour eviter les erreurs 419 (CSRF token mismatch) qui surviennent souvent
+ * avec les requetes AJAX sur les sessions expirees.
+ *
+ * Apres le submit(), le navigateur quitte la page actuelle et suit la redirection
+ * retournee par le serveur Laravel (/dashboard en cas de succes, /login en cas d'echec).
+ */
 const login = async () => {
     loading.value = true;
     error.value = '';
 
+    // Validation cote client avant soumission
     if (!form.value.email.trim()) {
         error.value = "L'adresse email est requise";
         loading.value = false;
@@ -34,7 +77,8 @@ const login = async () => {
     try {
         const csrf = document.querySelector('meta[name=csrf-token]')?.content;
 
-        // Soumettre via un formulaire caché = approche standard Laravel, évite les erreurs 419 CSRF
+        // Creation d'un formulaire cache soumis en POST vers /login
+        // Cette approche evite les erreurs 419 CSRF des requetes AJAX
         const formEl = document.createElement('form');
         formEl.method = 'POST';
         formEl.action = '/login';
@@ -55,14 +99,19 @@ const login = async () => {
 
         document.body.appendChild(formEl);
         formEl.submit();
-        // Le navigateur suit la redirection -- cette ligne ne s'exécute pas après submit
+        // Apres cette ligne, le navigateur quitte la page (redirection Laravel)
     } catch (e) {
-        error.value = 'Erreur réseau. Veuillez réessayer.';
+        error.value = 'Erreur reseau. Veuillez reessayer.';
     } finally {
         loading.value = false;
     }
 };
 
+/**
+ * sendResetLink - Envoie une demande de reinitialisation de mot de passe.
+ * Appel POST /forgot-password avec l'email saisi dans la modale.
+ * En cas de succes, affiche un message de confirmation dans la modale.
+ */
 const sendResetLink = async () => {
     forgotLoading.value = true;
     forgotError.value = '';
@@ -81,15 +130,16 @@ const sendResetLink = async () => {
             forgotSuccess.value = true;
         } else {
             const data = await res.json();
-            forgotError.value = data.message || 'Impossible d\'envoyer le lien';
+            forgotError.value = data.message || "Impossible d'envoyer le lien";
         }
     } catch (e) {
-        forgotError.value = 'Erreur réseau';
+        forgotError.value = 'Erreur reseau';
     } finally {
         forgotLoading.value = false;
     }
 };
 
+/** closeForgotModal - Reinitialise et ferme la modale de mot de passe oublie */
 const closeForgotModal = () => {
     showForgotModal.value = false;
     forgotEmail.value = '';

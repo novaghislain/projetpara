@@ -10,8 +10,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Contrôleur de gestion des cabinets d'expertise comptable.
+ * Permet la configuration des informations du cabinet, l'activation/désactivation
+ * des modules et la mise à jour des limites et configurations générales.
+ */
 class CabinetController extends Controller
 {
+    /**
+     * Constructeur : applique le middleware de permission pour l'administration.
+     */
     public function __construct()
     {
         $this->middleware('permission:admin.config');
@@ -19,6 +27,9 @@ class CabinetController extends Controller
 
     /**
      * Affiche la page de configuration du cabinet.
+     * Récupère ou crée le cabinet par défaut et liste les modules disponibles.
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
@@ -36,6 +47,7 @@ class CabinetController extends Controller
             ]);
         }
 
+        // Récupérer tous les modules associés à ce cabinet
         $modules = ModuleCabinet::where('cabinet_id', $cabinet->id)->get();
 
         return view('gel.admin.cabinet', compact('cabinet', 'modules'));
@@ -43,6 +55,10 @@ class CabinetController extends Controller
 
     /**
      * Met à jour les informations du cabinet.
+     * Valide les champs, gère le téléchargement du logo et enregistre une trace d'audit.
+     *
+     * @param Request $request La requête HTTP contenant les données du cabinet
+     * @return \Illuminate\Http\JsonResponse
      */
     public function update(Request $request)
     {
@@ -62,12 +78,13 @@ class CabinetController extends Controller
             'rccm' => 'nullable|string|max:100',
         ]);
 
+        // Gestion du logo : validation et stockage
         if ($request->hasFile('logo')) {
             $request->validate(['logo' => 'image|mimes:png,jpg,jpeg,webp|max:2048']);
             $path = $request->file('logo')->store('cabinets/logos', 'public');
             $validated['logo'] = $path;
 
-            // Supprimer l'ancien logo
+            // Supprimer l'ancien logo du stockage pour libérer de l'espace
             if ($cabinet->logo && Storage::disk('public')->exists($cabinet->logo)) {
                 Storage::disk('public')->delete($cabinet->logo);
             }
@@ -75,6 +92,7 @@ class CabinetController extends Controller
 
         $cabinet->update($validated);
 
+        // Enregistrer une trace d'audit pour la mise à jour
         AuditTrail::create([
             'user_id' => Auth::id(),
             'event' => 'cabinet_update',
@@ -95,7 +113,12 @@ class CabinetController extends Controller
     }
 
     /**
-     * Active/désactive un module du cabinet.
+     * Active ou désactive un module du cabinet.
+     * Inverse l'état actuel du module et enregistre une trace d'audit.
+     *
+     * @param Request $request La requête HTTP
+     * @param int $moduleId L'identifiant du module à basculer
+     * @return \Illuminate\Http\JsonResponse
      */
     public function toggleModule(Request $request, $moduleId)
     {
@@ -103,10 +126,12 @@ class CabinetController extends Controller
         $module = ModuleCabinet::where('cabinet_id', $cabinetId)
             ->findOrFail($moduleId);
 
+        // Inverser l'état d'activation du module
         $module->update(['is_active' => !$module->is_active]);
 
         $status = $module->is_active ? 'activé' : 'désactivé';
 
+        // Enregistrer la modification dans les traces d'audit
         AuditTrail::create([
             'user_id' => Auth::id(),
             'event' => 'cabinet_module_toggle',
@@ -123,7 +148,11 @@ class CabinetController extends Controller
     }
 
     /**
-     * Met à jour les limites et configuration du cabinet.
+     * Met à jour les limites et la configuration générale du cabinet.
+     * Fusionne les nouvelles valeurs avec les existantes.
+     *
+     * @param Request $request La requête HTTP contenant limits et/ou config
+     * @return \Illuminate\Http\JsonResponse
      */
     public function updateLimits(Request $request)
     {
@@ -139,6 +168,7 @@ class CabinetController extends Controller
             'config.date_format' => 'nullable|string|max:20',
         ]);
 
+        // Fusionner les nouvelles limites/config avec les existantes pour ne pas les écraser
         $limits = array_merge($cabinet->limits ?? [], $validated['limits'] ?? []);
         $config = array_merge($cabinet->config ?? [], $validated['config'] ?? []);
 

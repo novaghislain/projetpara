@@ -1,27 +1,30 @@
 <?php
-// =============================================================================
-// FICHIER : BusinessDomain.php
-// RÔLE    : Modèle — Domaine d'activité d'une entreprise cliente
-// ÉQUIPE  : GEL Cabinet — Équipe Dev Backend
-// =============================================================================
-// Chaque entreprise cliente a un domaine d'activité qui détermine les
-// fonctionnalités comptables disponibles (modules obligatoires + optionnels).
-//
-// Relations :
-//   - clients() : HasMany → les entreprises ayant ce domaine
-//
-// Casts :
-//   - modules_comptables → array (modules obligatoires pour ce domaine)
-//   - modules_optionnels → array (modules activables en option)
-//
-// Voir aussi : ClientAccountingModule, TenantDomainService
-// =============================================================================
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Modèle représentant un domaine d'activité d'une entreprise cliente.
+ *
+ * Chaque entreprise cliente a un domaine d'activité qui détermine les
+ * fonctionnalités comptables disponibles (modules obligatoires + optionnels).
+ * Les modules sont stockés sous forme de tableaux JSON.
+ *
+ * @property int $id
+ * @property string $code Code unique du domaine
+ * @property string $label Libellé du domaine
+ * @property string|null $description Description
+ * @property string|null $icon Icône du domaine
+ * @property array $modules_comptables Modules obligatoires pour ce domaine
+ * @property array $modules_optionnels Modules optionnels activables
+ * @property bool $is_active Domaine actif
+ * @property int $sort_order Ordre d'affichage
+ *
+ * @property-read \Illuminate\Database\Eloquent\Collection|Client[] $clients Entreprises ayant ce domaine
+ *
+ * @table business_domains
+ */
 class BusinessDomain extends Model
 {
     protected $fillable = [

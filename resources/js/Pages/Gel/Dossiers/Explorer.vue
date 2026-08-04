@@ -1,4 +1,10 @@
 <script setup>
+/* ============================================================
+ * Dossiers / Explorateur de documents
+ * Gère l'affichage des dossiers et documents d'un client,
+ * la création / modification / suppression de dossiers,
+ * ainsi que l'upload et la suppression de documents.
+ * ============================================================ */
 import { ref, onMounted, nextTick } from 'vue';
 import GelLayout from '../../../Layouts/GelLayout.vue';
 import { authStore } from '../../../stores/auth';
@@ -7,25 +13,30 @@ const props = defineProps({
     clientId: { type: [Number, String], default: null }
 });
 
-const client = ref(null);
-const folders = ref([]);
-const documents = ref([]);
-const loading = ref(true);
-const error = ref(null);
-const submitting = ref(false);
-const uploading = ref(false);
-const selectedFolder = ref(null);
+/* --- Données principales --- */
+const client = ref(null);       /* Informations du client courant */
+const folders = ref([]);        /* Liste des dossiers */
+const documents = ref([]);      /* Liste des documents */
+const loading = ref(true);      /* Indicateur de chargement */
+const error = ref(null);        /* Message d'erreur */
+const submitting = ref(false);  /* true pendant la soumission */
+const uploading = ref(false);   /* true pendant l'upload */
+const selectedFolder = ref(null); /* Dossier actuellement sélectionné */
 
-// Folder modal
-const showFolderModal = ref(false);
-const isEditingFolder = ref(false);
-const editingFolderId = ref(null);
+/* --- État de la modale dossier --- */
+const showFolderModal = ref(false);    /* Visibilité de la modale dossier */
+const isEditingFolder = ref(false);    /* true = édition, false = création */
+const editingFolderId = ref(null);     /* ID du dossier en cours d'édition */
 const folderForm = ref({ name: '', slug: '' });
 
-// Document upload
-const showUploadModal = ref(false);
-const uploadFolderId = ref(null);
+/* --- État de la modale d'upload --- */
+const showUploadModal = ref(false);    /* Visibilité de la modale d'upload */
+const uploadFolderId = ref(null);      /* ID du dossier cible pour l'upload */
 
+/*
+ * fetchData — Charge les dossiers, documents et infos client
+ * depuis l'API en parallèle via Promise.all.
+ */
 const fetchData = async () => {
     loading.value = true;
     error.value = null;
@@ -47,6 +58,9 @@ const fetchData = async () => {
     }
 };
 
+/*
+ * openCreateFolder — Ouvre la modale en mode création de dossier.
+ */
 const openCreateFolder = () => {
     folderForm.value = { name: '', slug: '' };
     isEditingFolder.value = false;
@@ -54,6 +68,9 @@ const openCreateFolder = () => {
     showFolderModal.value = true;
 };
 
+/*
+ * openEditFolder — Ouvre la modale en mode édition avec les données du dossier.
+ */
 const openEditFolder = (folder) => {
     folderForm.value = { name: folder.name, slug: folder.slug };
     isEditingFolder.value = true;
@@ -61,6 +78,10 @@ const openEditFolder = (folder) => {
     showFolderModal.value = true;
 };
 
+/*
+ * submitFolder — Crée ou met à jour un dossier selon le mode (création/édition).
+ * Envoie les données via fetch avec le token CSRF.
+ */
 const submitFolder = async () => {
     const effectiveClientId = props.clientId || authStore.user?.client_id;
     if (!effectiveClientId) {
@@ -91,6 +112,9 @@ const submitFolder = async () => {
     }
 };
 
+/*
+ * deleteFolder — Supprime un dossier et tous ses documents après confirmation.
+ */
 const deleteFolder = async (id) => {
     if (!confirm('Supprimer ce dossier et tous ses documents ?')) return;
     try {
@@ -106,12 +130,20 @@ const deleteFolder = async (id) => {
     }
 };
 
-// Upload
+/*
+ * openUpload — Ouvre la modale d'upload pour un dossier spécifique
+ * (ou sans dossier si folderId est null).
+ */
 const openUpload = (folderId = null) => {
     uploadFolderId.value = folderId;
     showUploadModal.value = true;
 };
 
+/*
+ * handleFileUpload — Gère l'upload d'un fichier.
+ * Construit un FormData avec le fichier, le client_id et optionnellement
+ * le folder_id, puis l'envoie au serveur.
+ */
 const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -141,6 +173,9 @@ const handleFileUpload = async (e) => {
     }
 };
 
+/*
+ * deleteDocument — Supprime un document après confirmation utilisateur.
+ */
 const deleteDocument = async (id) => {
     if (!confirm('Supprimer ce document ?')) return;
     try {
@@ -156,14 +191,21 @@ const deleteDocument = async (id) => {
     }
 };
 
+/*
+ * getFolderDocuments — Filtre les documents appartenant à un dossier donné.
+ */
 const getFolderDocuments = (folderId) => {
     return documents.value.filter(d => d.folder_id === folderId);
 };
 
+/*
+ * getUnfiledDocuments — Retourne les documents non classés (sans dossier).
+ */
 const getUnfiledDocuments = () => {
     return documents.value.filter(d => !d.folder_id);
 };
 
+/* Au montage du composant, on charge les données initiales. */
 onMounted(fetchData);
 </script>
 

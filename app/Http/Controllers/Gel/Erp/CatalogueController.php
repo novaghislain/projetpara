@@ -11,18 +11,27 @@ use Illuminate\Support\Facades\Validator;
 class CatalogueController extends Controller
 {
     /**
-     * Store a new category.
-     *
-     * POST /erp/catalogue/categories
+     * Contrôleur de gestion du catalogue ERP.
+     * Permet de créer et gérer les catégories et les articles
+     * du catalogue de produits/services dans le module ERP.
      */
     public function storeCategory(Request $request)
     {
+        /**
+         * Crée une nouvelle catégorie dans le catalogue.
+         *
+         * POST /erp/catalogue/categories
+         *
+         * @param Request $request La requête HTTP contenant les données de la catégorie
+         * @return \Illuminate\Http\JsonResponse La réponse JSON avec la catégorie créée
+         */
         $validator = Validator::make($request->all(), [
             'name'        => 'required|string|max:255',
             'type'        => 'required|string|max:100',
             'description' => 'nullable|string|max:1000',
         ]);
 
+        // Validation des données d'entrée
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
@@ -30,6 +39,7 @@ class CatalogueController extends Controller
             ], 422);
         }
 
+        // Création de la catégorie en base de données
         $category = ErpCategory::create($validator->validated());
 
         return response()->json([
@@ -40,9 +50,12 @@ class CatalogueController extends Controller
     }
 
     /**
-     * Store a new item.
+     * Crée un nouvel article dans le catalogue.
      *
      * POST /erp/catalogue/items
+     *
+     * @param Request $request La requête HTTP contenant les données de l'article
+     * @return \Illuminate\Http\JsonResponse La réponse JSON avec l'article créé
      */
     public function storeItem(Request $request)
     {
@@ -56,6 +69,7 @@ class CatalogueController extends Controller
             'unit'            => 'required|string|max:50',
         ]);
 
+        // Validation des données d'entrée
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
@@ -63,6 +77,7 @@ class CatalogueController extends Controller
             ], 422);
         }
 
+        // Création de l'article avec chargement de sa catégorie associée
         $item = ErpItem::create($validator->validated());
 
         return response()->json([

@@ -5,6 +5,16 @@ namespace App\Models\Rh;
 use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle RhContract - Contrat de travail d'un employé.
+ *
+ * Table associée : 'rh_contracts'.
+ * Enregistre les détails du contrat : type (CDI/CDD), dates, salaire,
+ * période d'essai, statut (actif/expiré), et le fichier PDF associé.
+ * Relations :
+ * - employee() : appartient à un employé (RhEmployee).
+ * - creator() : appartient à l'utilisateur (User) qui a créé le contrat.
+ */
 class RhContract extends RhBaseModel
 {
     use SoftDeletes;

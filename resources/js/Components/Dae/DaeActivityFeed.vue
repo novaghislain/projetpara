@@ -26,10 +26,22 @@
 </template>
 
 <script setup>
+/*
+ * Composant : DaeActivityFeed
+ * Description : Fil d'activités récentes. Affiche une liste chronologique
+ *               d'actions (création, modification, suppression, etc.) avec
+ *               le nom de l'utilisateur et la date.
+ * Props :
+ *   activities (Array, défaut []) -- Liste d'activités ({ id, user, action, entity, date })
+ */
 defineProps({
     activities: { type: Array, default: () => [] },
 })
 
+/*
+ * actionColor — Associe une couleur de pastille à chaque type d'action.
+ * Retourne un nom de classe CSS (green, blue, red, orange, gray ou primary).
+ */
 function actionColor(action) {
     return ({ create: 'green', update: 'blue', delete: 'red', traiter: 'orange', archiver: 'gray' })[action] || 'primary'
 }

@@ -5,6 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
+/**
+ * Modèle Service - Service proposé par la plateforme.
+ *
+ * Table associée : 'services' (convention Laravel).
+ * Catalogue des services disponibles (comptabilité, paie, juridique, etc.)
+ * avec catégorie, icône, et statut d'activation.
+ * Relations :
+ * - clients() : appartient à plusieurs clients (Client, pivot 'client_service').
+ * - clientServices() : a plusieurs inscriptions de clients (ClientService).
+ * - licenses() : a plusieurs licences (License).
+ */
 class Service extends Model
 {
     protected $fillable = [

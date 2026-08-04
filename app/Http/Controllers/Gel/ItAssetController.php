@@ -13,10 +13,23 @@ use Illuminate\View\View;
 
 class ItAssetController extends Controller
 {
+    /**
+     * Contrôleur de gestion des équipements IT (parc informatique).
+     * Permet de lister, créer, afficher, modifier et supprimer les actifs
+     * informatiques (ordinateurs, serveurs, imprimantes, etc.).
+     */
+
+    /**
+     * Liste paginée des équipements IT avec filtres (client, catégorie, statut).
+     *
+     * @param Request $request La requête HTTP avec les filtres optionnels
+     * @return View
+     */
     public function index(Request $request): View
     {
         $query = ItAsset::with(['client', 'assignedTo']);
 
+        // Filtres optionnels
         if ($request->filled('client_id')) $query->where('client_id', $request->client_id);
         if ($request->filled('category')) $query->where('category', $request->category);
         if ($request->filled('status')) $query->where('status', $request->status);
@@ -27,6 +40,11 @@ class ItAssetController extends Controller
         return view('app', ['page' => 'gel-it-assets', 'props' => compact('assets', 'clients')]);
     }
 
+    /**
+     * Affiche le formulaire de création d'un équipement IT.
+     *
+     * @return View
+     */
     public function create(): View
     {
         $clients = Client::where('status', 'actif')->orderBy('company_name')->get(['id', 'company_name']);
@@ -34,6 +52,12 @@ class ItAssetController extends Controller
         return view('app', ['page' => 'gel-it-assets-form', 'props' => compact('clients', 'technicians')]);
     }
 
+    /**
+     * Enregistre un nouvel équipement IT dans le parc informatique.
+     *
+     * @param Request $request La requête HTTP avec les données validées
+     * @return RedirectResponse Redirection vers la liste
+     */
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -61,12 +85,25 @@ class ItAssetController extends Controller
         return redirect()->route('gel.it-assets.index')->with('success', 'Équipement créé avec succès.');
     }
 
+    /**
+     * Affiche le détail d'un équipement IT avec ses relations (licences, interventions).
+     *
+     * @param ItAsset $asset L'équipement à afficher (injection de modèle)
+     * @return View
+     */
     public function show(ItAsset $asset): View
     {
         $asset->load(['client', 'assignedTo', 'licenses', 'interventions.technician']);
         return view('app', ['page' => 'gel-it-assets-show', 'props' => compact('asset')]);
     }
 
+    /**
+     * Met à jour un équipement IT existant.
+     *
+     * @param Request $request La requête HTTP avec les données mises à jour
+     * @param ItAsset $asset L'équipement à modifier (injection de modèle)
+     * @return RedirectResponse Redirection vers la fiche détail
+     */
     public function update(Request $request, ItAsset $asset): RedirectResponse
     {
         $validated = $request->validate([
@@ -87,6 +124,7 @@ class ItAssetController extends Controller
             'notes' => 'nullable|string',
         ]);
 
+        // Sauvegarde de l'état précédent pour l'audit
         $old = $asset->getAttributes();
         $asset->update($validated);
         AuditTrailService::log($asset, 'updated', $old, $asset->getAttributes(), 'Équipement IT mis à jour');
@@ -94,6 +132,12 @@ class ItAssetController extends Controller
         return redirect()->route('gel.it-assets.show', $asset)->with('success', 'Équipement mis à jour.');
     }
 
+    /**
+     * Supprime un équipement IT.
+     *
+     * @param ItAsset $asset L'équipement à supprimer (injection de modèle)
+     * @return RedirectResponse Redirection vers la liste
+     */
     public function destroy(ItAsset $asset): RedirectResponse
     {
         $old = $asset->getAttributes();

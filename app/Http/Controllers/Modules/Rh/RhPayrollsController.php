@@ -7,8 +7,23 @@ use App\Models\Rh\RhEmployee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur de gestion des fiches de paie RH.
+ *
+ * Permet de générer, consulter, changer le statut et supprimer
+ * les fiches de paie avec calcul automatique du net à payer.
+ */
 class RhPayrollsController extends BaseRhController
 {
+    /**
+     * Affiche la liste des fiches de paie ou la vue associée.
+     *
+     * Si la requête attend du JSON, retourne les fiches de paie paginées
+     * avec filtrage optionnel par statut et période.
+     *
+     * @param Request $request La requête HTTP avec les filtres (statut, periode)
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View Liste paginée des fiches de paie ou vue
+     */
     public function index(Request $request)
     {
         if ($request->expectsJson()) {
@@ -26,6 +41,15 @@ class RhPayrollsController extends BaseRhController
         return view('app', ['page' => 'rh-payrolls']);
     }
 
+    /**
+     * Génère une nouvelle fiche de paie avec calcul du net à payer.
+     *
+     * Calcule le net à payer à partir du salaire de base, des primes,
+     * indemnités, cotisations, retenues et avances.
+     *
+     * @param Request $request La requête HTTP contenant les données de paie
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse Fiche de paie créée ou redirection
+     */
     public function generate(Request $request)
     {
         $validated = $request->validate([
@@ -59,6 +83,13 @@ class RhPayrollsController extends BaseRhController
         return redirect()->route('rh.payrolls.index')->with('success', 'Fiche de paie générée.');
     }
 
+    /**
+     * Affiche les détails d'une fiche de paie.
+     *
+     * @param Request $request La requête HTTP
+     * @param mixed $id L'identifiant de la fiche de paie
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View Détails de la fiche de paie ou vue
+     */
     public function show(Request $request, $id)
     {
         $employeeIds = RhEmployee::byClient($this->getClientId($request))->pluck('id');
@@ -70,6 +101,16 @@ class RhPayrollsController extends BaseRhController
         return view('app', ['page' => 'rh-payrolls-show', 'id' => $id]);
     }
 
+    /**
+     * Modifie le statut d'une fiche de paie (calculée, validée, payée, annulée).
+     *
+     * Met à jour les informations associées au changement de statut
+     * comme l'identifiant du valideur et la date de paiement.
+     *
+     * @param Request $request La requête HTTP contenant le nouveau statut
+     * @param mixed $id L'identifiant de la fiche de paie
+     * @return \Illuminate\Http\JsonResponse La fiche de paie mise à jour
+     */
     public function changerStatut(Request $request, $id)
     {
         $employeeIds = RhEmployee::byClient($this->getClientId($request))->pluck('id');
@@ -91,6 +132,13 @@ class RhPayrollsController extends BaseRhController
         return response()->json($payroll->load('employee'));
     }
 
+    /**
+     * Supprime une fiche de paie.
+     *
+     * @param Request $request La requête HTTP
+     * @param mixed $id L'identifiant de la fiche de paie à supprimer
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse Message de confirmation ou redirection
+     */
     public function destroy(Request $request, $id)
     {
         $employeeIds = RhEmployee::byClient($this->getClientId($request))->pluck('id');

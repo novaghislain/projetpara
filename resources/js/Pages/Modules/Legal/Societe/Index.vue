@@ -86,9 +86,16 @@
 </template>
 
 <script setup>
+/*
+ * Composant : Index.vue (Societe)
+ * Description : Fiche d'identité de la société (Raison sociale, RCCM, IFU, dirigeant).
+ *               Permet l'affichage et la modification en ligne des informations.
+ * Route       : /juridique/societe
+ */
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 
+/* État local : mode édition, formulaire, sauvegarde de référence pour annulation */
 const editing = ref(false);
 const form = ref({
     raison_sociale: '',
@@ -105,11 +112,13 @@ const form = ref({
 });
 const original = ref(null);
 
+/* Formate une date ISO au format français lisible */
 function formatDate(date) {
     if (!date) return '—';
     return new Date(date).toLocaleDateString('fr-FR');
 }
 
+/* Charge les données de la société depuis l'API */
 async function loadSociete() {
     try {
         const res = await fetch('/juridique/societe');
@@ -125,6 +134,7 @@ async function loadSociete() {
     }
 }
 
+/* Sauvegarde les modifications du formulaire via PUT */
 async function save() {
     try {
         const res = await fetch('/juridique/societe', {
@@ -141,6 +151,7 @@ async function save() {
     }
 }
 
+/* Annule les modifications et restaure les valeurs d'origine */
 function cancelEdit() {
     form.value = JSON.parse(JSON.stringify(original.value));
     editing.value = false;

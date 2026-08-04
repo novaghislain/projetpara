@@ -18,5 +18,11 @@
     </GelLayout>
 </template>
 <script setup>
+/* ============================================
+ * Declarations.vue — Module de déclarations fiscales
+ * Gère les déclarations fiscales et sociales.
+ * ============================================ */
+
+/* Layout principal de l'interface GEL */
 import GelLayout from '../../../Layouts/GelLayout.vue';
 </script>

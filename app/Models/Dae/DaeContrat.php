@@ -5,6 +5,14 @@ namespace App\Models\Dae;
 use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle représentant un contrat dans le module DAE.
+ *
+ * Table associée : `dae_contrats`
+ *
+ * Permet de gérer les contrats avec les parties adverses : suivi des dates
+ * de signature, d'échéance, de renouvellement, montants et documents associés.
+ */
 class DaeContrat extends DaeBaseModel
 {
     use SoftDeletes;

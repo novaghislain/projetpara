@@ -28,12 +28,17 @@
 </template>
 
 <script setup>
+/*
+ * ActePreview -- Prévisualisation d'un acte juridique.
+ * Affiche le titre, la société, la catégorie et le contenu HTML
+ * d'un acte, ainsi que la liste des variables dynamiques attendues.
+ */
 defineProps({
-    title: { type: String, default: '' },
-    societe: { type: String, default: '' },
-    categorie: { type: String, default: '' },
-    html: { type: String, default: '' },
-    variables: { type: Array, default: () => [] },
+    title: { type: String, default: '' },          /* Titre de l'acte */
+    societe: { type: String, default: '' },        /* Société concernée */
+    categorie: { type: String, default: '' },      /* Catégorie (ex: statuts, PV, contrat) */
+    html: { type: String, default: '' },           /* Contenu HTML à prévisualiser */
+    variables: { type: Array, default: () => [] }, /* Variables dynamiques attendues dans le template */
 });
 </script>
 

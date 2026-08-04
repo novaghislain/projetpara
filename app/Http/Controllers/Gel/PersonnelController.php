@@ -13,36 +13,47 @@ use Illuminate\Validation\Rule;
 class PersonnelController extends Controller
 {
     /**
-     * Vérifie si l'utilisateur courant peut gérer le personnel GEL.
+     * Contrôleur de gestion du personnel interne du cabinet GEL.
+     * Gère les utilisateurs internes (non clients) avec un système
+     * de hiérarchie pour les droits de modification/suppression.
+     */
+
+    /**
+     * Vérifie les droits d'accès à la gestion du personnel.
+     * Seuls les super-admins, RH et directeurs peuvent gérer le personnel.
+     * La hiérarchie empêche la modification d'utilisateurs de niveau supérieur.
+     *
+     * @param object|null $targetUser L'utilisateur cible (optionnel)
+     * @return void
      */
     private function authorizeManager($targetUser = null): void
     {
         $currentUser = Auth::user();
 
-        // Les employés d'entreprise n'ont pas accès
+        // Les employés d'entreprise n'ont pas accès à la gestion du personnel
         if ($currentUser->client_id !== null) {
             abort(403, 'Accès réservé au personnel interne du cabinet.');
         }
 
-        // Vérifier les rôles autorisés à gérer le personnel
+        // Vérification des rôles autorisés à gérer le personnel
         if (!$currentUser->isSuperAdmin() && !in_array($currentUser->role, ['rh', 'director'])) {
             abort(403, 'Vous n\'avez pas les droits pour gérer le personnel.');
         }
 
-        // Protection de la hiérarchie pour la modification/suppression
+        // Protection hiérarchique pour la modification/suppression
         if ($targetUser && !$currentUser->isSuperAdmin()) {
             $hierarchy = [
-                'collaborator' => 0, 'secretaire' => 0, 'juriste' => 0, 
-                'gestionnaire_projet' => 0, 'comptable' => 0, 
-                'rh' => 1, 'pole_responsible' => 1, 
+                'collaborator' => 0, 'secretaire' => 0, 'juriste' => 0,
+                'gestionnaire_projet' => 0, 'comptable' => 0,
+                'rh' => 1, 'pole_responsible' => 1,
                 'director' => 2, 'super_admin' => 3
             ];
-            
+
             $currentLevel = $hierarchy[$currentUser->role] ?? 0;
             $targetLevel = $hierarchy[$targetUser->role] ?? 0;
 
-            // Un utilisateur ne peut modifier que des utilisateurs de niveau STRICTEMENT INFÉRIEUR,
-            // ou lui-même (s'il modifiait son propre compte, bien que l'update profile soit fait ailleurs)
+            // Un utilisateur ne peut modifier que des utilisateurs de niveau strictement inférieur
+            // ou son propre compte
             if ($targetLevel >= $currentLevel && $currentUser->id !== $targetUser->id) {
                 abort(403, 'Vous ne pouvez pas modifier ou supprimer cet utilisateur (privilèges insuffisants).');
             }
@@ -51,6 +62,8 @@ class PersonnelController extends Controller
 
     /**
      * Affiche la page de gestion du personnel GEL.
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
@@ -59,14 +72,16 @@ class PersonnelController extends Controller
     }
 
     /**
-     * API: Liste tout le personnel GEL (utilisateurs internes du cabinet).
+     * API : Liste tout le personnel GEL (utilisateurs internes du cabinet).
+     *
+     * @return \Illuminate\Http\JsonResponse La liste du personnel et les rôles disponibles
      */
     public function listAll()
     {
         $this->authorizeManager();
-        
-        // Personnel GEL = pas client_id (pas rattaché à une entreprise cliente)
-        // et rôle interne au cabinet
+
+        // Personnel GEL = utilisateurs sans client_id (non rattachés à une entreprise cliente)
+        // avec un rôle interne au cabinet
         $staff = User::whereNull('client_id')
             ->whereNotIn('role', ['company_admin', 'client'])
             ->with('roleModel')
@@ -88,7 +103,7 @@ class PersonnelController extends Controller
                 ];
             });
 
-        // Rôles disponibles pour le personnel GEL
+        // Rôles disponibles pour le personnel GEL (exclusion des rôles entreprise)
         $availableRoles = Role::whereNotIn('slug', ['super_admin', 'company_admin', 'client'])
             ->orderBy('level', 'desc')
             ->get(['id', 'name', 'slug', 'description']);
@@ -100,12 +115,15 @@ class PersonnelController extends Controller
     }
 
     /**
-     * API: Crée un membre du personnel GEL.
+     * API : Crée un nouveau membre du personnel GEL.
+     *
+     * @param Request $request La requête HTTP avec les données du membre
+     * @return \Illuminate\Http\JsonResponse Le membre créé
      */
     public function store(Request $request)
     {
         $this->authorizeManager();
-        
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
@@ -115,7 +133,7 @@ class PersonnelController extends Controller
             'phone' => 'nullable|string|max:50',
         ]);
 
-        // Vérifier que le rôle est autorisé pour le personnel GEL
+        // Vérification que le rôle est autorisé pour le personnel GEL
         if ($validated['role_id'] ?? null) {
             $role = Role::findOrFail($validated['role_id']);
             if (in_array($role->slug, ['super_admin', 'company_admin', 'client'])) {
@@ -137,7 +155,7 @@ class PersonnelController extends Controller
             'client_id' => null, // Personnel GEL, pas d'entreprise cliente
         ]);
 
-        // Si le rôle est secretaire, activer le flag role_secretaire
+        // Activation du flag secretaire si le rôle l'exige
         if ($roleSlug === 'secretaire') {
             $user->role_secretaire = true;
             $user->save();
@@ -150,13 +168,16 @@ class PersonnelController extends Controller
     }
 
     /**
-     * API: Met à jour un membre du personnel GEL.
+     * API : Met à jour un membre du personnel GEL.
+     *
+     * @param Request $request La requête HTTP avec les données mises à jour
+     * @param int $id L'identifiant du membre
+     * @return \Illuminate\Http\JsonResponse Le membre mis à jour
      */
     public function update(Request $request, $id)
     {
         $user = User::whereNull('client_id')->findOrFail($id);
         $this->authorizeManager($user);
-
 
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
@@ -170,11 +191,12 @@ class PersonnelController extends Controller
 
         $data = collect($validated)->except('password')->toArray();
 
+        // Hachage du mot de passe si fourni
         if (!empty($validated['password'])) {
             $data['password'] = Hash::make($validated['password']);
         }
 
-        // Si le rôle change, mettre à jour le champ role et le flag secretaire
+        // Gestion du changement de rôle et du flag secretaire
         if (isset($validated['role_id'])) {
             if ($validated['role_id']) {
                 $role = Role::find($validated['role_id']);
@@ -200,14 +222,18 @@ class PersonnelController extends Controller
     }
 
     /**
-     * API: Supprime un membre du personnel GEL.
+     * API : Supprime un membre du personnel GEL.
+     * Empêche la suppression de son propre compte.
+     *
+     * @param int $id L'identifiant du membre
+     * @return \Illuminate\Http\JsonResponse Message de confirmation
      */
     public function destroy($id)
     {
         $user = User::whereNull('client_id')->findOrFail($id);
         $this->authorizeManager($user);
 
-
+        // Protection contre l'auto-suppression
         if ((int) $user->id === (int) Auth::id()) {
             return response()->json(['message' => 'Vous ne pouvez pas supprimer votre propre compte.'], 403);
         }

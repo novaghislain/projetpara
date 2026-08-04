@@ -1,14 +1,21 @@
 <script setup>
+/* ============================================================
+ * Déclarations Fiscales — Gestion des déclarations (TVA, IS,
+ * ITS, CNSS, VPS) par client. Permet de calculer, suivre le
+ * statut et gérer le cycle de vie des déclarations fiscales.
+ * ============================================================ */
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 import TaxSummaryCard from '../../../../Components/Accounting/TaxSummaryCard.vue';
 import { authStore } from '../../../../stores/auth';
 import AccountingClientSelector from '../../../../Components/Gel/AccountingClientSelector.vue';
 
+/* Propriétés : identifiant client passé en prop */
 const props = defineProps({
     clientId: { type: [Number, String], default: null }
 });
 
+/* État réactif : déclarations, onglet actif, exercices et paramètres de calcul */
 const declarations = ref([]);
 const loading = ref(true);
 const error = ref(null);
@@ -18,13 +25,16 @@ const selectedFy = ref(null);
 const selectedMonth = ref(new Date().getMonth() + 1);
 const salaireInput = ref(0);
 const masseSalariale = ref(0);
+/* ID client actif : priorité à la prop, puis au store d'authentification */
 const activeClientId = ref(props.clientId || authStore.user?.active_client_id || authStore.user?.client_id || null);
 
+/* onClientSelected — Mis à jour du client via le sélecteur et rechargement */
 const onClientSelected = (cid) => {
     activeClientId.value = cid;
     fetchData();
 };
 
+/* fetchData — Chargement des déclarations et des exercices fiscaux depuis l'API */
 const fetchData = async () => {
     loading.value = true;
     error.value = null;
@@ -46,6 +56,7 @@ const fetchData = async () => {
     finally { loading.value = false; }
 };
 
+/* compute — Calcule une déclaration fiscale selon le type (TVA, IS, ITS, CNSS, VPS) */
 const compute = async (type) => {
     const cid = activeClientId.value;
     if (!cid) { alert('Aucun client sélectionné.'); return; }
@@ -71,6 +82,7 @@ const compute = async (type) => {
     if (res.ok) await fetchData();
 };
 
+/* updateStatus — Met à jour le statut d'une déclaration (déposée, payée, etc.) */
 const updateStatus = async (id, status) => {
     const cid = activeClientId.value;
     if (!cid) return;
@@ -82,6 +94,7 @@ const updateStatus = async (id, status) => {
     if (res.ok) await fetchData();
 };
 
+/* remove — Suppression d'une déclaration après confirmation */
 const remove = async (id) => {
     if (!confirm('Supprimer cette déclaration ?')) return;
     const cid = activeClientId.value;
@@ -90,11 +103,15 @@ const remove = async (id) => {
     await fetchData();
 };
 
+/* statusBadge — Classe CSS du badge selon le statut de la déclaration */
 const statusBadge = (s) => ({ brouillon: 'bg-secondary', calcule: 'bg-info', depose: 'bg-primary', paye: 'bg-success', en_retard: 'bg-danger' }[s] || 'bg-secondary');
+/* typeLabel — Libellé lisible du type de déclaration fiscale */
 const typeLabel = (t) => ({ tva: 'TVA', is: 'IS', its: 'ITS', cnss: 'CNSS', vps: 'VPS', aib: 'AIB' }[t] || t);
 
+/* filteredDeclarations — Filtre les déclarations par type d'impôt (onglet actif) */
 const filteredDeclarations = () => declarations.value.filter(d => d.tax_type === activeTab.value);
 
+/* Chargement initial au montage du composant */
 onMounted(fetchData);
 </script>
 

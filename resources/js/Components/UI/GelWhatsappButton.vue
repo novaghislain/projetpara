@@ -6,6 +6,11 @@
 </template>
 
 <script setup>
+/*
+ * Composant : GelWhatsappButton
+ * Role : Bouton flottant WhatsApp qui ouvre une conversation pré-remplie vers le support GEL Cabinet
+ * Props : aucune
+ */
 const phone = '22900000000'
 const message = encodeURIComponent(
   "Bonjour GEL Cabinet, j'aimerais avoir des informations sur vos services."

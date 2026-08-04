@@ -13,17 +13,28 @@
 </template>
 
 <script>
+/*
+ * StatBadge.vue -- Composant d'affichage de statistique sous forme de badge coloré
+ *
+ * Affiche une valeur numérique ou textuelle avec une icône, une couleur de fond
+ * et une tendance (hausse/baisse) optionnelle.
+ */
 export default {
     name: 'StatBadge',
+
+    /* Propriétés du composant */
     props: {
-        icon: { type: String, default: 'bi-box' },
-        label: { type: String, required: true },
-        value: { type: [Number, String], default: 0 },
-        color: { type: String, default: '#FF7900' },
-        trend: { type: Number, default: null },
-        format: { type: String, default: 'number' },
+        icon: { type: String, default: 'bi-box' },               /* Icône Bootstrap affichée à gauche */
+        label: { type: String, required: true },                 /* Libellé descriptif */
+        value: { type: [Number, String], default: 0 },           /* Valeur à afficher */
+        color: { type: String, default: '#FF7900' },             /* Couleur de thème (hex) */
+        trend: { type: Number, default: null },                  /* Tendance en pourcentage (négatif = baisse) */
+        format: { type: String, default: 'number' },             /* Format d'affichage : 'number' ou 'currency' */
     },
+
+    /* Propriétés calculées */
     computed: {
+        /* Style dynamique du badge : fond translucide + bordure latérale */
         badgeStyle() {
             return {
                 background: this.color + '18',
@@ -32,7 +43,10 @@ export default {
             };
         },
     },
+
+    /* Méthodes du composant */
     methods: {
+        /* Formate la valeur selon le format demandé (nombre ou devise) */
         formatValue(v) {
             if (this.format === 'currency') {
                 return Number(v).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

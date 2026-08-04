@@ -12,6 +12,19 @@ use Illuminate\View\View;
 
 class RelanceRuleController extends Controller
 {
+    /**
+     * Contrôleur de gestion des règles de relance client.
+     * Permet de définir des règles automatisées de relance
+     * (email, SMS, WhatsApp) déclenchées après un nombre de jours
+     * défini pour les factures impayées.
+     */
+
+    /**
+     * Liste paginée des règles de relance avec filtre par client.
+     *
+     * @param Request $request La requête HTTP avec le filtre client optionnel
+     * @return View
+     */
     public function index(Request $request): View
     {
         $query = RelanceRule::with('client');
@@ -22,18 +35,35 @@ class RelanceRuleController extends Controller
         return view('app', ['page' => 'gel-relance-rules', 'props' => compact('rules', 'clients')]);
     }
 
+    /**
+     * Affiche le détail d'une règle de relance.
+     *
+     * @param RelanceRule $rule La règle à afficher (injection de modèle)
+     * @return View
+     */
     public function show(RelanceRule $rule): View
     {
         $rule->load('client');
         return view('app', ['page' => 'gel-relance-rules-show', 'props' => compact('rule')]);
     }
 
+    /**
+     * Affiche le formulaire de création d'une règle de relance.
+     *
+     * @return View
+     */
     public function create(): View
     {
         $clients = Client::where('status', 'actif')->orderBy('company_name')->get(['id', 'company_name']);
         return view('app', ['page' => 'gel-relance-rules-form', 'props' => compact('clients')]);
     }
 
+    /**
+     * Enregistre une nouvelle règle de relance.
+     *
+     * @param Request $request La requête HTTP avec les données de la règle
+     * @return RedirectResponse Redirection vers la liste
+     */
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -51,6 +81,13 @@ class RelanceRuleController extends Controller
         return redirect()->route('gel.relance-rules.index')->with('success', 'Règle de relance créée.');
     }
 
+    /**
+     * Met à jour une règle de relance existante.
+     *
+     * @param Request $request La requête HTTP avec les données mises à jour
+     * @param RelanceRule $rule La règle à modifier (injection de modèle)
+     * @return RedirectResponse Redirection vers la liste
+     */
     public function update(Request $request, RelanceRule $rule): RedirectResponse
     {
         $validated = $request->validate([
@@ -69,6 +106,12 @@ class RelanceRuleController extends Controller
         return redirect()->route('gel.relance-rules.index')->with('success', 'Règle de relance mise à jour.');
     }
 
+    /**
+     * Supprime une règle de relance.
+     *
+     * @param RelanceRule $rule La règle à supprimer (injection de modèle)
+     * @return RedirectResponse Redirection vers la liste
+     */
     public function destroy(RelanceRule $rule): RedirectResponse
     {
         $old = $rule->getAttributes();

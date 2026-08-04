@@ -11,7 +11,16 @@ use Illuminate\Support\Facades\Auth;
 class BudgetController extends BaseGelAccountingController
 {
     /**
+     * Contrôleur de gestion des budgets.
+     * Permet de créer, modifier, valider et verrouiller des budgets
+     * avec leurs lignes budgétaires par exercice fiscal et par client.
+     */
+
+    /**
      * Page liste des budgets.
+     *
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\View\View
      */
     public function index($clientId)
     {
@@ -22,7 +31,10 @@ class BudgetController extends BaseGelAccountingController
     }
 
     /**
-     * API: Liste des exercices fiscaux pour le sélecteur du formulaire budget.
+     * API : Liste des exercices fiscaux pour le sélecteur du formulaire budget.
+     *
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\Http\JsonResponse La liste des exercices fiscaux
      */
     public function fiscalYears($clientId)
     {
@@ -34,7 +46,10 @@ class BudgetController extends BaseGelAccountingController
     }
 
     /**
-     * API: Liste des budgets pour un client.
+     * API : Liste des budgets pour un client.
+     *
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\Http\JsonResponse La liste des budgets
      */
     public function listAll($clientId)
     {
@@ -47,7 +62,11 @@ class BudgetController extends BaseGelAccountingController
     }
 
     /**
-     * API: Détail d'un budget avec ses lignes.
+     * API : Détail d'un budget avec ses lignes.
+     *
+     * @param int $clientId L'identifiant du client
+     * @param int $id L'identifiant du budget
+     * @return \Illuminate\Http\JsonResponse Le budget avec ses relations
      */
     public function show($clientId, $id)
     {
@@ -59,7 +78,10 @@ class BudgetController extends BaseGelAccountingController
     }
 
     /**
-     * API: Créer un budget.
+     * API : Crée un nouveau budget.
+     *
+     * @param Request $request La requête HTTP avec les données du budget
+     * @return \Illuminate\Http\JsonResponse Le budget créé
      */
     public function store(Request $request)
     {
@@ -75,8 +97,8 @@ class BudgetController extends BaseGelAccountingController
         ]);
 
         $validated['client_id'] = $clientId;
-        $validated['status'] = 'brouillon';
-        $validated['created_by'] = Auth::id();
+        $validated['status'] = 'brouillon';       // Statut initial : brouillon
+        $validated['created_by'] = Auth::id();    // Utilisateur connecté
 
         $budget = AccountingBudget::create($validated);
 
@@ -84,7 +106,11 @@ class BudgetController extends BaseGelAccountingController
     }
 
     /**
-     * API: Ajouter une ligne à un budget.
+     * API : Ajoute une ligne à un budget.
+     *
+     * @param Request $request La requête HTTP avec les données de la ligne
+     * @param int $budgetId L'identifiant du budget
+     * @return \Illuminate\Http\JsonResponse La ligne créée
      */
     public function addLine(Request $request, $budgetId)
     {
@@ -100,14 +126,19 @@ class BudgetController extends BaseGelAccountingController
 
         $line = AccountingBudgetLine::create($validated);
 
-        // Mettre à jour le montant prévu du budget
+        // Mise à jour du montant prévu global du budget
         $budget->increment('montant_prevu', $validated['montant_prevu']);
 
         return response()->json($line->load('account'), 201);
     }
 
     /**
-     * API: Mettre à jour une ligne de budget.
+     * API : Met à jour une ligne de budget.
+     *
+     * @param Request $request La requête HTTP avec les données mises à jour
+     * @param int $budgetId L'identifiant du budget
+     * @param int $lineId L'identifiant de la ligne
+     * @return \Illuminate\Http\JsonResponse La ligne mise à jour
      */
     public function updateLine(Request $request, $budgetId, $lineId)
     {
@@ -121,7 +152,7 @@ class BudgetController extends BaseGelAccountingController
         $oldMontant = $line->montant_prevu;
         $line->update($validated);
 
-        // Ajuster le total du budget
+        // Ajustement du total du budget en fonction de la différence
         $diff = ($validated['montant_prevu'] ?? $oldMontant) - $oldMontant;
         $line->budget->increment('montant_prevu', $diff);
 
@@ -129,7 +160,11 @@ class BudgetController extends BaseGelAccountingController
     }
 
     /**
-     * API: Supprimer une ligne de budget.
+     * API : Supprime une ligne de budget.
+     *
+     * @param int $budgetId L'identifiant du budget
+     * @param int $lineId L'identifiant de la ligne
+     * @return \Illuminate\Http\JsonResponse Message de confirmation
      */
     public function removeLine($budgetId, $lineId)
     {
@@ -141,12 +176,17 @@ class BudgetController extends BaseGelAccountingController
     }
 
     /**
-     * API: Valider un budget.
+     * API : Valide un budget (passe de brouillon à actif).
+     *
+     * @param int $clientId L'identifiant du client
+     * @param int $id L'identifiant du budget
+     * @return \Illuminate\Http\JsonResponse Le budget validé
      */
     public function valider($clientId, $id)
     {
         $budget = AccountingBudget::where('client_id', $clientId)->findOrFail($id);
 
+        // Un budget déjà traité ne peut pas être re-validé
         if ($budget->status !== 'brouillon') {
             return response()->json(['message' => 'Le budget a déjà été traité'], 409);
         }
@@ -161,7 +201,11 @@ class BudgetController extends BaseGelAccountingController
     }
 
     /**
-     * API: Verrouiller un budget (plus de modifications).
+     * API : Verrouille un budget (plus de modifications possibles).
+     *
+     * @param int $clientId L'identifiant du client
+     * @param int $id L'identifiant du budget
+     * @return \Illuminate\Http\JsonResponse Le budget verrouillé
      */
     public function verrouiller($clientId, $id)
     {
@@ -172,12 +216,17 @@ class BudgetController extends BaseGelAccountingController
     }
 
     /**
-     * API: Supprimer un budget.
+     * API : Supprime un budget (sauf s'il est verrouillé).
+     *
+     * @param int $clientId L'identifiant du client
+     * @param int $id L'identifiant du budget
+     * @return \Illuminate\Http\JsonResponse Message de confirmation
      */
     public function destroy($clientId, $id)
     {
         $budget = AccountingBudget::where('client_id', $clientId)->findOrFail($id);
 
+        // Un budget verrouillé ne peut pas être supprimé
         if ($budget->status === 'verrouille') {
             return response()->json(['message' => 'Un budget verrouillé ne peut pas être supprimé'], 409);
         }

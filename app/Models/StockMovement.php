@@ -5,6 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Modèle StockMovement - Mouvement de stock (entrée/sortie).
+ *
+ * Table associée : 'stock_movements' (convention Laravel).
+ * Enregistre chaque mouvement de stock avec les quantités avant/après,
+ * le type (entrée/sortie/ajustement), la référence, et le motif.
+ * Relations :
+ * - client() : appartient à un client (Client).
+ * - product() : appartient à un produit (Product).
+ * - variant() : appartient à une variante de produit (ProductVariant).
+ * - creator() : appartient à l'utilisateur (User) qui a effectué le mouvement.
+ */
 class StockMovement extends Model
 {
     protected $fillable = [

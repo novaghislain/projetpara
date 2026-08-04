@@ -6,6 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
+/**
+ * Modèle RefreshToken - Jeton de rafraîchissement pour l'authentification.
+ *
+ * Table associée : 'refresh_tokens' (convention Laravel).
+ * Gère les jetons JWT de rafraîchissement, avec suivi de validité,
+ * révocation, et informations sur le dispositif utilisé.
+ * Relations :
+ * - user() : appartient à un utilisateur (User).
+ */
 class RefreshToken extends Model
 {
     protected $fillable = [

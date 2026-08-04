@@ -1,6 +1,12 @@
 <script setup>
+/* ============================================================
+ * Agents IA — Dashboard des agents d'intelligence artificielle
+ * Affiche les agents disponibles, leurs métriques et suggestions.
+ * Permet d'exécuter un agent et de basculer de contexte client.
+ * ============================================================ */
 import { ref, onMounted, computed } from 'vue';
 
+/* État réactif : agents, suggestions récentes et indicateurs */
 const agents = ref({});
 const recentSuggestions = ref([]);
 const totalPending = ref(0);
@@ -12,8 +18,10 @@ const noContext = ref(false);
 const availableClients = ref([]);
 const selectingClient = ref(false);
 
+/* Liste des agents sous forme de tableau (depuis l'objet clé/valeur) */
 const agentsList = computed(() => Object.values(agents.value));
 
+/* selectClient — Bascule le contexte vers une entreprise cliente sélectionnée */
 async function selectClient(clientId) {
     selectingClient.value = true;
     try {
@@ -25,6 +33,7 @@ async function selectClient(clientId) {
     }
 }
 
+/* loadDashboard — Chargement des données du dashboard IA depuis l'API */
 async function loadDashboard() {
     loading.value = true;
     error.value = null;
@@ -33,6 +42,7 @@ async function loadDashboard() {
         const resp = await window.axios.get('/api/ai/agents/dashboard');
         const data = resp.data;
         if (data.no_context) {
+            /* Aucun contexte actif : affiche la liste des entreprises disponibles */
             noContext.value = true;
             availableClients.value = data.clients || [];
             agents.value = {};
@@ -50,6 +60,7 @@ async function loadDashboard() {
     loading.value = false;
 }
 
+/* runAgent — Exécute un agent par sa clé et rafraîchit le dashboard */
 async function runAgent(agentKey) {
     runningAgent.value = agentKey;
     flashMessage.value = '';
@@ -69,9 +80,11 @@ async function runAgent(agentKey) {
     runningAgent.value = null;
 }
 
+/* Mapping des couleurs par statut de suggestion et par niveau d'urgence */
 const statusColors = { pending: '#F59E0B', approved: '#10B981', rejected: '#EF4444', applied: '#3B82F6' };
 const urgencyColors = { warning: '#F59E0B', urgent: '#EF4444', critical: '#DC2626', info: '#3B82F6' };
 
+/* Chargement initial au montage du composant */
 onMounted(loadDashboard);
 </script>
 

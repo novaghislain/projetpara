@@ -1,19 +1,29 @@
 <script setup>
+/*
+ * Composant : Bilan.vue
+ * Description : Affiche le bilan comptable (actif / passif / resultat net) d'un client.
+ *              Les donnees sont chargees depuis l'API /api/accounting/reports/bilan/:clientId.
+ *              Utilise le layout GelLayout et le store d'authentification.
+ */
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../Layouts/GelLayout.vue';
 import { authStore } from '../../../stores/auth';
 
+// Proprietes du composant : identifiant du client (optionnel, peut etre nombre ou chaine)
 const props = defineProps({
     clientId: { type: [Number, String], default: null }
 });
 
+// Etat reactif : donnees du bilan, indicateur de chargement, message d'erreur
 const data = ref(null);
 const loading = ref(true);
 const error = ref(null);
 
+// Fonction asynchrone de chargement du bilan depuis l'API
 const fetchBilan = async () => {
     loading.value = true;
     error.value = null;
+    // Recupere l'ID client depuis les props ou depuis le store d'authentification
     const cid = props.clientId || authStore.user?.client_id;
     if (!cid) { error.value = 'Aucun client sélectionné.'; loading.value = false; return; }
     try {
@@ -27,9 +37,12 @@ const fetchBilan = async () => {
     }
 };
 
+// Calcule le total de l'actif en additionnant les soldes de chaque rubrique
 const totalActif = () => data.value?.actif?.reduce((s, i) => s + parseFloat(i.balance || 0), 0) || 0;
+// Calcule le total du passif en additionnant les soldes de chaque rubrique
 const totalPassif = () => data.value?.passif?.reduce((s, i) => s + parseFloat(i.balance || 0), 0) || 0;
 
+// Declenche le chargement automatique au montage du composant
 onMounted(fetchBilan);
 </script>
 

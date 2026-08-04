@@ -20,6 +20,8 @@ window.axios = axios;
 
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
+import './echo';
+
 // Global CSRF Token for all axios requests (SPA protection)
 const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
 if (csrfToken) {

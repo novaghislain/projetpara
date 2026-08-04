@@ -1,19 +1,29 @@
+<!--
+ * Composant : Formulaire contrat de maintenance
+ * Description : Formulaire de création et modification des contrats de maintenance IT.
+ *              Permet de saisir les informations client, la période, la tarification et la couverture SLA.
+ * Utilisation : Création (POST /it/maintenance-contracts) ou édition (PUT /it/maintenance-contracts/{id})
+-->
 <script setup>
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 
+/* Props reçues du backend : contrat existant (null si création) et liste des clients */
 const props = defineProps({
     contract: { type: Object, default: null },
     clients: { type: Array, default: () => [] },
 });
 
+/* États du formulaire : soumission, succès, erreur */
 const submitting = ref(false);
 const saved = ref(false);
 const error = ref(null);
 
+/* Listes déroulantes : types de contrat et statuts possibles */
 const typeOptions = ['corrective', 'preventive', 'full_service', 'hotline'];
 const statusOptions = ['active', 'suspended'];
 
+/* Données du formulaire, liées aux champs via v-model */
 const form = ref({
     client_id: '',
     reference: '',
@@ -28,14 +38,17 @@ const form = ref({
     auto_renew: false,
 });
 
+/* Fonctions d'affichage des libellés pour les select */
 const typeLabel = (t) =>
     ({ corrective: 'Corrective', preventive: 'Préventive', full_service: 'Service complet', hotline: 'Hotline' }[t] || t);
 
 const statusLabel = (s) =>
     ({ active: 'Actif', suspended: 'Suspendu' }[s] || s);
 
+/* Détermine si on est en mode édition ou création */
 const isEdit = !!props.contract;
 
+/* Initialise le formulaire avec les données du contrat en mode édition */
 const initForm = () => {
     if (props.contract) {
         form.value = {
@@ -54,6 +67,7 @@ const initForm = () => {
     }
 };
 
+/* Soumission du formulaire : création ou mise à jour du contrat */
 const submitForm = async () => {
     submitting.value = true;
     saved.value = false;
@@ -63,6 +77,7 @@ const submitForm = async () => {
         const url = isEdit ? '/it/maintenance-contracts/' + props.contract.id : '/it/maintenance-contracts';
         const method = isEdit ? 'PUT' : 'POST';
 
+        /* Envoi des données au format JSON */
         const res = await fetch(url, {
             method,
             headers: {
@@ -73,17 +88,20 @@ const submitForm = async () => {
             body: JSON.stringify(form.value),
         });
 
+        /* Redirection si le serveur répond par une 302 (non-JSON) */
         if (res.status === 302) {
             window.location.href = isEdit ? '/it/maintenance-contracts/' + props.contract.id : '/it/maintenance-contracts';
             return;
         }
 
+        /* Gestion des erreurs retournées par l'API */
         if (!res.ok) {
             const errData = await res.json().catch(() => ({}));
             throw new Error(errData.message || Object.values(errData.errors || {}).flat().join(', ') || "Erreur lors de l'enregistrement");
         }
 
         saved.value = true;
+        /* Redirection vers la page de détail après création */
         if (!isEdit) {
             const data = await res.json().catch(() => ({}));
             window.location.href = data && data.id ? '/it/maintenance-contracts/' + data.id : '/it/maintenance-contracts';
@@ -95,10 +113,12 @@ const submitForm = async () => {
     }
 };
 
+/* Retour à la page précédente */
 const goBack = () => {
     window.history.back();
 };
 
+/* Initialisation du formulaire au montage du composant */
 onMounted(initForm);
 </script>
 

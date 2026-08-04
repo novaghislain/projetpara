@@ -5,6 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Modèle TvaDeclaration - Déclaration de TVA (ancien système).
+ *
+ * Table associée : 'tva_declarations' (convention Laravel).
+ * Enregistre les déclarations de TVA avec les montants collectés/déductibles,
+ * le solde net, et le suivi des statuts (soumis, approuvé, payé).
+ * Relations :
+ * - client() : appartient à un client (User) [via client_id].
+ * - fiscalYear() : appartient à un exercice fiscal (FiscalYear).
+ * - createdBy() : appartient à l'utilisateur (User) qui a créé la déclaration.
+ */
 class TvaDeclaration extends Model
 {
     protected $fillable = [

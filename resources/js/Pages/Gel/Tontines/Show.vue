@@ -10,6 +10,12 @@
 </template>
 
 <script setup>
+/*
+ * Page : Tontines Show
+ * Role : Affiche le détail d'une tontine (participants, échéances, cotisations)
+ * Props :
+ *   tontine (Object) — Données de la tontine à afficher
+ */
 import GelLayout from '../../../Layouts/GelLayout.vue';
 defineProps(['tontine'])
 </script>

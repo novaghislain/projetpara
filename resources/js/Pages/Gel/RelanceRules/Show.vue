@@ -44,6 +44,18 @@
 </template>
 
 <script setup>
+/* ============================================================
+ * Composant : RelanceRules/Show
+ * Description : Page de detail d'une regle de relance.
+ *   Affiche le client concerne, le declencheur, le canal,
+ *   le statut et les modeles de message associes.
+ * ============================================================ */
+
 import GelLayout from '../../../Layouts/GelLayout.vue';
+
+/* Propriete recue du controleur :
+ *   rule - Objet contenant les donnees de la regle de relance
+ *          (id, name, client, trigger_days, channel, is_active,
+ *           template_subject, template_body) */
 defineProps(['rule'])
 </script>

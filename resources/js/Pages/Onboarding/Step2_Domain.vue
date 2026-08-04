@@ -1,3 +1,9 @@
+<!--
+ * Composant : Étape 2 du processus d'inscription — Domaine d'activité
+ * Description : Sélection du domaine d'activité de l'entreprise parmi une grille
+ *              de domaines disponibles. Étape 2 sur 5 du parcours d'onboarding.
+ * Utilisation : Page /register/company/step/2
+-->
 <template>
     <div class="onboarding-wrapper">
         <div class="onboarding-card">
@@ -57,15 +63,16 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 
-const domains = ref([]);
-const selectedId = ref(null);
-const selectedCode = ref(null);
+const domains = ref([]);        /* Liste des domaines d'activité */
+const selectedId = ref(null);   /* ID du domaine sélectionné */
+const selectedCode = ref(null); /* Code du domaine sélectionné */
 const loading = ref(true);
 const submitting = ref(false);
 const error = ref(null);
 
 const csrfToken = document.querySelector('meta[name=csrf-token]')?.content || '';
 
+/* Charge les domaines disponibles au montage du composant */
 onMounted(async () => {
     try {
         const res = await fetch('/api/register/domains', { headers: { Accept: 'application/json' } });
@@ -77,11 +84,13 @@ onMounted(async () => {
     }
 });
 
+/* Sélectionne un domaine au clic sur une carte */
 function selectDomain(d) {
     selectedId.value = d.id;
     selectedCode.value = d.code;
 }
 
+/* Envoie le domaine sélectionné au serveur et passe à l'étape 3 */
 async function submitStep2() {
     if (!selectedId.value) return;
     submitting.value = true;

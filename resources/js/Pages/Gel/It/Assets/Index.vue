@@ -10,6 +10,13 @@
 </template>
 
 <script setup>
-import GelLayout from '../../../../Layouts/GelLayout.vue';
-defineProps(['assets', 'clients'])
+/*
+ * Page : Assets Index
+ * Role : Liste des actifs IT avec filtres
+ * Props :
+ *   assets  (Object) — Données paginées des actifs
+ *   clients (Array)  — Liste des clients pour le filtre
+ */
+import GelLayout from '../../../../Layouts/GelLayout.vue'; // Layout principal du module GEL
+defineProps(['assets', 'clients']) // assets (Object) — Données paginées ; clients (Array) — pour le filtre
 </script>

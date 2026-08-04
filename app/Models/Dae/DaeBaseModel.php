@@ -6,6 +6,16 @@ use App\Models\Client;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Classe de base abstraite pour tous les modèles du module DAE.
+ *
+ * Fournit automatiquement :
+ * - La journalisation d'audit (création, modification, suppression)
+ * - La relation avec le client (Client)
+ * - Un scope par client
+ *
+ * Chaque modèle DAE doit implémenter getDaeModuleName() pour l'audit.
+ */
 abstract class DaeBaseModel extends Model
 {
     /**

@@ -56,17 +56,28 @@
 </template>
 
 <script setup>
+/*
+ * Composant : LegalAssembleesIndex
+ * Role : Page listant les assemblees generales.
+ * Affiche le type, la date, le lieu, le statut et la disponibilite du PV.
+ * Permet la consultation et la suppression d'une AG.
+ * Props : aucune
+ */
+
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 import ContratStatusBadge from '../../../../Components/Legal/ContratStatusBadge.vue';
 
+// Liste des assemblees chargees depuis l'API
 const assemblees = ref([]);
 
+/* Formate une date au format francais court */
 function formatDate(date) {
     if (!date) return '—';
     return new Date(date + 'T00:00:00').toLocaleDateString('fr-FR');
 }
 
+/* Charge la liste des assemblees depuis l'API */
 async function loadAG() {
     try {
         const res = await fetch('/juridique/assemblees');
@@ -74,6 +85,7 @@ async function loadAG() {
     } catch (e) { console.error(e); }
 }
 
+/* Supprime une assemblee apres confirmation utilisateur */
 async function deleteAG(id) {
     if (!confirm('Supprimer cette AG ?')) return;
     try {

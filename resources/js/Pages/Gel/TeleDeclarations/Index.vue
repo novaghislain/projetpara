@@ -1,4 +1,9 @@
 <template>
+    <!-- ============================================================
+    Page Index des teledeclarations fiscales.
+    Affiche la liste avec filtres (client, type, statut),
+    tableau des declarations et pagination.
+    ============================================================ -->
     <GelLayout page-title="Télédéclarations">
         <div class="p-6">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -84,6 +89,7 @@
                         </tbody>
                     </table>
                 </div>
+                <!-- Pagination -->
                 <div class="p-2" v-if="declarations.last_page > 1">
                     <nav>
                         <ul class="pagination pagination-sm mb-0 justify-content-center">
@@ -105,14 +111,21 @@
 </template>
 
 <script setup>
+/* ============================================================
+ * TeleDeclarations / Index.vue
+ * Page de liste des declarations fiscales avec filtres
+ * (client, type, statut) et pagination.
+ * ============================================================ */
 import GelLayout from '../../../Layouts/GelLayout.vue';
 defineProps(['declarations', 'clients'])
 
+/** Formate un montant en FCFA avec le separateur de milliers */
 const formatMille = (v) => {
     if (v == null || v === '') return '—';
     return Number(v).toLocaleString('fr-FR', { minimumFractionDigits: 0 }) + ' FCFA';
 }
 
+/** Retourne la classe CSS du badge de statut */
 const statusClass = (s) => ({
     brouillon: 'bg-secondary',
     calcule: 'bg-info text-dark',

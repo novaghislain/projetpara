@@ -11,18 +11,27 @@ use Illuminate\Support\Facades\Validator;
 class StockController extends Controller
 {
     /**
-     * Store a new warehouse.
-     *
-     * POST /erp/stocks/warehouses
+     * Contrôleur de gestion des stocks dans le module ERP.
+     * Permet la gestion des entrepôts et des mouvements de stock
+     * (entrées et sorties).
      */
     public function storeWarehouse(Request $request)
     {
+        /**
+         * Crée un nouvel entrepôt dans le système de stock.
+         *
+         * POST /erp/stocks/warehouses
+         *
+         * @param Request $request La requête HTTP contenant les données de l'entrepôt
+         * @return \Illuminate\Http\JsonResponse La réponse JSON avec l'entrepôt créé
+         */
         $validator = Validator::make($request->all(), [
             'name'      => 'required|string|max:255',
             'location'  => 'nullable|string|max:500',
             'is_active' => 'nullable|boolean',
         ]);
 
+        // Validation des données d'entrée
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
@@ -32,6 +41,7 @@ class StockController extends Controller
 
         $data = $validator->validated();
 
+        // Actif par défaut si non précisé
         if (!isset($data['is_active'])) {
             $data['is_active'] = true;
         }
@@ -46,9 +56,12 @@ class StockController extends Controller
     }
 
     /**
-     * Store a new stock movement.
+     * Enregistre un mouvement de stock (entrée ou sortie).
      *
      * POST /erp/stocks/movements
+     *
+     * @param Request $request La requête HTTP contenant les données du mouvement
+     * @return \Illuminate\Http\JsonResponse La réponse JSON avec le mouvement créé
      */
     public function storeMovement(Request $request)
     {
@@ -63,6 +76,7 @@ class StockController extends Controller
             'created_by'       => 'nullable|integer|exists:users,id',
         ]);
 
+        // Validation des données d'entrée
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
@@ -72,12 +86,14 @@ class StockController extends Controller
 
         $data = $validator->validated();
 
+        // Attribution de l'utilisateur connecté comme créateur si non spécifié
         if (!isset($data['created_by'])) {
             $data['created_by'] = $request->user()?->id;
         }
 
         $movement = ErpStockMovement::create($data);
 
+        // Chargement des relations article et entrepôt pour la réponse
         return response()->json([
             'success' => true,
             'message' => 'Stock movement recorded successfully.',

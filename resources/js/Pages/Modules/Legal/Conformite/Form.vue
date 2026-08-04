@@ -55,10 +55,21 @@
     </GelLayout>
 </template>
 <script setup>
+/*
+ * Composant : Form.vue (Conformite)
+ * Description : Formulaire de création d'une obligation de conformité réglementaire.
+ *               Saisie de l'intitulé, du type, de l'organisme, de l'échéance,
+ *               de la périodicité et du délai d'alerte.
+ * Route       : /juridique/conformite/create
+ */
 import { ref } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
+
+/* État de sauvegarde et données du formulaire */
 const saving = ref(false);
 const form = ref({ intitule:'', type:'juridique', organisme:'', date_echeance:'', periodicite:'annuelle', alerte_avant:30, notes:'' });
+
+/* Enregistre la nouvelle obligation via POST puis redirige vers la liste */
 async function save() {
     saving.value = true;
     try {

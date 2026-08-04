@@ -6,6 +6,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Client;
 
+/**
+ * Modèle représentant une immobilisation (actif à long terme).
+ *
+ * Table associée : `immobilisations` (via convention Laravel, préfixe Compta)
+ *
+ * Relations :
+ * - Une immobilisation appartient à un client (Client)
+ * - Une immobilisation est liée à un compte d'immobilisation (Compte)
+ */
 class Immobilisation extends Model
 {
     use HasFactory;

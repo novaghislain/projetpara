@@ -6,6 +6,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Client;
 
+/**
+ * Modèle représentant un journal comptable (ventes, achats, banque, etc.).
+ *
+ * Table associée : `journaux` (via convention Laravel, préfixe Compta)
+ *
+ * Relations :
+ * - Un journal appartient à un client (Client)
+ * - Un journal peut avoir un compte par défaut (Compte)
+ * - Un journal peut avoir plusieurs écritures (Ecriture)
+ */
 class Journal extends Model
 {
     use HasFactory;

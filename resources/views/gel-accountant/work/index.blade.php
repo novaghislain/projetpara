@@ -6,8 +6,8 @@
     <div><h1 class="gel-page-title">Work</h1><p class="gel-page-subtitle">Gestion des travaux en cours</p></div>
     <button class="gel-btn gel-btn-primary gel-btn-sm"><i class="fas fa-plus"></i> Nouveau travail</button>
 </div>
-<div class="gel-card">
-    <div class="gel-card-body">
+<div class="gel-card p-4 mb-4">
+    <div class="gel-card-body p-4 mb-4">
         <div class="gel-empty">
             <i class="fas fa-briefcase"></i>
             <h3>Aucun travail en cours</h3>

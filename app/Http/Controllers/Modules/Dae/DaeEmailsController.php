@@ -6,8 +6,23 @@ use App\Models\Dae\DaeEmail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur de gestion des emails du module DAE.
+ *
+ * Permet la gestion des emails avec classement dans des dossiers,
+ * suivi de statut, réponse, archivage et statistiques.
+ */
 class DaeEmailsController extends BaseDaeController
 {
+    /**
+     * Liste paginée des emails avec filtres.
+     *
+     * Filtres disponibles : dossier (réception, envoyés, brouillons, archive, corbeille),
+     * statut, recherche (objet, corps_texte).
+     *
+     * @param Request $request La requête HTTP avec les paramètres de filtre
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
+     */
     public function index(Request $request)
     {
         $query = DaeEmail::with('client');
@@ -41,11 +56,22 @@ class DaeEmailsController extends BaseDaeController
         return view('app', ['page' => 'dae-emails']);
     }
 
+    /**
+     * Affiche le formulaire de création d'un email.
+     *
+     * @return \Illuminate\View\View
+     */
     public function create()
     {
         return view('app', ['page' => 'dae-emails-create']);
     }
 
+    /**
+     * Crée un nouvel email (brouillon).
+     *
+     * @param Request $request La requête HTTP avec les données de l'email
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -70,6 +96,14 @@ class DaeEmailsController extends BaseDaeController
         return redirect()->route('dae.emails.index')->with('success', 'Email créé.');
     }
 
+    /**
+     * Affiche un email spécifique.
+     *
+     * Marque l'email comme "lu" si son statut était "recu".
+     *
+     * @param int $id L'identifiant de l'email
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
+     */
     public function show($id)
     {
         $email = DaeEmail::with('client', 'reponses')->findOrFail($id);
@@ -80,6 +114,12 @@ class DaeEmailsController extends BaseDaeController
         return view('app', ['page' => 'dae-emails-show']);
     }
 
+    /**
+     * Supprime un email (soft delete).
+     *
+     * @param int $id L'identifiant de l'email à supprimer
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function destroy($id)
     {
         $email = DaeEmail::findOrFail($id);
@@ -89,6 +129,13 @@ class DaeEmailsController extends BaseDaeController
         return redirect()->route('dae.emails.index')->with('success', 'Email supprimé.');
     }
 
+    /**
+     * Marque un email comme lu.
+     *
+     * @param Request $request La requête HTTP
+     * @param int $id L'identifiant de l'email
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function marquerLu(Request $request, $id)
     {
         $email = DaeEmail::findOrFail($id);
@@ -98,6 +145,13 @@ class DaeEmailsController extends BaseDaeController
         return redirect()->back();
     }
 
+    /**
+     * Crée une réponse à un email existant.
+     *
+     * @param Request $request La requête HTTP avec le corps de la réponse
+     * @param int $id L'identifiant de l'email d'origine
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function repondre(Request $request, $id)
     {
         $original = DaeEmail::findOrFail($id);
@@ -126,6 +180,13 @@ class DaeEmailsController extends BaseDaeController
         return redirect()->route('dae.emails.index')->with('success', 'Réponse créée.');
     }
 
+    /**
+     * Classe un email dans un dossier spécifique.
+     *
+     * @param Request $request La requête HTTP avec le nom du dossier cible
+     * @param int $id L'identifiant de l'email
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function classer(Request $request, $id)
     {
         $request->validate(['dossier' => 'required|string|max:100']);
@@ -142,6 +203,13 @@ class DaeEmailsController extends BaseDaeController
         return redirect()->back()->with('success', 'Email classé.');
     }
 
+    /**
+     * Archive un email.
+     *
+     * @param Request $request La requête HTTP
+     * @param int $id L'identifiant de l'email
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function archiver(Request $request, $id)
     {
         $email = DaeEmail::findOrFail($id);
@@ -151,6 +219,12 @@ class DaeEmailsController extends BaseDaeController
         return redirect()->back()->with('success', 'Email archivé.');
     }
 
+    /**
+     * Retourne les statistiques des emails.
+     *
+     * @param Request $request La requête HTTP
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function stats(Request $request)
     {
         $query = DaeEmail::where('client_id', $this->getClientId($request));

@@ -9,7 +9,16 @@ use App\Models\CatalogueService;
 class CartController extends Controller
 {
     /**
-     * View the Cart Page
+     * Contrôleur de gestion du panier d'achat en session.
+     * Permet d'ajouter, supprimer, consulter et vider le panier
+     * avant la soumission d'une commande.
+     */
+
+    /**
+     * Affiche la page du panier.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\View\View
      */
     public function view(Request $request)
     {
@@ -20,7 +29,10 @@ class CartController extends Controller
     }
 
     /**
-     * Get the current cart contents
+     * Récupère le contenu actuel du panier en session.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function index(Request $request)
     {
@@ -29,7 +41,11 @@ class CartController extends Controller
     }
 
     /**
-     * Add a service to the cart
+     * Ajoute un service au panier. Si le service existe déjà,
+     * la quantité est incrémentée.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function add(Request $request)
     {
@@ -64,7 +80,11 @@ class CartController extends Controller
     }
 
     /**
-     * Remove a service from the cart
+     * Retire un service du panier.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param int $id Identifiant du service à retirer
+     * @return \Illuminate\Http\JsonResponse
      */
     public function remove(Request $request, $id)
     {
@@ -79,7 +99,10 @@ class CartController extends Controller
     }
 
     /**
-     * Clear the entire cart
+     * Vide complètement le panier.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function clear(Request $request)
     {
@@ -88,7 +111,11 @@ class CartController extends Controller
     }
 
     /**
-     * Format cart array into JSON structure for frontend
+     * Formate le panier en une structure JSON pour le frontend.
+     * Calcule le total FCFA des articles à tarif fixe.
+     *
+     * @param array $cart Données brutes du panier en session
+     * @return array
      */
     private function formatCartResponse($cart)
     {

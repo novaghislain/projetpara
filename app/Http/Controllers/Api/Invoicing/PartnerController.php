@@ -10,15 +10,29 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * Contrôleur API des partenaires (clients, fournisseurs).
+ *
+ * Gère le CRUD des partenaires avec filtres, recherche
+ * et génération automatique du code partenaire.
+ */
 class PartnerController extends Controller
 {
+    /**
+     * Récupère l'ID du client connecté.
+     *
+     * @return int
+     */
     protected function getClientId(): int
     {
         return (int) (Auth::user()->active_client_id ?? Auth::user()->client_id);
     }
 
     /**
-     * Liste paginée des partenaires.
+     * Liste paginée des partenaires avec filtres optionnels.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
@@ -53,7 +67,10 @@ class PartnerController extends Controller
     }
 
     /**
-     * Détail d'un partenaire.
+     * Détail d'un partenaire avec factures et comptes associés.
+     *
+     * @param  string  $id
+     * @return JsonResponse
      */
     public function show(string $id): JsonResponse
     {
@@ -67,7 +84,10 @@ class PartnerController extends Controller
     }
 
     /**
-     * Crée un partenaire.
+     * Crée un partenaire (client, fournisseur ou les deux) avec code automatique.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function store(Request $request): JsonResponse
     {
@@ -97,7 +117,7 @@ class PartnerController extends Controller
             'swift' => 'nullable|string|max:20',
         ]);
 
-        // Générer un code automatique
+        // Générer un code partenaire automatique basé sur le type (CLI, FRN, PAR)
         if (empty($validated['code'])) {
             $prefix = match ($validated['type']) {
                 'customer' => 'CLI',
@@ -123,7 +143,11 @@ class PartnerController extends Controller
     }
 
     /**
-     * Modifie un partenaire.
+     * Modifie un partenaire existant.
+     *
+     * @param  Request  $request
+     * @param  string  $id
+     * @return JsonResponse
      */
     public function update(Request $request, string $id): JsonResponse
     {
@@ -165,7 +189,10 @@ class PartnerController extends Controller
     }
 
     /**
-     * Supprime un partenaire (soft delete).
+     * Supprime un partenaire (soft delete) — bloqué s'il a des factures.
+     *
+     * @param  string  $id
+     * @return JsonResponse
      */
     public function destroy(string $id): JsonResponse
     {

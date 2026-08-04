@@ -1,29 +1,30 @@
 <?php
-// =============================================================================
-// FICHIER : ClientAccountingModule.php
-// RÔLE    : Modèle — Activation d'un module comptable pour un client
-// ÉQUIPE  : GEL Cabinet — Équipe Dev Backend
-// =============================================================================
-// Table pivot entre les clients et les modules comptables.
-// Chaque entrée représente l'activation d'un module spécifique (ex: "stock",
-// "gestion_chambres", "quittances_loyer") pour une entreprise cliente donnée.
-//
-// Relations :
-//   - client()    : BelongsTo → Client
-//   - activator() : BelongsTo → User (qui a activé le module)
-//
-// Scopes :
-//   - active()    : modules activés uniquement
-//   - byClient()  : modules d'un client spécifique
-//
-// Voir aussi : BusinessDomain, TenantDomainService
-// =============================================================================
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Modèle représentant l'activation d'un module comptable pour un client.
+ *
+ * Table pivot entre les clients et les modules comptables.
+ * Chaque entrée représente l'activation d'un module spécifique
+ * (ex: "stock", "gestion_chambres", "quittances_loyer") pour
+ * une entreprise cliente donnée, avec sa configuration.
+ *
+ * @property int $id
+ * @property int $client_id Identifiant du client
+ * @property string $module Code du module (ex: stock, hotel, location)
+ * @property bool $is_active Module actif
+ * @property array|null $config Configuration du module
+ * @property string|null $activated_at Date d'activation
+ * @property int|null $activated_by Identifiant de l'utilisateur ayant activé
+ *
+ * @property-read Client $client Client associé
+ * @property-read User|null $activator Utilisateur ayant activé le module
+ *
+ * @table client_accounting_modules
+ */
 class ClientAccountingModule extends Model
 {
     protected $table = 'client_accounting_modules';

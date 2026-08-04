@@ -10,6 +10,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Contrôleur pour la gestion des ressources humaines (RH).
+ *
+ * Permet la gestion des employés, des demandes de congés, des notes de frais
+ * ainsi que l'affichage de statistiques RH pour une entreprise cliente.
+ */
 class HumanResourcesController extends BaseCompanyController
 {
     /**

@@ -4,6 +4,30 @@ namespace App\Models\Gel;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Modèle Subscription (Abonnement).
+ *
+ * Gère les abonnements des cabinets à la plateforme.
+ * Définit la formule souscrite, le statut, la période de validité,
+ * le nombre maximal d'utilisateurs/clients autorisés, et les fonctionnalités
+ * activées (features). Supporte l'intégration Stripe.
+ * Table associée : `gel_subscriptions`.
+ *
+ * @property int $id
+ * @property int $cabinet_id ID du cabinet
+ * @property string $formule Formule d'abonnement (basic, pro, enterprise)
+ * @property string $statut Statut (actif, expire, suspendu)
+ * @property \Carbon\Carbon $date_debut Date de début d'abonnement
+ * @property \Carbon\Carbon $date_fin Date de fin d'abonnement
+ * @property string|null $stripe_id ID de la souscription Stripe
+ * @property float $montant Montant de l'abonnement
+ * @property string $devise Devise (XOF, EUR, USD)
+ * @property int $max_users Nombre max d'utilisateurs
+ * @property int $max_clients Nombre max de clients
+ * @property array $features Fonctionnalités activées (JSON)
+ *
+ * @property-read \App\Models\Gel\Cabinet $cabinet Cabinet associé
+ */
 class Subscription extends Model
 {
     protected $table = 'gel_subscriptions';

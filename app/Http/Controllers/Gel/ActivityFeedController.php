@@ -9,8 +9,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Contrôleur du fil d'activité et des notifications.
+ * Gère l'affichage des actions récentes (AuditTrail), les notifications
+ * utilisateur et le nettoyage des notifications obsolètes.
+ */
 class ActivityFeedController extends Controller
 {
+    /**
+     * Constructeur : applique le middleware de permission pour l'accès aux logs.
+     */
     public function __construct()
     {
         $this->middleware('permission:admin.logs');
@@ -18,9 +26,14 @@ class ActivityFeedController extends Controller
 
     /**
      * Affiche la page d'activité.
+     * Récupère les 50 dernières actions (AuditTrail) et les 20 dernières notifications
+     * de l'utilisateur connecté.
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
+        // Récupération des 50 dernières activités avec l'utilisateur associé
         $activities = AuditTrail::with('user')
             ->latest()
             ->take(50)
@@ -35,6 +48,7 @@ class ActivityFeedController extends Controller
                 'time_diff' => $a->created_at->diffForHumans(),
             ]);
 
+        // Récupération des 20 dernières notifications pour l'utilisateur connecté
         $notifications = Notification::where('user_id', Auth::id())
             ->latest()
             ->take(20)
@@ -51,6 +65,10 @@ class ActivityFeedController extends Controller
 
     /**
      * Récupère les activités récentes (API).
+     * Permet un filtre optionnel par date (since) pour les mises à jour incrémentales.
+     *
+     * @param Request $request La requête HTTP contenant optionnellement le paramètre 'since' (date ISO)
+     * @return \Illuminate\Http\JsonResponse Réponse JSON avec la liste des activités récentes
      */
     public function recent(Request $request)
     {
@@ -58,6 +76,7 @@ class ActivityFeedController extends Controller
 
         $query = AuditTrail::with('user')->latest()->take(50);
 
+        // Si un marqueur temporel est fourni, filtrer les activités plus récentes que celui-ci
         if ($since) {
             $query->where('created_at', '>', $since);
         }
@@ -78,7 +97,11 @@ class ActivityFeedController extends Controller
     }
 
     /**
-     * Marque une notification comme lue.
+     * Marque une notification spécifique comme lue.
+     * Vérifie que la notification appartient à l'utilisateur connecté.
+     *
+     * @param int $notificationId L'identifiant de la notification à marquer
+     * @return \Illuminate\Http\JsonResponse
      */
     public function markAsRead($notificationId)
     {
@@ -91,7 +114,10 @@ class ActivityFeedController extends Controller
     }
 
     /**
-     * Marque toutes les notifications comme lues.
+     * Marque toutes les notifications de l'utilisateur comme lues.
+     * Met à jour en masse les notifications non lues.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function markAllAsRead()
     {
@@ -103,7 +129,9 @@ class ActivityFeedController extends Controller
     }
 
     /**
-     * Récupère le nombre de notifications non lues.
+     * Récupère le nombre de notifications non lues pour l'utilisateur connecté.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function unreadCount()
     {
@@ -118,7 +146,11 @@ class ActivityFeedController extends Controller
     }
 
     /**
-     * Supprime une notification.
+     * Supprime une notification spécifique.
+     * Vérifie que la notification appartient à l'utilisateur connecté.
+     *
+     * @param int $notificationId L'identifiant de la notification à supprimer
+     * @return \Illuminate\Http\JsonResponse
      */
     public function deleteNotification($notificationId)
     {
@@ -131,10 +163,13 @@ class ActivityFeedController extends Controller
     }
 
     /**
-     * Nettoie les notifications de plus de 90 jours.
+     * Nettoie les notifications de plus de 90 jours pour l'utilisateur connecté.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function cleanOld()
     {
+        // Supprimer les notifications datant de plus de 90 jours
         $deleted = Notification::where('user_id', Auth::id())
             ->where('created_at', '<', now()->subDays(90))
             ->delete();

@@ -4,6 +4,32 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle représentant un emballage consigné.
+ *
+ * Gère le suivi des emballages consignés (cartons, palettes, fûts, etc.)
+ * remis à des tiers (clients ou fournisseurs). Permet le suivi des
+ * mouvements, des consignations et des retours d'emballages.
+ *
+ * @property int $id
+ * @property int|null $client_id Identifiant du client (entreprise)
+ * @property string $type Type d'emballage
+ * @property string $tiers_nom Nom du tiers (client ou fournisseur)
+ * @property string $tiers_type Type de tiers (client, fournisseur)
+ * @property string $produit Produit concerné
+ * @property int $quantite Quantité d'emballages
+ * @property float $montant_consigne Montant de la consigne
+ * @property string|null $date_emission Date d'émission
+ * @property string|null $date_retour Date de retour
+ * @property string $statut Statut (en_cours, retourne, facture)
+ * @property string|null $notes Notes
+ * @property int|null $created_by Identifiant de l'utilisateur créateur
+ *
+ * @property-read Client|null $client Client (entreprise) associé
+ * @property-read User|null $creator Utilisateur créateur
+ *
+ * @table accounting_emballages
+ */
 class AccountingEmballage extends Model
 {
     use SoftDeletes;

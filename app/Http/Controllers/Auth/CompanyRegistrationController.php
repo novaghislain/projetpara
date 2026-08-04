@@ -16,6 +16,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
+/**
+ * Contrôleur d'inscription des entreprises (wizard multi-étapes).
+ *
+ * Gère un parcours d'inscription en 5 étapes : informations entreprise,
+ * domaine d'activité, plan d'abonnement, compte administrateur
+ * et confirmation. Crée le client (entreprise) et son admin.
+ */
 class CompanyRegistrationController extends Controller
 {
     /**
@@ -50,6 +57,10 @@ class CompanyRegistrationController extends Controller
 
     /**
      * Traite la soumission d'une étape.
+     *
+     * @param  Request  $request  La requête HTTP entrante
+     * @param  int  $step  Numéro de l'étape (1 à 5)
+     * @return JsonResponse|RedirectResponse
      */
     public function process(Request $request, int $step): JsonResponse|RedirectResponse
     {
@@ -64,6 +75,12 @@ class CompanyRegistrationController extends Controller
 
     // ─── Étape 1 : Informations entreprise ─────────────────────────
 
+    /**
+     * Traite l'étape 1 : informations générales de l'entreprise.
+     *
+     * @param  Request  $request  La requête HTTP entrante
+     * @return JsonResponse|RedirectResponse
+     */
     protected function processStep1(Request $request): JsonResponse|RedirectResponse
     {
         $validated = $request->validate([
@@ -87,6 +104,12 @@ class CompanyRegistrationController extends Controller
 
     // ─── Étape 2 : Sélection du domaine ───────────────────────────
 
+    /**
+     * Traite l'étape 2 : sélection du domaine d'activité.
+     *
+     * @param  Request  $request  La requête HTTP entrante
+     * @return JsonResponse|RedirectResponse
+     */
     protected function processStep2(Request $request): JsonResponse|RedirectResponse
     {
         $validated = $request->validate([
@@ -113,11 +136,19 @@ class CompanyRegistrationController extends Controller
 
     // ─── Étape 3 : Plan d'abonnement ─────────────────────────────
 
+    /**
+     * Traite l'étape 3 : choix du plan d'abonnement (mensuel/annuel) et type de contrat.
+     *
+     * @param  Request  $request  La requête HTTP entrante
+     * @return JsonResponse|RedirectResponse
+     */
     protected function processStep3(Request $request): JsonResponse|RedirectResponse
     {
         $validated = $request->validate([
-            'plan'       => 'required|string|in:mensuel,annuel',
-            'contract_type' => 'required|string|in:standard,premium',
+            'plan'          => 'required|in:mensuel,annuel',
+            'contract_type' => 'required|in:standard,premium',
+            'wants_accounting' => 'boolean',
+            'wants_secretary'  => 'boolean',
         ]);
 
         $data = session('company_registration', []);
@@ -129,6 +160,12 @@ class CompanyRegistrationController extends Controller
 
     // ─── Étape 4 : Compte administrateur ─────────────────────────
 
+    /**
+     * Traite l'étape 4 : création du compte administrateur.
+     *
+     * @param  Request  $request  La requête HTTP entrante
+     * @return JsonResponse|RedirectResponse
+     */
     protected function processStep4(Request $request): JsonResponse|RedirectResponse
     {
         $validated = $request->validate([
@@ -147,6 +184,13 @@ class CompanyRegistrationController extends Controller
 
     // ─── Étape 5 : Confirmation et création ──────────────────────
 
+    /**
+     * Traite l'étape 5 : confirmation et création effective de l'entreprise,
+     * de l'administrateur et des modules du domaine.
+     *
+     * @param  Request  $request  La requête HTTP entrante
+     * @return JsonResponse|RedirectResponse
+     */
     protected function processStep5(Request $request): JsonResponse|RedirectResponse
     {
         $data = session('company_registration');
@@ -177,6 +221,8 @@ class CompanyRegistrationController extends Controller
                     'contract_type' => $data['step3']['contract_type'],
                     'domain_id'    => $data['step2']['domain_id'],
                     'domain_code'  => $data['step2']['domain_code'],
+                    'wants_accounting' => $data['step3']['wants_accounting'] ?? true,
+                    'wants_secretary'  => $data['step3']['wants_secretary'] ?? false,
                 ]);
 
                 // 2. Créer l'utilisateur admin
@@ -242,7 +288,9 @@ class CompanyRegistrationController extends Controller
     }
 
     /**
-     * Récupère les domaines disponibles (pour l'étape 2 via API).
+     * Récupère la liste des domaines d'activité disponibles (étape 2).
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function getDomains()
     {

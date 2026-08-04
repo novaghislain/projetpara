@@ -1,16 +1,25 @@
 <script setup>
+/*
+ * Composant : Resultat.vue
+ * Description : Affiche le compte de resultat (produits / charges / resultat net) d'un client.
+ *              Les donnees sont chargees depuis l'API /api/accounting/reports/resultat/:clientId.
+ *              Utilise le layout GelLayout et le store d'authentification.
+ */
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../Layouts/GelLayout.vue';
 import { authStore } from '../../../stores/auth';
 
+// Proprietes du composant : identifiant du client (optionnel)
 const props = defineProps({
     clientId: { type: [Number, String], default: null }
 });
 
+// Etat reactif : donnees du compte de resultat, chargement, erreur
 const data = ref(null);
 const loading = ref(true);
 const error = ref(null);
 
+// Chargement asynchrone du compte de resultat depuis l'API
 const fetchResultat = async () => {
     loading.value = true;
     error.value = null;
@@ -27,10 +36,14 @@ const fetchResultat = async () => {
     }
 };
 
+// Somme de tous les montants de produits
 const totalProduits = () => data.value?.produits?.reduce((s, i) => s + parseFloat(i.montant || 0), 0) || 0;
+// Somme de tous les montants de charges
 const totalCharges = () => data.value?.charges?.reduce((s, i) => s + parseFloat(i.montant || 0), 0) || 0;
+// Calcul du resultat net (produits moins charges)
 const resultatNet = () => totalProduits() - totalCharges();
 
+// Chargement automatique au montage du composant
 onMounted(fetchResultat);
 </script>
 

@@ -75,6 +75,11 @@
     </CompanyLayout>
 </template>
 
+/*
+ * Composant : CompanyDaeContrats
+ * Role : Gestion des contrats et conventions dans le module DAE.
+ *        Affiche une liste filtrable avec statistiques et pagination.
+ */
 <script>
 import CompanyLayout from '../../Layouts/CompanyLayout.vue';
 import DaeDataTable from '../../Components/Dae/DaeDataTable.vue';
@@ -83,18 +88,18 @@ export default {
     components: { CompanyLayout, DaeDataTable },
     data() {
         return {
-            loading: true,
-            rows: [],
-            currentPage: 1,
-            totalPages: 1,
-            filterStatut: '',
-            stats: {
+            loading: true,                     /* Indicateur de chargement */
+            rows: [],                          /* Donnees des contrats */
+            currentPage: 1,                    /* Page courante */
+            totalPages: 1,                     /* Nombre total de pages */
+            filterStatut: '',                  /* Filtre par statut */
+            stats: {                           /* Statistiques resume */
                 total: { label: 'Total', count: 0 },
                 actif: { label: 'Actifs', count: 0 },
                 expire: { label: 'Expirés', count: 0 },
             },
-            toast: null,
-            columns: [
+            toast: null,                       /* Notification utilisateur */
+            columns: [                         /* Colonnes du tableau */
                 { key: 'reference', label: 'Réf.', width: '120px' },
                 { key: 'titre', label: 'Titre' },
                 { key: 'partie_adverse', label: 'Partie adverse' },
@@ -102,7 +107,7 @@ export default {
                 { key: 'date_fin', label: 'Échéance', width: '110px' },
                 { key: 'statut', label: 'Statut', width: '110px' },
             ],
-            actions: [
+            actions: [                         /* Actions disponibles par ligne */
                 { key: 'view', label: 'Voir le détail', icon: 'bi-eye' },
             ],
         };
@@ -111,6 +116,7 @@ export default {
         this.fetchData();
     },
     methods: {
+        /* Charge les contrats depuis l'API avec pagination et filtres */
         async fetchData(page = 1) {
             this.loading = true;
             try {
@@ -132,23 +138,28 @@ export default {
                 this.loading = false;
             }
         },
+        /* Execute une action sur une ligne du tableau */
         async handleAction({ action, row }) {
             if (action === 'view') {
                 window.location.href = `/company/dae/contrats/${row.id}`;
             }
         },
+        /* Retourne la classe CSS du badge selon le statut */
         statutClass(s) {
             const map = { brouillon: 'bg-secondary', actif: 'bg-success', expire: 'bg-danger', resilie: 'bg-warning text-dark', renouvele: 'bg-info' };
             return map[s] || 'bg-secondary';
         },
+        /* Retourne le libelle affichable du statut */
         statutLabel(s) {
             const map = { brouillon: 'Brouillon', actif: 'Actif', expire: 'Expiré', resilie: 'Résilié', renouvele: 'Renouvelé' };
             return map[s] || s;
         },
+        /* Formate un montant en francs CFA */
         formatMontant(m) {
             if (!m) return '—';
             return Number(m).toLocaleString('fr-FR', { minimumFractionDigits: 0 }) + ' F';
         },
+        /* Formate une date au format francais court */
         formatDate(d) {
             if (!d) return '—';
             return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });

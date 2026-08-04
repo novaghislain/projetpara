@@ -12,10 +12,18 @@ use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 
+/**
+ * Contrôleur de gestion des administrateurs entreprise et des rôles/permissions.
+ * Permet de gérer les utilisateurs, leurs rôles, les permissions,
+ * ainsi que la création/suppression des administrateurs entreprise.
+ * Utilise Spatie Permission pour la gestion des rôles et permissions.
+ */
 class CompanyAdminController extends Controller
 {
     /**
      * Affiche la page de gestion des administrateurs entreprise.
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
@@ -23,8 +31,11 @@ class CompanyAdminController extends Controller
     }
 
     /**
-     * API: Retourne tous les utilisateurs qui sont administrateurs entreprise
-     * (is_company_admin = true OU client_id non nul), avec leur relation client.
+     * API : Retourne tous les utilisateurs administrateurs entreprise.
+     * Inclut ceux avec is_company_admin=true OU client_id non nul,
+     * avec leur relation client.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function listAll()
     {
@@ -40,7 +51,10 @@ class CompanyAdminController extends Controller
     }
 
     /**
-     * API: Retourne un administrateur entreprise spécifique.
+     * API : Retourne un administrateur entreprise spécifique.
+     *
+     * @param int $id L'identifiant de l'utilisateur
+     * @return \Illuminate\Http\JsonResponse
      */
     public function show($id)
     {
@@ -55,7 +69,10 @@ class CompanyAdminController extends Controller
     }
 
     /**
-     * API: Retourne tous les utilisateurs du cabinet (pour la vue admin).
+     * API : Retourne tous les utilisateurs du cabinet avec leurs rôles et permissions.
+     * Paginé par 50 utilisateurs.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function listUsers()
     {
@@ -76,7 +93,12 @@ class CompanyAdminController extends Controller
     }
 
     /**
-     * API: Met à jour les rôles d'un utilisateur.
+     * API : Met à jour les rôles d'un utilisateur.
+     * Remplace tous les rôles existants par ceux fournis.
+     *
+     * @param Request $request La requête HTTP avec la liste des rôles
+     * @param int $id L'identifiant de l'utilisateur
+     * @return \Illuminate\Http\JsonResponse
      */
     public function updateRoles(Request $request, $id)
     {
@@ -100,7 +122,9 @@ class CompanyAdminController extends Controller
     }
 
     /**
-     * API: Retourne la liste des rôles disponibles (pour la vue admin).
+     * API : Retourne la liste des rôles disponibles avec le nombre d'utilisateurs.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function listRoles()
     {
@@ -121,7 +145,9 @@ class CompanyAdminController extends Controller
     }
 
     /**
-     * API: Retourne la liste des permissions disponibles.
+     * API : Retourne la liste des permissions disponibles.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function listPermissions()
     {
@@ -140,7 +166,10 @@ class CompanyAdminController extends Controller
     }
 
     /**
-     * API: Crée un nouveau rôle.
+     * API : Crée un nouveau rôle avec ses permissions associées.
+     *
+     * @param Request $request La requête HTTP avec les données du rôle
+     * @return \Illuminate\Http\JsonResponse
      */
     public function storeRole(Request $request)
     {
@@ -163,6 +192,7 @@ class CompanyAdminController extends Controller
             'guard_name' => 'web',
         ]);
 
+        // Associer les permissions au rôle si fournies
         if (!empty($validated['permissions'])) {
             $role->syncPermissions($validated['permissions']);
         }
@@ -175,7 +205,11 @@ class CompanyAdminController extends Controller
     }
 
     /**
-     * API: Met à jour les permissions d'un rôle.
+     * API : Met à jour les permissions et les métadonnées d'un rôle.
+     *
+     * @param Request $request La requête HTTP avec les données mises à jour
+     * @param string $name Le nom du rôle à modifier
+     * @return \Illuminate\Http\JsonResponse
      */
     public function updateRolePermissions(Request $request, $name)
     {
@@ -209,11 +243,16 @@ class CompanyAdminController extends Controller
     }
 
     /**
-     * API: Supprime un rôle.
+     * API : Supprime un rôle.
+     * Les rôles système (super_admin, gestionnaire_cabinet) sont protégés
+     * et ne peuvent pas être supprimés.
+     *
+     * @param string $name Le nom du rôle à supprimer
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroyRole($name)
     {
-        // Empêcher la suppression des rôles système
+        // Empêcher la suppression des rôles système critiques
         $protectedRoles = ['super_admin', 'gestionnaire_cabinet'];
         if (in_array($name, $protectedRoles)) {
             return response()->json([
@@ -230,6 +269,15 @@ class CompanyAdminController extends Controller
             'message' => 'Rôle supprimé avec succès.',
         ]);
     }
+
+    /**
+     * API : Crée un nouvel administrateur entreprise.
+     * Crée l'utilisateur et l'associe au client via la table pivot user_clients
+     * pour que le middleware ensure.company autorise l'accès au dashboard.
+     *
+     * @param Request $request La requête HTTP avec name, email, password, client_id
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -268,8 +316,12 @@ class CompanyAdminController extends Controller
     }
 
     /**
-     * API: Met à jour un administrateur entreprise.
-     * Ne change pas le mot de passe si le champ est vide.
+     * API : Met à jour un administrateur entreprise.
+     * Ne change le mot de passe que si le champ est fourni et non vide.
+     *
+     * @param Request $request La requête HTTP avec les données mises à jour
+     * @param int $id L'identifiant de l'utilisateur
+     * @return \Illuminate\Http\JsonResponse
      */
     public function update(Request $request, $id)
     {
@@ -296,7 +348,11 @@ class CompanyAdminController extends Controller
     }
 
     /**
-     * API: Supprime un administrateur entreprise (seulement s'il est company_admin).
+     * API : Supprime un administrateur entreprise.
+     * Vérifie que l'utilisateur est bien un company_admin avant suppression.
+     *
+     * @param int $id L'identifiant de l'utilisateur
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy($id)
     {

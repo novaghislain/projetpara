@@ -10,6 +10,12 @@
 </template>
 
 <script setup>
+/*
+ * Page : KnowledgeBase Show
+ * Role : Affiche le contenu complet d'un article de la base de connaissances
+ * Props :
+ *   article (Object) — Données de l'article à afficher
+ */
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 defineProps(['article'])
 </script>

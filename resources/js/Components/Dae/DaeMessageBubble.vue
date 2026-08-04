@@ -23,17 +23,37 @@
 </template>
 
 <script setup>
+/*
+ * Composant : DaeMessageBubble
+ * Description : Bulle de notification/message cliquable. Affiche un titre,
+ *               un sous-titre optionnel, une horodatage et un compteur.
+ *               Supporte les variantes info, warning, danger et success.
+ * Props :
+ *   type      (String, défaut 'info')    -- Variante : info, warning, danger, success
+ *   iconClass (String, défaut 'bi-info-circle') -- Classe de l'icône Bootstrap
+ *   title     (String, requis)           -- Titre de la bulle
+ *   subtitle  (String, défaut '')        -- Sous-titre optionnel
+ *   time      (String, défaut '')        -- Horodatage affiché
+ *   count     (Number, défaut undefined) -- Compteur de notifications
+ *   urgent    (Boolean, défaut false)    -- Affiche le badge d'urgence
+ * Événements :
+ *   click — Émis au clic sur la bulle
+ */
 defineProps({
-    type: { type: String, default: 'info' },  // info, warning, danger, success
-    iconClass: { type: String, default: 'bi-info-circle' },
-    title: { type: String, required: true },
-    subtitle: { type: String, default: '' },
-    time: { type: String, default: '' },
-    count: { type: Number, default: undefined },
-    urgent: { type: Boolean, default: false },
+    type: { type: String, default: 'info' },         // info, warning, danger, success
+    iconClass: { type: String, default: 'bi-info-circle' },  // Icône affichée
+    title: { type: String, required: true },          // Titre principal
+    subtitle: { type: String, default: '' },          // Texte secondaire
+    time: { type: String, default: '' },              // Horodatage
+    count: { type: Number, default: undefined },       // Compteur numérique
+    urgent: { type: Boolean, default: false },         // Indicateur d'urgence
 })
 
 const emit = defineEmits(['click'])
+
+/*
+ * onClick — Émet l'événement 'click' vers le parent.
+ */
 function onClick() { emit('click') }
 </script>
 

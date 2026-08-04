@@ -7,6 +7,36 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle représentant un budget comptable.
+ *
+ * Un budget est associé à un client (entreprise) et à un exercice fiscal.
+ * Il définit les montants prévus et réalisés, avec un suivi par lignes budgétaires.
+ * Le budget peut être créé et validé par des utilisateurs différents.
+ *
+ * @property int $id
+ * @property int|null $client_id Identifiant du client (entreprise)
+ * @property int|null $fiscal_year_id Identifiant de l'exercice fiscal
+ * @property string $name Nom du budget
+ * @property string $type Type de budget (fonctionnement, investissement, etc.)
+ * @property string $status Statut du budget (brouillon, actif, cloture)
+ * @property float $montant_prevu Montant prévu au budget
+ * @property float $montant_realise Montant réalisé
+ * @property string|null $notes Notes ou commentaires
+ * @property string|null $date_debut Date de début de la période budgétaire
+ * @property string|null $date_fin Date de fin de la période budgétaire
+ * @property int|null $created_by Identifiant de l'utilisateur créateur
+ * @property int|null $validated_by Identifiant du validateur
+ * @property string|null $validated_at Date de validation
+ *
+ * @property-read Client|null $client Client (entreprise) associé
+ * @property-read FiscalYear|null $fiscalYear Exercice fiscal associé
+ * @property-read \Illuminate\Database\Eloquent\Collection|AccountingBudgetLine[] $lines Lignes budgétaires
+ * @property-read User|null $createdBy Utilisateur créateur
+ * @property-read User|null $validatedBy Utilisateur validateur
+ *
+ * @table accounting_budgets
+ */
 class AccountingBudget extends Model
 {
     use SoftDeletes;
@@ -79,6 +109,26 @@ class AccountingBudget extends Model
     }
 }
 
+/**
+ * Modèle représentant une ligne budgétaire individuelle.
+ *
+ * Chaque ligne est rattachée à un budget et à un compte comptable.
+ * Elle définit le montant prévu et le montant réalisé pour une ligne
+ * budgétaire spécifique, permettant un suivi analytique détaillé.
+ *
+ * @property int $id
+ * @property int $budget_id Identifiant du budget parent
+ * @property int|null $account_id Identifiant du compte comptable
+ * @property string $label Libellé de la ligne budgétaire
+ * @property float $montant_prevu Montant prévu
+ * @property float $montant_realise Montant réalisé
+ * @property string|null $notes Notes additionnelles
+ *
+ * @property-read AccountingBudget $budget Budget parent
+ * @property-read AccountingAccount|null $account Compte comptable associé
+ *
+ * @table accounting_budget_lines
+ */
 class AccountingBudgetLine extends Model
 {
     use SoftDeletes;

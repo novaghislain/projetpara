@@ -6,6 +6,35 @@ use Illuminate\Database\Eloquent\Model;
 
 use App\Models\User;
 
+/**
+ * Modèle représentant une commande de service depuis le catalogue.
+ *
+ * Gère les commandes passées par les clients pour des services
+ * du catalogue. Chaque commande est liée à un service et à une
+ * catégorie, avec suivi des documents, messages et historique
+ * des statuts.
+ *
+ * @property int $id
+ * @property int|null $client_id Identifiant du client (utilisateur)
+ * @property int|null $service_id Identifiant du service commandé
+ * @property int|null $categorie_id Identifiant de la catégorie
+ * @property string $statut Statut de la commande
+ * @property string|null $date_commande Date de commande
+ * @property string|null $date_livraison Date de livraison
+ * @property float|null $montant_estime_fcfa Montant estimé
+ * @property array|null $form_data Données du formulaire (JSON)
+ * @property int|null $responsable_id Identifiant du responsable
+ *
+ * @property-read CatalogueService|null $service Service commandé
+ * @property-read CatalogueCategory|null $category Catégorie
+ * @property-read User|null $client Client (utilisateur)
+ * @property-read User|null $responsable Responsable
+ * @property-read \Illuminate\Database\Eloquent\Collection|CatalogueOrderDocument[] $documents Documents attachés
+ * @property-read \Illuminate\Database\Eloquent\Collection|CatalogueOrderMessage[] $messages Messages
+ * @property-read \Illuminate\Database\Eloquent\Collection|CatalogueOrderStatusHistory[] $statusHistory Historique des statuts
+ *
+ * @table catalogue_orders
+ */
 class CatalogueOrder extends Model
 {
     //

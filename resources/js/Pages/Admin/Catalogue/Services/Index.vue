@@ -1,14 +1,22 @@
 <script setup>
+/**
+ * Index.vue — Page d'administration du catalogue (services et modèles)
+ * Rôle : CRUD des catégories, services et modèles avec interface d'accordéon,
+ *        recherche en temps réel et modales de création/édition.
+ * Layout parent : GelLayout
+ */
 import { ref, reactive, computed } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 
+/* Props : liste des catégories reçue du backend */
 const props = defineProps({
     categories: { type: Array, required: true },
 });
 
+/* Récupération du token CSRF depuis le meta du document */
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
-// ── Search ──
+// ── Recherche locale (filtre par nom/description/type) ──
 const searchQuery = ref('');
 
 const filteredCategories = computed(() => {
@@ -26,7 +34,7 @@ const filteredCategories = computed(() => {
         .filter(cat => cat.services.length > 0);
 });
 
-// ── Accordion ──
+// ── Gestion de l'accordéon (ouverture/fermeture des catégories) ──
 const expandedCats = reactive({});
 
 function toggleCat(id) {
@@ -34,10 +42,10 @@ function toggleCat(id) {
 }
 
 function isExpanded(id) {
-    return expandedCats[id] !== false; // default: expanded
+    return expandedCats[id] !== false; // Par défaut : déplié
 }
 
-// Stats
+/* Statistiques calculées (catégories, services, modèles actifs) */
 const stats = computed(() => {
     let totalServices = 0, totalModeles = 0, totalCats = 0;
     props.categories.forEach(cat => {
@@ -51,7 +59,7 @@ const stats = computed(() => {
     return { totalServices, totalModeles, totalCats };
 });
 
-// ── Modals state ──
+// ── État des modales (création / édition) ──
 const showCatModal = ref(false);
 const showServiceModal = ref(false);
 const editingCat = ref(null);
@@ -59,7 +67,7 @@ const editingService = ref(null);
 const catProcessing = ref(false);
 const serviceProcessing = ref(false);
 
-// ── Category Form ──
+// ── Formulaire Catégorie ──
 const catForm = reactive({
     nom: '', icone: '', description: '', couleur: '', ordre: 0, actif: true,
 });
@@ -108,7 +116,7 @@ async function deleteCat(id) {
     }
 }
 
-// ── Service/Model Form ──
+// ── Formulaire Service / Modèle ──
 const serviceForm = reactive({
     category_id: '', nom: '', type: 'service', description: '',
     inclus_json: [], delai_jours: '', tarif_fcfa: '', tarif_type: 'fixe',
@@ -197,6 +205,7 @@ async function deleteService(id) {
     }
 }
 
+/* Fonctions utilitaires d'affichage (icône, libellé, classe CSS selon le type) */
 function typeIcon(type) {
     return type === 'modele' ? 'bi-box-seam' : 'bi-gear-wide-connected';
 }

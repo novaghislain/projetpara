@@ -1,3 +1,9 @@
+<!--
+ * Composant : Étape 3 du processus d'inscription — Plan d'abonnement
+ * Description : Choix entre abonnement mensuel ou annuel avec avantages comparatifs.
+ *              Étape 3 sur 5 du parcours d'onboarding.
+ * Utilisation : Page /register/company/step/3
+-->
 <template>
     <div class="onboarding-wrapper">
         <div class="onboarding-card">
@@ -47,11 +53,29 @@
                 </div>
             </div>
 
+            <div class="mt-4 p-3 border rounded" style="background-color: #f8f9fa;">
+                <h5 class="fw-bold mb-3" style="color:var(--gel-dark); font-size:16px;">Services souscrits</h5>
+                <p class="text-muted small mb-3">Sélectionnez les services que vous souhaitez utiliser sur votre espace entreprise.</p>
+                
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="check_accounting" v-model="wants_accounting">
+                    <label class="form-check-label" for="check_accounting">
+                        <strong>Services de Comptabilité</strong> (Journal, écritures, grand livre...)
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="check_secretary" v-model="wants_secretary">
+                    <label class="form-check-label" for="check_secretary">
+                        <strong>Services de Secrétariat</strong> (Agenda, relances, appels...)
+                    </label>
+                </div>
+            </div>
+
             <div v-if="error" class="alert alert-danger mt-3">{{ error }}</div>
 
             <div class="d-flex justify-content-between mt-4 pt-3 border-top">
                 <a href="/register/company/step/2" class="btn btn-outline-secondary">← Retour</a>
-                <button @click="submitStep3" class="btn btn-primary px-4" :disabled="!plan || submitting">
+                <button @click="submitStep3" class="btn btn-primary px-4" :disabled="!plan || submitting || (!wants_accounting && !wants_secretary)">
                     <span v-if="submitting" class="spinner-border spinner-border-sm me-2"></span>
                     Continuer →
                 </button>
@@ -63,15 +87,22 @@
 <script setup>
 import { ref } from 'vue';
 
-const plan = ref(null);
-const contractType = ref('standard');
+const plan = ref(null);               /* 'mensuel' ou 'annuel' */
+const contractType = ref('standard'); /* Type de contrat associé au plan */
+const wants_accounting = ref(true);   /* Choix des services */
+const wants_secretary = ref(false);
 const submitting = ref(false);
 const error = ref(null);
 
 const csrfToken = document.querySelector('meta[name=csrf-token]')?.content || '';
 
+/* Envoie le plan choisi au serveur et passe à l'étape suivante */
 async function submitStep3() {
     if (!plan.value) return;
+    if (!wants_accounting.value && !wants_secretary.value) {
+        error.value = "Vous devez sélectionner au moins un service.";
+        return;
+    }
     submitting.value = true;
     error.value = null;
 
@@ -83,7 +114,12 @@ async function submitStep3() {
                 'X-CSRF-TOKEN': csrfToken,
                 Accept: 'application/json',
             },
-            body: JSON.stringify({ plan: plan.value, contract_type: contractType.value }),
+            body: JSON.stringify({ 
+                plan: plan.value, 
+                contract_type: contractType.value,
+                wants_accounting: wants_accounting.value,
+                wants_secretary: wants_secretary.value
+            }),
         });
 
         const data = await res.json();

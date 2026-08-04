@@ -7,6 +7,19 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle Tenant - Locataire / entité multi-entreprise (niveau supérieur).
+ *
+ * Table associée : 'tenants' (convention Laravel).
+ * Représente une organisation locataire du système avec ses propres
+ * paramètres : devise, taux de TVA par défaut, exercice fiscal, etc.
+ * Relations :
+ * - users() : a plusieurs utilisateurs (User).
+ * - chartAccounts() : a plusieurs plans comptables (ChartAccount).
+ * - journals() : a plusieurs journaux comptables (Journal).
+ * - accountingJournals() : a plusieurs journaux (AccountingJournal).
+ * - accountingAccounts() : a plusieurs comptes comptables (AccountingAccount).
+ */
 class Tenant extends Model
 {
     use SoftDeletes;

@@ -1,3 +1,10 @@
+<!--
+ * Composant : Bilan comptable
+ * Description : Affiche le bilan comptable (Actif / Passif) à une date d'arrêté donnée.
+ *              Présente les rubriques et sous-rubriques avec leurs montants
+ *              et vérifie l'équilibre du bilan.
+ * Utilisation : Page /rapports/bilan
+-->
 <template>
     <div class="container-fluid py-3">
         <div class="d-flex align-items-center gap-2 mb-3">
@@ -129,22 +136,26 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 
-const data = ref(null)
+const data = ref(null)            /* Données du bilan chargées depuis l'API */
 const loading = ref(true)
 const error = ref(null)
-const asOfDate = ref(new Date().toISOString().split('T')[0])
+const asOfDate = ref(new Date().toISOString().split('T')[0])  /* Date d'arrêté par défaut : aujourd'hui */
 
+/* Totaux calculés pour la vérification d'équilibre */
 const totalActif = computed(() => data.value?.total_actif || data.value?.totalAssets || 0)
 const totalPassif = computed(() => data.value?.total_passif || data.value?.totalLiabilities || 0)
 const isBalancedBilan = computed(() => Math.abs(totalActif.value - totalPassif.value) < 0.01)
 
+/* Formate un nombre en francs CFA */
 const fmt = (v) => new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(v || 0) + ' F'
 const csrf = computed(() => document.querySelector('meta[name=csrf-token]')?.content || '')
+/* Fonction utilitaire pour les appels API avec en-têtes communs */
 const api = (path, opts = {}) => fetch(path, {
     headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf.value, ...opts.headers },
     ...opts,
 })
 
+/* Charge les données du bilan pour la date d'arrêté sélectionnée */
 async function loadData() {
     loading.value = true; error.value = null
     try {
@@ -155,6 +166,7 @@ async function loadData() {
     } catch (e) { error.value = e.message } finally { loading.value = false }
 }
 
+/* Exporte le bilan au format PDF */
 function exportPdf() {
     window.open(`/api/reports/financial-statements/balance-sheet/pdf?as_of_date=${asOfDate.value}`, '_blank')
 }

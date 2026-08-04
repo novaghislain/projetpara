@@ -45,10 +45,10 @@ class EmecefService
      * Émet une facture normalisée auprès de la DGI (e-MECeF).
      * Utilise le NIM du client (per-client), pas un NIM global.
      *
-     * @param  ErpInvoice  $invoice  La facture à émettre
+     * @param  \Illuminate\Database\Eloquent\Model  $invoice  La facture à émettre
      * @return array  ['success' => bool, 'error'? => string, 'nim'? => string, 'compteur'? => string]
      */
-    public function emettreFactureNormalisee(ErpInvoice $invoice): array
+    public function emettreFactureNormalisee($invoice): array
     {
         // Vérifier que le client a une configuration e-MECeF complète (NIM + mot de passe)
         $client = $invoice->client;
@@ -168,7 +168,7 @@ class EmecefService
      * @param  ErpInvoice  $invoice  La facture à annuler
      * @return array  ['success' => bool, 'error'? => string]
      */
-    public function annulerFacture(ErpInvoice $invoice): array
+    public function annulerFacture($invoice): array
     {
         if (!$invoice->emecef_nim) {
             return ['success' => false, 'error' => 'Facture non émise à la DGI.'];
@@ -269,10 +269,10 @@ class EmecefService
      * Méthode statique préservée pour compatibilité avec l'ancien système.
      * Utilisée uniquement pour le rendu PDF, pas pour l'envoi à la DGI.
      *
-     * @param  ErpInvoice  $invoice  La facture à certifier
-     * @return ErpInvoice  La facture mise à jour avec les champs e-MECeF
+     * @param  $invoice  La facture à certifier
+     * @return  La facture mise à jour avec les champs e-MECeF
      */
-    public static function certifyInvoice(ErpInvoice $invoice): ErpInvoice
+    public static function certifyInvoice($invoice)
     {
         if ($invoice->emecef_statut === 'emise' && !empty($invoice->emecef_nim)) {
             return $invoice;

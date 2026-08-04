@@ -1,4 +1,14 @@
 <script setup>
+/*
+ * JournalForm.vue - Formulaire de saisie d'écriture comptable (GEL)
+ *
+ * Permet de créer une nouvelle écriture comptable avec :
+ *   - Type de journal (recette, dépense, banque, OD, achat, vente)
+ *   - Date, référence et description
+ *   - Lignes d'écriture (compte, libellé, débit, crédit) dynamiques
+ * Le formulaire valide que le total des débits égale le total des crédits
+ * avant soumission (principe de la partie double).
+ */
 import { ref, computed, onMounted } from 'vue';
 import GelLayout from '../../../Layouts/GelLayout.vue';
 import { authStore } from '../../../stores/auth';
@@ -13,8 +23,10 @@ const loading = ref(true);
 const submitting = ref(false);
 const error = ref(null);
 
+// ID client résolu : priorité à la prop, fallback sur le store auth
 const effectiveClientId = computed(() => props.clientId || authStore.user?.client_id || null);
 
+// Formulaire principal avec lignes d'écriture
 const form = ref({
     client_id: effectiveClientId.value,
     journal_type: 'od',
@@ -24,6 +36,7 @@ const form = ref({
     lines: [{ account_id: '', label: '', debit: '', credit: '' }],
 });
 
+// Chargement des comptes pour le sélecteur de ligne
 const fetchAccounts = async () => {
     if (!effectiveClientId.value) { error.value = 'Aucun client sélectionné.'; loading.value = false; return; }
     try {
@@ -32,27 +45,33 @@ const fetchAccounts = async () => {
     } catch (e) { /* */ }
 };
 
+// Ajout d'une ligne d'écriture supplémentaire
 const addLine = () => {
     form.value.lines.push({ account_id: '', label: '', debit: '', credit: '' });
 };
 
+// Suppression d'une ligne (min 1 ligne obligatoire)
 const removeLine = (idx) => {
     if (form.value.lines.length <= 1) return;
     form.value.lines.splice(idx, 1);
 };
 
+// Total des débits de toutes les lignes
 const totalDebit = () => {
     return form.value.lines.reduce((sum, l) => sum + (parseFloat(l.debit) || 0), 0);
 };
 
+// Total des crédits de toutes les lignes
 const totalCredit = () => {
     return form.value.lines.reduce((sum, l) => sum + (parseFloat(l.credit) || 0), 0);
 };
 
+// Vérification d'équilibre débit = crédit (tolérance 0.01)
 const isBalanced = () => {
     return Math.abs(totalDebit() - totalCredit()) < 0.01;
 };
 
+// Soumission de l'écriture comptable avec validation d'équilibre
 const submitForm = async () => {
     if (!isBalanced()) {
         alert('Le total des débits doit être égal au total des crédits.');
@@ -92,6 +111,7 @@ const submitForm = async () => {
     }
 };
 
+// Retour à la page précédente
 const goBack = () => { window.history.back(); };
 
 onMounted(async () => {

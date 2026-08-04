@@ -5,8 +5,23 @@ namespace App\Http\Controllers\Modules\Dae;
 use App\Models\Dae\DaePersonnelDossier;
 use Illuminate\Http\Request;
 
+/**
+ * Contrôleur de gestion du personnel du module DAE.
+ *
+ * Permet la gestion des dossiers du personnel avec suivi
+ * des effectifs, départements et statuts.
+ */
 class DaePersonnelController extends BaseDaeController
 {
+    /**
+     * Liste paginée du personnel avec filtres.
+     *
+     * Filtres disponibles : statut, département, recherche
+     * (nom, prénom, email, poste).
+     *
+     * @param Request $request La requête HTTP avec les paramètres de filtre
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
+     */
     public function index(Request $request)
     {
         $query = DaePersonnelDossier::orderBy('nom')->orderBy('prenom');
@@ -29,6 +44,12 @@ class DaePersonnelController extends BaseDaeController
         return view('app', ['page' => 'dae-personnel']);
     }
 
+    /**
+     * Crée un nouveau dossier personnel.
+     *
+     * @param Request $request La requête HTTP avec les données du personnel
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -55,6 +76,12 @@ class DaePersonnelController extends BaseDaeController
         return redirect()->route('dae.personnel.index')->with('success', 'Membre ajouté.');
     }
 
+    /**
+     * Affiche un dossier personnel spécifique.
+     *
+     * @param int $id L'identifiant du membre du personnel
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
+     */
     public function show($id)
     {
         $personne = DaePersonnelDossier::with('client')->findOrFail($id);
@@ -62,6 +89,13 @@ class DaePersonnelController extends BaseDaeController
         return view('app', ['page' => 'dae-personnel-show']);
     }
 
+    /**
+     * Met à jour un dossier personnel existant.
+     *
+     * @param Request $request La requête HTTP avec les données de mise à jour
+     * @param int $id L'identifiant du membre du personnel
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function update(Request $request, $id)
     {
         $personne = DaePersonnelDossier::findOrFail($id);
@@ -88,6 +122,12 @@ class DaePersonnelController extends BaseDaeController
         return redirect()->route('dae.personnel.index')->with('success', 'Membre mis à jour.');
     }
 
+    /**
+     * Supprime un dossier personnel.
+     *
+     * @param int $id L'identifiant du membre à supprimer
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function destroy($id)
     {
         $personne = DaePersonnelDossier::findOrFail($id);
@@ -97,6 +137,15 @@ class DaePersonnelController extends BaseDaeController
         return redirect()->route('dae.personnel.index')->with('success', 'Membre supprimé.');
     }
 
+    /**
+     * Retourne les changements récents et les statistiques du personnel.
+     *
+     * Fournit l'effectif actif, les effectifs par département
+     * et les 5 derniers membres ajoutés.
+     *
+     * @param Request $request La requête HTTP
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function changementsRecent(Request $request)
     {
         $query = DaePersonnelDossier::whereIn('statut', ['actif', 'conge'])->where('client_id', $this->getClientId($request));

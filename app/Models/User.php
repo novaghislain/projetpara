@@ -10,6 +10,24 @@ use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use App\Traits\Auditable;
 
+/**
+ * Modèle User - Utilisateur de la plateforme.
+ *
+ * Table associée : 'users'.
+ * Modèle central d'authentification avec support multi-entreprise,
+ * permissions Spatie/Legacy, rôles, onboarding, et double facteur.
+ * Relations principales :
+ * - roleModel() : appartient à un rôle (Role) via 'role_id' (legacy).
+ * - rolePermissions() : permissions héritées du rôle (HasManyThrough).
+ * - directPermissions() / directPermissionModels() : permissions directes (UserPermission).
+ * - activeClient() : client actif (Client) sélectionné en session.
+ * - userClients() : toutes les entreprises rattachées (UserClient).
+ * - pole() : appartient à un pôle (Pole).
+ * - tenant() : appartient à un tenant (Tenant).
+ * - client() : appartient à un client principal (Client).
+ * - entreprise() : appartient à une entreprise GEL (Entreprise).
+ * - assignedMissions(), createdMissions(), missionCollaborations() : missions.
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -21,7 +39,9 @@ class User extends Authenticatable
 
     protected $fillable = [
         'tenant_id',
+        'account_type',
         'name',
+        'prenom',
         'email',
         'password',
         'role',
@@ -37,6 +57,11 @@ class User extends Authenticatable
         'photo',
         'role_secretaire',
         'clients_assignes',
+        'onboarding_token',
+        'onboarding_completed',
+        'wants_accounting',
+        'wants_secretary',
+        'email_verified_at',
         'two_factor_secret',
         'two_factor_recovery_codes',
         'two_factor_confirmed_at',
@@ -48,6 +73,15 @@ class User extends Authenticatable
         'suspended_reason',
         'must_change_password',
         'cabinet_id',
+        'entreprise_id',
+        'workspace_type',
+        'account_context',
+        'active_account_context',
+        'trial_ends_at',
+        'subscription_status',
+        'plan_id',
+        'personal_company_name',
+        'personal_industry',
     ];
 
     protected $hidden = [
@@ -73,6 +107,11 @@ class User extends Authenticatable
             'suspended_at' => 'datetime',
             'last_login_at' => 'datetime',
             'login_count' => 'integer',
+            'onboarding_completed' => 'boolean',
+            'wants_accounting' => 'boolean',
+            'wants_secretary' => 'boolean',
+            'trial_ends_at' => 'datetime',
+            'account_context' => 'array',
         ];
     }
 
@@ -216,6 +255,9 @@ class User extends Authenticatable
      */
     public function isComptable(): bool
     {
+        if ($this->role === 'comptable') {
+            return is_null($this->client_id) || is_null($this->entreprise_id);
+        }
         if ($this->roleModel && $this->roleModel->slug === 'comptable') {
             return is_null($this->client_id);
         }
@@ -230,6 +272,17 @@ class User extends Authenticatable
     {
         if ($this->roleModel && $this->roleModel->slug === 'client') return true;
         if ($this->role === 'client') return true;
+        return false;
+    }
+
+    /**
+     * Vérifie si l'utilisateur est un secrétaire.
+     */
+    public function isSecretaire(): bool
+    {
+        if ($this->role === 'secretaire' || $this->role === 'secretary' || $this->role_secretaire) return true;
+        if ($this->roleModel && $this->roleModel->slug === 'secretaire') return true;
+        if ($this->hasRole('secretaire') || $this->hasRole('secretary')) return true;
         return false;
     }
 
@@ -257,6 +310,66 @@ class User extends Authenticatable
     public function isSuspended(): bool
     {
         return $this->is_suspended ?? false;
+    }
+
+    /**
+     * Vérifie si c'est un secrétaire indépendant (autonome). [Modèle 3A]
+     */
+    public function isAutonomousSecretary(): bool
+    {
+        return $this->workspace_type === 'individuel';
+    }
+
+    /**
+     * Vérifie si c'est un comptable indépendant (autonome). [Modèle 3B]
+     */
+    public function isAutonomousAccountant(): bool
+    {
+        return $this->workspace_type === 'individuel_comptable';
+    }
+
+    /**
+     * Vérifie si c'est un personnel du pool GEL SABINET. [Modèle 2]
+     */
+    public function isGelPoolStaff(): bool
+    {
+        return $this->workspace_type === 'gel_pool';
+    }
+
+    /**
+     * Retourne vrai si l'utilisateur a plusieurs contextes de travail actifs.
+     * Ex : comptable invité par une entreprise (Modèle 1) ET indépendant (Modèle 3).
+     */
+    public function hasMultipleContexts(): bool
+    {
+        $contexts = $this->account_context ?? [];
+        return count($contexts) > 1;
+    }
+
+    /**
+     * Retourne la liste des contextes disponibles pour cet utilisateur.
+     * Structure : [['key' => 'model1', 'label' => 'Votre entreprise'], ...]
+     */
+    public function getAvailableContexts(): array
+    {
+        $contexts = $this->account_context ?? [];
+        $labels = [
+            'model1'             => 'Accès Entreprise (invité)',
+            'model2_gel_pool'    => 'Personnel GEL SABINET',
+            'model3_secretaire'  => 'Espace Secrétariat Indépendant',
+            'model3_comptable'   => 'Espace Comptable Indépendant',
+        ];
+        return array_map(fn($key) => ['key' => $key, 'label' => $labels[$key] ?? $key], $contexts);
+    }
+
+    /**
+     * Vérifie si l'abonnement (secrétaire ou comptable individuel) est actif ou en essai valide.
+     */
+    public function hasActiveSubscription(): bool
+    {
+        if ($this->subscription_status === 'active') return true;
+        if ($this->subscription_status === 'trial' && $this->trial_ends_at && $this->trial_ends_at->isFuture()) return true;
+        return false;
     }
 
     // ─── Vérifications de permissions ───────────────────────────────────
@@ -477,8 +590,8 @@ class User extends Authenticatable
      */
     public function switchToClient(int $clientId): bool
     {
-        // Super-admins et comptables peuvent basculer sur n'importe quel client
-        if ($this->isSuperAdmin() || $this->isComptable()) {
+        // Super-admins, comptables et secrétaires peuvent basculer sur n'importe quel client
+        if ($this->isSuperAdmin() || $this->isComptable() || $this->isSecretaire()) {
             $client = \App\Models\Client::find($clientId);
             if (!$client) return false;
 
@@ -577,6 +690,53 @@ class User extends Authenticatable
     public function scopeByRoleSlug($query, string $slug)
     {
         return $query->whereHas('roleModel', fn($q) => $q->where('slug', $slug));
+    }
+
+    // ─── Relations GEL / Onboarding ─────────────────────────────────────
+
+    /**
+     * Entreprise (pour les propriétaires d'entreprise).
+     */
+    public function entreprise()
+    {
+        return $this->belongsTo(\App\Models\Gel\Entreprise::class, 'entreprise_id');
+    }
+
+    /**
+     * Vérifie si l'utilisateur est propriétaire d'une entreprise.
+     */
+    public function estProprietaireEntreprise(): bool
+    {
+        return $this->account_type === 'entreprise' && !is_null($this->entreprise_id);
+    }
+
+    /**
+     * Vérifie si l'utilisateur a complété son onboarding.
+     * Retourne true pour les utilisateurs legacy (account_type = client|internal|super_admin).
+     */
+    public function hasCompletedOnboarding(): bool
+    {
+        // Legacy : ancien type de compte → pas d'onboarding GEL nécessaire
+        if (in_array($this->account_type, ['client', 'internal', 'super_admin', null])) {
+            return true;
+        }
+
+        // Le flag onboarding_completed est la source de vérité.
+        // Les fallbacks entreprise_id/cabinet_id ne s'appliquent que si le flag
+        // n'a jamais été renseigné (comptes legacy) — jamais quand il est
+        // explicitement false (entreprise réinitialisée via onboarding:reset).
+        return $this->onboarding_completed === true
+            || ($this->onboarding_completed === null
+                && (($this->account_type === 'entreprise' && $this->entreprise_id)
+                    || ($this->account_type === 'cabinet' && $this->cabinet_id)));
+    }
+
+    /**
+     * Vérifie si l'utilisateur est un comptable/expert-comptable (compte cabinet).
+     */
+    public function isAccountant(): bool
+    {
+        return $this->account_type === 'cabinet' || !empty($this->cabinet_id);
     }
 
     // ─── Relations existantes ───────────────────────────────────────────

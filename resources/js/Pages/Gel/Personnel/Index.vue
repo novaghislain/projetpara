@@ -1,30 +1,43 @@
+/*
+ * Composant : Personnel/Index.vue
+ * Description : Page de gestion du personnel GEL.
+ *              Permet de creer, modifier, supprimer des comptes
+ *              pour les membres de l'equipe (directeurs, responsables
+ *              de pole, collaborateurs, secretaires, comptables).
+ */
 <script setup>
 import { ref, onMounted } from 'vue';
-import GelLayout from '../../../Layouts/GelLayout.vue';
+import GelLayout from '../../../Layouts/GelLayout.vue';   /* Layout principal du module GEL */
 
-const staff = ref([]);
-const roles = ref([]);
-const loading = ref(true);
-const error = ref(null);
-const submitting = ref(false);
+/* ─── Donnees ─── */
+const staff = ref([]);      /* Liste du personnel chargee depuis l'API */
+const roles = ref([]);      /* Liste des roles disponibles */
+const loading = ref(true);  /* Indicateur de chargement */
+const error = ref(null);    /* Message d'erreur */
+const submitting = ref(false); /* Indicateur de soumission du formulaire */
 
-const showModal = ref(false);
-const isEditing = ref(false);
-const editingId = ref(null);
+/* ─── Gestion de la modale ─── */
+const showModal = ref(false);     /* Visibilite de la modale */
+const isEditing = ref(false);     /* Mode edition ou creation */
+const editingId = ref(null);      /* Identifiant du membre en cours d'edition */
 
+/* ─── Formulaire ─── */
 const form = ref({
-    name: '',
-    email: '',
-    password: '',
-    role_id: '',
-    fonction: '',
-    phone: '',
+    name: '',       /* Nom complet */
+    email: '',      /* Adresse email */
+    password: '',   /* Mot de passe */
+    role_id: '',    /* Identifiant du role */
+    fonction: '',   /* Intitule du poste */
+    phone: '',      /* Numero de telephone */
 });
 
+/* ─── Reinitialisation du formulaire ─── */
 function resetForm() {
     form.value = { name: '', email: '', password: '', role_id: '', fonction: '', phone: '' };
 }
 
+/* ─── Formateurs ─── */
+/* Retourne la classe CSS du badge en fonction du slug du role */
 const roleBadgeClass = (roleSlug) => {
     const map = {
         director: 'gel-badge--danger',
@@ -36,6 +49,7 @@ const roleBadgeClass = (roleSlug) => {
     return map[roleSlug] || 'gel-badge--grey';
 };
 
+/* Retourne l'icone Bootstrap en fonction du slug du role */
 const roleIcon = (roleSlug) => {
     const map = {
         director: 'bi-person-fill-gear',
@@ -47,7 +61,7 @@ const roleIcon = (roleSlug) => {
     return map[roleSlug] || 'bi-person-badge';
 };
 
-// ─── API ──
+/* ─── API ──
 async function fetchStaff() {
     loading.value = true; error.value = null;
     try {
@@ -60,6 +74,7 @@ async function fetchStaff() {
     finally { loading.value = false; }
 }
 
+/* Envoi du formulaire (creation ou mise a jour) */
 async function submitForm() {
     submitting.value = true;
     try {
@@ -84,6 +99,7 @@ async function submitForm() {
     finally { submitting.value = false; }
 }
 
+/* Suppression d'un membre du personnel */
 async function deleteStaff(id) {
     if (!confirm('Confirmer la suppression ?')) return;
     try {
@@ -97,6 +113,7 @@ async function deleteStaff(id) {
     } catch (e) { alert('Erreur: ' + e.message); }
 }
 
+/* Activation / desactivation d'un compte */
 async function toggleStatus(id, currentStatus) {
     try {
         const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
@@ -109,10 +126,12 @@ async function toggleStatus(id, currentStatus) {
     } catch (e) { alert('Erreur: ' + e.message); }
 }
 
+/* Ouverture de la modale en mode creation */
 function openCreateModal() {
     resetForm(); isEditing.value = false; editingId.value = null; showModal.value = true;
 }
 
+/* Ouverture de la modale en mode edition */
 function openEditModal(user) {
     form.value = {
         name: user.name, email: user.email, password: '',

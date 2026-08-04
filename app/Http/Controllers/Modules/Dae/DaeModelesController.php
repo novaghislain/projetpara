@@ -5,8 +5,22 @@ namespace App\Http\Controllers\Modules\Dae;
 use App\Models\Dae\DaeModeleCourrier;
 use Illuminate\Http\Request;
 
+/**
+ * Contrôleur de gestion des modèles de courriers du module DAE.
+ *
+ * Permet la création, modification et génération de modèles
+ * de courriers avec substitution de variables.
+ */
 class DaeModelesController extends BaseDaeController
 {
+    /**
+     * Liste paginée des modèles avec filtres.
+     *
+     * Filtres disponibles : type, categorie, recherche (nom, objet_defaut).
+     *
+     * @param Request $request La requête HTTP avec les paramètres de filtre
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
+     */
     public function index(Request $request)
     {
         $query = DaeModeleCourrier::query()->orderBy('nom');
@@ -26,6 +40,12 @@ class DaeModelesController extends BaseDaeController
         return view('app', ['page' => 'dae-modeles']);
     }
 
+    /**
+     * Crée un nouveau modèle de courrier.
+     *
+     * @param Request $request La requête HTTP avec les données du modèle
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -44,6 +64,13 @@ class DaeModelesController extends BaseDaeController
         return redirect()->route('dae.modeles.index')->with('success', 'Modèle créé.');
     }
 
+    /**
+     * Met à jour un modèle de courrier existant.
+     *
+     * @param Request $request La requête HTTP avec les données de mise à jour
+     * @param int $id L'identifiant du modèle
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function update(Request $request, $id)
     {
         $modele = DaeModeleCourrier::findOrFail($id);
@@ -63,6 +90,12 @@ class DaeModelesController extends BaseDaeController
         return redirect()->route('dae.modeles.index')->with('success', 'Modèle mis à jour.');
     }
 
+    /**
+     * Supprime un modèle de courrier.
+     *
+     * @param int $id L'identifiant du modèle à supprimer
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function destroy($id)
     {
         $modele = DaeModeleCourrier::findOrFail($id);
@@ -72,6 +105,15 @@ class DaeModelesController extends BaseDaeController
         return redirect()->route('dae.modeles.index')->with('success', 'Modèle supprimé.');
     }
 
+    /**
+     * Génère le contenu d'un modèle avec substitution des variables.
+     *
+     * Remplace les placeholders {{variable}} par les valeurs fournies.
+     *
+     * @param Request $request La requête HTTP avec les variables de substitution
+     * @param int $id L'identifiant du modèle
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function generer(Request $request, $id)
     {
         $modele = DaeModeleCourrier::findOrFail($id);

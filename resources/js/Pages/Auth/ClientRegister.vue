@@ -115,9 +115,37 @@
     </div>
 </template>
 
-<script setup>
+/*
+ * ClientRegister.vue - Page d'inscription entreprise (portail client).
+ *
+ * Role     : Permet a un nouvel utilisateur de creer un compte lie a une
+ *            entreprise existante en utilisant un "code entreprise" fourni
+ *            par son employeur. Inscription en une seule etape (pas de wizard).
+ * Props    : Aucune (composant autonome).
+ * Emits    : Aucun (redirection HTTP classique apres succes).
+ * Store    : Aucun (requetes fetch directes).
+ *
+ * Fonctionnalites :
+ * - Saisie du code entreprise avec verification instantanee via API
+ *   (appel GET /api/company/code/lookup) et auto-recherche apres 500 ms
+ * - Champs : nom, email, telephone, mot de passe + confirmation
+ * - Validation cote client avec affichage des erreurs champ par champ
+ * - Appel POST /inscription-entreprise avec jeton CSRF
+ * - Affichage d'un etat de succes apres creation du compte
+ * - Redirection vers le dashboard ou l'URL fournie par le serveur
+ *
+ * Flux type :
+ *   1. L'utilisateur saisit le code entreprise -> lookup automatique
+ *   2. Si le code est valide, le nom de l'entreprise s'affiche
+ *   3. L'utilisateur remplit les champs du formulaire
+ *   4. Soumission POST vers /inscription-entreprise
+ *   5. Succes -> message de reussite + redirection
+ *   6. Erreur -> affichage des erreurs de validation
+ */
+
 import { ref, reactive } from 'vue'
 
+// --- Etat du formulaire ---
 const form = reactive({
     client_code: '',
     name: '',
@@ -127,17 +155,23 @@ const form = reactive({
     password_confirmation: '',
 })
 
-const errors = reactive({})
-const error = ref(null)
-const sending = ref(false)
-const lookingUp = ref(false)
-const codeValid = ref(null)
-const companyName = ref('')
-const success = ref(null)
-const redirectUrl = ref('/dashboard')
+// --- Etats reactifs ---
+const errors = reactive({})        // Erreurs de validation retournees par le serveur
+const error = ref(null)            // Message d'erreur general
+const sending = ref(false)         // Indicateur d'envoi du formulaire
+const lookingUp = ref(false)       // Indicateur de recherche du code entreprise
+const codeValid = ref(null)        // true = code valide, false = invalide, null = pas encore verifie
+const companyName = ref('')        // Nom de l'entreprise associee au code
+const success = ref(null)          // Message de succes apres inscription
+const redirectUrl = ref('/dashboard')  // URL de redirection apres succes
 
-let lookupTimeout = null
+let lookupTimeout = null           // Timer pour l'auto-recherche differee du code
 
+/**
+ * lookupCode - Verifie la validite du code entreprise aupres de l'API.
+ * Appele manuellement via le bouton "Verifier" ou automatiquement apres
+ * 500 ms d'inactivite sur le champ du code.
+ */
 async function lookupCode() {
     const code = form.client_code.trim().toUpperCase()
     if (!code) return
@@ -157,23 +191,32 @@ async function lookupCode() {
         }
     } catch {
         codeValid.value = null
-        errors.client_code = 'Erreur de vérification du code'
+        errors.client_code = 'Erreur de verification du code'
     } finally {
         lookingUp.value = false
     }
 }
 
+/**
+ * onCodeInput - Nettoie la saisie du code (majuscules) et declenche
+ * une auto-recherche differee de 500 ms si la longueur >= 6 caracteres.
+ */
 function onCodeInput() {
     form.client_code = form.client_code.toUpperCase()
     codeValid.value = null
     companyName.value = ''
     clearTimeout(lookupTimeout)
-    // Auto lookup after 500ms pause
+    // Auto-recherche apres 500 ms d'inactivite
     if (form.client_code.trim().length >= 6) {
         lookupTimeout = setTimeout(lookupCode, 500)
     }
 }
 
+/**
+ * submitForm - Soumet le formulaire d'inscription au serveur.
+ * En cas de succes, affiche le message de confirmation et redirige.
+ * En cas d'erreur, affiche les erreurs de validation champ par champ.
+ */
 async function submitForm() {
     sending.value = true
     error.value = null

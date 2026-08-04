@@ -8,6 +8,12 @@ use App\Services\AuditTrailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur pour la gestion des exercices comptables.
+ *
+ * Permet de lister, créer, afficher, modifier, clôturer, réouvrir,
+ * verrouiller et supprimer les exercices comptables d'un client.
+ */
 class FiscalYearController extends BaseCompanyController
 {
     /**

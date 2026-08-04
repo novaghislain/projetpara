@@ -1,14 +1,26 @@
 ﻿<script setup>
+/*
+ * Services.vue — Services sous licence de l'entreprise
+ *
+ * Affiche la liste des services / licences actifs et expirés
+ * de l'entreprise connectée. Chaque service est présenté
+ * sous forme de carte avec sa clé de licence, ses dates
+ * de validité, et une barre de progression de la durée restante.
+ */
+
 import { ref, computed, onMounted } from 'vue';
 import CompanyLayout from '../../Layouts/CompanyLayout.vue';
 
-const company = ref(null);
-const licenses = ref([]);
-const loading = ref(true);
-const error = ref(null);
+// ── État réactif ─────────────────────────────────────────────────
+const company = ref(null);   // Informations de l'entreprise
+const licenses = ref([]);    // Liste des licences / services
+const loading = ref(true);   // État de chargement
+const error = ref(null);     // Message d'erreur éventuel
 
+// Identifiant client injecté côté serveur
 const clientId = window.__CLIENT_ID__;
 
+// ── Chargement des données ───────────────────────────────────────
 const loadData = async () => {
     if (!clientId) { loading.value = false; return; }
     try {
@@ -24,12 +36,16 @@ const loadData = async () => {
     }
 };
 
+// ── Helpers d'affichage ──────────────────────────────────────────
+// Formate une date ISO au format lisible français (ex: "12 janvier 2025")
 const formatDate = (dateStr) => {
     if (!dateStr) return '';
     const d = new Date(dateStr);
     return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
 };
 
+// Calcule le pourcentage de progression entre la date de début et de fin
+// Utile pour la barre de validité visible sur chaque licence active.
 const progressPct = (lic) => {
     if (!lic.start_date || !lic.end_date) return 0;
     const start = new Date(lic.start_date).getTime();
@@ -40,6 +56,7 @@ const progressPct = (lic) => {
     return Math.round(((now - start) / (end - start)) * 100);
 };
 
+// Lancement du chargement au montage du composant
 onMounted(loadData);
 </script>
 

@@ -1,14 +1,26 @@
 <script setup>
+/*
+ * Composant Gestion des Congés
+ * Permet de :
+ *   - Visualiser la liste des demandes de congé avec leur statut
+ *   - Voir un récapitulatif (en attente / approuvés / rejetés)
+ *   - Créer une nouvelle demande via un modal
+ *   - Annuler une demande en attente
+ * Calcule automatiquement la durée en jours à partir des dates saisies.
+ */
+
 import { ref, computed, onMounted } from 'vue';
 import CompanyLayout from '../../../Layouts/CompanyLayout.vue';
 import { authStore } from '../../../stores/auth';
 
+/* État réactif : liste des congés, UI de chargement et modal */
 const leaves = ref([]);
 const loading = ref(true);
 const error = ref(null);
 const submitting = ref(false);
 const showCreateModal = ref(false);
 
+/* Formulaire de création d'une demande de congé */
 const form = ref({
     type: 'conge_paye',
     date_debut: '',
@@ -16,6 +28,7 @@ const form = ref({
     motif: '',
 });
 
+/* Récupération de toutes les demandes de congé */
 const fetchLeaves = async () => {
     loading.value = true;
     error.value = null;
@@ -30,6 +43,7 @@ const fetchLeaves = async () => {
     }
 };
 
+/* Correspondance statut -> classe Bootstrap pour le badge */
 const statusBadgeClass = (status) => {
     const map = {
         en_attente: 'bg-warning text-dark',
@@ -40,6 +54,7 @@ const statusBadgeClass = (status) => {
     return map[status] || 'bg-secondary';
 };
 
+/* Calcul du nombre de jours entre date_debut et date_fin */
 const dureeJours = computed(() => {
     if (!form.value.date_debut || !form.value.date_fin) return 0;
     const debut = new Date(form.value.date_debut);
@@ -48,6 +63,7 @@ const dureeJours = computed(() => {
     return Math.max(0, Math.ceil(diff / (1000 * 3600 * 24)) + 1);
 });
 
+/* Soumission d'une nouvelle demande de congé */
 const submitLeaveRequest = async () => {
     submitting.value = true;
     try {
@@ -71,6 +87,7 @@ const submitLeaveRequest = async () => {
     }
 };
 
+/* Annulation d'une demande de congé (uniquement si en attente) */
 const cancelLeave = async (id) => {
     if (!confirm('Confirmer l\'annulation de cette demande ?')) return;
     try {
@@ -85,6 +102,7 @@ const cancelLeave = async (id) => {
     }
 };
 
+/* Chargement initial au montage */
 onMounted(fetchLeaves);
 </script>
 

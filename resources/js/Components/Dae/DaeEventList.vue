@@ -24,10 +24,21 @@
 </template>
 
 <script setup>
+/*
+ * Composant : DaeEventList
+ * Description : Liste d'événements du jour. Chaque événement affiche son heure,
+ *               son titre et son type avec une icône et une couleur de bordure.
+ * Props :
+ *   events (Array, défaut []) -- Liste d'événements ({ id, title, type, time, color })
+ */
 defineProps({
     events: { type: Array, default: () => [] },
 })
 
+/*
+ * typeIcon — Retourne l'icône Bootstrap correspondant au type d'événement.
+ * Types supportés : rdv, reunion, appel, echeance, autre.
+ */
 function typeIcon(type) {
     return ({ rdv: 'bi-person', reunion: 'bi-people', appel: 'bi-telephone', echeance: 'bi-alarm', autre: 'bi-calendar' })[type] || 'bi-calendar'
 }

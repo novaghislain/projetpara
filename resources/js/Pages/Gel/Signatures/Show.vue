@@ -25,6 +25,13 @@
     </GelLayout>
 </template>
 <script setup>
+/* ═══════════════════════════════════════════════════════
+   Signatures / Show — Détail d'une signature électronique
+   avec les informations du signataire et le statut.
+   ═══════════════════════════════════════════════════════ */
+
 import GelLayout from '../../../Layouts/GelLayout.vue'
+
+/* ─── Props — signature complète ─── */
 defineProps({ signature: { type: Object, required: true } })
 </script>

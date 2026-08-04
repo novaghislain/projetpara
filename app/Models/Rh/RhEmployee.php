@@ -5,6 +5,21 @@ namespace App\Models\Rh;
 use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle RhEmployee - Employé (ressource humaine).
+ *
+ * Table associée : 'rh_employees' (convention Laravel avec trait RhBaseModel).
+ * Fiche complète de l'employé : identité, coordonnées, poste, département,
+ * date d'embauche, salaire de base, numéros CNSS/IFU, banque, etc.
+ * Relations :
+ * - contracts() : a plusieurs contrats (RhContract).
+ * - leaveRequests() : a plusieurs demandes de congé (RhLeaveRequest).
+ * - expenses() : a plusieurs notes de frais (RhExpense).
+ * - payrolls() : a plusieurs fiches de paie (RhPayroll).
+ * - attendance() : a plusieurs pointages (RhAttendance).
+ * - trainings() : a plusieurs formations (RhTraining).
+ * - creator() : appartient à l'utilisateur (User) qui a créé la fiche.
+ */
 class RhEmployee extends RhBaseModel
 {
     use SoftDeletes;

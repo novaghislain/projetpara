@@ -32,7 +32,19 @@
 </template>
 
 <script setup>
+/* ============================================================
+ * Composant : Ocr/Form
+ * Description : Formulaire de soumission d'un document
+ *   pour analyse OCR. Permet de selectionner le client,
+ *   le fichier a analyser et un eventuel document lie.
+ * ============================================================ */
+
 import GelLayout from '../../../Layouts/GelLayout.vue';
+
+/* Propriete recue du controleur :
+ *   clients - Liste des clients pour l'association */
 defineProps(['clients'])
+
+/* Token CSRF extrait du meta-tag pour les requetes POST */
 const csrfToken = document.querySelector('meta[name=csrf-token]')?.content || '';
 </script>

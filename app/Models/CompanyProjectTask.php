@@ -5,6 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * Modèle représentant une tâche liée à un projet.
+ *
+ * Table associée : `company_project_tasks` (via convention Laravel)
+ *
+ * Relations :
+ * - Une tâche appartient à un projet (CompanyProject)
+ */
 class CompanyProjectTask extends Model
 {
     use HasFactory;

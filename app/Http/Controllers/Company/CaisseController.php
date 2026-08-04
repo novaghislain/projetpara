@@ -10,10 +10,22 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Contrôleur de gestion de caisse (Company).
+ *
+ * Gère les caisses (ouverture, fermeture, calcul d'écarts),
+ * les transactions (encaissements, décaissements),
+ * les statistiques du jour et les rapports (journalier, mensuel).
+ *
+ * Chaque caisse est associée à un client et suit un cycle
+ * ouverture → transactions → fermeture avec écart éventuel.
+ */
 class CaisseController extends BaseCompanyController
 {
     /**
-     * Page de la caisse.
+     * Page de gestion de la caisse (vue SPA).
+     *
+     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
      */
     public function index()
     {
@@ -31,6 +43,8 @@ class CaisseController extends BaseCompanyController
 
     /**
      * Liste toutes les caisses de l'entreprise.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function registers()
     {
@@ -44,7 +58,10 @@ class CaisseController extends BaseCompanyController
     }
 
     /**
-     * Crée une nouvelle caisse.
+     * Crée une nouvelle caisse (avec code auto-généré).
+     *
+     * @param Request $request Requête HTTP (name, type)
+     * @return \Illuminate\Http\JsonResponse
      */
     public function storeRegister(Request $request)
     {
@@ -73,7 +90,10 @@ class CaisseController extends BaseCompanyController
     }
 
     /**
-     * Ouvre une caisse.
+     * Ouvre une caisse et enregistre un log d'ouverture.
+     *
+     * @param int $id Identifiant de la caisse
+     * @return \Illuminate\Http\JsonResponse
      */
     public function openRegister($id)
     {
@@ -105,7 +125,13 @@ class CaisseController extends BaseCompanyController
     }
 
     /**
-     * Clôture une caisse avec calcul de l'écart.
+     * Clôture une caisse avec calcul de l'écart entre solde théorique et observé.
+     *
+     * Crée un log de clôture (ou d'écart si différence non nulle).
+     *
+     * @param int $id Identifiant de la caisse
+     * @param Request $request Requête HTTP (observed_balance, notes)
+     * @return \Illuminate\Http\JsonResponse
      */
     public function closeRegister($id, Request $request)
     {
@@ -156,7 +182,13 @@ class CaisseController extends BaseCompanyController
     // ─── Transactions ───────────────────────────────────────
 
     /**
-     * Liste les transactions (avec filtre optionnel "today").
+     * Liste les transactions caisse (avec filtres optionnels).
+     *
+     * Filtres disponibles : "today" (aujourd'hui), "register_id" (par caisse).
+     * Joint les tables cash_registers et users pour les libellés.
+     *
+     * @param Request $request Requête HTTP avec les filtres
+     * @return \Illuminate\Http\JsonResponse
      */
     public function transactions(Request $request)
     {
@@ -186,7 +218,14 @@ class CaisseController extends BaseCompanyController
     }
 
     /**
-     * Crée une transaction (encaissement/décaissement).
+     * Crée une transaction caisse (encaissement ou décaissement).
+     *
+     * Vérifie que la caisse est ouverte et appartient au client.
+     * Met à jour le solde de la caisse après la transaction.
+     * Toute l'opération est encapsulée dans une transaction SQL.
+     *
+     * @param Request $request Requête HTTP avec les données de transaction
+     * @return \Illuminate\Http\JsonResponse
      */
     public function storeTransaction(Request $request)
     {
@@ -244,7 +283,12 @@ class CaisseController extends BaseCompanyController
     // ─── Statistiques ──────────────────────────────────────
 
     /**
-     * Statistiques du jour.
+     * Statistiques du jour pour toutes les caisses.
+     *
+     * Calcule le total des encaissements, décaissements
+     * et le nombre de transactions du jour.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function stats()
     {
@@ -269,7 +313,11 @@ class CaisseController extends BaseCompanyController
     // ─── Rapports ──────────────────────────────────────────
 
     /**
-     * Rapport journalier d'une caisse.
+     * Rapport journalier d'une caisse (transactions + logs).
+     *
+     * @param int $registerId Identifiant de la caisse
+     * @param Request $request Requête HTTP (date optionnelle)
+     * @return \Illuminate\Http\JsonResponse
      */
     public function dailyReport($registerId, Request $request)
     {
@@ -304,7 +352,14 @@ class CaisseController extends BaseCompanyController
     }
 
     /**
-     * Rapport mensuel d'une caisse.
+     * Rapport mensuel d'une caisse avec résumé journalier.
+     *
+     * Agrège les transactions par jour pour un aperçu mensuel
+     * des encaissements et décaissements.
+     *
+     * @param int $registerId Identifiant de la caisse
+     * @param Request $request Requête HTTP (month optionnel, format Y-m)
+     * @return \Illuminate\Http\JsonResponse
      */
     public function monthlyReport($registerId, Request $request)
     {

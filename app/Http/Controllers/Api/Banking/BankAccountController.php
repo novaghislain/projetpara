@@ -8,15 +8,29 @@ use App\Models\AccountingAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur API pour la gestion des comptes bancaires.
+ *
+ * Permet de lister, créer, modifier, supprimer et consulter
+ * le solde des comptes bancaires rattachés à un client.
+ */
 class BankAccountController extends Controller
 {
+    /**
+     * Récupère l'identifiant client depuis l'utilisateur authentifié.
+     *
+     * @return int
+     */
     protected function getClientId(): int
     {
         return (int) (Auth::user()->active_client_id ?? Auth::user()->client_id);
     }
 
     /**
-     * Liste des comptes bancaires
+     * Liste paginée des comptes bancaires du client.
+     *
+     * @param Request $request La requête HTTP contenant les filtres (type, is_active).
+     * @return \Illuminate\Http\JsonResponse
      */
     public function index(Request $request)
     {
@@ -33,7 +47,10 @@ class BankAccountController extends Controller
     }
 
     /**
-     * Créer un compte bancaire
+     * Crée un nouveau compte bancaire.
+     *
+     * @param Request $request La requête HTTP avec les données validées du compte.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
     {
@@ -61,7 +78,7 @@ class BankAccountController extends Controller
         $validated['reconciled_balance'] = $validated['opening_balance'] ?? 0;
         $validated['is_active'] = true;
 
-        // Si is_default, enlever le flag des autres
+        // Si le compte est marqué par défaut, on retire le flag aux autres comptes du client
         if (!empty($validated['is_default'])) {
             BankAccount::where('client_id', $clientId)->update(['is_default' => false]);
         }
@@ -76,7 +93,10 @@ class BankAccountController extends Controller
     }
 
     /**
-     * Afficher un compte bancaire
+     * Affiche le détail d'un compte bancaire avec ses dernières transactions.
+     *
+     * @param string $id L'identifiant du compte bancaire.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function show(string $id)
     {
@@ -91,7 +111,11 @@ class BankAccountController extends Controller
     }
 
     /**
-     * Modifier un compte bancaire
+     * Modifie un compte bancaire existant.
+     *
+     * @param Request $request La requête HTTP avec les champs à mettre à jour.
+     * @param string $id L'identifiant du compte bancaire.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function update(Request $request, string $id)
     {
@@ -127,7 +151,10 @@ class BankAccountController extends Controller
     }
 
     /**
-     * Supprimer un compte bancaire
+     * Supprime un compte bancaire (uniquement s'il n'a pas de transactions).
+     *
+     * @param string $id L'identifiant du compte bancaire.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy(string $id)
     {
@@ -135,6 +162,7 @@ class BankAccountController extends Controller
             ->where('client_id', $this->getClientId())
             ->firstOrFail();
 
+        // Vérification : on empêche la suppression si des transactions existent
         if ($account->transactions()->exists()) {
             return response()->json([
                 'success' => false,
@@ -151,7 +179,10 @@ class BankAccountController extends Controller
     }
 
     /**
-     * Solde actuel d'un compte
+     * Consulte le solde actuel et le solde rapproché d'un compte bancaire.
+     *
+     * @param string $id L'identifiant du compte bancaire.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function balance(string $id)
     {

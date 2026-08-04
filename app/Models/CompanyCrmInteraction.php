@@ -5,6 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Modèle représentant une interaction CRM (appel, email, rendez-vous, etc.).
+ *
+ * Table associée : `company_crm_interactions` (via convention Laravel)
+ *
+ * Relations :
+ * - Une interaction appartient à un contact (CompanyCrmContact)
+ * - Une interaction peut être liée à une affaire (CompanyCrmDeal)
+ * - Une interaction est créée par un utilisateur (User)
+ */
 class CompanyCrmInteraction extends Model
 {
     protected $fillable = [

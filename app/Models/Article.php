@@ -5,6 +5,29 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
+/**
+ * Modèle représentant un article de blog.
+ *
+ * Gère les articles publiés sur le site vitrine de l'application.
+ * Chaque article a un titre, un contenu et peut être categorisé.
+ * Inclut la gestion du slug, des tags et de la publication.
+ *
+ * @property int $id
+ * @property string $title Titre de l'article
+ * @property string $slug Slug pour l'URL
+ * @property string $content Contenu de l'article
+ * @property string|null $excerpt Extrait ou résumé
+ * @property string|null $category Catégorie
+ * @property array|null $tags Étiquettes (JSON)
+ * @property string|null $author Auteur de l'article
+ * @property int|null $reading_minutes Temps de lecture estimé
+ * @property bool $is_published Indique si l'article est publié
+ * @property string|null $published_at Date de publication
+ * @property string|null $featured_image Image à la une
+ * @property string|null $meta_description Description meta SEO
+ *
+ * @table articles
+ */
 class Article extends Model
 {
     protected $fillable = [

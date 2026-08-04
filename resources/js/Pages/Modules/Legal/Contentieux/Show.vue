@@ -109,22 +109,33 @@
 </template>
 
 <script setup>
+/*
+ * Composant : Show.vue (Contentieux)
+ * Description : Détail d'un litige / contentieux avec informations complètes
+ *               (type, nature, partie adverse, tribunal, historique, documents).
+ *               Permet de changer le statut du litige.
+ * Route       : /juridique/contentieux/{id}
+ */
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 import ContratStatusBadge from '../../../../Components/Legal/ContratStatusBadge.vue';
 
+/* Données du litige, erreur éventuelle et identifiant extrait de l'URL */
 const litige = ref(null);
 const error = ref(null);
 const id = window.location.pathname.split('/').pop();
 
+/* Formate une date ISO au format français */
 function formatDate(date) {
     if (!date) return '—';
     return new Date(date + 'T00:00:00').toLocaleDateString('fr-FR');
 }
+/* Formate un montant en devise XOF */
 function formatCurrency(val) {
     return Number(val).toLocaleString('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0 });
 }
 
+/* Charge les détails du litige depuis l'API */
 async function load() {
     try {
         const res = await fetch('/juridique/contentieux/' + id);
@@ -140,6 +151,7 @@ async function load() {
     }
 }
 
+/* Change le statut du litige via une invite et une requête PATCH */
 async function changerStatut() {
     const nouveau = prompt('Nouveau statut (assignation, instruction, plaidoirie, jugement, gagné, perdu, transigé, classé) :');
     if (!nouveau) return;

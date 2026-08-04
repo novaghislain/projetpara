@@ -1,26 +1,36 @@
+/*
+ * Composant : CompanyAdmins/Index.vue
+ * Description : Page de gestion des administrateurs entreprise.
+ *              Permet de creer, modifier et supprimer les administrateurs
+ *              associes aux entreprises clientes du module GEL.
+ */
 <script setup>
 import { ref, onMounted, nextTick } from 'vue';
-import GelLayout from '../../../Layouts/GelLayout.vue';
+import GelLayout from '../../../Layouts/GelLayout.vue';   /* Layout principal du module GEL */
 
-const admins = ref([]);
-const clients = ref([]);
-const loading = ref(true);
-const error = ref(null);
-const submitting = ref(false);
+/* ─── Donnees ─── */
+const admins = ref([]);     /* Liste des administrateurs chargee depuis l'API */
+const clients = ref([]);    /* Liste des entreprises pour le formulaire */
+const loading = ref(true);  /* Indicateur de chargement */
+const error = ref(null);    /* Message d'erreur */
+const submitting = ref(false); /* Indicateur de soumission du formulaire */
 
-const showModal = ref(false);
-const isEditing = ref(false);
-const editingId = ref(null);
-const modalEl = ref(null);
-const modalInstance = ref(null);
+/* ─── Gestion de la modale ─── */
+const showModal = ref(false);     /* Visibilite de la modale */
+const isEditing = ref(false);     /* Mode edition ou creation */
+const editingId = ref(null);      /* Identifiant de l'admin en cours d'edition */
+const modalEl = ref(null);        /* Reference a l'element DOM de la modale */
+const modalInstance = ref(null);  /* Instance Bootstrap de la modale */
 
+/* ─── Formulaire ─── */
 const form = ref({
-    name: '',
-    email: '',
-    password: '',
-    client_id: '',
+    name: '',       /* Nom complet de l'administrateur */
+    email: '',      /* Adresse email */
+    password: '',   /* Mot de passe */
+    client_id: '',  /* Identifiant de l'entreprise associee */
 });
 
+/* ─── Formateurs ─── */
 const statusBadgeClass = (status) => {
     const map = { active: 'bg-success', inactive: 'bg-secondary' };
     return map[status] || 'bg-secondary';
@@ -31,6 +41,7 @@ const statusLabel = (status) => {
     return map[status] || status;
 };
 
+/* ─── API : chargement des donnees ─── */
 const fetchAdmins = async () => {
     loading.value = true;
     error.value = null;
@@ -45,6 +56,7 @@ const fetchAdmins = async () => {
     }
 };
 
+/* Chargement de la liste des entreprises pour le select du formulaire */
 const fetchClients = async () => {
     try {
         const res = await fetch('/api/clients');
@@ -52,6 +64,7 @@ const fetchClients = async () => {
     } catch (e) { /* non-critique */ }
 };
 
+/* ─── Gestion du formulaire ─── */
 const resetForm = () => {
     form.value = {
         name: '',
@@ -62,6 +75,7 @@ const resetForm = () => {
     };
 };
 
+/* Ouverture de la modale en mode creation */
 const openCreateModal = async () => {
     await nextTick();
     resetForm();
@@ -74,6 +88,7 @@ const openCreateModal = async () => {
     modalInstance.value?.show();
 };
 
+/* Ouverture de la modale en mode edition */
 const openEditModal = async (id) => {
     try {
         const res = await fetch('/api/company-admins/' + id);
@@ -99,11 +114,13 @@ const openEditModal = async (id) => {
     }
 };
 
+/* Fermeture de la modale */
 const closeModal = () => {
     modalInstance.value?.hide();
     showModal.value = false;
 };
 
+/* Envoi du formulaire (creation ou mise a jour) */
 const submitForm = async () => {
     if (!isEditing.value && form.value.password !== form.value.password_confirmation) {
         alert('Les mots de passe ne correspondent pas.');
@@ -144,6 +161,7 @@ const submitForm = async () => {
     }
 };
 
+/* Suppression d'un administrateur */
 const deleteAdmin = async (id) => {
     if (!confirm('Confirmer la suppression de cet administrateur ?')) return;
     try {

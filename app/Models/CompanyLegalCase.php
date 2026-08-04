@@ -6,6 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * Modèle représentant un dossier/contentieux juridique.
+ *
+ * Table associée : `company_legal_cases` (via convention Laravel)
+ *
+ * Relations :
+ * - Un dossier juridique est créé par un utilisateur (User)
+ */
 class CompanyLegalCase extends Model
 {
     use HasFactory, SoftDeletes;

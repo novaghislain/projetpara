@@ -1,10 +1,20 @@
+<!--
+ * Cashflow.vue - Prévisions de Trésorerie (IA)
+ * Module d'analyse prédictive du cashflow avec alertes et recommandations
+ * Statut : phase de développement initiale
+-->
 <script setup>
 import GelLayout from '../../../Layouts/GelLayout.vue';
 </script>
 
+<!--
+ * Gabarit du module de prévisions de trésorerie
+ * Cartes descriptives des trois fonctionnalités prévues
+-->
 <template>
     <GelLayout pageTitle="Prévisions Trésorerie IA">
         <div class="ai-module-page">
+            <!-- Section d'en-tête : icône, titre, sous-titre -->
             <div class="ai-module-hero" style="--accent: #EF4444">
                 <div class="ai-module-hero-icon"><i class="bi-graph-up-arrow"></i></div>
                 <div>
@@ -13,6 +23,7 @@ import GelLayout from '../../../Layouts/GelLayout.vue';
                 </div>
             </div>
 
+            <!-- Grille des fonctionnalités : chaque carte présente un module IA -->
             <div class="ai-module-cards">
                 <div class="ai-feature-card">
                     <div class="ai-feature-icon" style="background: rgba(239,68,68,0.1); color: #EF4444"><i class="bi-graph-up"></i></div>
@@ -38,6 +49,7 @@ import GelLayout from '../../../Layouts/GelLayout.vue';
 </template>
 
 <style scoped>
+/* ===== Styles du module Prévisions Trésorerie IA ===== */
 .ai-module-page { max-width: 1100px; }
 .ai-module-hero {
     display: flex; align-items: center; gap: 18px;

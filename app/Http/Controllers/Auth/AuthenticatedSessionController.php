@@ -13,8 +13,18 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\View\View;
 use PragmaRX\Google2FALaravel\Google2FA;
 
+/**
+ * Contrôleur de gestion des sessions authentifiées.
+ *
+ * Gère la connexion, la déconnexion, la vérification en 8 étapes
+ * (credentials, suspension, email, mot de passe forcé, 2FA,
+ *  métadonnées, audit, redirection) et le challenge 2FA.
+ */
 class AuthenticatedSessionController extends Controller
 {
+    /**
+     * Affiche le formulaire de connexion.
+     */
     public function create(): View
     {
         return view('auth.login', [
@@ -54,19 +64,18 @@ class AuthenticatedSessionController extends Controller
         }
 
         // ─── 3. Vérification email (sauf super admin) ───────────────────
-        // if (!$user->isSuperAdmin() && !$user->email_verified_at) {
-        //     Auth::logout();
-        //     $request->session()->invalidate();
-        //     $request->session()->regenerateToken();
-        //
-        //     return redirect()->route('login')->withErrors([
-        //         'email' => 'Veuillez vérifier votre adresse email avant de vous connecter.',
-        //     ]);
-        // }
+        if (!$user->isSuperAdmin() && !$user->email_verified_at) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->withErrors([
+                'email' => 'Veuillez vérifier votre adresse email avant de vous connecter.',
+            ]);
+        }
 
         // ─── 4. must_change_password ────────────────────────────────────
         if ($user->must_change_password) {
-            // Ne pas déconnecter, stocker en session pour forcer le changement
             session(['must_change_password' => true]);
         }
 
@@ -80,7 +89,10 @@ class AuthenticatedSessionController extends Controller
         }
 
         // ─── 6. Metadata de connexion ──────────────────────────────────
-        $user->recordLogin($request->ip());
+        $user->update([
+            'last_login_at' => now(),
+            'last_login_ip' => $request->ip(),
+        ]);
 
         // ─── 7. Audit trail ────────────────────────────────────────────
         AuditTrail::create([
@@ -94,8 +106,73 @@ class AuthenticatedSessionController extends Controller
             'user_agent'     => $request->userAgent(),
         ]);
 
-        // ─── 8. Redirection ───────────────────────────────────────────
-        return $this->redirectUser($user, $request);
+        // ─── 8. Onboarding incomplet ? Redirection vers le profil ───
+        if (!$user->hasCompletedOnboarding() && $user->onboarding_token && $user->account_type) {
+            return redirect()->route('onboarding.profil', ['token' => $user->onboarding_token]);
+        }
+
+        // ─── 9. Redirection selon le rôle ──────────────────────────────
+        // Commande en cours ? Priorité absolue
+        if (session('order_service_id')) {
+            return redirect()->route('commande.step', [
+                'service' => session('order_service_id'),
+            ]);
+        }
+
+        return match (true) {
+            $user->role === 'super_admin'
+                => redirect('/dashboard'),
+
+            $user->role === 'comptable'
+                => redirect('/gel-accountant/dashboard'),
+
+            in_array($user->role, ['secretaire', 'secretary']) || $user->role_secretaire
+                => redirect('/gel-secretary/dashboard'),
+
+            $user->role === 'client'
+                => redirect('/mes-commandes'),
+
+            in_array($user->role, ['company_admin', 'company_manager', 'company_employee'])
+                => $this->redirectBusinessUser($user),
+
+            default => redirect('/login'),
+        };
+    }
+
+    /**
+     * Redirige un utilisateur business (company_admin, manager, employee)
+     * vers le portail entreprise avec le contexte client_id correct.
+     *
+     * @param  mixed  $user  L'utilisateur authentifié
+     * @return RedirectResponse
+     */
+    private function redirectBusinessUser($user): RedirectResponse
+    {
+        $clientId = $user->active_client_id
+                 ?? $user->client_id
+                 ?? null;
+
+        if (!$clientId) {
+            $clientId = \DB::table('user_clients')
+                ->where('user_id', $user->id)
+                ->where('is_active', true)
+                ->value('client_id');
+
+            if ($clientId) {
+                $user->update(['active_client_id' => $clientId]);
+            }
+        }
+
+        if (!$clientId) {
+            auth()->logout();
+            return redirect('/login')->withErrors([
+                'email' => 'Votre compte n\'est associé à aucune entreprise.',
+            ]);
+        }
+
+        session(['active_client_id' => $clientId]);
+
+        return redirect('/gel-business/dashboard');
     }
 
     /**
@@ -181,55 +258,49 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Rediriger l'utilisateur selon son profil.
-     * Gère : commande en attente, multi-entreprise, super_admin, comptable,
-     * company_admin, client, secretaire.
+     * Rediriger l'utilisateur selon son rôle (utilisé aussi après 2FA).
+     *
+     * @param  mixed  $user    L'utilisateur authentifié
+     * @param  Request  $request  La requête HTTP entrante
+     * @return RedirectResponse
      */
     private function redirectUser($user, $request): RedirectResponse
     {
-        // Si une commande est en attente (client venant du catalogue)
+        // Onboarding incomplet ?
+        if (!$user->hasCompletedOnboarding() && $user->onboarding_token && $user->account_type) {
+            return redirect()->route('onboarding.profil', ['token' => $user->onboarding_token]);
+        }
+
+        // Commande en cours ? Priorité absolue
         if (session('order_service_id')) {
-            return redirect()->route('commande.step');
+            return redirect()->route('commande.step', [
+                'service' => session('order_service_id'),
+            ]);
         }
 
-        // Super Admin → dashboard GEL
-        if ($user->isSuperAdmin()) {
-            return redirect()->intended(route('dashboard'));
-        }
+        return match (true) {
+            $user->role === 'super_admin'
+                => redirect('/dashboard'),
 
-        // Comptable → GEL Accountant dashboard (Blade)
-        if ($user->isComptable() || $user->role === 'comptable' || $user->roleModel?->slug === 'comptable') {
-            return redirect()->to(route('gel-accountant.dashboard'));
-        }
+            $user->role === 'comptable'
+                => redirect('/gel-accountant/dashboard'),
 
-        // Vérifier si l'utilisateur a plusieurs entreprises → sélecteur de contexte
-        $userClientCount = UserClient::where('user_id', $user->id)
-            ->where('is_active', true)
-            ->count();
+            in_array($user->role, ['secretaire', 'secretary']) || $user->role_secretaire
+                => redirect('/gel-secretary/dashboard'),
 
-        if ($userClientCount > 1 && !$user->active_client_id) {
-            return redirect()->route('select.context');
-        }
+            $user->role === 'client'
+                => redirect('/mes-commandes'),
 
-        // Company admin / manager / employee → GEL Business dashboard
-        if ($user->isCompanyAdmin() || $user->isCompanyManager() || $user->roleModel?->slug === 'company_employee') {
-            return redirect()->to(route('gel-business.dashboard'));
-        }
+            in_array($user->role, ['company_admin', 'company_manager', 'company_employee'])
+                => $this->redirectBusinessUser($user),
 
-        // Clients purs (role=client)
-        if ($user->isClient() || $user->role === 'client') {
-            return redirect()->intended(route('client.orders.index'));
-        }
-
-        // Secrétaire DAE
-        if ($user->role_secretaire) {
-            return redirect()->intended(route('dae.dashboard'));
-        }
-
-        // Fallback → GEL dashboard
-        return redirect()->intended(route('dashboard'));
+            default => redirect('/login'),
+        };
     }
 
+    /**
+     * Déconnecte l'utilisateur, invalide la session et enregistre l'audit.
+     */
     public function destroy(Request $request): RedirectResponse
     {
         $user = Auth::user();

@@ -18,8 +18,8 @@
 </div>
 
 {{-- Filtres --}}
-<div class="gel-card" style="margin-bottom:16px;">
-    <div class="gel-card-body">
+<div class="gel-card p-4 mb-4">
+    <div class="gel-card-body p-4 mb-4">
         <form method="GET" action="{{ route('gel-accountant.comptabilite.grand-livre') }}" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
             <div class="gel-filter-group">
                 <label>Client</label>
@@ -59,8 +59,8 @@
 
 {{-- Résultats --}}
 @if(isset($lignes) && $lignes->count() > 0)
-    <div class="gel-card">
-        <div class="gel-card-body" style="padding:0;">
+    <div class="gel-card p-4 mb-4">
+        <div class="gel-card-body p-4 mb-4">
             <table class="gel-table">
                 <thead>
                     <tr>
@@ -98,7 +98,7 @@
         </div>
     </div>
 @else
-    <div class="gel-card">
+    <div class="gel-card p-4 mb-4">
         <div class="gel-empty">
             <i class="bi bi-book"></i>
             <h3>Aucun mouvement</h3>

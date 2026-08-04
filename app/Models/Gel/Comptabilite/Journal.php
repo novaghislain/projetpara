@@ -6,6 +6,24 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Modèle Journal (Journal comptable).
+ *
+ * Représente un journal comptable (ex: AC: Achats, VE: Ventes, BQ: Banque,
+ * CA: Caisse, OD: Opérations Diverses, SA: Salaires).
+ * Génère automatiquement les numéros d'écriture séquentiels.
+ * Table associée : `gel_journaux`.
+ *
+ * @property int $id
+ * @property int $cabinet_id ID du cabinet
+ * @property string $code Code du journal (AC, VE, BQ, CA, OD, SA, AN, IN)
+ * @property string $libelle Libellé du journal
+ * @property string $type Type de journal
+ * @property bool $actif Si le journal est actif
+ *
+ * @property-read \App\Models\Cabinet $cabinet Cabinet associé
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Gel\Comptabilite\EcritureComptable[] $ecritures Écritures comptables du journal
+ */
 class Journal extends Model
 {
     protected $table = 'gel_journaux';

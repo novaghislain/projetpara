@@ -1,6 +1,12 @@
+/*
+ * Composant : Index (Commandes client)
+ * Role : Affiche la liste des commandes de services passées par le client.
+ *        Permet de voir le statut de chaque commande et d'accéder au suivi détaillé.
+ */
 <script setup>
 import CompanyLayout from '../../../Layouts/CompanyLayout.vue';
 
+/* Propriétés : recoit la liste des commandes depuis le backend */
 const props = defineProps({
     orders: {
         type: Array,
@@ -8,6 +14,7 @@ const props = defineProps({
     }
 });
 
+/* Fonction utilitaire : associe une couleur de fond/de texte a chaque statut */
 const getStatusColor = (status) => {
     const colors = {
         'Nouvelle Demande': 'bg-blue-100 text-blue-800',

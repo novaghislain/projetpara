@@ -17,7 +17,15 @@ use Illuminate\View\View;
 class UserSessionController extends Controller
 {
     /**
-     * Lister les sessions actives de l'utilisateur connecté.
+     * Contrôleur de gestion des sessions utilisateur.
+     * Permet de lister les sessions actives, de révoquer des sessions
+     * spécifiques et de consulter l'historique des connexions.
+     */
+
+    /**
+     * Liste les sessions actives de l'utilisateur connecté.
+     *
+     * @return JsonResponse La liste des sessions avec leurs métadonnées
      */
     public function activeSessions(): JsonResponse
     {
@@ -31,7 +39,7 @@ class UserSessionController extends Controller
                     'id'         => $s->id,
                     'ip_address' => $s->ip_address,
                     'user_agent' => $s->user_agent,
-                    'last_active'=> $s->last_activity ? now()->createFromTimestamp($s->last_activity)->diffForHumans() : '—',
+                    'last_active'=> $s->last_activity ? now()->createFromTimestamp($s->last_activity)->diffForHumans() : '---',
                     'is_current' => $s->id === session()->getId(),
                 ];
             });
@@ -40,16 +48,21 @@ class UserSessionController extends Controller
     }
 
     /**
-     * Révoquer une session spécifique.
+     * Révoque une session spécifique (sauf la session actuelle).
+     *
+     * @param string $sessionId L'identifiant de la session à révoquer
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function revokeSession(string $sessionId)
     {
+        // Empêche la révocation de sa propre session
         if ($sessionId === session()->getId()) {
             return back()->withErrors(['Vous ne pouvez pas révoquer votre session actuelle.']);
         }
 
         DB::table('sessions')->where('id', $sessionId)->delete();
 
+        // Traçage de l'action dans l'audit
         AuditTrail::create([
             'user_id'   => Auth::id(),
             'event'     => 'logout',
@@ -64,7 +77,9 @@ class UserSessionController extends Controller
     }
 
     /**
-     * Révoquer toutes les sessions sauf la session actuelle.
+     * Révoque toutes les sessions sauf la session actuelle.
+     *
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function revokeOthers()
     {
@@ -75,6 +90,7 @@ class UserSessionController extends Controller
             ->where('id', '!=', $currentSessionId)
             ->delete();
 
+        // Traçage de l'action dans l'audit
         AuditTrail::create([
             'user_id'   => Auth::id(),
             'event'     => 'logout',
@@ -89,7 +105,9 @@ class UserSessionController extends Controller
     }
 
     /**
-     * Historique des connexions (30 dernières).
+     * Historique des connexions (30 dernières entrées).
+     *
+     * @return JsonResponse L'historique des connexions
      */
     public function loginHistory(): JsonResponse
     {

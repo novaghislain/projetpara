@@ -10,6 +10,17 @@
 </template>
 
 <script setup>
+/* ============================================================
+ * Composant : ApprovalWorkflows/Show
+ * Description : Page de detail d'un workflow d'approbation.
+ *   Affiche les etapes, les approbateurs, les conditions
+ *   et le statut actuel du workflow.
+ * ============================================================ */
+
 import GelLayout from '../../../Layouts/GelLayout.vue';
+
+/* Propriete recue du controleur :
+ *   workflow - Objet contenant les donnees du workflow
+ *              (id, name, steps, approvers, status) */
 defineProps(['workflow'])
 </script>

@@ -4,6 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Modèle représentant le journal d'audit des documents.
+ *
+ * Table associée : `document_audit_log`
+ *
+ * Enregistre chaque action (consultation, téléchargement, modification)
+ * effectuée sur un document.
+ */
 class DocumentAuditLog extends Model
 {
     protected $fillable = [

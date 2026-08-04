@@ -10,6 +10,12 @@
 </template>
 
 <script setup>
-import GelLayout from '../../../../Layouts/GelLayout.vue';
-defineProps(['ticket'])
+/*
+ * Page : Ticket Show
+ * Role : Affiche le détail d'un ticket IT support
+ * Props :
+ *   ticket (Object) — Données du ticket à afficher
+ */
+import GelLayout from '../../../../Layouts/GelLayout.vue'; // Layout principal du module GEL
+defineProps(['ticket']) // Données du ticket à afficher (mode détails)
 </script>

@@ -8,6 +8,21 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle Product - Produit ou service vendu par une entreprise.
+ *
+ * Table associée : 'products' (convention Laravel).
+ * Gère le catalogue de produits avec prix HT/TTC, stock, TVA, codes-barres, etc.
+ * Supporte la notion de lot (bundle) et le suivi de stock avec seuils d'alerte.
+ * Relations :
+ * - client() : appartient à un client (Client).
+ * - category() : appartient à une catégorie (ProductCategory).
+ * - images() : a plusieurs images (ProductImage).
+ * - primaryImage() : a une image principale (HasOne, filtrée).
+ * - variants() : a plusieurs variantes (ProductVariant).
+ * - suppliers() : appartient à plusieurs fournisseurs (Supplier, pivot 'product_supplier').
+ * - stockMovements() : a plusieurs mouvements de stock (StockMovement).
+ */
 class Product extends Model
 {
     use SoftDeletes;

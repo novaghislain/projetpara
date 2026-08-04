@@ -1,3 +1,9 @@
+<!--
+ * Composant : Détail d'une politique SLA
+ * Description : Affiche les informations d'une politique de niveau de service (SLA) : priorité,
+ *              délais de réponse et de résolution, statut par défaut ou personnalisé.
+ * Utilisation : Page /it/sla-policies/{id}
+-->
 <template>
     <GelLayout page-title="Politique SLA">
         <div class="p-6">
@@ -41,8 +47,11 @@
 
 <script setup>
 import GelLayout from '../../../../Layouts/GelLayout.vue';
+
+/* Propriété : politique SLA transmise par le backend */
 defineProps(['policy'])
 
+/* Retourne la classe Bootstrap selon la priorité */
 const priorityClass = (p) => ({
     critical: 'bg-danger',
     high: 'bg-warning text-dark',

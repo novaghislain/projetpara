@@ -5,8 +5,21 @@ namespace App\Http\Controllers\Modules\Rh;
 use App\Models\Rh\RhAlert;
 use Illuminate\Http\Request;
 
+/**
+ * Contrôleur de gestion des alertes RH.
+ *
+ * Permet de lister, modifier le statut et générer automatiquement
+ * des alertes pour les événements RH tels que les fins de contrat
+ * et les fins de période d'essai.
+ */
 class RhAlertsController extends BaseRhController
 {
+    /**
+     * Liste toutes les alertes RH avec filtrage optionnel.
+     *
+     * @param Request $request La requête HTTP contenant les filtres (statut, type)
+     * @return \Illuminate\Http\JsonResponse Liste paginée des alertes
+     */
     public function listAll(Request $request)
     {
         $query = RhAlert::byClient($this->getClientId($request))
@@ -23,6 +36,13 @@ class RhAlertsController extends BaseRhController
         return response()->json($query->paginate(20));
     }
 
+    /**
+     * Modifie le statut d'une alerte RH.
+     *
+     * @param Request $request La requête HTTP contenant le nouveau statut
+     * @param mixed $id L'identifiant de l'alerte
+     * @return \Illuminate\Http\JsonResponse L'alerte mise à jour
+     */
     public function changerStatut(Request $request, $id)
     {
         $alert = RhAlert::byClient($this->getClientId($request))->findOrFail($id);
@@ -34,6 +54,16 @@ class RhAlertsController extends BaseRhController
         return response()->json($alert);
     }
 
+    /**
+     * Génère automatiquement des alertes pour les échéances RH.
+     *
+     * Vérifie les contrats expirant dans 30 jours et les périodes d'essai
+     * expirant dans 14 jours, puis crée les alertes correspondantes
+     * si elles n'existent pas déjà.
+     *
+     * @param Request $request La requête HTTP
+     * @return \Illuminate\Http\JsonResponse Message de confirmation et nombre d'alertes générées
+     */
     public function generate(Request $request)
     {
         $clientId = $this->getClientId($request);

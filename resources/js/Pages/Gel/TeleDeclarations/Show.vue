@@ -1,4 +1,10 @@
 <template>
+    <!-- ============================================================
+    Page detail d'une declaration fiscale.
+    Affiche les informations generales (client, type, periode,
+    statut), les montants (base, taux, TVA, CNSS, penalites,
+    solde) et les notes. Permet de deposer la declaration.
+    ============================================================ -->
     <GelLayout page-title="Détail Déclaration">
         <div class="p-6">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -17,6 +23,7 @@
             </div>
 
             <div class="row g-3">
+                <!-- Carte informations generales -->
                 <div class="col-md-6">
                     <div class="bg-white rounded-lg shadow p-3">
                         <h6 class="fw-bold mb-3 small text-uppercase text-muted">Informations</h6>
@@ -48,6 +55,7 @@
                         </dl>
                     </div>
                 </div>
+                <!-- Carte montants : base, taux, TVA, CNSS, penalites, solde -->
                 <div class="col-md-6">
                     <div class="bg-white rounded-lg shadow p-3">
                         <h6 class="fw-bold mb-3 small text-uppercase text-muted">Montants</h6>
@@ -64,6 +72,7 @@
                             <dd class="col-sm-7">{{ formatMille(declaration.penalites) }}</dd>
                             <dt class="col-sm-5">Solde</dt>
                             <dd class="col-sm-7" :class="{ 'text-danger fw-bold': declaration.solde > 0 }">{{ formatMille(declaration.solde) }}</dd>
+                            <!-- Details specifiques TVA -->
                             <template v-if="declaration.tax_type === 'tva'">
                                 <dt class="col-sm-5">TVA collectée</dt>
                                 <dd class="col-sm-7">{{ formatMille(declaration.tva_collectee) }}</dd>
@@ -72,6 +81,7 @@
                                 <dt class="col-sm-5">TVA nette</dt>
                                 <dd class="col-sm-7 fw-semibold">{{ formatMille(declaration.tva_net) }}</dd>
                             </template>
+                            <!-- Details specifiques CNSS -->
                             <template v-if="declaration.tax_type === 'cnss'">
                                 <dt class="col-sm-5">Part employeur</dt>
                                 <dd class="col-sm-7">{{ formatMille(declaration.part_employeur) }}</dd>
@@ -81,6 +91,7 @@
                         </dl>
                     </div>
                 </div>
+                <!-- Notes optionnelles -->
                 <div class="col-12" v-if="declaration.notes">
                     <div class="bg-white rounded-lg shadow p-3">
                         <h6 class="fw-bold mb-2 small text-uppercase text-muted">Notes</h6>
@@ -93,15 +104,23 @@
 </template>
 
 <script setup>
+/* ============================================================
+ * TeleDeclarations / Show.vue
+ * Page de detail d'une declaration fiscale : informations,
+ * montants (base, taux, TVA, CNSS), notes et actions (deposer).
+ * ============================================================ */
 import GelLayout from '../../../Layouts/GelLayout.vue';
 defineProps(['declaration'])
+/* Token CSRF pour les formulaires de soumission */
 const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
+/** Formate un montant en FCFA */
 const formatMille = (v) => {
     if (v == null || v === '') return '—';
     return Number(v).toLocaleString('fr-FR', { minimumFractionDigits: 0 }) + ' FCFA';
 }
 
+/** Classe CSS du badge en fonction du statut */
 const statusClass = (s) => ({
     brouillon: 'bg-secondary',
     calcule: 'bg-info text-dark',

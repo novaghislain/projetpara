@@ -19,12 +19,12 @@
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
-      --primary: #005BAC;
-      --primary-hover: #004080;
-      --primary-light: #E8F0FE;
-      --sidebar-bg: #F7F8F9;
-      --sidebar-hover: #E5E7EB;
-      --sidebar-active: #005BAC;
+      --primary: #2CA01C;
+      --primary-hover: #1D7C13;
+      --primary-light: #EBF7E9;
+      --sidebar-bg: #F4F5F8;
+      --sidebar-hover: #EBECEF;
+      --sidebar-active: #EBECEF;
       --sidebar-width: 240px;
       --topbar-height: 56px;
       --text-primary: #1F2A44;
@@ -57,8 +57,8 @@
     .gel-topbar {
       position: fixed; top: 0; left: var(--sidebar-width); right: 0;
       height: var(--topbar-height);
-      background: white;
-      border-bottom: 1px solid var(--border-color);
+      background: var(--primary);
+      border-bottom: 1px solid var(--primary-hover);
       display: flex; align-items: center;
       padding: 0 20px;
       z-index: 1000;
@@ -66,23 +66,23 @@
 
     .topbar-logo {
       font-weight: 700; font-size: 18px;
-      color: var(--text-primary); margin-right: 16px;
+      color: white; margin-right: 16px;
     }
     .topbar-logo small {
       font-weight: 400; font-size: 12px;
-      color: var(--text-muted); margin-left: 6px;
+      color: rgba(255,255,255,0.7); margin-left: 6px;
     }
 
     .btn-go-business {
       display: flex; align-items: center; gap: 6px;
       padding: 6px 12px;
-      border: 1px solid var(--border-color);
-      border-radius: 4px; background: white;
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: 4px; background: transparent; color: white;
       cursor: pointer; font-size: 13px; font-weight: 500;
       position: relative; white-space: nowrap;
       transition: background 120ms;
     }
-    .btn-go-business:hover { background: var(--sidebar-hover); }
+    .btn-go-business:hover { background: rgba(255,255,255,0.15); }
 
     .search-bar {
       flex: 1; max-width: 360px; margin: 0 20px; position: relative;
@@ -120,11 +120,11 @@
     .topbar-btn {
       width: 34px; height: 34px; border: none; background: none;
       border-radius: 50%; cursor: pointer;
-      color: var(--text-secondary); font-size: 17px;
+      color: white; font-size: 17px;
       display: flex; align-items: center; justify-content: center;
       position: relative; transition: background 120ms;
     }
-    .topbar-btn:hover { background: var(--sidebar-hover); }
+    .topbar-btn:hover { background: rgba(255,255,255,0.15); }
 
     .notif-dot::after {
       content: ''; position: absolute; top: 5px; right: 5px;
@@ -134,7 +134,7 @@
 
     .avatar {
       width: 34px; height: 34px; border-radius: 50%;
-      background: var(--primary); color: white;
+      background: white; color: var(--primary);
       display: flex; align-items: center; justify-content: center;
       font-weight: 600; font-size: 13px; cursor: pointer;
       margin-left: 4px;
@@ -150,6 +150,28 @@
       border-right: 1px solid var(--border-color);
       padding-top: var(--topbar-height);
       overflow-y: auto; z-index: 999;
+    }
+
+    .btn-nouveau-sidebar {
+      width: 100%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: background 150ms, box-shadow 150ms;
+    }
+    .btn-nouveau-sidebar:hover {
+      background: var(--primary-hover);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
     }
 
     .sidebar-menu { list-style: none; padding: 8px; margin: 0; }
@@ -202,6 +224,47 @@
       transform: translateY(0);
       pointer-events: auto;
     }
+
+    .mega-menu {
+      position: fixed;
+      left: calc(var(--sidebar-width) + 4px);
+      top: 60px;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      box-shadow: var(--dropdown-shadow);
+      display: flex;
+      gap: 32px;
+      padding: 24px;
+      opacity: 0; visibility: hidden;
+      transform: translateY(-4px);
+      transition: opacity 120ms ease, visibility 120ms ease, transform 120ms ease;
+      z-index: 1100;
+      pointer-events: none;
+    }
+    .mega-menu.open {
+      opacity: 1; visibility: visible;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    .mega-col {
+      min-width: 160px;
+    }
+    .mega-header {
+      font-size: 12px; font-weight: 700; color: #1F2A44;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 12px;
+    }
+    .mega-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 0; cursor: pointer;
+      font-size: 13px; color: var(--text-secondary);
+      text-decoration: none;
+    }
+    .mega-item:hover { color: var(--primary); }
+    .mega-icon { width: 16px; text-align: center; color: var(--text-muted); font-size: 14px; }
 
     .dd-header {
       padding: 6px 14px 4px;
@@ -373,12 +436,30 @@
       </button>
       <div class="nested-dropdown" id="dropdownGoBusiness" style="position:absolute;left:0;top:calc(100% + 6px);min-width:300px;">
         <div class="dd-header">Mes clients</div>
-        <div class="dd-item" data-route="client-1"><span class="dd-icon">🏢</span> SARL Bénin Tech</div>
-        <div class="dd-item" data-route="client-2"><span class="dd-icon">🏢</span> Ets Afrique Express</div>
-        <div class="dd-item" data-route="client-3"><span class="dd-icon">🏢</span> Global SARL</div>
+        @php
+          $cabinetClients = [];
+          try { $cabinetClients = \App\Models\Gel\Client::where('cabinet_id', auth()->user()?->cabinet_id)->where('statut', 'actif')->get(); } catch(\Exception $e) {}
+        @endphp
+        @forelse($cabinetClients as $gc)
+        <a href="{{ route('gel-business.dashboard', ['client_id' => $gc->id]) }}" class="dd-item" style="text-decoration:none;">
+          <span class="dd-icon">🏢</span> {{ $gc->nom_entreprise }}
+        </a>
+        @empty
+        <div class="dd-item" style="color:var(--text-muted);"><span class="dd-icon">🏢</span> Aucun client actif</div>
+        @endforelse
         <div class="dd-divider"></div>
-        <div class="dd-item" data-route="gestion-clients"><span class="dd-icon">⚙️</span> Gérer les clients</div>
+        <a href="{{ route('gel-accountant.clients') }}" class="dd-item" style="text-decoration:none;"><span class="dd-icon">⚙️</span> Gérer les clients</a>
       </div>
+    </div>
+
+    {{-- Outils comptables / Flux d'affaires --}}
+    <div style="display:flex; gap:8px; margin-left:16px;">
+      <button class="btn-go-business">
+        <i class="fas fa-briefcase"></i> Outils comptables
+      </button>
+      <button class="btn-go-business">
+        <i class="fas fa-sitemap"></i> Flux d'affaires
+      </button>
     </div>
 
     {{-- Search --}}
@@ -435,17 +516,18 @@
       <button class="topbar-btn" title="Paramètres"><i class="fas fa-cog"></i></button>
 
       {{-- User --}}
+      @php $authUser = auth()->user(); @endphp
       <div style="position:relative;">
-        <div class="avatar" onclick="toggleDropdown('userDropdown')">GE</div>
+        <div class="avatar" onclick="toggleDropdown('userDropdown')">{{ strtoupper(substr($authUser->name ?? $authUser->email ?? 'U', 0, 2)) }}</div>
         <div class="nested-dropdown" id="userDropdown"
              style="position:absolute;right:0;left:auto;top:calc(100% + 6px);min-width:220px;">
           <div style="padding:12px 14px;border-bottom:1px solid var(--border-color);">
-            <div style="font-weight:600;">Ghislain EDA</div>
-            <div style="font-size:12px;color:var(--text-muted);">admin@gel.cabinet</div>
+            <div style="font-weight:600;">{{ $authUser->name ?? 'Utilisateur' }}</div>
+            <div style="font-size:12px;color:var(--text-muted);">{{ $authUser->email }}</div>
             <div style="font-size:11px;color:var(--primary);font-weight:500;margin-top:2px;">Comptable</div>
           </div>
-          <div class="dd-item"><span class="dd-icon">👤</span> Mon profil</div>
-          <div class="dd-item"><span class="dd-icon">⚙️</span> Paramètres</div>
+          <a href="{{ route('gel-accountant.profile') }}" class="dd-item" style="text-decoration:none;"><span class="dd-icon">👤</span> Mon profil</a>
+          <a href="{{ route('gel-accountant.settings') }}" class="dd-item" style="text-decoration:none;"><span class="dd-icon">⚙️</span> Paramètres</a>
           <div class="dd-divider"></div>
           <div class="dd-item" onclick="event.preventDefault();document.getElementById('logoutForm').submit();">
             <span class="dd-icon">🚪</span> Déconnexion
@@ -457,24 +539,93 @@
 
   {{-- ════════════════════════════════════════════ SIDEBAR ═══════════════ --}}
   <aside class="gel-sidebar">
+    <div style="padding: 16px 16px 8px;">
+      <button class="btn-nouveau-sidebar" onclick="toggleDropdown('dropdownNouveauSidebar')">
+        <i class="fas fa-plus"></i> Nouveau
+      </button>
+      <div class="mega-menu" id="dropdownNouveauSidebar">
+        <!-- CLIENTS -->
+        <div class="mega-col">
+          <div class="mega-header">CLIENTS</div>
+          <a href="{{ route('gel-accountant.factures.create') }}" class="mega-item"><i class="fas fa-file-invoice mega-icon"></i> Facture</a>
+          <a href="{{ route('gel-accountant.payments.create') }}" class="mega-item"><i class="fas fa-hand-holding-usd mega-icon"></i> Recevez le paiement</a>
+          <a href="{{ route('gel-accountant.declaration.create') }}" class="mega-item"><i class="fas fa-file-alt mega-icon"></i> Déclaration</a>
+          <a href="{{ route('gel-accountant.estimation.create') }}" class="mega-item"><i class="fas fa-calculator mega-icon"></i> Estimation</a>
+          <a href="{{ route('gel-accountant.sales-order.create') }}" class="mega-item"><i class="fas fa-shopping-cart mega-icon"></i> Commande de vente</a>
+          <a href="{{ route('gel-accountant.credit-note.create') }}" class="mega-item"><i class="fas fa-file-invoice-dollar mega-icon"></i> Note de crédit</a>
+          <a href="{{ route('gel-accountant.sales-receipt.create') }}" class="mega-item"><i class="fas fa-receipt mega-icon"></i> Récépissé de vente</a>
+          <a href="{{ route('gel-accountant.refund-receipt.create') }}" class="mega-item"><i class="fas fa-undo mega-icon"></i> Remboursement...</a>
+          <a href="{{ route('gel-accountant.delayed-credit.create') }}" class="mega-item"><i class="fas fa-clock mega-icon"></i> Crédit retardé</a>
+          <a href="{{ route('gel-accountant.delayed-charge.create') }}" class="mega-item"><i class="fas fa-hourglass-half mega-icon"></i> Charge retardée</a>
+          <a href="{{ route('gel-accountant.client.create') }}" class="mega-item" style="margin-top: 8px;"><i class="fas fa-user-plus mega-icon"></i> Ajouter un client</a>
+        </div>
+        
+        <!-- FOURNISSEURS -->
+        <div class="mega-col">
+          <div class="mega-header">FOURNISSEURS</div>
+          <a href="{{ route('gel-accountant.expenses.create') }}" class="mega-item"><i class="fas fa-money-bill-wave mega-icon"></i> Dépenses</a>
+          <a href="{{ route('gel-accountant.check.create') }}" class="mega-item"><i class="fas fa-money-check mega-icon"></i> Chèque</a>
+          <a href="{{ route('gel-accountant.bills.create') }}" class="mega-item"><i class="fas fa-file-invoice mega-icon"></i> Bill</a>
+          <a href="{{ route('gel-accountant.pay-bills') }}" class="mega-item"><i class="fas fa-credit-card mega-icon"></i> Payer les factures</a>
+          <a href="{{ route('gel-accountant.purchase-orders.create') }}" class="mega-item"><i class="fas fa-shopping-basket mega-icon"></i> Bon de commande</a>
+          <a href="{{ route('gel-accountant.receive-item') }}" class="mega-item"><i class="fas fa-box-open mega-icon"></i> Réception de l'article</a>
+          <a href="{{ route('gel-accountant.vendor-credit.create') }}" class="mega-item"><i class="fas fa-tags mega-icon"></i> Crédit fournisseur</a>
+          <a href="{{ route('gel-accountant.credit-card-credit.create') }}" class="mega-item"><i class="fas fa-credit-card mega-icon"></i> Crédit de carte...</a>
+          <a href="{{ route('gel-accountant.vendors.create') }}" class="mega-item" style="margin-top: 8px;"><i class="fas fa-truck-loading mega-icon"></i> Ajouter un fournisseur</a>
+        </div>
+
+        <!-- ÉQUIPE -->
+        <div class="mega-col">
+          <div class="mega-header">ÉQUIPE</div>
+          <a href="{{ route('gel-accountant.single-time-activity') }}" class="mega-item"><i class="fas fa-stopwatch mega-icon"></i> Activité à durée unique</a>
+          <a href="{{ route('gel-accountant.weekly-timesheet') }}" class="mega-item"><i class="fas fa-calendar-alt mega-icon"></i> Feuille de temps...</a>
+          <a href="{{ route('gel-accountant.review-time') }}" class="mega-item"><i class="fas fa-history mega-icon"></i> Temps de révision</a>
+        </div>
+
+        <!-- AUTRE -->
+        <div class="mega-col">
+          <div class="mega-header">AUTRE</div>
+          <a href="{{ route('gel-accountant.task.create') }}" class="mega-item"><i class="fas fa-tasks mega-icon"></i> Tâche</a>
+          <a href="{{ route('gel-accountant.bank-deposit') }}" class="mega-item"><i class="fas fa-university mega-icon"></i> Dépôt bancaire</a>
+          <a href="{{ route('gel-accountant.transfer') }}" class="mega-item"><i class="fas fa-exchange-alt mega-icon"></i> Transfert</a>
+          <a href="{{ route('gel-accountant.journal-entry') }}" class="mega-item"><i class="fas fa-book mega-icon"></i> Entrée de journal</a>
+          <a href="{{ route('gel-accountant.inventory-adjustment') }}" class="mega-item"><i class="fas fa-boxes mega-icon"></i> Inventaire...</a>
+          <a href="{{ route('gel-accountant.pay-credit-card') }}" class="mega-item"><i class="fas fa-credit-card mega-icon"></i> Payer la carte...</a>
+          <a href="{{ route('gel-accountant.add-product') }}" class="mega-item" style="margin-top: 8px;"><i class="fas fa-plus-circle mega-icon"></i> Ajouter un produit...</a>
+        </div>
+      </div>
+    </div>
+
     <ul class="sidebar-menu">
-      <div class="sidebar-section">Général</div>
-      <li class="sidebar-item" data-route="clients">📋 Mes clients</li>
-      <li class="sidebar-item active" data-route="dashboard">📊 Tableau de bord</li>
+      <div class="sidebar-section">VOTRE PRATIQUE</div>
+      <li class="sidebar-item" data-route="clients"><i class="fas fa-users dd-icon"></i> Clients</li>
+      <li class="sidebar-item" data-route="travail"><i class="fas fa-list dd-icon"></i> Travail</li>
+      <li class="sidebar-item" data-route="equipe"><i class="fas fa-user-friends dd-icon"></i> Équipe</li>
+      <li class="sidebar-item" data-route="invitations"><i class="fas fa-envelope-open-text dd-icon"></i> Invitations</li>
+      <li class="sidebar-item" data-route="formation">
+        <i class="fas fa-graduation-cap dd-icon"></i> Formation 
+        <span style="margin-left:auto;background:#EBF7E9;color:#2CA01C;font-size:9px;padding:2px 6px;border-radius:4px;font-weight:700;">NEW</span>
+      </li>
+      <li class="sidebar-item" data-route="apps"><i class="fas fa-th-large dd-icon"></i> Apps</li>
 
-      <div class="sidebar-section">Comptabilité</div>
-      <li class="sidebar-item has-children" data-dropdown="dd-compta">📒 Comptabilité <span class="arrow">▸</span></li>
-      <li class="sidebar-item has-children" data-dropdown="dd-fact">📄 Facturation <span class="arrow">▸</span></li>
-      <li class="sidebar-item has-children" data-dropdown="dd-dep">💰 Dépenses <span class="arrow">▸</span></li>
-      <li class="sidebar-item has-children" data-dropdown="dd-banque">🏦 Banque <span class="arrow">▸</span></li>
-
-      <div class="sidebar-section">Analyse</div>
-      <li class="sidebar-item has-children" data-dropdown="dd-rapports">📊 Rapports <span class="arrow">▸</span></li>
-
-      <div class="sidebar-section">Administration</div>
-      <li class="sidebar-item" data-route="equipe">👥 Équipe</li>
-      <li class="sidebar-item" data-route="parametres">⚙️ Paramètres</li>
+      <div class="sidebar-section" style="margin-top:16px;">MARQUE-PAGES</div>
+      <li class="sidebar-item" data-route="rapports-standards"><i class="fas fa-chart-bar dd-icon"></i> Rapports standards</li>
+      <li class="sidebar-item" data-route="transactions"><i class="fas fa-exchange-alt dd-icon"></i> Transactions bancaires</li>
+      <li class="sidebar-item" data-route="rapprochement"><i class="fas fa-check dd-icon"></i> Réconcilier</li>
+      <li class="sidebar-item" data-route="plan-comptable"><i class="fas fa-sitemap dd-icon"></i> Graphique des comptes</li>
+      <li class="sidebar-item" data-route="ecritures"><i class="fas fa-pen dd-icon"></i> Écritures</li>
+      <li class="sidebar-item" style="color:var(--primary);"><i class="fas fa-pencil-alt dd-icon"></i> Modifier le signet</li>
     </ul>
+
+    <div style="position: absolute; bottom: 0; left: 0; width: 100%; border-top: 1px solid var(--border-color); padding: 12px 16px; background: var(--sidebar-bg); display: flex; align-items: center; cursor: pointer;">
+      <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; margin-right: 12px;">
+        {{ strtoupper(substr(auth()->user()->name ?? auth()->user()->email ?? 'U', 0, 2)) }}
+      </div>
+      <div style="font-size: 13px; font-weight: 600; color: var(--text-primary); flex: 1;">
+        {{ explode(' ', auth()->user()->name ?? 'Utilisateur')[0] }}
+      </div>
+      <i class="fas fa-sign-out-alt" style="color: var(--text-muted); font-size: 14px;" onclick="event.preventDefault();document.getElementById('logoutForm').submit();" title="Déconnexion"></i>
+    </div>
   </aside>
 
   {{-- ════════════════════════════════════════════ DROPDOWNS (Niveau 2) ═══ --}}
@@ -927,8 +1078,32 @@
           'client-1': '🏢 SARL Bénin Tech',
           'client-2': '🏢 Ets Afrique Express',
           'client-3': '🏢 Global SARL',
-          'gestion-clients': '⚙️ Gérer les clients'
+          'gestion-clients': '⚙️ Gérer les clients',
+          'invitations': '✉️ Invitations'
         };
+
+        var routeMap = {
+          'dashboard': '{{ route("gel-accountant.dashboard") }}',
+          'clients': '{{ route("gel-accountant.clients") }}',
+          'gestion-clients': '{{ route("gel-accountant.clients") }}',
+          'plan-comptable': '{{ route("gel-accountant.comptabilite.plan-comptable") }}',
+          'ecritures': '{{ route("gel-accountant.comptabilite.ecritures") }}',
+          'grand-livre': '{{ route("gel-accountant.comptabilite.grand-livre") }}',
+          'balance': '{{ route("gel-accountant.comptabilite.balance") }}',
+          'journaux': '{{ route("gel-accountant.comptabilite.journaux") }}',
+          'etats-financiers': '{{ route("gel-accountant.comptabilite.etats-financiers") }}',
+          'taches': '{{ route("gel-accountant.tasks.index") }}',
+          'workflows': '{{ route("gel-accountant.workflows.index") }}',
+          'equipe': '{{ route("gel-accountant.team") }}',
+          'invitations': '{{ route("gel-accountant.invitations") }}',
+          'parametres': '{{ route("gel-accountant.settings") }}',
+          'profile': '{{ route("gel-accountant.profile") }}',
+        };
+
+        if (routeMap[route]) {
+          window.location.href = routeMap[route];
+          return;
+        }
 
         var title = titles[route] || '📄 ' + route.charAt(0).toUpperCase() + route.slice(1);
 

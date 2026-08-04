@@ -17,48 +17,58 @@
                 @endforeach
             </select>
         </div>
-        <button class="gel-btn gel-btn-primary" onclick="openPanel('Nouveau compte', `
-            <form method="POST" action="{{ route('gel-accountant.comptabilite.plan-comptable.store') }}" id="newCompteForm">
-                @csrf
-                <div class="gel-form-group">
-                    <label>Code *</label>
-                    <input type="text" name="code" class="gel-form-control" required placeholder="Ex: 601">
-                </div>
-                <div class="gel-form-group">
-                    <label>Intitulé *</label>
-                    <input type="text" name="intitule" class="gel-form-control" required>
-                </div>
-                <div class="gel-form-group">
-                    <label>Classe</label>
-                    <select name="classe" class="gel-form-select">
-                        @foreach(range(1,8) as $c)
-                            <option value="{{ $c }}">{{ $c }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="gel-form-group">
-                    <label>Type</label>
-                    <select name="type" class="gel-form-select">
-                        <option value="">—</option>
-                        <option value="actif">Actif</option>
-                        <option value="passif">Passif</option>
-                        <option value="charge">Charge</option>
-                        <option value="produit">Produit</option>
-                    </select>
-                </div>
-                <div class="gel-form-group">
-                    <label>Code parent</label>
-                    <input type="text" name="code_parent" class="gel-form-control" placeholder="Ex: 60">
-                </div>
-            </form>
-        `, '<button class="gel-btn gel-btn-secondary" onclick="closePanel()">Annuler</button><button class="gel-btn gel-btn-primary" onclick="document.getElementById(\'newCompteForm\').submit()">Créer</button>')">
+        <button class="gel-btn gel-btn-primary" onclick="openNewComptePanel()">
             <i class="bi bi-plus-circle"></i> Nouveau compte
         </button>
     </div>
 </div>
 
-<div class="gel-card">
-    <div class="gel-card-body" style="padding:0;">
+<template id="newCompteFormTemplate">
+    <form method="POST" action="{{ route('gel-accountant.comptabilite.plan-comptable.store') }}" id="newCompteForm">
+        @csrf
+        <div class="gel-form-group">
+            <label>Code *</label>
+            <input type="text" name="code" class="gel-form-control" required placeholder="Ex: 601">
+        </div>
+        <div class="gel-form-group">
+            <label>Intitulé *</label>
+            <input type="text" name="intitule" class="gel-form-control" required>
+        </div>
+        <div class="gel-form-group">
+            <label>Classe</label>
+            <select name="classe" class="gel-form-select">
+                @foreach(range(1,8) as $c)
+                    <option value="{{ $c }}">{{ $c }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="gel-form-group">
+            <label>Type</label>
+            <select name="type" class="gel-form-select">
+                <option value="">—</option>
+                <option value="actif">Actif</option>
+                <option value="passif">Passif</option>
+                <option value="charge">Charge</option>
+                <option value="produit">Produit</option>
+            </select>
+        </div>
+        <div class="gel-form-group">
+            <label>Code parent</label>
+            <input type="text" name="code_parent" class="gel-form-control" placeholder="Ex: 60">
+        </div>
+    </form>
+</template>
+
+<script>
+    function openNewComptePanel() {
+        const formHtml = document.getElementById('newCompteFormTemplate').innerHTML;
+        const buttonsHtml = '<button class="gel-btn gel-btn-secondary" onclick="closePanel()">Annuler</button><button class="gel-btn gel-btn-primary" onclick="document.getElementById(\'newCompteForm\').submit()">Créer</button>';
+        openPanel('Nouveau compte', formHtml, buttonsHtml);
+    }
+</script>
+
+<div class="gel-card p-4 mb-4">
+    <div class="gel-card-body p-4 mb-4">
         @if($comptes->count() > 0)
             <table class="gel-table">
                 <thead>
@@ -101,7 +111,11 @@
                                 @endif
                             </td>
                             <td>
-                                <button class="gel-btn gel-btn-sm gel-btn-secondary" onclick="openPanel('Modifier {{ $compte->code }}', \`
+                                <button class="gel-btn gel-btn-sm gel-btn-secondary" onclick="openEditComptePanel('{{ $compte->id }}', '{{ $compte->code }}')">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                
+                                <template id="editCompteFormTemplate{{ $compte->id }}">
                                     <form method="POST" action="{{ route('gel-accountant.comptabilite.plan-comptable.update', $compte->id) }}" id="editCompteForm{{ $compte->id }}">
                                         @csrf @method('PUT')
                                         <div class="gel-form-group">
@@ -131,9 +145,7 @@
                                             </label>
                                         </div>
                                     </form>
-                                \`, '<button class="gel-btn gel-btn-secondary" onclick="closePanel()">Annuler</button><button class="gel-btn gel-btn-primary" onclick="document.getElementById(\'editCompteForm{{ $compte->id }}\').submit()">Enregistrer</button>')">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
+                                </template>
                             </td>
                         </tr>
                     @endforeach
@@ -144,6 +156,13 @@
                 <i class="bi bi-list-columns"></i>
                 <h3>Plan comptable vide</h3>
                 <p>Importez le plan SYSCOHADA ou créez vos comptes manuellement.</p>
+                
+                <form action="{{ route('gel-accountant.comptabilite.plan-comptable.import') }}" method="POST" style="margin-top: 20px;">
+                    @csrf
+                    <button type="submit" class="gel-btn gel-btn-primary" style="color:white !important;">
+                        <i class="fas fa-file-import"></i> Importer le plan SYSCOHADA par défaut
+                    </button>
+                </form>
             </div>
         @endif
     </div>
@@ -155,6 +174,18 @@
         if (classe) url.searchParams.set('classe', classe);
         else url.searchParams.delete('classe');
         window.location.href = url.toString();
+    }
+    
+    function openEditComptePanel(id, code) {
+        const formHtml = document.getElementById('editCompteFormTemplate' + id).innerHTML;
+        const buttonsHtml = '<button class="gel-btn gel-btn-secondary" onclick="closePanel()">Annuler</button><button class="gel-btn gel-btn-primary" onclick="document.getElementById(\'editCompteForm\' + id).submit()">Enregistrer</button>';
+        openPanel('Modifier ' + code, formHtml, buttonsHtml);
+    }
+
+    function openNewComptePanel() {
+        const formHtml = document.getElementById('newCompteFormTemplate').innerHTML;
+        const buttonsHtml = '<button class="gel-btn gel-btn-secondary" onclick="closePanel()">Annuler</button><button class="gel-btn gel-btn-primary" onclick="document.getElementById(\'newCompteForm\').submit()">Enregistrer</button>';
+        openPanel('Nouveau compte', formHtml, buttonsHtml);
     }
 </script>
 @endsection

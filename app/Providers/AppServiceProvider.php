@@ -35,6 +35,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Enregistrement des Observers
+        \App\Models\Dae\DaeAgendaEvent::observe(\App\Observers\AgendaEventObserver::class);
+        \App\Models\Client::observe(\App\Observers\ClientObserver::class);
+
         // ─── Redirection intelligente des utilisateurs authentifiés ──────
         // Lorsqu'un utilisateur déjà connecté visite /login, le middleware
         // 'guest' (RedirectIfAuthenticated) intercepte. On personnalise
@@ -84,5 +88,8 @@ class AppServiceProvider extends ServiceProvider
                 ->symbols()
                 ->uncompromised();
         });
+
+        // ─── Enregistrement des Observers ─────────────────────────────
+        \App\Models\Gel\EcritureComptable::observe(\App\Observers\Gel\EcritureObserver::class);
     }
 }

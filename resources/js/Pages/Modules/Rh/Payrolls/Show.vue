@@ -1,3 +1,8 @@
+<!--
+  Composant : Payrolls/Show.vue
+  Description : Affichage détaillé d'une fiche de paie avec rémunération,
+                retenues, cotisations et net à payer.
+-->
 <template>
     <GelLayout>
         <div class="rh-payroll-show">
@@ -15,6 +20,7 @@
                 </div>
 
                 <div class="row g-3">
+                    <!-- Carte : Rémunération (salaire, primes, indemnités) -->
                     <div class="col-md-6">
                         <div class="card border-0 shadow-sm h-100">
                             <div class="card-header bg-white border-bottom"><h6 class="mb-0 fw-semibold">Rémunération</h6></div>
@@ -29,6 +35,7 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Carte : Retenues (cotisations, retenues diverses, net à payer) -->
                     <div class="col-md-6">
                         <div class="card border-0 shadow-sm h-100">
                             <div class="card-header bg-white border-bottom"><h6 class="mb-0 fw-semibold">Retenues</h6></div>
@@ -58,6 +65,7 @@ export default {
     components: { GelLayout },
     props: { id: [String, Number] },
     data() { return { loading: true, payroll: null }; },
+    /* Chargement de la fiche de paie au montage du composant */
     async mounted() {
         try {
             const res = await fetch(`/rh/payrolls/${this.id}`);

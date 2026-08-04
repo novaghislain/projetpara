@@ -1,7 +1,14 @@
+/*
+ * Composant : SelectContext
+ * Role : Page de selection de l'entreprise active parmi celles auxquelles
+ *        l'utilisateur a acces. Inclut la deconnexion et le chargement
+ *        automatique de la liste depuis le store d'authentification.
+ */
 <script setup>
 import { ref, onMounted } from 'vue';
 import { authStore } from '../../stores/auth';
 
+/* Proprietes : liste initiale des entreprises (optionnelle) */
 const props = defineProps({
     companies: {
         type: Array,
@@ -9,16 +16,19 @@ const props = defineProps({
     }
 });
 
+/* Donnees reactives */
 const loading = ref(false);
 const error = ref(null);
 const companyList = ref(props.companies || []);
 
+/* Au montage, charge les entreprises depuis le store si la liste est vide */
 onMounted(async () => {
     if (companyList.value.length === 0 && authStore.companies?.length) {
         companyList.value = authStore.companies;
     }
 });
 
+/* Bascule vers l'entreprise choisie via le store d'authentification */
 async function selectCompany(clientId) {
     loading.value = true;
     error.value = null;
@@ -34,6 +44,7 @@ async function selectCompany(clientId) {
     }
 }
 
+/* Deconnexion : soumet un formulaire POST vers /logout */
 function logout() {
     const form = document.createElement('form');
     form.method = 'POST';

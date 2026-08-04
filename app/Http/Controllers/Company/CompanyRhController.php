@@ -12,8 +12,23 @@ use App\Models\Rh\RhAlert;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur RH (Ressources Humaines) pour l'interface Company.
+ *
+ * Gère les employés, les congés, les dépenses, les fiches de paie
+ * et les formations. Point d'entrée unique pour le module RH.
+ *
+ * Toutes les données sont filtrées par client_id via le scope byClient.
+ */
 class CompanyRhController extends BaseCompanyController
 {
+    /**
+     * Page du tableau de bord RH (vue SPA).
+     * Retourne les statistiques si la requête attend du JSON.
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\View\View|\Illuminate\Http\JsonResponse
+     */
     public function index(Request $request)
     {
         if ($request->expectsJson()) {
@@ -22,6 +37,12 @@ class CompanyRhController extends BaseCompanyController
         return view('company', ['page' => 'company-rh-dashboard', 'clientId' => $this->getClientId()]);
     }
 
+    /**
+     * API: Statistiques RH (effectifs, congés en attente, dépenses).
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function stats(Request $request)
     {
         $clientId = $this->getClientId();
@@ -46,11 +67,23 @@ class CompanyRhController extends BaseCompanyController
 
     // -- Employees --
 
+    /**
+     * Page vue SPA de la liste des employés.
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\View\View
+     */
     public function employees(Request $request)
     {
         return view('company', ['page' => 'company-rh-employees', 'clientId' => $this->getClientId()]);
     }
 
+    /**
+     * API: Liste des employés avec recherche et pagination.
+     *
+     * @param Request $request Requête HTTP (search optionnel)
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function employeesList(Request $request)
     {
         $query = RhEmployee::byClient($this->getClientId())->with('contracts');
@@ -66,6 +99,12 @@ class CompanyRhController extends BaseCompanyController
         return response()->json($query->latest()->paginate(20));
     }
 
+    /**
+     * API: Affiche un employé avec ses relations (contrats, congés, paies, formations).
+     *
+     * @param int $id Identifiant de l'employé
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function employeeShow($id)
     {
         $employee = RhEmployee::byClient($this->getClientId())
@@ -74,6 +113,12 @@ class CompanyRhController extends BaseCompanyController
         return response()->json($employee);
     }
 
+    /**
+     * API: Crée un nouvel employé.
+     *
+     * @param Request $request Requête HTTP (nom, prenom, email, phone, poste, etc.)
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function storeEmployee(Request $request)
     {
         $validated = $request->validate([
@@ -94,6 +139,13 @@ class CompanyRhController extends BaseCompanyController
         return response()->json($employee, 201);
     }
 
+    /**
+     * API: Modifie un employé.
+     *
+     * @param Request $request Requête HTTP avec les champs à modifier
+     * @param int $id Identifiant de l'employé
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function updateEmployee(Request $request, $id)
     {
         $employee = RhEmployee::byClient($this->getClientId())->findOrFail($id);
@@ -111,6 +163,12 @@ class CompanyRhController extends BaseCompanyController
         return response()->json($employee);
     }
 
+    /**
+     * API: Supprime un employé.
+     *
+     * @param int $id Identifiant de l'employé
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function destroyEmployee($id)
     {
         $employee = RhEmployee::byClient($this->getClientId())->findOrFail($id);
@@ -120,11 +178,23 @@ class CompanyRhController extends BaseCompanyController
 
     // -- Leaves --
 
+    /**
+     * Page vue SPA de la gestion des congés.
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\View\View
+     */
     public function leaves(Request $request)
     {
         return view('company', ['page' => 'company-rh-leaves', 'clientId' => $this->getClientId()]);
     }
 
+    /**
+     * API: Liste des demandes de congés (avec filtre par statut).
+     *
+     * @param Request $request Requête HTTP (statut optionnel)
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function leavesList(Request $request)
     {
         $employeeIds = RhEmployee::byClient($this->getClientId())->pluck('id');
@@ -135,6 +205,12 @@ class CompanyRhController extends BaseCompanyController
         return response()->json($query->latest()->paginate(20));
     }
 
+    /**
+     * API: Crée une demande de congé.
+     *
+     * @param Request $request Requête HTTP (employee_id, type, date_debut, date_fin, motif)
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function leaveStore(Request $request)
     {
         $validated = $request->validate([
@@ -149,6 +225,13 @@ class CompanyRhController extends BaseCompanyController
         return response()->json($leave->load('employee'), 201);
     }
 
+    /**
+     * API: Approuve ou rejette une demande de congé.
+     *
+     * @param Request $request Requête HTTP (statut, notes_approbateur)
+     * @param int $id Identifiant de la demande de congé
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function leaveApprouver(Request $request, $id)
     {
         $employeeIds = RhEmployee::byClient($this->getClientId())->pluck('id');
@@ -165,11 +248,23 @@ class CompanyRhController extends BaseCompanyController
 
     // -- Expenses --
 
+    /**
+     * Page vue SPA de la gestion des dépenses.
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\View\View
+     */
     public function expenses(Request $request)
     {
         return view('company', ['page' => 'company-rh-expenses', 'clientId' => $this->getClientId()]);
     }
 
+    /**
+     * API: Liste des notes de frais (avec filtre par statut).
+     *
+     * @param Request $request Requête HTTP (statut optionnel)
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function expensesList(Request $request)
     {
         $employeeIds = RhEmployee::byClient($this->getClientId())->pluck('id');
@@ -180,6 +275,12 @@ class CompanyRhController extends BaseCompanyController
         return response()->json($query->latest()->paginate(20));
     }
 
+    /**
+     * API: Crée une note de frais.
+     *
+     * @param Request $request Requête HTTP (employee_id, categorie, montant, description)
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function expenseStore(Request $request)
     {
         $validated = $request->validate([
@@ -193,6 +294,13 @@ class CompanyRhController extends BaseCompanyController
         return response()->json($expense->load('employee'), 201);
     }
 
+    /**
+     * API: Approuve ou rejette une note de frais.
+     *
+     * @param Request $request Requête HTTP (statut)
+     * @param int $id Identifiant de la note de frais
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function expenseApprouver(Request $request, $id)
     {
         $employeeIds = RhEmployee::byClient($this->getClientId())->pluck('id');
@@ -208,11 +316,23 @@ class CompanyRhController extends BaseCompanyController
 
     // -- Payrolls --
 
+    /**
+     * Page vue SPA de la gestion des fiches de paie.
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\View\View
+     */
     public function payrolls(Request $request)
     {
         return view('company', ['page' => 'company-rh-payrolls', 'clientId' => $this->getClientId()]);
     }
 
+    /**
+     * API: Liste des fiches de paie (avec filtre par statut).
+     *
+     * @param Request $request Requête HTTP (statut optionnel)
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function payrollsList(Request $request)
     {
         $employeeIds = RhEmployee::byClient($this->getClientId())->pluck('id');
@@ -225,11 +345,23 @@ class CompanyRhController extends BaseCompanyController
 
     // -- Trainings --
 
+    /**
+     * Page vue SPA de la gestion des formations.
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\View\View
+     */
     public function trainings(Request $request)
     {
         return view('company', ['page' => 'company-rh-trainings', 'clientId' => $this->getClientId()]);
     }
 
+    /**
+     * API: Liste des formations (avec filtre par statut).
+     *
+     * @param Request $request Requête HTTP (statut optionnel)
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function trainingsList(Request $request)
     {
         $employeeIds = RhEmployee::byClient($this->getClientId())->pluck('id');

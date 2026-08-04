@@ -1,6 +1,16 @@
 <script setup>
+/*
+ * Composant : DaeContratsShow
+ * Role : Page de detail d'un contrat dans le module DAE.
+ * Affiche les informations generales, la periode, le montant, les conditions,
+ * et les fichiers du contrat. Permet la modification, le renouvellement et le telechargement.
+ * Utilise le mode Composition API (script setup).
+ * Props : aucune (l'ID est extrait de l'URL)
+ * Evenements : aucun
+ */
 import { ref, computed, onMounted } from 'vue';
 
+// Libelles des statuts pour l'affichage
 const statutLabels = {
     brouillon: 'Brouillon',
     actif: 'Actif',
@@ -22,14 +32,17 @@ const processing = ref(false);
 const toast = ref({ show: false, message: '', type: 'success' });
 let toastTimer = null;
 
+// Recuperation du token CSRF depuis la balise meta
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
+// Affiche une notification toast avec message et type (success/danger)
 function showToast(message, type = 'success') {
     clearTimeout(toastTimer);
     toast.value = { show: true, message, type };
     toastTimer = setTimeout(() => { toast.value.show = false; }, 4000);
 }
 
+// Retourne la couleur Bootstrap correspondant au statut du contrat
 function getStatutColor(statut) {
     const map = {
         brouillon: 'secondary',
@@ -41,6 +54,7 @@ function getStatutColor(statut) {
     return map[statut] || 'secondary';
 }
 
+// Retourne l'icone Bootstrap correspondant au statut du contrat
 function getStatutIcon(statut) {
     const map = {
         brouillon: 'bi-pencil-square',
@@ -52,6 +66,7 @@ function getStatutIcon(statut) {
     return map[statut] || 'bi-circle';
 }
 
+// Charge les donnees du contrat depuis l'API
 async function fetchContrat() {
     loading.value = true;
     error.value = null;
@@ -68,6 +83,7 @@ async function fetchContrat() {
     }
 }
 
+// Renouvelle le contrat via l'API et redirige vers la nouvelle version
 async function renouveler() {
     if (!confirm('Confirmer le renouvellement de ce contrat ? Un nouveau contrat sera créé à partir de celui-ci.')) return;
     processing.value = true;
@@ -96,17 +112,20 @@ async function renouveler() {
     }
 }
 
+// Formate un montant avec la devise (ex: 1 234,56 EUR)
 function formatMontant(montant, devise) {
     if (montant === null || montant === undefined) return '-';
     const formatter = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     return `${formatter.format(montant)} ${devise || 'EUR'}`;
 }
 
+// Formate une date en francais (jour mois annee)
 function formatDate(dateStr) {
     if (!dateStr) return '-';
     return new Date(dateStr).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
+// Formate une date avec l'heure en francais
 function formatDateTime(dateStr) {
     if (!dateStr) return '-';
     return new Date(dateStr).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });

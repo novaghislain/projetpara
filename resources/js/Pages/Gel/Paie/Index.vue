@@ -119,17 +119,26 @@
 </template>
 
 <script setup>
+/* ============================================================
+ * Paie — Calculateur de paie (barèmes Bénin 2026)
+ * Permet de calculer le salaire net, l'IRPP et les cotisations
+ * CNSS à partir du salaire brut et de la situation familiale.
+ * ============================================================ */
 import { ref, reactive } from 'vue';
 import GelLayout from '../../../Layouts/GelLayout.vue';
 
+/* Formulaire réactif : salaire brut et situation familiale */
 const form = reactive({ salaire: 350000, situation: 'celibataire' })
+/* Résultat du calcul retourné par l'API */
 const resultat = ref(null)
 
+/* formatMille — Formate un nombre en devise FCFA avec séparateur de milliers */
 const formatMille = (v) => {
     if (v == null || v === '') return '—';
     return Number(v).toLocaleString('fr-FR', { minimumFractionDigits: 0 }) + ' FCFA';
 }
 
+/* calculer — Envoie les données à l'API de paie et stocke le résultat */
 const calculer = async () => {
     try {
         const res = await fetch('/api/paie/calculer', {
@@ -143,5 +152,6 @@ const calculer = async () => {
     }
 }
 
+/* Token CSRF extrait depuis la balise meta du document */
 const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 </script>

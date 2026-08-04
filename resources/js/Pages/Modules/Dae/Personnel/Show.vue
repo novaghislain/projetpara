@@ -67,8 +67,16 @@
 </template>
 
 <script>
+/*
+ * Composant : DaePersonnelShow
+ * Role : Page de detail d'un membre du personnel dans le module DAE.
+ * Affiche les informations personnelles, le statut, le contrat, le salaire et les dates.
+ * Props : aucune (l'ID est extrait de l'URL)
+ * Evenements : aucun
+ */
 import axios from 'axios';
 
+// Mapping des statuts du personnel avec leurs libelles et classes de badge
 const STATUT_MAP = {
     actif: { label: 'Actif', badge: 'bg-success' },
     conge: { label: 'Congé', badge: 'bg-warning text-dark' },

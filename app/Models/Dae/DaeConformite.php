@@ -5,6 +5,14 @@ namespace App\Models\Dae;
 use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle représentant une conformité réglementaire dans le module DAE.
+ *
+ * Table associée : `dae_conformite`
+ *
+ * Permet de suivre les exigences réglementaires, les dates de soumission,
+ * de validation et d'expiration pour les différentes obligations légales.
+ */
 class DaeConformite extends DaeBaseModel
 {
     use SoftDeletes;

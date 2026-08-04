@@ -184,10 +184,19 @@
 </template>
 
 <script>
+/*
+ * Composant : DaeConformiteIndex
+ * Role : Page de gestion de la conformite du module DAE.
+ * Affiche la liste des elements de conformite avec filtres (type, statut, client, recherche).
+ * Permet la creation d'elements via une modale et leur suppression.
+ * Props : aucune
+ * Evenements : row-click, action, page-change (via DaeDataTable)
+ */
 import axios from 'axios';
 import { Modal } from 'bootstrap';
 import DaeDataTable from '../../../../Components/Dae/DaeDataTable.vue';
 
+// Mapping des statuts de conformite avec leurs libelles et classes de badge
 const STATUT_MAP = {
     a_faire:       { label: 'À faire',       badge: 'bg-secondary' },
     en_cours:      { label: 'En cours',      badge: 'bg-primary' },

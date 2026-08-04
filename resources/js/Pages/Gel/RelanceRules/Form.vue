@@ -10,6 +10,16 @@
 </template>
 
 <script setup>
+/* ============================================================
+ * Composant : RelanceRules/Form
+ * Description : Formulaire de creation / modification
+ *   d'une regle de relance. Permet de configurer
+ *   le declencheur, le canal et le destinataire.
+ * ============================================================ */
+
 import GelLayout from '../../../Layouts/GelLayout.vue';
+
+/* Propriete recue du controleur :
+ *   clients - Liste des clients pour l'association */
 defineProps(['clients'])
 </script>

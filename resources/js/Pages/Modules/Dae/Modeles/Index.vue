@@ -161,6 +161,17 @@
 </template>
 
 <script>
+/*
+ * Composant : DaeModelesIndex
+ * Role : Page de gestion des modeles de courriers du module DAE.
+ * Affiche la liste des modeles avec filtres (type, categorie, client, recherche).
+ * Permet la creation, modification, apercu et suppression de modeles.
+ * Les modeles servent de gabarits pour les courriers et notes.
+ * Props : aucune
+ * Evenements : action, page-change (via DaeDataTable)
+ */
+
+// Importation du client HTTP et des composants
 import axios from 'axios';
 import { Modal } from 'bootstrap';
 import DaeDataTable from '../../../../Components/Dae/DaeDataTable.vue';
@@ -170,24 +181,25 @@ export default {
     components: { DaeDataTable },
     data() {
         return {
-            loading: true,
-            items: [],
-            clients: [],
-            currentPage: 1,
-            totalPages: 1,
-            totalItems: 0,
-            categories: [],
-            filters: { type: '', categorie: '', client_id: '', recherche: '' },
-            // Form modal
-            formModalInstance: null,
-            editing: null,
-            form: { client_id: '', nom: '', type: '', objet_defaut: '', corps: '', categorie: '' },
-            variablesInput: '',
-            formLoading: false,
-            formError: '',
+            loading: true,         // Indicateur de chargement
+            items: [],             // Liste des modeles
+            clients: [],           // Liste des clients pour les filtres
+            currentPage: 1,        // Page courante de la pagination
+            totalPages: 1,         // Nombre total de pages
+            totalItems: 0,         // Nombre total de modeles
+            categories: [],        // Liste des categories extraites des modeles
+            filters: { type: '', categorie: '', client_id: '', recherche: '' }, // Filtres actifs
+            // ─── Modale formulaire ──────────────────────────────
+            formModalInstance: null, // Instance de la modale
+            editing: null,           // Mode edition (null = creation, objet = modification)
+            form: { client_id: '', nom: '', type: '', objet_defaut: '', corps: '', categorie: '' }, // Donnees du formulaire
+            variablesInput: '',      // Saisie brute des variables (sep. par virgules)
+            formLoading: false,      // Indicateur d'envoi du formulaire
+            formError: '',           // Message d'erreur du formulaire
         };
     },
     computed: {
+        /* Definition des colonnes de la table des modeles */
         tableColumns() {
             return [
                 { key: 'nom', label: 'Nom', class: 'fw-semibold' },
@@ -205,13 +217,16 @@ export default {
         },
     },
     created() {
+        /* Chargement initial : clients et modeles en parallele */
         Promise.all([this.fetchClients(), this.fetchItems()]).finally(() => { this.loading = false; });
     },
     methods: {
+        /* Recupere la liste des clients depuis l'API */
         async fetchClients() {
             try { const r = await axios.get('/api/clients'); this.clients = Array.isArray(r.data) ? r.data : (r.data.data || []); }
             catch (e) { console.error('Erreur clients:', e); }
         },
+        /* Recupere la liste paginee des modeles selon les filtres */
         async fetchItems() {
             try {
                 const params = { page: this.currentPage, ...this.filters };
@@ -228,28 +243,36 @@ export default {
                 this.items = []; this.totalPages = 1; this.totalItems = 0;
             }
         },
+        /* Extrait la liste unique des categories a partir des modeles charges */
         extractCategories() {
             const cats = new Set();
             this.items.forEach(i => { if (i.categorie) cats.add(i.categorie); });
             this.categories = [...cats].sort();
         },
+        /* Applique les filtres et recharge la liste */
         applyFilters() { this.currentPage = 1; this.fetchItems(); },
+        /* Change de page dans la pagination */
         changePage(p) { this.currentPage = p; this.fetchItems(); },
+        /* Aiguille les actions de la table (apercu, modifier, supprimer) */
         handleAction({ action, row }) {
             if (action === 'apercu') this.apercuModele(row);
             if (action === 'modifier') this.openEditModal(row);
             if (action === 'supprimer') this.deleteItem(row);
         },
+        /* Affiche un apercu rapide du modele (objet et debut du corps) */
         apercuModele(row) {
             alert(`Objet: ${row.objet_defaut || '(aucun)'}\n\n${row.corps ? row.corps.substring(0, 200) + '...' : '(corps vide)'}`);
         },
+        /* Supprime un modele apres confirmation */
         async deleteItem(row) {
             if (!confirm(`Supprimer le modèle "${row.nom}" ?`)) return;
             try { await axios.delete(`/dae/modeles/${row.id}`); this.fetchItems(); }
             catch (e) { alert('Impossible de supprimer.'); }
         },
 
-        // Form modal
+        // ─── MODALE FORMULAIRE ────────────────────────────────────
+
+        /* Ouvre la modale de creation d'un nouveau modele */
         openCreateModal() {
             this.formError = '';
             this.editing = null;
@@ -258,6 +281,7 @@ export default {
             this.formModalInstance = new Modal(this.$refs.formModal);
             this.formModalInstance.show();
         },
+        /* Ouvre la modale d'edition d'un modele existant */
         openEditModal(row) {
             this.formError = '';
             this.editing = row;
@@ -273,6 +297,7 @@ export default {
             this.formModalInstance = new Modal(this.$refs.formModal);
             this.formModalInstance.show();
         },
+        /* Soumet le formulaire de creation ou modification */
         async submitForm() {
             this.formLoading = true;
             this.formError = '';

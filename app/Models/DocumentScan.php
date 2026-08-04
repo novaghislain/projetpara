@@ -6,7 +6,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Résultat d'analyse OCR d'un document scanné.
+ * Modèle représentant le résultat d'analyse OCR d'un document scanné.
+ *
+ * Table associée : `document_scans` (via convention Laravel)
+ *
+ * Stocke le texte extrait, le niveau de confiance et les entités
+ * détectées automatiquement par l'OCR.
+ *
+ * Relations :
+ * - Un scan appartient à un client (User, via client_id)
+ * - Un scan appartient à un document (Document)
  */
 class DocumentScan extends Model
 {

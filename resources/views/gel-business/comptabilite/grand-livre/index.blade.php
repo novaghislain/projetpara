@@ -1,3 +1,4 @@
+@php $currentSection = 'grand-livre'; @endphp
 @extends('layouts.gel-business')
 
 @section('title', 'Grand Livre - Mon Entreprise')

@@ -4,6 +4,31 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Modèle représentant un dossier de documents pour un client.
+ *
+ * Structure hiérarchique de dossiers (arborescence) pour organiser
+ * les documents d'un client. Chaque dossier peut avoir un parent
+ * (sous-dossier) et des enfants, avec un niveau de profondeur.
+ * Les dossiers système sont créés automatiquement.
+ *
+ * @property int $id
+ * @property int $client_id Identifiant du client
+ * @property string $name Nom du dossier
+ * @property string|null $slug Slug du dossier
+ * @property string $path Chemin complet
+ * @property int $level Niveau dans l'arborescence
+ * @property int|null $parent_id Identifiant du dossier parent
+ * @property int $sort_order Ordre d'affichage
+ * @property bool $is_system Dossier système (créé automatiquement)
+ *
+ * @property-read Client $client Client associé
+ * @property-read ClientFolder|null $parent Dossier parent
+ * @property-read \Illuminate\Database\Eloquent\Collection|ClientFolder[] $children Sous-dossiers
+ * @property-read \Illuminate\Database\Eloquent\Collection|Document[] $documents Documents
+ *
+ * @table client_folders
+ */
 class ClientFolder extends Model
 {
     protected $fillable = [

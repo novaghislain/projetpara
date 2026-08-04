@@ -11,10 +11,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Contrôleur du tableau de bord GEL.
+ * Gère l'affichage de la page d'accueil, les redirections selon le rôle
+ * et les statistiques du tableau de bord (clients, missions, pôles, revenus).
+ */
 class DashboardController extends Controller
 {
     /**
      * Affiche la page d'accueil publique (landing page).
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
@@ -23,7 +30,12 @@ class DashboardController extends Controller
 
     /**
      * Affiche le tableau de bord (authentifié).
-     * Redirige les comptables vers le nouveau GEL Accountant.
+     * Redirige vers le dashboard approprié selon le rôle :
+     * - Comptable → GEL Accountant
+     * - Company admin/manager → GEL Business
+     * - Super Admin / autres → GEL (Vue SPA)
+     *
+     * @return \Illuminate\Http\RedirectResponse|\Illuminate\View\View
      */
     public function dashboard()
     {
@@ -34,9 +46,14 @@ class DashboardController extends Controller
             return redirect()->to(route('gel-accountant.dashboard'));
         }
 
-        // Super Admin → dashboard GEL (Vue SPA)
-        if ($user && $user->isSuperAdmin()) {
-            return view('app', ['page' => 'gel-dashboard']);
+        // Company admin / manager → GEL Business dashboard (Blade)
+        if ($user && in_array($user->role, ['company_admin', 'company_manager', 'company_employee'])) {
+            return redirect()->to(route('gel-business.dashboard'));
+        }
+
+        // Super Admin → portail de supervision
+        if ($user && $user->role === 'super_admin') {
+            return redirect()->to(route('gel-super-admin.dashboard'));
         }
 
         return view('app', ['page' => 'gel-dashboard']);
@@ -44,6 +61,11 @@ class DashboardController extends Controller
 
     /**
      * API: Retourne les statistiques du tableau de bord.
+     * Fournit le total des clients, missions, pôles, les clients/missions récents,
+     * la répartition par pôle et les revenus mensuels.
+     * Filtre les données selon le rôle de l'utilisateur (super admin/director vs pole).
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function stats()
     {
@@ -55,7 +77,7 @@ class DashboardController extends Controller
         $missionsQuery = Mission::query();
         $polesQuery = Pole::query();
 
-        // Filtres selon le rôle
+        // Filtres selon le rôle : restreindre aux données du pôle si non admin
         if (!$isSuperAdmin && !$isDirector) {
             $poleId = $user->pole_id;
             $clientsQuery->whereHas('poles', fn($q) => $q->where('pole_id', $poleId));
@@ -66,14 +88,14 @@ class DashboardController extends Controller
             });
         }
 
-        // Clients récents
+        // 5 clients les plus récents
         $recentClients = (clone $clientsQuery)
             ->select('id', 'company_name', 'email', 'status')
             ->latest()
             ->take(5)
             ->get();
 
-        // Missions récentes avec leur client
+        // 5 missions les plus récentes avec leur client
         $recentMissions = (clone $missionsQuery)
             ->with('client:id,company_name')
             ->select('id', 'title', 'status', 'progress', 'client_id')
@@ -81,7 +103,7 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        // Répartition par pôle
+        // Répartition des clients par pôle (avec pourcentage calculé)
         $poles = $polesQuery->select('id', 'name', 'color', 'slug')->get();
         $poleDistribution = $poles->map(function ($pole) {
             $clientCount = DB::table('client_pole')->where('pole_id', $pole->id)->count();
@@ -98,7 +120,7 @@ class DashboardController extends Controller
             return $p;
         })->values();
 
-        // Revenus mensuels (factures émises)
+        // Revenus mensuels sur 12 mois (à partir des factures émises non annulées)
         $monthlyRevenue = CompanyInvoice::select(
             DB::raw("DATE_FORMAT(issue_date, '%Y-%m') as month"),
             DB::raw('SUM(total_ttc) as total')

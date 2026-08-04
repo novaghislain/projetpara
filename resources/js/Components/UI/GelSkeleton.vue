@@ -3,6 +3,14 @@
 </template>
 
 <script setup>
+/*
+ * Composant : GelSkeleton
+ * Role : Placeholder de chargement (skeleton screen) pour les zones en attente de données
+ * Props :
+ *   width   (String, défaut '100%') — Largeur du squelette
+ *   height  (String, défaut '20px') — Hauteur du squelette
+ *   rounded (Boolean, défaut false) — Forme arrondie (cercle si true)
+ */
 import { computed } from 'vue'
 
 const props = defineProps({

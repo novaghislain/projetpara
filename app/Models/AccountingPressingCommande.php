@@ -4,6 +4,35 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle représentant une commande de pressing / blanchisserie.
+ *
+ * Gère le suivi des commandes de nettoyage de vêtements, avec les
+ * informations sur le client, les articles confiés, les dates de
+ * dépôt et de retrait, et le suivi des paiements.
+ *
+ * @property int $id
+ * @property int|null $client_id Identifiant du client (établissement de pressing)
+ * @property string $numero_commande Numéro de commande
+ * @property string $client_nom Nom du client
+ * @property string $client_contact Contact du client
+ * @property string|null $date_depot Date de dépôt des articles
+ * @property string|null $date_retrait_prevu Date de retrait prévue
+ * @property string|null $date_retrait Date de retrait effective
+ * @property int $nb_articles Nombre d'articles
+ * @property string|null $articles Description des articles
+ * @property string $type_service Type de service (nettoyage sec, repassage, etc.)
+ * @property float $montant_total Montant total
+ * @property float $acompte Acompte versé
+ * @property float $solde Solde restant
+ * @property string $statut Statut (en_cours, pret, retire, annule)
+ * @property string|null $notes Notes
+ * @property int|null $created_by Identifiant de l'utilisateur créateur
+ *
+ * @property-read Client|null $client Client (établissement) associé
+ *
+ * @table accounting_pressing_commandes
+ */
 class AccountingPressingCommande extends Model
 {
     use SoftDeletes;

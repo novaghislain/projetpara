@@ -6,8 +6,22 @@ use App\Models\Dae\DaeContrat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Contrôleur de gestion des contrats du module DAE.
+ *
+ * Permet la gestion complète des contrats avec création, suivi,
+ * renouvellement, téléchargement des fichiers et recherche avancée.
+ */
 class DaeContratsController extends BaseDaeController
 {
+    /**
+     * Liste paginée des contrats avec filtres.
+     *
+     * Filtres disponibles : statut, type_contrat, recherche (titre, référence, partie_adverse).
+     *
+     * @param Request $request La requête HTTP avec les paramètres de filtre
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
+     */
     public function index(Request $request)
     {
         $query = DaeContrat::with('client')->orderBy('created_at', 'desc');
@@ -29,11 +43,22 @@ class DaeContratsController extends BaseDaeController
         return view('app', ['page' => 'dae-contrats']);
     }
 
+    /**
+     * Affiche le formulaire de création d'un contrat.
+     *
+     * @return \Illuminate\View\View
+     */
     public function create()
     {
         return view('app', ['page' => 'dae-contrats-create']);
     }
 
+    /**
+     * Crée un nouveau contrat avec gestion du fichier joint.
+     *
+     * @param Request $request La requête HTTP avec les données du contrat
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -67,6 +92,12 @@ class DaeContratsController extends BaseDaeController
         return redirect()->route('dae.contrats.index')->with('success', 'Contrat créé.');
     }
 
+    /**
+     * Affiche un contrat spécifique.
+     *
+     * @param int $id L'identifiant du contrat
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
+     */
     public function show($id)
     {
         $contrat = DaeContrat::with('client')->findOrFail($id);
@@ -74,11 +105,24 @@ class DaeContratsController extends BaseDaeController
         return view('app', ['page' => 'dae-contrats-show']);
     }
 
+    /**
+     * Affiche le formulaire d'édition d'un contrat.
+     *
+     * @param int $id L'identifiant du contrat
+     * @return \Illuminate\View\View
+     */
     public function edit($id)
     {
         return view('app', ['page' => 'dae-contrats-edit']);
     }
 
+    /**
+     * Met à jour un contrat existant avec gestion du fichier joint.
+     *
+     * @param Request $request La requête HTTP avec les données de mise à jour
+     * @param int $id L'identifiant du contrat
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function update(Request $request, $id)
     {
         $contrat = DaeContrat::findOrFail($id);
@@ -110,6 +154,12 @@ class DaeContratsController extends BaseDaeController
         return redirect()->route('dae.contrats.index')->with('success', 'Contrat mis à jour.');
     }
 
+    /**
+     * Supprime un contrat et son fichier associé.
+     *
+     * @param int $id L'identifiant du contrat à supprimer
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function destroy($id)
     {
         $contrat = DaeContrat::findOrFail($id);
@@ -120,6 +170,16 @@ class DaeContratsController extends BaseDaeController
         return redirect()->route('dae.contrats.index')->with('success', 'Contrat supprimé.');
     }
 
+    /**
+     * Renouvelle un contrat en créant une copie avec les mêmes paramètres.
+     *
+     * L'ancien contrat est marqué comme "renouvele" et un nouveau contrat
+     * est créé par réplication avec une nouvelle référence et date de début.
+     *
+     * @param Request $request La requête HTTP avec la nouvelle date de fin et le montant
+     * @param int $id L'identifiant du contrat à renouveler
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function renouveler(Request $request, $id)
     {
         $contrat = DaeContrat::findOrFail($id);
@@ -143,6 +203,12 @@ class DaeContratsController extends BaseDaeController
             ->with('success', 'Contrat renouvelé.');
     }
 
+    /**
+     * Télécharge le fichier d'un contrat.
+     *
+     * @param int $id L'identifiant du contrat
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse
+     */
     public function telecharger($id)
     {
         $contrat = DaeContrat::findOrFail($id);

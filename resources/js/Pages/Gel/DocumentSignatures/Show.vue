@@ -10,6 +10,16 @@
 </template>
 
 <script setup>
+/* ============================================================
+ * Composant : DocumentSignatures/Show
+ * Description : Page de detail d'une signature electronique.
+ *   Affiche les informations de la signature ainsi que
+ *   son statut actuel.
+ * ============================================================ */
+
 import GelLayout from '../../../Layouts/GelLayout.vue';
+
+/* Propriete recue du controleur :
+ *   signature - Objet contenant les donnees de la signature */
 defineProps(['signature'])
 </script>

@@ -5,6 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Modèle SaleItem - Ligne de vente (produit vendu).
+ *
+ * Table associée : 'sale_items' (convention Laravel).
+ * Détail d'une vente : produit, quantité, prix unitaire HT/TTC,
+ * remise, taux de TVA, et totaux par ligne.
+ * Relations :
+ * - sale() : appartient à une vente (Sale).
+ * - product() : appartient à un produit (Product).
+ * - variant() : appartient à une variante de produit (ProductVariant).
+ */
 class SaleItem extends Model
 {
     protected $fillable = [

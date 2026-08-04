@@ -6,6 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Modèle PosSession - Session de caisse (Point of Sale).
+ *
+ * Table associée : 'pos_sessions' (convention Laravel).
+ * Enregistre l'ouverture et la fermeture d'une session de caisse,
+ * avec les montants d'ouverture, de clôture, et la différence constatée.
+ * Relations :
+ * - client() : appartient à un client (Client).
+ * - businessUser() : appartient à un utilisateur métier (BusinessUser).
+ * - sales() : a plusieurs ventes (Sale).
+ */
 class PosSession extends Model
 {
     protected $fillable = [

@@ -5,6 +5,14 @@ namespace App\Models\Dae;
 use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle représentant une demande de fourniture de bureau (DAE).
+ *
+ * Table associée : `dae_office_supply_requests`
+ *
+ * Permet de gérer les demandes internes de fournitures avec suivi
+ * du statut (en attente, approuvée, refusée) et validation par un approuveur.
+ */
 class DaeOfficeSupplyRequest extends DaeBaseModel
 {
     use SoftDeletes;

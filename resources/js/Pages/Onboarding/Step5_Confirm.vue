@@ -1,3 +1,10 @@
+<!--
+ * Composant : Étape 5 du processus d'inscription — Confirmation
+ * Description : Récapitulatif des données saisies aux étapes précédentes (entreprise, domaine,
+ *              plan, administrateur) et validation finale pour créer l'espace.
+ *              Dernière étape du parcours d'onboarding.
+ * Utilisation : Page /register/company/step/5
+-->
 <template>
     <div class="onboarding-wrapper">
         <div class="onboarding-card">
@@ -79,9 +86,10 @@ import { ref, reactive, onMounted } from 'vue';
 
 const submitting = ref(false);
 const error = ref(null);
-const created = ref(null);
-const domain = ref(null);
+const created = ref(null);   /* Données de l'entreprise créée après succès */
+const domain = ref(null);    /* Détails du domaine sélectionné */
 
+/* Données des étapes précédentes chargées depuis la session */
 const data = reactive({
     step1: null,
     step2: null,
@@ -91,8 +99,8 @@ const data = reactive({
 
 const csrfToken = document.querySelector('meta[name=csrf-token]')?.content || '';
 
+/* Charge les données de session des étapes précédentes au montage */
 onMounted(async () => {
-    // Charger les données de session
     try {
         const res = await fetch('/api/register/company/data', { headers: { Accept: 'application/json' } });
         if (res.ok) {
@@ -102,6 +110,7 @@ onMounted(async () => {
             data.step3 = sessionData.step3 || null;
             data.step4 = sessionData.step4 || null;
 
+            /* Récupère les infos du domaine si un ID est présent */
             if (data.step2?.domain_id) {
                 const dRes = await fetch(`/api/register/domains/${data.step2.domain_id}`, { headers: { Accept: 'application/json' } });
                 if (dRes.ok) domain.value = await dRes.json();
@@ -112,6 +121,7 @@ onMounted(async () => {
     }
 });
 
+/* Finalise la création de l'espace entreprise */
 async function submitStep5() {
     submitting.value = true;
     error.value = null;
@@ -129,6 +139,7 @@ async function submitStep5() {
         const result = await res.json();
 
         if (!res.ok) {
+            /* Réinitialisation si la session a expiré */
             if (result.reset) {
                 window.location.href = '/register/company/step/1';
                 return;
@@ -139,6 +150,7 @@ async function submitStep5() {
 
         if (result.success) {
             created.value = result.company;
+            /* Redirection vers le tableau de bord après 2 secondes */
             if (result.redirect) {
                 setTimeout(() => { window.location.href = result.redirect; }, 2000);
             }

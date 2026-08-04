@@ -1,3 +1,9 @@
+<!--
+ * Composant : Liste des contrats de maintenance
+ * Description : Affiche la liste paginée des contrats de maintenance IT avec filtres (client, statut).
+ *              Permet la navigation vers le détail et la création de nouveaux contrats.
+ * Utilisation : Page principale /it/maintenance-contracts
+-->
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
@@ -7,14 +13,14 @@ const props = defineProps({
     clients: Array,
 });
 
-// ── Filters ──
+/* ─── Filtres de la liste ─── */
 const filterClientId = ref('');
 const filterStatus = ref('');
 const contractsData = ref(null);
 const loading = ref(false);
 let debounceTimer = null;
 
-// ── Helpers ──
+/* ─── Fonctions d'affichage des libellés ─── */
 const typeLabel = (t) =>
     ({ corrective: 'Corrective', preventive: 'Préventive', full_service: 'Service complet', hotline: 'Hotline' }[t] || t);
 
@@ -38,7 +44,8 @@ const formatCurrency = (amount) => {
 
 const hasContracts = computed(() => contractsData.value?.data?.length > 0);
 
-// ── Data fetching (SPA: JSON via Accept header) ──
+/* ─── Récupération des données (SPA : en-tête Accept: application/json) ─── */
+/* Récupère les contrats depuis l'API avec les paramètres de filtre actifs */
 const fetchContracts = async (page) => {
     loading.value = true;
     try {
@@ -60,20 +67,21 @@ const fetchContracts = async (page) => {
     }
 };
 
-// ── Watchers ──
+/* ─── Surveillance des filtres avec debounce (300ms) ─── */
 watch([filterClientId, filterStatus], () => {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => fetchContracts(), 300);
 });
 
-// ── Pagination ──
+/* ─── Navigation paginée ─── */
+/* Change de page dans la pagination */
 const goToPage = (url) => {
     if (!url) return;
     const u = new URL(url, window.location.origin);
     fetchContracts(u.searchParams.get('page'));
 };
 
-// ── Lifecycle ──
+/* ─── Initialisation : on utilise les données passées par Inertia/SSR ─── */
 onMounted(() => {
     contractsData.value = props.contracts;
 });

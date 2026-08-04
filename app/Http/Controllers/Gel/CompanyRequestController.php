@@ -8,10 +8,18 @@ use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Http\Request;
 
+/**
+ * Contrôleur de gestion des demandes d'inscription entreprise.
+ * Permet de lister, consulter, mettre à jour le statut et supprimer
+ * les demandes de création d'entreprise soumises via le formulaire public.
+ * Notifie les super admins lors de la validation d'une demande.
+ */
 class CompanyRequestController extends Controller
 {
     /**
      * Affiche la page de gestion des demandes entreprises.
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
@@ -19,7 +27,9 @@ class CompanyRequestController extends Controller
     }
 
     /**
-     * API: Retourne toutes les demandes entreprises, de la plus récente à la plus ancienne, paginées.
+     * API : Retourne toutes les demandes entreprises, de la plus récente à la plus ancienne.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function listAll()
     {
@@ -29,7 +39,10 @@ class CompanyRequestController extends Controller
     }
 
     /**
-     * API: Retourne une demande entreprise spécifique.
+     * API : Retourne une demande entreprise spécifique.
+     *
+     * @param int $id L'identifiant de la demande
+     * @return \Illuminate\Http\JsonResponse
      */
     public function show($id)
     {
@@ -39,8 +52,12 @@ class CompanyRequestController extends Controller
     }
 
     /**
-     * API: Met à jour le statut d'une demande entreprise.
-     * Si le statut est 'validated', crée une notification pour les super admins.
+     * API : Met à jour le statut d'une demande entreprise.
+     * Si le statut passe à 'validated', crée une notification pour tous les super admins.
+     *
+     * @param Request $request La requête HTTP avec status et admin_notes optionnels
+     * @param int $id L'identifiant de la demande
+     * @return \Illuminate\Http\JsonResponse
      */
     public function updateStatus(Request $request, $id)
     {
@@ -52,7 +69,7 @@ class CompanyRequestController extends Controller
         $companyRequest = CompanyRequest::findOrFail($id);
         $companyRequest->update($validated);
 
-        // Si le statut passe à 'validated', notifier les super admins
+        // Si le statut passe à 'validated', notifier tous les super admins
         if ($validated['status'] === 'validated') {
             $superAdmins = User::where('role', 'super_admin')->get();
 
@@ -74,7 +91,10 @@ class CompanyRequestController extends Controller
     }
 
     /**
-     * API: Supprime une demande entreprise.
+     * API : Supprime une demande entreprise.
+     *
+     * @param int $id L'identifiant de la demande à supprimer
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy($id)
     {

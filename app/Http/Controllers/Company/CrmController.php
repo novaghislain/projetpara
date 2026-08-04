@@ -10,10 +10,21 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Contrôleur CRM (Customer Relationship Management) pour l'interface Company.
+ *
+ * Gère les contacts, les affaires (deals), les interactions et les
+ * statistiques commerciales. Chaque entité est filtrée par client_id.
+ *
+ * Les contacts sont catégorisés (client, prospect, lead, partenaire, fournisseur).
+ * Les affaires suivent un pipeline (prospection → qualification → proposition → négociation → finalisé).
+ */
 class CrmController extends BaseCompanyController
 {
     /**
-     * Affiche la page CRM.
+     * Affiche la page CRM (vue SPA).
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
@@ -25,6 +36,10 @@ class CrmController extends BaseCompanyController
 
     /**
      * API: Liste tous les contacts CRM de l'entreprise.
+     *
+     * Retourne les contacts avec le nombre d'affaires et d'interactions associées.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function contacts()
     {
@@ -56,7 +71,10 @@ class CrmController extends BaseCompanyController
     }
 
     /**
-     * API: Cree un contact CRM.
+     * API: Crée un contact CRM.
+     *
+     * @param Request $request Requête HTTP (first_name, last_name, email, phone, company, position, category, notes, tags)
+     * @return \Illuminate\Http\JsonResponse
      */
     public function storeContact(Request $request)
     {
@@ -87,6 +105,10 @@ class CrmController extends BaseCompanyController
 
     /**
      * API: Modifie un contact CRM.
+     *
+     * @param Request $request Requête HTTP avec les champs à modifier
+     * @param int $id Identifiant du contact
+     * @return \Illuminate\Http\JsonResponse
      */
     public function updateContact(Request $request, $id)
     {
@@ -116,6 +138,9 @@ class CrmController extends BaseCompanyController
 
     /**
      * API: Supprime un contact CRM.
+     *
+     * @param int $id Identifiant du contact
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroyContact($id)
     {
@@ -127,10 +152,12 @@ class CrmController extends BaseCompanyController
         return response()->json(['message' => 'Contact supprime.']);
     }
 
-    // --- AFFAIRES (DEALS) -----------------------------------------------------------
-
     /**
-     * API: Liste toutes les affaires de l'entreprise.
+     * API: Liste toutes les affaires (deals) de l'entreprise.
+     *
+     * Retourne les deals avec le contact associé et le nombre d'interactions.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function deals()
     {
@@ -166,7 +193,12 @@ class CrmController extends BaseCompanyController
     }
 
     /**
-     * API: Cree une affaire.
+     * API: Crée une affaire (deal).
+     *
+     * Vérifie que le contact associé appartient bien au client.
+     *
+     * @param Request $request Requête HTTP (contact_id, title, description, amount, stage, status, etc.)
+     * @return \Illuminate\Http\JsonResponse
      */
     public function storeDeal(Request $request)
     {
@@ -206,6 +238,13 @@ class CrmController extends BaseCompanyController
 
     /**
      * API: Modifie une affaire.
+     *
+     * Si le statut passe à won/lost/abandoned, enregistre automatiquement
+     * la date de clôture si elle n'est pas déjà définie.
+     *
+     * @param Request $request Requête HTTP avec les champs à modifier
+     * @param int $id Identifiant du deal
+     * @return \Illuminate\Http\JsonResponse
      */
     public function updateDeal(Request $request, $id)
     {
@@ -241,6 +280,9 @@ class CrmController extends BaseCompanyController
 
     /**
      * API: Supprime une affaire.
+     *
+     * @param int $id Identifiant du deal
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroyDeal($id)
     {
@@ -252,10 +294,12 @@ class CrmController extends BaseCompanyController
         return response()->json(['message' => 'Affaire supprimee.']);
     }
 
-    // --- INTERACTIONS ----------------------------------------------------------------
-
     /**
-     * API: Liste toutes les interactions de l'entreprise.
+     * API: Liste toutes les interactions CRM.
+     *
+     * Retourne les interactions avec le contact et le deal associés.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function interactions()
     {
@@ -290,7 +334,12 @@ class CrmController extends BaseCompanyController
     }
 
     /**
-     * API: Cree une interaction.
+     * API: Crée une interaction (appel, email, réunion, note, autre).
+     *
+     * Vérifie que le contact et le deal associés appartiennent au client.
+     *
+     * @param Request $request Requête HTTP (contact_id, deal_id, type, subject, description, scheduled_at, outcome)
+     * @return \Illuminate\Http\JsonResponse
      */
     public function storeInteraction(Request $request)
     {
@@ -328,10 +377,13 @@ class CrmController extends BaseCompanyController
         ], 201);
     }
 
-    // --- STATISTIQUES ----------------------------------------------------------------
-
     /**
-     * API: Statistiques CRM.
+     * API: Statistiques CRM (contacts, deals, taux de conversion, interactions récentes).
+     *
+     * Calcule les indicateurs clés : répartition par catégorie, pipeline,
+     * montant gagné/perdu, interactions récentes et taux de conversion.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function stats()
     {

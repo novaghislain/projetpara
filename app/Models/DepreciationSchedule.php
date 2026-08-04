@@ -5,6 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Modèle représentant le plan d'amortissement d'une immobilisation.
+ *
+ * Table associée : `depreciation_schedules` (via convention Laravel)
+ *
+ * Relations :
+ * - Un plan appartient à une immobilisation (FixedAsset)
+ * - Un plan est lié à un exercice fiscal (FiscalYear)
+ * - Un plan peut être lié à un journal comptable (AccountingJournal)
+ */
 class DepreciationSchedule extends Model
 {
     protected $fillable = [

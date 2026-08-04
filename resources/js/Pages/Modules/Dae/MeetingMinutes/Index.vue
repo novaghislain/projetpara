@@ -1,3 +1,9 @@
+<!--
+ * Composant : Liste des procès-verbaux de réunion
+ * Description : Affiche la liste paginée des PV de réunion avec filtres (statut, date, client).
+ *              Les PV sont présentés sous forme de cartes avec possibilité de création.
+ * Utilisation : Page /dae/pv-reunions
+-->
 <template>
     <GelLayout>
         <div class="dae-courriers-index">
@@ -128,25 +134,32 @@ import { ref, reactive, onMounted } from 'vue'
 import GelLayout from '../../../../Layouts/GelLayout.vue'
 
 const loading = ref(false)
-const minutes = ref([])
-const clients = ref([])
+const minutes = ref([])           /* Liste des PV affichés */
+const clients = ref([])           /* Liste des clients pour le filtre */
 const totalItems = ref(0)
 
+/* Filtres de recherche réactifs */
 const filters = reactive({ statut: '', from: '', to: '', client_id: '' })
+/* État de la pagination */
 const pagination = reactive({ current_page: 1, last_page: 1, prev_page_url: null, next_page_url: null })
 
+/* Formate une date au format français court */
 function formatDate(d) {
     if (!d) return ''
     return new Date(d).toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' })
 }
+/* Retourne la classe Bootstrap selon le statut du PV */
 function statutBadge(s) {
     return { projet: 'bg-warning text-dark', final: 'bg-info', approuve: 'bg-success' }[s] || 'bg-secondary'
 }
+/* Libellé du statut du PV */
 function statutLabel(s) {
     return { projet: 'Projet', final: 'Final', approuve: 'Approuvé' }[s] || s
 }
+/* Redirige vers la page de détail */
 function goToShow(id) { window.location.href = '/dae/pv-reunions/' + id }
 
+/* Récupère les PV avec filtres et pagination */
 async function fetchMinutes(page = 1) {
     loading.value = true
     try {
@@ -162,14 +175,17 @@ async function fetchMinutes(page = 1) {
     } catch (err) { console.error(err) }
     finally { loading.value = false }
 }
+/* Change de page dans la pagination */
 function goPage(page) {
     if (page >= 1 && page <= pagination.last_page) fetchMinutes(page)
 }
+/* Charge la liste des clients pour le filtre */
 async function fetchClients() {
     try { const res = await window.axios.get('/api/clients/list'); clients.value = res.data || [] }
     catch { /* ignore */ }
 }
 
+/* Initialisation au montage : charge les PV et les clients */
 onMounted(() => { fetchMinutes(); fetchClients() })
 </script>
 

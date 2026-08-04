@@ -10,15 +10,29 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Contrôleur API pour la gestion des périodes comptables d'un exercice.
+ *
+ * Permet de lister, créer, générer les 12 périodes mensuelles
+ * et clôturer les périodes d'un exercice comptable.
+ */
 class FiscalPeriodController extends Controller
 {
+    /**
+     * Récupère l'identifiant client depuis l'utilisateur authentifié.
+     *
+     * @return int
+     */
     protected function getClientId(): int
     {
         return (int) (Auth::user()->active_client_id ?? Auth::user()->client_id);
     }
 
     /**
-     * Périodes d'un exercice.
+     * Liste les périodes d'un exercice comptable.
+     *
+     * @param int $fiscalYear L'identifiant de l'exercice.
+     * @return JsonResponse
      */
     public function index(int $fiscalYear): JsonResponse
     {
@@ -35,7 +49,11 @@ class FiscalPeriodController extends Controller
     }
 
     /**
-     * Créer une période.
+     * Crée une nouvelle période comptable dans un exercice.
+     *
+     * @param Request $request La requête HTTP avec les données de la période.
+     * @param int $fiscalYear L'identifiant de l'exercice.
+     * @return JsonResponse
      */
     public function store(Request $request, int $fiscalYear): JsonResponse
     {
@@ -70,7 +88,10 @@ class FiscalPeriodController extends Controller
     }
 
     /**
-     * Générer les 12 périodes mensuelles d'un exercice.
+     * Génère automatiquement les 12 périodes mensuelles (M01 à M12) d'un exercice.
+     *
+     * @param int $fiscalYear L'identifiant de l'exercice.
+     * @return JsonResponse
      */
     public function generateMonthly(int $fiscalYear): JsonResponse
     {
@@ -86,6 +107,7 @@ class FiscalPeriodController extends Controller
             return response()->json(['message' => 'Des périodes existent déjà pour cet exercice.'], 409);
         }
 
+        // Définition des 12 mois avec leur code et libellé
         $months = [
             ['code' => 'M01', 'label' => 'Janvier'],
             ['code' => 'M02', 'label' => 'Février'],
@@ -104,6 +126,8 @@ class FiscalPeriodController extends Controller
         $year = $fiscalYearModel->year;
         $periods = DB::transaction(function () use ($fiscalYear, $year, $months) {
             $created = [];
+            // Pour chaque mois, on calcule la date de début (1er du mois)
+            // et la date de fin (dernier jour du mois)
             foreach ($months as $i => $month) {
                 $monthNum = $i + 1;
                 $startDate = sprintf('%d-%02d-01', $year, $monthNum);
@@ -128,7 +152,11 @@ class FiscalPeriodController extends Controller
     }
 
     /**
-     * Clôturer une période.
+     * Clôture une période comptable (la rend non modifiable).
+     *
+     * @param int $fiscalYear L'identifiant de l'exercice.
+     * @param int $period L'identifiant de la période à clôturer.
+     * @return JsonResponse
      */
     public function close(int $fiscalYear, int $period): JsonResponse
     {

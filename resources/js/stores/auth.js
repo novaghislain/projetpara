@@ -1,3 +1,11 @@
+/* ============================================================
+ * Fichier : stores/auth.js
+ * Description : Store reactif d'authentification et de permissions
+ * Gerer l'utilisateur, les permissions, les modules et le contexte entreprise
+ * Fournit des getters pour les verifications de roles et droits d'acces
+ * Inclut le polling de verification des permissions
+ * ============================================================ */
+
 import { reactive } from 'vue';
 
 /**

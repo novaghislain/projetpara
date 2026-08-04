@@ -1,4 +1,9 @@
 <script setup>
+/*
+ * Omnisearch -- Barre de recherche globale accessible via Ctrl+K.
+ * Ouvre une modale de recherche avec résultats catégorisés, navigation
+ * au clavier (flèches, Enter, Esc) et historique des recherches récentes.
+ */
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import { sanitizeHtml } from '../utils/sanitize.js';
 
@@ -7,14 +12,15 @@ const props = defineProps({
     placeholder: { type: String, default: 'Rechercher... (clients, factures, pages...)' },
 });
 
-const isOpen = ref(false);
-const query = ref('');
-const results = ref([]);
-const loading = ref(false);
-const selectedIndex = ref(-1);
-const searchInput = ref(null);
-const recentSearches = ref(loadRecent());
+const isOpen = ref(false);        /* État d'ouverture de la modale */
+const query = ref('');             /* Texte saisi */
+const results = ref([]);           /* Résultats groupés par catégorie */
+const loading = ref(false);        /* Indicateur de chargement */
+const selectedIndex = ref(-1);     /* Index sélectionné dans la liste plate */
+const searchInput = ref(null);     /* Référence vers l'input DOM */
+const recentSearches = ref(loadRecent());  /* Recherches récentes depuis localStorage */
 
+/* Catégories de résultats affichées dans la modale */
 const categories = [
     { key: 'clients', icon: 'bi-building', label: 'Clients' },
     { key: 'invoices', icon: 'bi-receipt', label: 'Factures' },
@@ -25,15 +31,18 @@ const categories = [
     { key: 'navigation', icon: 'bi-link', label: 'Pages' },
 ];
 
+/* Index des icônes et libellés par clé de catégorie */
 const categoryIcons = Object.fromEntries(categories.map(c => [c.key, c.icon]));
 const categoryLabels = Object.fromEntries(categories.map(c => [c.key, c.label]));
 
+/* Charge l'historique depuis le localStorage */
 function loadRecent() {
     try {
         return JSON.parse(localStorage.getItem('omnisearch_recent') || '[]');
     } catch { return []; }
 }
 
+/* Sauvegarde une recherche dans l'historique (max 5) */
 function saveRecent(q) {
     let recents = loadRecent().filter(r => r !== q);
     recents.unshift(q);
@@ -43,6 +52,7 @@ function saveRecent(q) {
 }
 
 let debounceTimer = null;
+/* Déclenche la recherche après 300ms d'inactivité */
 watch(query, (val) => {
     clearTimeout(debounceTimer);
     selectedIndex.value = -1;
@@ -55,6 +65,7 @@ watch(query, (val) => {
     debounceTimer = setTimeout(() => performSearch(val), 300);
 });
 
+/* Exécute la requête de recherche via l'API */
 async function performSearch(q) {
     try {
         const resp = await window.axios.get(`/api/search?q=${encodeURIComponent(q)}`);
@@ -65,6 +76,7 @@ async function performSearch(q) {
     loading.value = false;
 }
 
+/* Ouvre la modale et réinitialise l'état */
 function open() {
     isOpen.value = true;
     query.value = '';
@@ -73,6 +85,7 @@ function open() {
     nextTick(() => searchInput.value?.focus());
 }
 
+/* Ferme la modale et réinitialise l'état */
 function close() {
     isOpen.value = false;
     query.value = '';
@@ -80,6 +93,7 @@ function close() {
     selectedIndex.value = -1;
 }
 
+/* Navigue vers l'élément sélectionné */
 function navigate(item) {
     if (!item) return;
     if (query.value.trim().length >= 2) saveRecent(query.value.trim());
@@ -90,6 +104,7 @@ function navigate(item) {
     }
 }
 
+/* Gestionnaire d'événements clavier (navigation dans les résultats) */
 function onKeydown(e) {
     if (!isOpen.value) return;
 
@@ -115,15 +130,18 @@ function onKeydown(e) {
     }
 }
 
+/* Sélectionne une recherche récente comme requête */
 function selectRecent(q) {
     query.value = q;
 }
 
+/* Efface l'historique des recherches récentes */
 function clearRecent() {
     localStorage.removeItem('omnisearch_recent');
     recentSearches.value = [];
 }
 
+/* Intercepte Ctrl+K / Cmd+K pour ouvrir/fermer la recherche */
 function handleGlobalKeydown(e) {
     if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault();
@@ -135,7 +153,7 @@ function handleGlobalKeydown(e) {
 onMounted(() => document.addEventListener('keydown', handleGlobalKeydown));
 onUnmounted(() => document.removeEventListener('keydown', handleGlobalKeydown));
 
-// Expose open/close for parent access
+/* Expose open/close pour accès depuis le parent */
 defineExpose({ open, close });
 </script>
 

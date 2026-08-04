@@ -6,11 +6,21 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Contrôleur API du tableau de bord des rapports comptables.
+ *
+ * Fournit une vue d'ensemble rapide des indicateurs financiers
+ * (balance de vérification, CA, charges, trésorerie, créances, dettes).
+ */
 class ReportDashboardController extends Controller
 {
     /**
-     * Tableau de bord des rapports comptables
-     * Vue d'ensemble rapide des indicateurs financiers
+     * Tableau de bord des rapports comptables.
+     * Vue d'ensemble rapide des indicateurs financiers (CA, charges, trésorerie,
+     * créances, dettes, équilibre débits/crédits, transactions mensuelles).
+     *
+     * @param  Request  $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function index(Request $request)
     {

@@ -5,6 +5,32 @@ namespace App\Models\Gel;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle Task (Tâche).
+ *
+ * Gère les tâches à réaliser dans le cadre du suivi de mission.
+ * Une tâche est assignée à un utilisateur avec une priorité, une date d'échéance,
+ * et un statut d'avancement (a_faire, en_cours, termine).
+ * Table associée : `gel_tasks`.
+ * Supporte la suppression douce (SoftDeletes).
+ *
+ * @property int $id
+ * @property int $cabinet_id ID du cabinet
+ * @property int $client_id ID du client
+ * @property int $assigned_to ID de l'utilisateur assigné
+ * @property int $created_by ID du créateur
+ * @property string $titre Titre de la tâche
+ * @property string|null $description Description détaillée
+ * @property string $priorite Priorité (basse, moyenne, haute, critique)
+ * @property string $statut Statut (a_faire, en_cours, termine)
+ * @property \Carbon\Carbon|null $date_echeance Date d'échéance
+ * @property \Carbon\Carbon|null $termine_at Date de réalisation
+ *
+ * @property-read \App\Models\Gel\Cabinet $cabinet Cabinet associé
+ * @property-read \App\Models\Gel\Client $client Client associé
+ * @property-read \App\Models\User $assigne Utilisateur assigné
+ * @property-read \App\Models\User $createur Utilisateur créateur
+ */
 class Task extends Model
 {
     use SoftDeletes;

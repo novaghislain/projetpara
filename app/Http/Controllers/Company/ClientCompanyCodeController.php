@@ -12,10 +12,25 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 
+/**
+ * Contrôleur de gestion du code entreprise (Company).
+ *
+ * Permet d'afficher le code QR de l'entreprise, de régénérer le code
+ * d'accès (super admin / company admin uniquement), et de rattacher
+ * un utilisateur à une entreprise via son code.
+ *
+ * Utilise le CompanyCodeService pour la génération et la validation des codes.
+ */
 class ClientCompanyCodeController extends Controller
 {
     /**
-     * Récupère les infos du code entreprise pour l'affichage.
+     * Récupère les informations du code entreprise pour l'affichage.
+     *
+     * Retourne le code client et son QR code data URI.
+     * Vérifie que l'utilisateur a accès à ce client.
+     *
+     * @param int $clientId Identifiant du client
+     * @return \Illuminate\Http\JsonResponse
      */
     public function show(int $clientId): JsonResponse
     {
@@ -40,6 +55,12 @@ class ClientCompanyCodeController extends Controller
 
     /**
      * Régénère le code entreprise (super_admin ou company_admin uniquement).
+     *
+     * Limité à 3 régénérations par heure par client (rate limiting).
+     * L'ancien code devient invalide après régénération.
+     *
+     * @param int $clientId Identifiant du client
+     * @return \Illuminate\Http\JsonResponse
      */
     public function regenerate(int $clientId): JsonResponse
     {
@@ -93,7 +114,13 @@ class ClientCompanyCodeController extends Controller
     }
 
     /**
-     * Vérifie que l'utilisateur a accès à ce client.
+     * Vérifie que l'utilisateur connecté a accès au client spécifié.
+     *
+     * Autorise les super administrateurs, ou les utilisateurs dont
+     * le client_id correspond au client cible.
+     *
+     * @param int $clientId Identifiant du client à vérifier
+     * @return void
      */
     private function authorizeAccess(int $clientId): void
     {
@@ -109,6 +136,12 @@ class ClientCompanyCodeController extends Controller
 
     /**
      * Ajoute une entreprise au compte de l'utilisateur connecté via un code.
+     *
+     * Résout le code, vérifie que l'utilisateur n'est pas déjà rattaché,
+     * et crée la liaison UserClient.
+     *
+     * @param Request $request Requête HTTP (client_code)
+     * @return \Illuminate\Http\JsonResponse
      */
     public function addCompany(Request $request): JsonResponse
     {

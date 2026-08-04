@@ -10,6 +10,12 @@
 </template>
 
 <script setup>
+/*
+ * Page : SlaPolicies Index
+ * Role : Liste des politiques SLA (Service Level Agreements) avec recherche et pagination
+ * Props :
+ *   policies (Object) — Données paginées des politiques SLA
+ */
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 defineProps(['policies'])
 </script>

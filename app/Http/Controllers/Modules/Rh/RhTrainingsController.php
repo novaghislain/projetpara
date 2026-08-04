@@ -6,8 +6,23 @@ use App\Models\Rh\RhTraining;
 use App\Models\Rh\RhEmployee;
 use Illuminate\Http\Request;
 
+/**
+ * Contrôleur de gestion des formations RH.
+ *
+ * Permet de planifier, mettre à jour et supprimer les formations
+ * des employés avec suivi du statut et des certifications.
+ */
 class RhTrainingsController extends BaseRhController
 {
+    /**
+     * Affiche la liste des formations ou la vue associée.
+     *
+     * Si la requête attend du JSON, retourne les formations paginées
+     * avec filtrage optionnel par statut.
+     *
+     * @param Request $request La requête HTTP avec le filtre (statut)
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View Liste paginée des formations ou vue
+     */
     public function index(Request $request)
     {
         if ($request->expectsJson()) {
@@ -22,6 +37,12 @@ class RhTrainingsController extends BaseRhController
         return view('app', ['page' => 'rh-trainings']);
     }
 
+    /**
+     * Planifie une nouvelle formation.
+     *
+     * @param Request $request La requête HTTP contenant les données de la formation
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse Formation créée ou redirection
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -46,6 +67,13 @@ class RhTrainingsController extends BaseRhController
         return redirect()->route('rh.trainings.index')->with('success', 'Formation créée.');
     }
 
+    /**
+     * Met à jour une formation existante.
+     *
+     * @param Request $request La requête HTTP contenant les données à mettre à jour
+     * @param mixed $id L'identifiant de la formation
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse Formation mise à jour ou redirection
+     */
     public function update(Request $request, $id)
     {
         $employeeIds = RhEmployee::byClient($this->getClientId($request))->pluck('id');
@@ -72,6 +100,13 @@ class RhTrainingsController extends BaseRhController
         return redirect()->route('rh.trainings.index')->with('success', 'Formation mise à jour.');
     }
 
+    /**
+     * Supprime une formation.
+     *
+     * @param Request $request La requête HTTP
+     * @param mixed $id L'identifiant de la formation à supprimer
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse Message de confirmation ou redirection
+     */
     public function destroy(Request $request, $id)
     {
         $employeeIds = RhEmployee::byClient($this->getClientId($request))->pluck('id');

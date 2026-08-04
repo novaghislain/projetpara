@@ -4,6 +4,19 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\Auditable;
 
+/**
+ * Modèle représentant une facture dans le module ERP.
+ *
+ * Table associée : `erp_invoices` (via convention Laravel)
+ *
+ * Supporte la facturation électronique (e-MECeF) avec les champs
+ * NIM, compteur, hash et QR code.
+ *
+ * Relations :
+ * - Une facture appartient à un client (Client)
+ * - Une facture peut avoir plusieurs lignes (ErpInvoiceItem)
+ * - Une facture est créée par un utilisateur (User)
+ */
 class ErpInvoice extends Model {
     use SoftDeletes, Auditable;
     protected $fillable = [

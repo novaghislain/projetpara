@@ -5,6 +5,16 @@ namespace App\Models\Rh;
 use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle RhExpense - Note de frais d'un employé.
+ *
+ * Table associée : 'rh_expenses'.
+ * Gère les notes de frais : catégorie, montant, justificatif,
+ * statut (en attente/approuvé/refusé) et approbation.
+ * Relations :
+ * - employee() : appartient à un employé (RhEmployee).
+ * - approbateur() : appartient à l'utilisateur (User) qui a approuvé la note.
+ */
 class RhExpense extends RhBaseModel
 {
     use SoftDeletes;

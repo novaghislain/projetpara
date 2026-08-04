@@ -1,16 +1,29 @@
 ﻿<script setup>
+/*
+ * Profile.vue — Profil entreprise et utilisateur
+ *
+ * Page de profil de l'espace client. Permet de visualiser
+ * et modifier les informations de l'entreprise (raison sociale,
+ * email, téléphone, adresse) ainsi que les détails légaux
+ * (forme juridique, IFU, RCCM). Inclut également un composant
+ * de profil utilisateur pour les paramètres personnels.
+ */
+
 import { ref, onMounted } from 'vue';
 import CompanyLayout from '../../Layouts/CompanyLayout.vue';
 import UserProfileSettings from '../../Components/UserProfileSettings.vue';
 
-const company = ref(null);
-const loading = ref(true);
-const saving = ref(false);
-const error = ref(null);
-const success = ref(null);
+// ── État réactif ─────────────────────────────────────────────────
+const company = ref(null);   // Données de l'entreprise
+const loading = ref(true);   // État de chargement initial
+const saving = ref(false);   // État de sauvegarde du formulaire
+const error = ref(null);     // Message d'erreur
+const success = ref(null);   // Message de succès
 
+// Identifiant client injecté côté serveur
 const clientId = window.__CLIENT_ID__;
 
+// Formulaire lié aux champs de saisie
 const form = ref({
     company_name: '',
     email: '',
@@ -18,6 +31,7 @@ const form = ref({
     address: '',
 });
 
+// ── Chargement des données entreprise ────────────────────────────
 const loadData = async () => {
     if (!clientId) { loading.value = false; return; }
     try {
@@ -25,6 +39,7 @@ const loadData = async () => {
         if (!res.ok) throw new Error('Erreur serveur');
         const data = await res.json();
         company.value = data.company;
+        // Initialisation du formulaire avec les données existantes
         form.value = {
             company_name: data.company.company_name || '',
             email: data.company.email || '',
@@ -38,6 +53,7 @@ const loadData = async () => {
     }
 };
 
+// ── Mise à jour du profil entreprise (PUT) ──────────────────────
 const updateProfile = async () => {
     saving.value = true;
     success.value = null;
@@ -63,6 +79,7 @@ const updateProfile = async () => {
     }
 };
 
+// Lancement du chargement au montage
 onMounted(loadData);
 </script>
 

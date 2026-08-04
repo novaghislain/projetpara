@@ -1,11 +1,20 @@
+<!--
+ * AccountSelector.vue
+ * Sélecteur de compte comptable avec deux modes :
+ *   - Recherche avancée avec autocomplétion (quand > 10 comptes)
+ *   - Select simple (quand <= 10 comptes)
+ * Supporte le filtrage par classe et par type de compte.
+-->
 <template>
     <div class="account-selector">
+        <!-- Label avec astérisque si requis -->
         <label v-if="label" class="form-label small mb-1">
             {{ label }}<span v-if="required" class="text-danger ms-1">*</span>
         </label>
 
-        <!-- Mode recherche avancé (quand on a des comptes) -->
+        <!-- Mode recherche avancée avec dropdown (plus de 10 comptes) -->
         <div v-if="accounts.length > 10" class="position-relative">
+            <!-- Champ de recherche texte -->
             <input
                 :value="searchTerm"
                 @input="onSearch"
@@ -16,6 +25,7 @@
                 :class="{ 'is-invalid': error }"
                 :placeholder="placeholder"
             />
+            <!-- Liste déroulante des résultats filtrés -->
             <ul v-if="showDropdown && filteredAccounts.length > 0"
                 class="dropdown-menu show w-100 mt-1 p-0 shadow-sm"
                 style="max-height: 280px; overflow-y: auto;">
@@ -29,7 +39,7 @@
             </ul>
         </div>
 
-        <!-- Mode select simple (quand peu de comptes ou via propriétaire) -->
+        <!-- Mode select simple (10 comptes ou moins) -->
         <select v-else
             class="form-select form-select-sm"
             :class="{ 'is-invalid': error }"
@@ -41,9 +51,11 @@
             </option>
         </select>
 
+        <!-- Compte sélectionné affiché en mode recherche -->
         <div v-if="selected && accounts.length > 10" class="mt-1">
             <small class="text-success">✓ {{ selected.code }} — {{ selected.name }}</small>
         </div>
+        <!-- Message d'erreur -->
         <div v-if="error" class="invalid-feedback d-block">{{ error }}</div>
     </div>
 </template>
@@ -51,37 +63,44 @@
 <script setup>
 import { ref, computed } from 'vue';
 
+/* Propriétés du composant AccountSelector */
 const props = defineProps({
-    modelValue: { type: [String, Number, null], default: null },
+    modelValue: { type: [String, Number, null], default: null },  /* ID du compte sélectionné */
     label: { type: String, default: '' },
     placeholder: { type: String, default: 'Code ou nom du compte...' },
     required: { type: Boolean, default: false },
     error: { type: String, default: '' },
-    classFilter: { type: String, default: '' },
-    typeFilter: { type: String, default: '' },
-    accounts: { type: Array, default: () => [] },
+    classFilter: { type: String, default: '' },    /* Filtre par classe SYSCOHADA (ex: "1", "2", ...) */
+    typeFilter: { type: String, default: '' },     /* Filtre par type de compte */
+    accounts: { type: Array, default: () => [] },  /* Liste de tous les comptes disponibles */
 });
 
 const emit = defineEmits(['update:modelValue']);
 
-const searchTerm = ref('');
-const showDropdown = ref(false);
-const selected = ref(null);
+/* État interne */
+const searchTerm = ref('');          /* Texte saisi dans la recherche */
+const showDropdown = ref(false);     /* Visibilité du dropdown */
+const selected = ref(null);          /* Compte sélectionné (objet complet) */
 
+/* Liste filtrée selon le terme de recherche, la classe et le type */
 const filteredAccounts = computed(() => {
     let list = props.accounts;
 
+    /* Filtre par classe SYSCOHADA (code commençant par) */
     if (props.classFilter) {
         list = list.filter(a =>
             a.code?.startsWith(props.classFilter) ||
             a.syscohada_class === props.classFilter
         );
     }
+    /* Filtre par type de compte */
     if (props.typeFilter) {
         list = list.filter(a => a.type === props.typeFilter);
     }
+    /* Si pas de recherche ou mode select simple, retourne la liste brute filtrée */
     if (!searchTerm.value || props.accounts.length <= 10) return list;
 
+    /* Recherche textuelle sur le code et le nom (limité à 30 résultats) */
     const term = searchTerm.value.toLowerCase();
     return list.filter(
         a => a.code?.toLowerCase().includes(term) ||
@@ -89,11 +108,13 @@ const filteredAccounts = computed(() => {
     ).slice(0, 30);
 });
 
+/* Met à jour le terme de recherche et affiche le dropdown */
 function onSearch(e) {
     searchTerm.value = e.target.value;
     showDropdown.value = true;
 }
 
+/* Sélectionne un compte et émet son ID */
 function selectAccount(account) {
     selected.value = account;
     searchTerm.value = `${account.code} — ${account.name}`;
@@ -101,6 +122,7 @@ function selectAccount(account) {
     emit('update:modelValue', account.id);
 }
 
+/* Cache le dropdown avec un délai pour permettre les clics */
 function hideDropdown() {
     setTimeout(() => { showDropdown.value = false; }, 200);
 }

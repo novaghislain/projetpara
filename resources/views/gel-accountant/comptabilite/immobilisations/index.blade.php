@@ -12,7 +12,7 @@
     <a class="gel-tab" onclick="switchTab('faTab','report')" faTab="report">Rapport</a>
 </div>
 <div class="gel-tab-content active" faTab="list">
-    <div class="gel-card"><div class="gel-card-body" style="padding:0;">
+    <div class="gel-card p-4 mb-4"><div class="gel-card-body p-4 mb-4">
         @php $assets = $assets ?? []; @endphp
         @if(count($assets) > 0)
         <table class="gel-table">
@@ -38,12 +38,12 @@
     </div></div>
 </div>
 <div class="gel-tab-content" faTab="amort">
-    <div class="gel-card"><div class="gel-card-body">
+    <div class="gel-card p-4 mb-4"><div class="gel-card-body p-4 mb-4">
         <div class="gel-empty"><i class="fas fa-chart-line"></i><h3>Amortissements</h3><p>Les amortissements seront calculés automatiquement.</p></div>
     </div></div>
 </div>
 <div class="gel-tab-content" faTab="report">
-    <div class="gel-card"><div class="gel-card-body">
+    <div class="gel-card p-4 mb-4"><div class="gel-card-body p-4 mb-4">
         <div class="gel-empty"><i class="fas fa-file-alt"></i><h3>Rapport</h3><p>Générez le rapport des immobilisations.</p></div>
     </div></div>
 </div>

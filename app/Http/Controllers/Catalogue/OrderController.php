@@ -14,7 +14,17 @@ use Illuminate\Support\Str;
 class OrderController extends Controller
 {
     /**
+     * Contrôleur pour la gestion des commandes côté public et client.
+     * Gère le parcours de commande : préparation en session,
+     * formulaire Wizard, soumission avec gestion du panier
+     * et des documents associés.
+     */
+
+    /**
      * Route PUBLIQUE : Sauvegarde le service en session avant la connexion/inscription
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function prepare(Request $request)
     {
@@ -28,7 +38,11 @@ class OrderController extends Controller
     }
 
     /**
-     * Étape 1 : Initialisation de la commande depuis le catalogue public
+     * Étape 1 : Initialisation de la commande depuis le catalogue public.
+     * Stocke l'identifiant du service en session avant la soumission.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function initialize(Request $request)
     {
@@ -43,7 +57,10 @@ class OrderController extends Controller
     }
 
     /**
-     * Affiche le formulaire de commande (Wizard)
+     * Affiche le formulaire de commande (Wizard) avec le panier et les services.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
      */
     public function step(Request $request)
     {
@@ -67,8 +84,12 @@ class OrderController extends Controller
     }
 
     /**
-     * Soumission finale de la commande
-     * Supporte : Panier multi-services (cart session) et Service unique (order_service_id)
+     * Soumission finale de la commande.
+     * Supporte le panier multi-services (session cart) et le service unique (session order_service_id).
+     * Crée les commandes, enregistre l'historique des statuts et attache les documents.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
     public function submit(Request $request)
     {

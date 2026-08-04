@@ -5,6 +5,14 @@ namespace App\Models\Dae;
 use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle représentant un message interne dans le module DAE.
+ *
+ * Table associée : `dae_messages`
+ *
+ * Permet la messagerie interne avec suivi des statuts (lu, traité),
+ * gestion des urgences et type de message (appel, notification, etc.).
+ */
 class DaeMessage extends DaeBaseModel
 {
     use SoftDeletes;

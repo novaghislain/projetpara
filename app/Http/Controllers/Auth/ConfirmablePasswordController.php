@@ -10,10 +10,16 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Contrôleur de confirmation du mot de passe.
+ *
+ * Permet de vérifier le mot de passe d'un utilisateur avant d'accéder
+ * à des zones sensibles de l'application (ex. paramètres de sécurité).
+ */
 class ConfirmablePasswordController extends Controller
 {
     /**
-     * Show the confirm password view.
+     * Affiche la vue de confirmation du mot de passe.
      */
     public function show(): Response
     {
@@ -21,7 +27,10 @@ class ConfirmablePasswordController extends Controller
     }
 
     /**
-     * Confirm the user's password.
+     * Confirme le mot de passe de l'utilisateur pour une zone sensible.
+     *
+     * @param  Request  $request  La requête HTTP entrante
+     * @return RedirectResponse
      */
     public function store(Request $request): RedirectResponse
     {

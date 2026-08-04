@@ -89,9 +89,23 @@
 </template>
 
 <script setup>
+/* ============================================================
+ * Composant : Ocr/Index
+ * Description : Page de liste des analyses OCR.
+ *   Affiche les documents analyses avec leur statut,
+ *   leur niveau de confiance et les actions disponibles.
+ *   Filtrage par client et par statut.
+ * ============================================================ */
+
 import GelLayout from '../../../Layouts/GelLayout.vue';
+
+/* Proprietes recues du controleur :
+ *   scans   - Liste paginee des analyses OCR
+ *   clients - Liste des clients pour le filtre */
 defineProps(['scans', 'clients'])
 
+/* Fonction utilitaire : retourne la classe CSS du badge
+ * en fonction du statut de l'analyse */
 const statusClass = (s) => ({
     completed: 'bg-success',
     processing: 'bg-warning text-dark',

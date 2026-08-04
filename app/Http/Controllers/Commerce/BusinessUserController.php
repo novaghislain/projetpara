@@ -11,11 +11,27 @@ use Illuminate\Support\Facades\Auth;
 
 class BusinessUserController extends Controller
 {
+    /**
+     * Contrôleur pour la gestion des utilisateurs commerciaux.
+     * Permet d'associer des utilisateurs à une entreprise avec des rôles
+     * et permissions spécifiques (admin_entreprise, dg, commercial, etc.).
+     */
+
+    /**
+     * Affiche la page de gestion des utilisateurs commerciaux.
+     *
+     * @return \Illuminate\View\View
+     */
     public function index()
     {
         return view('app', ['page' => 'commerce-business-users']);
     }
 
+    /**
+     * Retourne la liste de tous les utilisateurs commerciaux de l'entreprise.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function listAll()
     {
         $user = Auth::user();
@@ -29,6 +45,13 @@ class BusinessUserController extends Controller
         return response()->json($users);
     }
 
+    /**
+     * Associe un utilisateur existant à l'entreprise avec un rôle spécifique.
+     * Vérifie l'unicité de l'association.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function store(Request $request)
     {
         $clientId = Auth::user()->client_id ?? Auth::id();
@@ -58,6 +81,13 @@ class BusinessUserController extends Controller
         return response()->json($businessUser->load(['user', 'role']), 201);
     }
 
+    /**
+     * Met à jour le rôle ou les permissions d'un utilisateur commercial.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param int $id Identifiant de l'utilisateur commercial
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function update(Request $request, $id)
     {
         $businessUser = BusinessUser::findOrFail($id);
@@ -73,6 +103,12 @@ class BusinessUserController extends Controller
         return response()->json($businessUser->load(['user', 'role']));
     }
 
+    /**
+     * Supprime l'association d'un utilisateur à l'entreprise.
+     *
+     * @param int $id Identifiant de l'utilisateur commercial
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function destroy($id)
     {
         $businessUser = BusinessUser::findOrFail($id);
@@ -80,6 +116,12 @@ class BusinessUserController extends Controller
         return response()->json(['message' => 'Utilisateur commercial retiré']);
     }
 
+    /**
+     * Retourne la liste des utilisateurs disponibles pour être associés
+     * (ceux qui ne sont pas déjà liés à l'entreprise).
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function availableUsers()
     {
         $clientId = Auth::user()->client_id ?? Auth::id();
@@ -97,6 +139,11 @@ class BusinessUserController extends Controller
         return response()->json($users);
     }
 
+    /**
+     * Retourne la liste des rôles personnalisés de l'entreprise.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function roles()
     {
         $clientId = Auth::user()->client_id ?? Auth::id();
@@ -104,6 +151,12 @@ class BusinessUserController extends Controller
         return response()->json($roles);
     }
 
+    /**
+     * Crée un nouveau rôle personnalisé pour l'entreprise.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function storeRole(Request $request)
     {
         $clientId = Auth::user()->client_id ?? Auth::id();

@@ -5,6 +5,14 @@ namespace App\Models\Dae;
 use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle représentant un rapport dans le module DAE.
+ *
+ * Table associée : `dae_rapports`
+ *
+ * Permet de générer et stocker des rapports avec métriques,
+ * contenu structuré et fichier exporté.
+ */
 class DaeRapport extends DaeBaseModel
 {
     use SoftDeletes;

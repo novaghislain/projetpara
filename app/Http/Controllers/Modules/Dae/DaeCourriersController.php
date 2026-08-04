@@ -7,8 +7,23 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Contrôleur de gestion des courriers du module DAE.
+ *
+ * Permet la gestion complète des courriers entrants, sortants et internes
+ * avec suivi, traitement, archivage, duplication et export.
+ */
 class DaeCourriersController extends BaseDaeController
 {
+    /**
+     * Liste paginée des courriers avec filtres avancés.
+     *
+     * Filtres disponibles : type, statut, urgence, période, recherche
+     * (référence, objet, contenu).
+     *
+     * @param Request $request La requête HTTP avec les paramètres de filtre
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
+     */
     public function index(Request $request)
     {
         $query = DaeCourrier::with(['client', 'traitePar', 'createdBy'])
@@ -49,11 +64,22 @@ class DaeCourriersController extends BaseDaeController
         return view('app', ['page' => 'dae-courriers']);
     }
 
+    /**
+     * Affiche le formulaire de création d'un courrier.
+     *
+     * @return \Illuminate\View\View
+     */
     public function create()
     {
         return view('app', ['page' => 'dae-courriers-create']);
     }
 
+    /**
+     * Crée un nouveau courrier avec gestion du fichier joint.
+     *
+     * @param Request $request La requête HTTP avec les données du courrier
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -95,6 +121,12 @@ class DaeCourriersController extends BaseDaeController
             ->with('success', 'Courrier créé avec succès.');
     }
 
+    /**
+     * Affiche un courrier spécifique.
+     *
+     * @param int $id L'identifiant du courrier
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
+     */
     public function show($id)
     {
         $courrier = DaeCourrier::with(['client', 'traitePar', 'createdBy'])
@@ -107,11 +139,24 @@ class DaeCourriersController extends BaseDaeController
         return view('app', ['page' => 'dae-courriers-show']);
     }
 
+    /**
+     * Affiche le formulaire d'édition d'un courrier.
+     *
+     * @param int $id L'identifiant du courrier
+     * @return \Illuminate\View\View
+     */
     public function edit($id)
     {
         return view('app', ['page' => 'dae-courriers-edit']);
     }
 
+    /**
+     * Met à jour un courrier existant avec gestion du fichier joint.
+     *
+     * @param Request $request La requête HTTP avec les données de mise à jour
+     * @param int $id L'identifiant du courrier
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function update(Request $request, $id)
     {
         $courrier = DaeCourrier::findOrFail($id);
@@ -150,6 +195,12 @@ class DaeCourriersController extends BaseDaeController
             ->with('success', 'Courrier mis à jour.');
     }
 
+    /**
+     * Supprime un courrier et son fichier joint associé.
+     *
+     * @param int $id L'identifiant du courrier à supprimer
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function destroy($id)
     {
         $courrier = DaeCourrier::findOrFail($id);
@@ -166,6 +217,13 @@ class DaeCourriersController extends BaseDaeController
             ->with('success', 'Courrier supprimé.');
     }
 
+    /**
+     * Traite un courrier en le marquant avec les notes de traitement.
+     *
+     * @param Request $request La requête HTTP avec les notes de traitement
+     * @param int $id L'identifiant du courrier
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function traiter(Request $request, $id)
     {
         $courrier = DaeCourrier::findOrFail($id);
@@ -188,6 +246,13 @@ class DaeCourriersController extends BaseDaeController
         return redirect()->back()->with('success', 'Courrier traité.');
     }
 
+    /**
+     * Archive un courrier.
+     *
+     * @param Request $request La requête HTTP
+     * @param int $id L'identifiant du courrier
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function archiver(Request $request, $id)
     {
         $courrier = DaeCourrier::findOrFail($id);
@@ -200,6 +265,13 @@ class DaeCourriersController extends BaseDaeController
         return redirect()->back()->with('success', 'Courrier archivé.');
     }
 
+    /**
+     * Duplique un courrier en créant une copie en statut brouillon.
+     *
+     * @param Request $request La requête HTTP
+     * @param int $id L'identifiant du courrier à dupliquer
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function dupliquer(Request $request, $id)
     {
         $original = DaeCourrier::findOrFail($id);
@@ -217,6 +289,13 @@ class DaeCourriersController extends BaseDaeController
             ->with('success', 'Courrier dupliqué.');
     }
 
+    /**
+     * Assigne un courrier à un utilisateur.
+     *
+     * @param Request $request La requête HTTP avec l'identifiant de l'utilisateur
+     * @param int $id L'identifiant du courrier
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function assigner(Request $request, $id)
     {
         $courrier = DaeCourrier::findOrFail($id);
@@ -236,6 +315,13 @@ class DaeCourriersController extends BaseDaeController
         return redirect()->back()->with('success', 'Courrier assigné.');
     }
 
+    /**
+     * Enregistre une réponse à un courrier.
+     *
+     * @param Request $request La requête HTTP avec le texte de la réponse
+     * @param int $id L'identifiant du courrier
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function repondre(Request $request, $id)
     {
         $courrier = DaeCourrier::findOrFail($id);
@@ -256,6 +342,12 @@ class DaeCourriersController extends BaseDaeController
         return redirect()->back()->with('success', 'Réponse enregistrée.');
     }
 
+    /**
+     * Exporte les courriers au format CSV.
+     *
+     * @param string $format Le format d'export (csv, etc.)
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\StreamedResponse
+     */
     public function export($format)
     {
         $courriers = DaeCourrier::with('client')->get();
@@ -285,6 +377,12 @@ class DaeCourriersController extends BaseDaeController
         return response()->json(['message' => 'Format non supporté.'], 400);
     }
 
+    /**
+     * Télécharge un fichier joint pour un courrier.
+     *
+     * @param Request $request La requête HTTP contenant le fichier
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function upload(Request $request)
     {
         $request->validate([

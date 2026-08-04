@@ -23,16 +23,33 @@
 </template>
 
 <script setup>
+/*
+ * Composant : DaeStatCard
+ * Description : Carte de statistique affichant une icône, un libellé, une valeur
+ *               et une tendance optionnelle. Utilisée dans les tableaux de bord.
+ * Props :
+ *   icon  (String, requis)    -- Classe Bootstrap Icon (ex: "bi-file-text")
+ *   label (String, requis)    -- Libellé de la statistique
+ *   value (String|Number, requis) -- Valeur affichée (formatée automatiquement)
+ *   color (String, défaut 'primary') -- Variante de couleur (primary, success, info, etc.)
+ *   trend (Number, défaut null) -- Variation en pourcentage (positif = hausse, négatif = baisse)
+ */
 import { computed } from 'vue'
 
 const props = defineProps({
-    icon:  { type: String, required: true },
-    label: { type: String, required: true },
-    value: { type: [String, Number], required: true },
-    color: { type: String, default: 'primary' },
-    trend: { type: Number, default: null },
+    icon:  { type: String, required: true },              // Icône de la carte
+    label: { type: String, required: true },              // Libellé
+    value: { type: [String, Number], required: true },     // Valeur brute
+    color: { type: String, default: 'primary' },          // Couleur du thème
+    trend: { type: Number, default: null },               // Tendance en pourcentage
 })
 
+/*
+ * displayValue — Propriété calculée qui formate la valeur :
+ *               - '—' si la valeur est nulle ou vide
+ *               - Formate les nombres en français (ex: 1 234)
+ *               - Retourne la chaîne telle quelle si ce n'est pas un nombre
+ */
 const displayValue = computed(() => {
     if (props.value == null || props.value === '') return '—'
     const num = Number(props.value)

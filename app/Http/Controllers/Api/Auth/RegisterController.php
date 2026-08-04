@@ -16,6 +16,12 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
+/**
+ * Contrôleur API d'inscription libre-service.
+ *
+ * Crée un nouveau locataire (tenant) avec son plan comptable SYSCOHADA,
+ * ses journaux par défaut, son administrateur, et génère un token Sanctum.
+ */
 class RegisterController extends Controller
 {
     /**
@@ -29,6 +35,9 @@ class RegisterController extends Controller
      * 5. Crée un Client pour rétrocompatibilité
      * 6. Génère un token Sanctum (connexion automatique)
      * 7. Envoie un email de bienvenue
+     *
+     * @param  Request  $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function register(Request $request)
     {
@@ -166,6 +175,10 @@ class RegisterController extends Controller
 
     /**
      * Installe le plan comptable SYSCOHADA complet pour un tenant.
+     * Crée les comptes des classes 1 à 8 (capitaux, immobilisations,
+     * stocks, tiers, trésorerie, charges, produits, comptes spéciaux).
+     *
+     * @param  int  $tenantId  L'ID du tenant (entreprise)
      */
     private function installChartAccounts(int $tenantId): void
     {

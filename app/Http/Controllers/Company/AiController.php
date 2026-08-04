@@ -9,17 +9,34 @@ use App\Services\AiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur de l'assistant IA (Company).
+ *
+ * Gère le chat avec l'intelligence artificielle, l'analyse de documents,
+ * la classification de contenus et la suggestion de réponses.
+ *
+ * Utilise le service AiService pour déléguer les appels au modèle de langage.
+ */
 class AiController extends BaseCompanyController
 {
     protected AiService $aiService;
 
+    /**
+     * Constructeur : injecte le service IA.
+     *
+     * @param AiService $aiService Service de communication avec le modèle de langage
+     */
     public function __construct(AiService $aiService)
     {
         $this->aiService = $aiService;
     }
 
     /**
-     * Affiche la page de l'assistant IA.
+     * Affiche la page de l'assistant IA (vue SPA).
+     *
+     * Vérifie que l'utilisateur a une entreprise associée avant d'afficher la vue.
+     *
+     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
      */
     public function index()
     {
@@ -35,7 +52,13 @@ class AiController extends BaseCompanyController
     }
 
     /**
-     * Envoie un message au chat IA et retourne la réponse.
+     * Envoie un message au chat IA et retourne la réponse générée.
+     *
+     * Construit le contexte, appelle le service AI, sauvegarde la conversation
+     * dans CompanyAiChat et retourne la réponse au format JSON.
+     *
+     * @param Request $request Requête HTTP (message, contexte optionnel)
+     * @return \Illuminate\Http\JsonResponse
      */
     public function chat(Request $request)
     {
@@ -87,6 +110,12 @@ class AiController extends BaseCompanyController
 
     /**
      * Analyse un document via IA (OCR et classification).
+     *
+     * Récupère le document par son ID, vérifie l'appartenance au client,
+     * puis délègue l'analyse et la classification au service AI.
+     *
+     * @param Request $request Requête HTTP (document_id)
+     * @return \Illuminate\Http\JsonResponse
      */
     public function analyzeDocument(Request $request)
     {
@@ -110,7 +139,13 @@ class AiController extends BaseCompanyController
     }
 
     /**
-     * Classifie un document ou un texte.
+     * Classifie un document ou un texte (titre/contenu).
+     *
+     * Utilise le service IA pour déterminer la catégorie et le type
+     * du document à partir de son titre et éventuellement de son contenu.
+     *
+     * @param Request $request Requête HTTP (title, content optionnel)
+     * @return \Illuminate\Http\JsonResponse
      */
     public function classify(Request $request)
     {
@@ -128,7 +163,13 @@ class AiController extends BaseCompanyController
     }
 
     /**
-     * Suggère une réponse IA selon le type de requête.
+     * Suggère une réponse IA selon le type de requête et le contexte.
+     *
+     * Utile pour générer des réponses types automatiques (email, accusé de
+     * réception, etc.) basées sur un type de requête et un contexte donnés.
+     *
+     * @param Request $request Requête HTTP (query_type, context)
+     * @return \Illuminate\Http\JsonResponse
      */
     public function suggestResponse(Request $request)
     {

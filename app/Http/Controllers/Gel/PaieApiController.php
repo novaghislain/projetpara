@@ -14,11 +14,24 @@ use Illuminate\Http\Request;
  */
 class PaieApiController extends Controller
 {
+    /**
+     * Contrôleur API de calcul de la paie.
+     * Calcule l'IRPP (Impôt sur le Revenu des Personnes Physiques)
+     * et les cotisations CNSS à partir du salaire brut mensuel.
+     * Utilisé par le calculateur de paie côté Vue.
+     */
+
     public function __construct(
         private readonly IrppCalculator $irpp,
         private readonly CnssCalculator $cnss,
     ) {}
 
+    /**
+     * Calcule le salaire net après IRPP et CNSS.
+     *
+     * @param Request $request La requête HTTP avec le salaire brut et la situation familiale
+     * @return JsonResponse Le détail du calcul (salaire brut, net, IRPP, CNSS)
+     */
     public function calculer(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -29,9 +42,11 @@ class PaieApiController extends Controller
         $salaire = (float) $validated['salaire_brut'];
         $situation = $validated['situation'] ?? 'celibataire';
 
+        // Calculs IRPP et CNSS via les services dédiés
         $irppResult = $this->irpp->calculateMonthly($salaire, $situation);
         $cnssResult = $this->cnss->calculate($salaire);
 
+        // Salaire net = brut - IRPP - part salariale CNSS
         $salaireNet = $salaire - ($irppResult['irpp_mensuel'] ?? 0) - ($cnssResult['part_salarie'] ?? 0);
 
         return response()->json([

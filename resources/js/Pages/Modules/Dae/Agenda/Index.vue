@@ -220,11 +220,22 @@
 </template>
 
 <script>
+/*
+ * Composant : DaeAgendaIndex
+ * Role : Page de gestion de l'agenda/calendrier du module DAE.
+ * Affiche un calendrier mensuel avec la grille des jours, la navigation entre les mois,
+ * et la liste des evenements du jour selectionne.
+ * Permet la creation de nouveaux evenements via une modale.
+ * Props : aucune
+ * Evenements : aucun
+ */
 import axios from 'axios';
 import DaeEventList from '../../../../Components/Dae/DaeEventList.vue';
 
+// En-tetes des jours de la semaine (lundi au dimanche)
 const DAY_HEADERS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
+// Mapping des types d'evenement vers leurs icones Bootstrap
 const TYPE_ICON_MAP = {
     rdv: 'bi-person',
     reunion: 'bi-people',

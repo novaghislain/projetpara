@@ -1,10 +1,18 @@
+<!--
+  Composant : Employees/Show.vue
+  Description : Affichage détaillé d'un employé : informations personnelles,
+                professionnelles et liste des contrats associés.
+-->
 <template>
     <GelLayout>
         <div class="rh-employee-show">
+            <!-- Indicateur de chargement -->
             <div v-if="loading" class="text-center py-5">
                 <div class="spinner-border text-primary" role="status"></div>
             </div>
+            <!-- Contenu principal de la fiche employé -->
             <div v-else-if="employee" class="container-fluid">
+                <!-- En-tête avec retour, identité et statut -->
                 <div class="d-flex align-items-center mb-4">
                     <a href="/rh/employees" class="btn btn-sm btn-outline-secondary me-3"><i class="bi bi-arrow-left"></i></a>
                     <div>
@@ -14,6 +22,7 @@
                     <span :class="`badge bg-${employee.status === 'actif' ? 'success' : 'warning'} ms-auto fs-6`">{{ employee.status }}</span>
                 </div>
                 <div class="row g-3">
+                    <!-- Carte : Informations personnelles -->
                     <div class="col-md-6">
                         <div class="card border-0 shadow-sm h-100">
                             <div class="card-header bg-white border-bottom"><h6 class="mb-0 fw-semibold">Informations personnelles</h6></div>
@@ -30,6 +39,7 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Carte : Informations professionnelles -->
                     <div class="col-md-6">
                         <div class="card border-0 shadow-sm h-100">
                             <div class="card-header bg-white border-bottom"><h6 class="mb-0 fw-semibold">Informations professionnelles</h6></div>
@@ -46,6 +56,7 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Section : Contrats associés à l'employé -->
                     <div class="col-12">
                         <div class="card border-0 shadow-sm">
                             <div class="card-header bg-white border-bottom"><h6 class="mb-0 fw-semibold">Contrats</h6></div>
@@ -80,6 +91,7 @@ export default {
     components: { GelLayout },
     props: { id: [String, Number] },
     data() { return { loading: true, employee: null }; },
+    /* Chargement des données employé au montage du composant */
     async mounted() {
         try {
             const res = await fetch(`/rh/employees/${this.id}`);

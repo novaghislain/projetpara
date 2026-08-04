@@ -6,17 +6,29 @@ use App\Services\Reports\BalanceReportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur API de la balance générale.
+ *
+ * Génère la balance des comptes avec possibilité d'export CSV
+ * pour la période et les classes de comptes sélectionnées.
+ */
 class BalanceController extends Controller
 {
     private BalanceReportService $balanceService;
 
+    /**
+     * Constructeur avec injection du service de balance.
+     */
     public function __construct(BalanceReportService $balanceService)
     {
         $this->balanceService = $balanceService;
     }
 
     /**
-     * Balance générale
+     * Génère la balance générale selon la période et les filtres (classe, comptes).
+     *
+     * @param Request $request La requête HTTP avec les paramètres de génération.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function index(Request $request)
     {
@@ -37,7 +49,10 @@ class BalanceController extends Controller
     }
 
     /**
-     * Export CSV
+     * Exporte la balance au format CSV.
+     *
+     * @param Request $request La requête HTTP avec la période d'export.
+     * @return \Illuminate\Http\Response
      */
     public function export(Request $request)
     {

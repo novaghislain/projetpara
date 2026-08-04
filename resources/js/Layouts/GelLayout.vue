@@ -1290,15 +1290,19 @@ const logout = async () => {
 }
 .dp-ps-link--active {
     color: #fff !important;
-    background: rgba(255,121,0,0.2) !important;
+    background: #FF7900 !important;
     border-color: #FF7900 !important;
+    box-shadow: 0 2px 5px rgba(255,121,0,0.4);
 }
 .dp-ps-link i {
     font-size: 14px;
     color: rgba(255,121,0,0.8);
 }
-.dp-ps-link:hover i, .dp-ps-link--active i {
+.dp-ps-link:hover i {
     color: #FF7900;
+}
+.dp-ps-link--active i {
+    color: #fff !important;
 }
 .dp-client-selector-wrap {
     display: flex;

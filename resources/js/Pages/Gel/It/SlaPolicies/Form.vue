@@ -10,6 +10,13 @@
 </template>
 
 <script setup>
+/*
+ * Page : SlaPolicies Form
+ * Role : Formulaire de création et d'édition d'une politique SLA
+ *        Définit les délais de résolution par priorité et type de ticket.
+ * Props :
+ *   policy (Object|null) — Politique existante (mode édition) ou null (mode création)
+ */
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 defineProps([])
 </script>

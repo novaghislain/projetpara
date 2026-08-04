@@ -1,3 +1,9 @@
+<!--
+ * Composant : Formulaire contrat DAE
+ * Description : Formulaire de création et modification des contrats dans le module DAE.
+ *              Gère les informations de base (titre, dates, montant, devise, fichier, tags).
+ * Utilisation : Pages /dae/contrats/create et /dae/contrats/{id}/edit
+-->
 <template>
     <GelLayout>
         <div class="container-fluid py-4">
@@ -89,7 +95,7 @@ export default {
     props: { contratId: { type: [Number, String], default: null } },
     data() {
         return {
-            isEditing: !!this.contratId,
+            isEditing: !!this.contratId,   /* Mode édition si un ID est fourni */
             saving: false,
             form: {
                 titre: '', type_contrat: '', partie_adverse: '',
@@ -102,6 +108,7 @@ export default {
         if (this.isEditing) this.loadContrat();
     },
     methods: {
+        /* Charge les données du contrat existant pour pré-remplir le formulaire */
         loadContrat() {
             axios.get(`/dae/contrats/${this.contratId}`).then(res => {
                 const d = res.data;
@@ -114,6 +121,7 @@ export default {
                 };
             });
         },
+        /* Enregistre le contrat (création ou mise à jour) avec gestion du fichier */
         save() {
             this.saving = true;
             const formData = new FormData();

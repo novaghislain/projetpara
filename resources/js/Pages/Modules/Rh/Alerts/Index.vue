@@ -1,7 +1,13 @@
+<!--
+  Composant : Alerts/Index.vue
+  Description : Gestion des alertes RH automatiques (contrats, congés, visites,
+                documents, paie). Permet la génération, le filtrage et la mise à jour.
+-->
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 
+/* État réactif : liste d'alertes, filtres, indicateurs */
 const alerts = ref([]);
 const loading = ref(true);
 const error = ref(null);
@@ -10,6 +16,7 @@ const search = ref('');
 const typeFilter = ref('');
 const statusFilter = ref('');
 
+/* Récupération des alertes depuis l'API */
 const fetchAlerts = async () => {
     loading.value = true;
     error.value = null;
@@ -24,6 +31,7 @@ const fetchAlerts = async () => {
     }
 };
 
+/* Filtrage local : recherche, type et statut */
 const filteredAlerts = computed(() => {
     let list = alerts.value;
     if (search.value) {
@@ -42,6 +50,7 @@ const filteredAlerts = computed(() => {
     return list;
 });
 
+/* Classes Bootstrap pour les badges de statut */
 const statusBadgeClass = (status) => {
     const map = {
         en_attente: 'bg-warning text-dark',
@@ -63,6 +72,7 @@ const typeBadgeClass = (type) => {
     return map[type] || 'bg-secondary';
 };
 
+/* Génération automatique des alertes RH */
 const generateAlerts = async () => {
     if (!confirm('Générer les alertes RH automatiques ?')) return;
     generating.value = true;
@@ -83,6 +93,7 @@ const generateAlerts = async () => {
     }
 };
 
+/* Mise à jour du statut d'une alerte (traité, ignoré) */
 const updateAlertStatus = async (id, newStatus) => {
     try {
         const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
@@ -98,6 +109,7 @@ const updateAlertStatus = async (id, newStatus) => {
     }
 };
 
+/* Suppression d'une alerte avec confirmation */
 const deleteAlert = async (id) => {
     if (!confirm('Confirmer la suppression de cette alerte ?')) return;
     try {

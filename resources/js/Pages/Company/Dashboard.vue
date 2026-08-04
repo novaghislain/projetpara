@@ -1,20 +1,34 @@
-﻿<script setup>
+<script setup>
+/*
+ * Dashboard.vue — Portail Client GEL (style iSupplier)
+ *
+ * Tableau de bord principal de l'espace client entreprise.
+ * Affiche les informations de la société, ses licences/services actifs,
+ * une barre d'onglets modulaires et des liens rapides contextuels.
+ * Les onglets et liens sont filtrés selon les modules auxquels
+ * l'utilisateur a accès via authStore.hasModule().
+ */
+
 import { ref, computed, watch, onMounted } from 'vue';
 import CompanyLayout from '../../Layouts/CompanyLayout.vue';
 import { authStore } from '../../stores/auth';
 
-const company   = ref(null);
-const licenses  = ref([]);
-const stats     = ref({ user_count: 0, active_user_count: 0 });
-const loading   = ref(true);
-const error     = ref(null);
-const activeTab = ref('accueil');
+// ── État réactif du tableau de bord ──────────────────────────────
+const company   = ref(null);  // Infos de l'entreprise connectée
+const licenses  = ref([]);    // Liste des licences / abonnements
+const stats     = ref({ user_count: 0, active_user_count: 0 });  // Statistiques utilisateurs
+const loading   = ref(true);  // Indicateur de chargement
+const error     = ref(null);  // Message d'erreur éventuel
+const activeTab = ref('accueil');  // Onglet actif (défaut: Accueil)
 
+// Identifiant client injecté côté serveur (fenêtre globale)
 const clientId = window.__CLIENT_ID__;
 
+// Propriétés calculées : licences actives / expirées
 const activeLicenses  = computed(() => licenses.value.filter(l => l.valid));
 const expiredLicenses = computed(() => licenses.value.filter(l => !l.valid));
 
+// ── Chargement des données entreprise ────────────────────────────
 const loadData = async () => {
     if (!clientId) { loading.value = false; return; }
     try {
@@ -24,6 +38,16 @@ const loadData = async () => {
         company.value  = data.company;
         licenses.value = data.licenses;
         stats.value    = data.stats || { user_count: 0, active_user_count: 0 };
+        
+        // Auto-sélection de l'espace de travail si un seul est souscrit
+        if (company.value.wants_accounting && !company.value.wants_secretary) {
+            activeWorkspace.value = 'comptabilite';
+        } else if (!company.value.wants_accounting && company.value.wants_secretary) {
+            activeWorkspace.value = 'secretariat';
+        } else if (!company.value.wants_accounting && !company.value.wants_secretary) {
+            // Fallback (ne devrait pas arriver, on force comptabilite)
+            activeWorkspace.value = 'comptabilite';
+        }
     } catch (e) {
         error.value = e.message;
     } finally {
@@ -31,34 +55,46 @@ const loadData = async () => {
     }
 };
 
+// Lancement du chargement au montage du composant
 onMounted(loadData);
 
+const activeWorkspace = ref(null); // 'comptabilite', 'secretariat'
+
 // ── Onglets (iSupplier style) ───────────────────────────────
+// Chaque onglet peut être lié à un module ; si l'utilisateur
+// n'a pas accès au module, l'onglet est masqué.
 const allTabs = [
     { key: 'accueil',       label: "Accueil",          icon: 'bi-house' },
     { key: 'commandes',     label: "Commandes",        icon: 'bi-cart-check' },
-    { key: 'finance',       label: "Finance",          icon: 'bi-receipt',          module: 'facturation' },
-    { key: 'caisse',        label: "Caisse",           icon: 'bi-cash-coin',       module: 'caisse' },
-    { key: 'comptabilite',  label: "Comptabilité",     icon: 'bi-calculator',       module: 'comptabilite' },
-    { key: 'crm',           label: "CRM",              icon: 'bi-people',           module: 'crm' },
-    { key: 'secretariat',   label: "Secrétariat",      icon: 'bi-briefcase',        module: 'document' },
-    { key: 'juridique',     label: "Juridique",        icon: 'bi-briefcase',        module: 'juridique' },
-    { key: 'projets',       label: "Projets",          icon: 'bi-kanban',           module: 'projets' },
-    { key: 'rh',            label: "RH",               icon: 'bi-people',           module: 'rh' },
+    { key: 'finance',       label: "Finance",          icon: 'bi-receipt',          module: 'facturation', workspace: 'comptabilite' },
+    { key: 'caisse',        label: "Caisse",           icon: 'bi-cash-coin',       module: 'caisse', workspace: 'comptabilite' },
+    { key: 'comptabilite',  label: "Comptabilité",     icon: 'bi-calculator',       module: 'comptabilite', workspace: 'comptabilite' },
+    { key: 'crm',           label: "CRM",              icon: 'bi-people',           module: 'crm', workspace: 'both' },
+    { key: 'secretariat',   label: "Secrétariat",      icon: 'bi-briefcase',        module: 'document', workspace: 'secretariat' },
+    { key: 'juridique',     label: "Juridique",        icon: 'bi-briefcase',        module: 'juridique', workspace: 'secretariat' },
+    { key: 'projets',       label: "Projets",          icon: 'bi-kanban',           module: 'projets', workspace: 'secretariat' },
+    { key: 'rh',            label: "RH",               icon: 'bi-people',           module: 'rh', workspace: 'both' },
     { key: 'administration',label: "Administration",   icon: 'bi-gear' },
 ];
-const tabs = computed(() =>
-    allTabs.filter(t => !t.module || authStore.hasModule(t.module))
-);
+// Filtrage des onglets selon les modules activés et l'espace de travail choisi
+const tabs = computed(() => {
+    if (!activeWorkspace.value) return [];
+    return allTabs.filter(t => {
+        const moduleOk = !t.module || authStore.hasModule(t.module);
+        const workspaceOk = !t.workspace || t.workspace === 'both' || t.workspace === activeWorkspace.value;
+        return moduleOk && workspaceOk;
+    });
+});
 
 // Si l'onglet actif n'est plus visible → revenir à Accueil
 watch(tabs, (visible) => {
-    if (!visible.some(t => t.key === activeTab.value)) {
+    if (visible.length > 0 && !visible.some(t => t.key === activeTab.value)) {
         activeTab.value = 'accueil';
     }
 }, { immediate: true });
 
-/* ── Module requis pour les liens rapides ── */
+// ── Carte des modules requis pour chaque lien rapide ─────────────
+// Permet de masquer un lien si son module n'est pas activé.
 const qlModuleMap = {
     '/company/ged':        'document',
     '/company/caisse':     'caisse',
@@ -77,7 +113,7 @@ function qlVisible(href) {
     return !mod || authStore.hasModule(mod);
 }
 
-// ── Liens rapides filtrés par module ──
+// ── Liens rapides filtrés selon les modules disponibles ──────────
 const filteredQuickLinks = computed(() => {
     const section = quickLinks[activeTab.value] || [];
     return section.map(group => ({
@@ -262,8 +298,32 @@ const tabContent = {
                     </div>
                 </div>
 
+                <!-- ── Choix de l'espace de travail (si les deux sont souscrits) ────────── -->
+                <div v-if="!activeWorkspace" class="isup-content d-flex justify-content-center align-items-center flex-column py-5" style="min-height: 400px; background: #fff;">
+                    <h3 class="mb-4 fw-bold" style="color:var(--gel-dark);">Sélectionnez votre espace de travail</h3>
+                    <div class="d-flex gap-4">
+                        <!-- Carte Comptabilité -->
+                        <div class="card text-center" style="width: 250px; cursor: pointer; transition: transform 0.2s;" @click="activeWorkspace = 'comptabilite'" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                            <div class="card-body py-5">
+                                <i class="bi-calculator mb-3" style="font-size: 3rem; color: #FF7900;"></i>
+                                <h5 class="card-title fw-bold">Espace Comptabilité</h5>
+                                <p class="card-text text-muted small">Accédez à la facturation, caisse et journaux comptables.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Carte Secrétariat -->
+                        <div class="card text-center" style="width: 250px; cursor: pointer; transition: transform 0.2s;" @click="activeWorkspace = 'secretariat'" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                            <div class="card-body py-5">
+                                <i class="bi-briefcase mb-3" style="font-size: 3rem; color: #009FE3;"></i>
+                                <h5 class="card-title fw-bold">Espace Secrétariat</h5>
+                                <p class="card-text text-muted small">Gérez votre agenda, les relances et la GED.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- ── Onglets horizontaux (iSupplier Tab style) ────────── -->
-                <div class="isup-tabs-bar">
+                <div v-if="activeWorkspace" class="isup-tabs-bar">
                     <button
                         v-for="tab in tabs"
                         :key="tab.key"
@@ -275,10 +335,14 @@ const tabContent = {
                         {{ tab.label }}
                         <span v-if="activeTab === tab.key" class="isup-tab-notch"></span>
                     </button>
+                    <!-- Bouton pour changer d'espace -->
+                    <button v-if="company?.wants_accounting && company?.wants_secretary" class="isup-tab ms-auto" style="border-left: 1px solid #ddd; border-bottom: none;" @click="activeWorkspace = null; activeTab = 'accueil'">
+                        <i class="bi-arrow-left-right me-1"></i> Changer d'espace
+                    </button>
                 </div>
 
                 <!-- ── Content zone ──────────────────────────────────────── -->
-                <div class="isup-content d-flex gap-0">
+                <div v-if="activeWorkspace" class="isup-content d-flex gap-0">
 
                     <!-- Sidebar de liens rapides (iSupplier Quick Links) -->
                     <aside class="isup-quicklinks">

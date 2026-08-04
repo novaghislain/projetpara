@@ -10,17 +10,31 @@ use App\Services\IA\ChatAiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur de chat avec l'intelligence artificielle.
+ * Gère les conversations, l'envoi et la réception de messages,
+ * l'historique, les suggestions rapides et l'export des conversations.
+ * Utilise le service ChatAiService pour la génération des réponses.
+ */
 class ChatIAController extends Controller
 {
+    /** @var ChatAiService Service d'IA conversationnelle */
     protected ChatAiService $chatAi;
 
+    /**
+     * Initialise le contrôleur avec le service de chat IA.
+     *
+     * @param ChatAiService $chatAi Service de chat IA
+     */
     public function __construct(ChatAiService $chatAi)
     {
         $this->chatAi = $chatAi;
     }
 
     /**
-     * Affiche la page de chat IA.
+     * Affiche la page de chat IA avec les 20 dernières conversations.
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
@@ -33,7 +47,11 @@ class ChatIAController extends Controller
     }
 
     /**
-     * Crée une nouvelle conversation.
+     * Crée une nouvelle conversation avec un titre et un contexte optionnel.
+     * Enregistre une trace d'audit de la création.
+     *
+     * @param Request $request La requête HTTP contenant title et contexte
+     * @return \Illuminate\Http\JsonResponse
      */
     public function createConversation(Request $request)
     {
@@ -53,6 +71,7 @@ class ChatIAController extends Controller
             'metadata' => null,
         ]);
 
+        // Enregistrer la création dans les traces d'audit
         AuditTrail::create([
             'user_id' => Auth::id(),
             'event' => 'ia_conversation_create',
@@ -70,7 +89,13 @@ class ChatIAController extends Controller
     }
 
     /**
-     * Envoie un message dans une conversation.
+     * Envoie un message dans une conversation et reçoit une réponse IA.
+     * Sauvegarde le message utilisateur, récupère l'historique, appelle le service IA,
+     * sauvegarde la réponse et met à jour la conversation.
+     *
+     * @param Request $request La requête HTTP contenant le message
+     * @param int $conversationId L'identifiant de la conversation
+     * @return \Illuminate\Http\JsonResponse
      */
     public function sendMessage(Request $request, $conversationId)
     {
@@ -88,7 +113,7 @@ class ChatIAController extends Controller
             'content' => $validated['message'],
         ]);
 
-        // Récupérer historique
+        // Récupérer tout l'historique des messages pour le contexte
         $historique = IaMessage::where('conversation_id', $conversation->id)
             ->orderBy('created_at', 'asc')
             ->get()
@@ -98,7 +123,7 @@ class ChatIAController extends Controller
             ])
             ->toArray();
 
-        // Appel au service IA
+        // Appel au service IA pour générer une réponse
         $response = $this->chatAi->generate(
             $validated['message'],
             $historique,
@@ -106,7 +131,7 @@ class ChatIAController extends Controller
             $conversation->cabinet_id
         );
 
-        // Sauvegarder la réponse
+        // Sauvegarder la réponse de l'assistant
         $assistantMessage = IaMessage::create([
             'conversation_id' => $conversation->id,
             'user_id' => Auth::id(),
@@ -118,12 +143,13 @@ class ChatIAController extends Controller
             ],
         ]);
 
-        // Mettre à jour le message JSON dans la conversation
+        // Mettre à jour le champ JSON contenant les messages dans la conversation
         $messages = $conversation->messages ?? [];
         $messages[] = ['role' => 'user', 'content' => $validated['message']];
         $messages[] = ['role' => 'assistant', 'content' => $response['message']];
         $conversation->update(['messages' => $messages]);
 
+        // Enregistrer l'envoi du message dans les traces d'audit
         AuditTrail::create([
             'user_id' => Auth::id(),
             'event' => 'ia_message_sent',
@@ -147,7 +173,10 @@ class ChatIAController extends Controller
     }
 
     /**
-     * Récupère l'historique d'une conversation.
+     * Récupère l'historique complet des messages d'une conversation.
+     *
+     * @param int $conversationId L'identifiant de la conversation
+     * @return \Illuminate\Http\JsonResponse
      */
     public function getHistory($conversationId)
     {
@@ -172,13 +201,16 @@ class ChatIAController extends Controller
     }
 
     /**
-     * Supprime une conversation.
+     * Supprime une conversation et tous ses messages associés.
+     *
+     * @param int $conversationId L'identifiant de la conversation à supprimer
+     * @return \Illuminate\Http\JsonResponse
      */
     public function deleteConversation($conversationId)
     {
         $conversation = ChatConversation::findOrFail($conversationId);
 
-        // Supprimer les messages liés
+        // Supprimer les messages liés avant la conversation elle-même
         IaMessage::where('conversation_id', $conversation->id)->delete();
         $conversation->delete();
 
@@ -194,7 +226,10 @@ class ChatIAController extends Controller
     }
 
     /**
-     * Récupère les suggestions rapides.
+     * Récupère les suggestions rapides pour le chat IA.
+     *
+     * @param Request $request La requête HTTP contenant contexte et query optionnels
+     * @return \Illuminate\Http\JsonResponse
      */
     public function getSuggestions(Request $request)
     {
@@ -210,7 +245,13 @@ class ChatIAController extends Controller
     }
 
     /**
-     * Exporte une conversation en PDF.
+     * Exporte une conversation aux formats texte ou JSON.
+     * Génère un fichier texte brut téléchargeable pour le format TXT,
+     * ou retourne la conversation en JSON pour les autres formats.
+     *
+     * @param int $conversationId L'identifiant de la conversation à exporter
+     * @param string $format Le format d'export (txt par défaut)
+     * @return \Illuminate\Http\Response|\Illuminate\Http\JsonResponse
      */
     public function exportConversation($conversationId, $format = 'pdf')
     {
@@ -220,6 +261,7 @@ class ChatIAController extends Controller
             ->get();
 
         if ($format === 'txt') {
+            // Générer un fichier texte avec l'en-tête et les messages formatés
             $content = "Conversation : {$conversation->title}\n";
             $content .= "Date : {$conversation->created_at->format('d/m/Y H:i')}\n";
             $content .= str_repeat('=', 50) . "\n\n";
@@ -235,7 +277,7 @@ class ChatIAController extends Controller
             ]);
         }
 
-        // Fallback JSON
+        // Fallback : retourner les données en JSON
         return response()->json([
             'success' => true,
             'conversation' => $conversation,

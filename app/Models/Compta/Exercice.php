@@ -7,6 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Client;
 use App\Models\User;
 
+/**
+ * Modèle représentant un exercice comptable (période annuelle).
+ *
+ * Table associée : `exercices` (via convention Laravel, préfixe Compta)
+ *
+ * Relations :
+ * - Un exercice appartient à un client (Client)
+ * - Un exercice peut avoir plusieurs écritures comptables (Ecriture)
+ */
 class Exercice extends Model
 {
     use HasFactory;

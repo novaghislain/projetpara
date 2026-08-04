@@ -5,6 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * Modèle représentant une demande de congé d'un employé.
+ *
+ * Table associée : `company_leave_requests` (via convention Laravel)
+ *
+ * Relations :
+ * - Une demande appartient à un employé (CompanyEmployee)
+ * - Une demande peut être approuvée/rejetée par un utilisateur (User)
+ */
 class CompanyLeaveRequest extends Model
 {
     use HasFactory;

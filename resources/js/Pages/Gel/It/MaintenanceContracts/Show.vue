@@ -1,3 +1,9 @@
+<!--
+ * Composant : Détail d'un contrat de maintenance
+ * Description : Affiche les informations complètes d'un contrat : client, période, tarification,
+ *              couverture SLA, actifs couverts et tickets associés. Permet la modification et la suppression.
+ * Utilisation : Page /it/maintenance-contracts/{id}
+-->
 <template>
     <GelLayout page-title="Contrat de Maintenance">
         <div class="p-fluid">
@@ -301,11 +307,11 @@ const props = defineProps({
     contract: { type: Object, required: true },
 });
 
-// ── Modal ──
+/* ─── Gestion de la modale de suppression ─── */
 const showDeleteModal = ref(false);
 const deleting = ref(false);
 
-// ── Helpers (shared patterns from Index) ──
+/* ─── Fonctions de formatage partagées avec la vue Index ─── */
 
 const typeLabel = (t) =>
     ({ corrective: 'Corrective', preventive: 'Préventive', full_service: 'Service complet', hotline: 'Hotline' }[t] || t || '-');
@@ -316,6 +322,7 @@ const statusLabel = (s) =>
 const statusClass = (s) =>
     ({ active: 'bg-success', expired: 'bg-secondary', suspended: 'bg-warning text-dark' }[s] || 'bg-secondary');
 
+/* Formate une date au format français court */
 const formatDate = (d) => {
     if (!d) return '-';
     return new Date(d).toLocaleDateString('fr-FR', {
@@ -323,24 +330,28 @@ const formatDate = (d) => {
     });
 };
 
+/* Formate un montant en francs CFA */
 const formatCurrency = (amount) => {
     if (amount === null || amount === undefined) return '-';
     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0 }).format(amount);
 };
 
-// ── Computed ──
+/* ─── Propriétés calculées ─── */
 
+/* Vérifie si la date de fin est dépassée */
 const isExpired = computed(() => {
     if (!props.contract.end_date) return false;
     return new Date(props.contract.end_date) < new Date();
 });
 
+/* Calcule le montant annuel estimé (mensuel x 12) */
 const estimatedAnnual = computed(() => {
     const m = props.contract.monthly_amount;
     if (m === null || m === undefined) return null;
     return Number(m) * 12;
 });
 
+/* Classe Bootstrap pour le statut d'un ticket */
 const ticketStatusClass = (s) => {
     const map = {
         open: 'bg-info',
@@ -352,6 +363,7 @@ const ticketStatusClass = (s) => {
     return map[s] || 'bg-secondary';
 };
 
+/* Classe Bootstrap pour la priorité d'un ticket */
 const ticketPriorityClass = (p) => {
     const map = {
         critical: 'bg-danger',
@@ -362,12 +374,14 @@ const ticketPriorityClass = (p) => {
     return map[p] || 'bg-secondary';
 };
 
-// ── Actions ──
+/* ─── Actions ─── */
 
+/* Ouvre la modale de confirmation de suppression */
 const confirmDelete = () => {
     showDeleteModal.value = true;
 };
 
+/* Supprime le contrat via l'API puis redirige vers la liste */
 const deleteContract = async () => {
     deleting.value = true;
     try {

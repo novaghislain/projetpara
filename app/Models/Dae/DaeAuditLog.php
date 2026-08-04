@@ -5,6 +5,14 @@ namespace App\Models\Dae;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Modèle représentant le journal d'audit du module DAE.
+ *
+ * Table associée : `dae_audit_logs`
+ *
+ * Enregistre chaque action (création, modification, suppression)
+ * effectuée sur les entités du module DAE.
+ */
 class DaeAuditLog extends Model
 {
     protected $table = 'dae_audit_logs';

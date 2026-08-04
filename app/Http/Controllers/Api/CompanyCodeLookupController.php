@@ -8,11 +8,21 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 
+/**
+ * Contrôleur API pour la validation des codes entreprises.
+ *
+ * Utilisé par le formulaire d'inscription pour vérifier
+ * l'existence d'une entreprise via son code client.
+ * Inclut une limitation de débit (rate limiting) par IP.
+ */
 class CompanyCodeLookupController extends Controller
 {
     /**
-     * Valide un code entreprise et retourne les infos publiques.
-     * Utilisé par le formulaire d'inscription pour vérification côté client.
+     * Valide un code entreprise et retourne les informations publiques de l'entreprise.
+     * Limité à 10 requêtes par minute par adresse IP.
+     *
+     * @param Request $request La requête HTTP contenant le code entreprise.
+     * @return JsonResponse
      */
     public function lookup(Request $request): JsonResponse
     {

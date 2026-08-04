@@ -85,6 +85,11 @@
     </CompanyLayout>
 </template>
 
+/*
+ * Composant : CompanyDaeTaches
+ * Role : Suivi des taches et activites dans le module DAE.
+ *        Permet de filtrer, visualiser et mettre a jour le statut des taches.
+ */
 <script>
 import CompanyLayout from '../../Layouts/CompanyLayout.vue';
 import DaeDataTable from '../../Components/Dae/DaeDataTable.vue';
@@ -93,26 +98,26 @@ export default {
     components: { CompanyLayout, DaeDataTable },
     data() {
         return {
-            loading: true,
-            rows: [],
-            currentPage: 1,
-            totalPages: 1,
-            filterStatut: '',
-            filterPriorite: '',
-            stats: {
+            loading: true,                     /* Etat de chargement */
+            rows: [],                          /* Liste des taches */
+            currentPage: 1,                    /* Page courante */
+            totalPages: 1,                     /* Nombre total de pages */
+            filterStatut: '',                  /* Filtre par statut */
+            filterPriorite: '',                /* Filtre par priorite */
+            stats: {                           /* Statistiques resume */
                 total: { label: 'En cours', count: 0 },
                 terminee: { label: 'Terminées', count: 0 },
                 en_retard: { label: 'En retard', count: 0 },
             },
-            toast: null,
-            columns: [
+            toast: null,                       /* Notification utilisateur */
+            columns: [                         /* Colonnes du tableau */
                 { key: 'titre', label: 'Tâche' },
                 { key: 'priorite', label: 'Priorité', width: '100px' },
                 { key: 'statut', label: 'Statut', width: '110px' },
                 { key: 'echeance', label: 'Échéance', width: '110px' },
                 { key: 'assigned_to', label: 'Assigné à', width: '150px' },
             ],
-            actions: [
+            actions: [                         /* Actions de changement de statut */
                 { key: 'a_faire', label: 'Marquer À faire', icon: 'bi-circle' },
                 { key: 'en_cours', label: 'Marquer En cours', icon: 'bi-arrow-repeat' },
                 { key: 'terminee', label: 'Marquer Terminée', icon: 'bi-check2' },
@@ -124,6 +129,7 @@ export default {
         this.fetchData();
     },
     methods: {
+        /* Charge les taches depuis l'API avec pagination et filtres */
         async fetchData(page = 1) {
             this.loading = true;
             try {
@@ -147,6 +153,7 @@ export default {
                 this.loading = false;
             }
         },
+        /* Met a jour le statut d'une tache via l'API */
         async handleAction({ action, row }) {
             const csrf = document.querySelector('meta[name=csrf-token]')?.content;
             try {
@@ -163,18 +170,22 @@ export default {
                 this.toast = { type: 'error', message: e.message };
             }
         },
+        /* Classe CSS pour le badge de statut */
         statutClass(s) {
             const map = { a_faire: 'bg-secondary', en_cours: 'bg-info', en_revision: 'bg-warning text-dark', terminee: 'bg-success', annulee: 'bg-light text-dark' };
             return map[s] || 'bg-secondary';
         },
+        /* Libelle affichable du statut */
         statutLabel(s) {
             const map = { a_faire: 'À faire', en_cours: 'En cours', en_revision: 'En révision', terminee: 'Terminée', annulee: 'Annulée' };
             return map[s] || s;
         },
+        /* Classe CSS pour le badge de priorite */
         prioriteClass(p) {
             const map = { basse: 'bg-light text-dark', moyenne: 'bg-info', haute: 'bg-warning text-dark', critique: 'bg-danger' };
             return map[p] || 'bg-light text-dark';
         },
+        /* Formate une date au format francais court */
         formatDate(d) {
             if (!d) return '—';
             return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });

@@ -1,6 +1,16 @@
 <script setup>
+/*
+ * Page : Asset Form
+ * Role : Formulaire de création et d'édition d'un actif IT (équipement)
+ *        Saisie des informations d'identification, marque/modèle, affectation,
+ *        achat/garantie, informations système et notes.
+ * Props :
+ *   asset       (Object|null) — Actif existant (mode édition) ou null (mode création)
+ *   clients     (Array)       — Liste des clients pour le select d'affectation
+ *   technicians (Array)       — Liste des techniciens pour le select d'assignation
+ */
 import { ref, onMounted } from 'vue';
-import GelLayout from '../../../../Layouts/GelLayout.vue';
+import GelLayout from '../../../../Layouts/GelLayout.vue'; // Layout principal du module GEL
 
 const props = defineProps({
     asset: { type: Object, default: null },
@@ -8,12 +18,12 @@ const props = defineProps({
     technicians: { type: Array, default: () => [] },
 });
 
-const submitting = ref(false);
-const saved = ref(false);
-const error = ref(null);
+const submitting = ref(false); // Indique si le formulaire est en cours d'envoi
+const saved = ref(false);      // Passe à true après un enregistrement réussi
+const error = ref(null);       // Message d'erreur à afficher
 
-const categoryOptions = ['computer', 'server', 'printer', 'network', 'mobile', 'software', 'other'];
-const statusOptions = ['active', 'inactive', 'in_repair', 'disposed'];
+const categoryOptions = ['computer', 'server', 'printer', 'network', 'mobile', 'software', 'other']; // Catégories d'actifs
+const statusOptions = ['active', 'inactive', 'in_repair', 'disposed'];                                // Statuts possibles
 
 const form = ref({
     client_id: '',
@@ -35,8 +45,9 @@ const form = ref({
     notes: '',
 });
 
-const isEdit = !!props.asset;
+const isEdit = !!props.asset; // Mode édition si un actif existant est passé en prop
 
+// Initialise le formulaire avec les données de l'actif existant (mode édition)
 const initForm = () => {
     if (props.asset) {
         form.value = {
@@ -61,6 +72,7 @@ const initForm = () => {
     }
 };
 
+// Soumet le formulaire via fetch (POST création / PUT édition)
 const submitForm = async () => {
     submitting.value = true;
     saved.value = false;
@@ -102,10 +114,12 @@ const submitForm = async () => {
     }
 };
 
+// Retourne à la page précédente dans l'historique du navigateur
 const goBack = () => {
     window.history.back();
 };
 
+// Initialise le formulaire au montage du composant
 onMounted(initForm);
 </script>
 

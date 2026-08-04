@@ -8,7 +8,20 @@ use Illuminate\Http\Request;
 class ReportController extends BaseGelAccountingController
 {
     /**
-     * API: Balance des comptes.
+     * Contrôleur de reporting comptable.
+     * Fournit les API pour consulter la balance, le grand livre,
+     * le bilan et le compte de résultat à partir des écritures
+     * comptables validées.
+     */
+
+    /**
+     * API : Balance des comptes avec soldes débiteurs/créditeurs.
+     *
+     * Calcule le total des débits et crédits pour chaque compte actif
+     * et détermine le solde (débiteur ou créditeur).
+     *
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\Http\JsonResponse La balance avec les totaux
      */
     public function balance($clientId)
     {
@@ -18,6 +31,7 @@ class ReportController extends BaseGelAccountingController
             ->get();
 
         $balance = $accounts->map(function ($account) {
+            // Somme des débits et crédits des écritures validées
             $debitTotal = $account->journalLines()
                 ->whereHas('journal', fn($q) => $q->where('status', 'posted'))
                 ->sum('debit');
@@ -51,7 +65,13 @@ class ReportController extends BaseGelAccountingController
     }
 
     /**
-     * API: Grand Livre.
+     * API : Grand Livre avec solde courant par compte.
+     *
+     * Pour chaque compte actif, liste les écritures validées avec
+     * le solde cumulé après chaque ligne.
+     *
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\Http\JsonResponse Le grand livre détaillé
      */
     public function grandLivre($clientId)
     {
@@ -67,6 +87,7 @@ class ReportController extends BaseGelAccountingController
                 ->orderBy('created_at')
                 ->get();
 
+            // Calcul du solde courant après chaque ligne
             $runningBalance = 0;
             $linesWithBalance = $lines->map(function ($line) use (&$runningBalance) {
                 $runningBalance += $line->debit - $line->credit;
@@ -97,7 +118,13 @@ class ReportController extends BaseGelAccountingController
     }
 
     /**
-     * API: Bilan comptable.
+     * API : Bilan comptable (Actif / Passif).
+     *
+     * Regroupe les comptes par type (actif, trésorerie, passif)
+     * et calcule les soldes pour chaque poste du bilan.
+     *
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\Http\JsonResponse Le bilan avec totaux
      */
     public function bilan($clientId)
     {
@@ -132,7 +159,13 @@ class ReportController extends BaseGelAccountingController
     }
 
     /**
-     * API: Compte de résultat.
+     * API : Compte de résultat (Charges / Produits).
+     *
+     * Regroupe les comptes par type (charge, produit) et calcule
+     * le résultat net (produits - charges).
+     *
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\Http\JsonResponse Le compte de résultat
      */
     public function resultat($clientId)
     {

@@ -1,16 +1,25 @@
+/*
+ * Composant : Poles/Show.vue
+ * Description : Page de detail d'un pole du module GEL.
+ *              Affiche les informations du pole (nom, description,
+ *              couleur) et la liste des missions qui lui sont associees.
+ */
 <script setup>
 import { ref, onMounted } from 'vue';
-import GelLayout from '../../../Layouts/GelLayout.vue';
-import { authStore } from '../../../stores/auth';
+import GelLayout from '../../../Layouts/GelLayout.vue';   /* Layout principal du module GEL */
+import { authStore } from '../../../stores/auth';         /* Store d'authentification */
 
+/* Propriete recue : identifiant du pole a afficher */
 const props = defineProps({
     poleId: { type: [Number, String], required: true }
 });
 
-const pole = ref(null);
-const loading = ref(true);
-const error = ref(null);
+/* ─── Etat local ─── */
+const pole = ref(null);    /* Donnees du pole charge depuis l'API */
+const loading = ref(true); /* Indicateur de chargement */
+const error = ref(null);   /* Message d'erreur en cas d'echec */
 
+/* ─── Chargement du pole ─── */
 const fetchPole = async () => {
     loading.value = true;
     error.value = null;
@@ -25,7 +34,7 @@ const fetchPole = async () => {
     }
 };
 
-onMounted(fetchPole);
+onMounted(fetchPole);  /* Declenche le chargement au montage du composant */
 </script>
 
 <template>

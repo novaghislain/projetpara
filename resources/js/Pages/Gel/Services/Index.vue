@@ -1,29 +1,43 @@
 <script setup>
+/* ============================================================
+ * Services — Index
+ * Liste, création, modification et suppression des services
+ * proposés par le cabinet. Chaque service possède un nom, un
+ * slug, une description, une icône Bootstrap, une couleur
+ * et un statut actif/inactif.
+ * ============================================================ */
 import { ref, onMounted, nextTick } from 'vue';
 import GelLayout from '../../../Layouts/GelLayout.vue';
 import { authStore } from '../../../stores/auth';
 
-const services = ref([]);
-const loading = ref(true);
-const error = ref(null);
-const submitting = ref(false);
+/* --- État réactif --- */
+const services = ref([]);      /* Liste des services */
+const loading = ref(true);     /* Indicateur de chargement */
+const error = ref(null);       /* Message d'erreur */
+const submitting = ref(false); /* true pendant la soumission */
 
-const showModal = ref(false);
-const isEditing = ref(false);
-const editingId = ref(null);
-const modalEl = ref(null);
-const modalInstance = ref(null);
+/* --- État de la modale --- */
+const showModal = ref(false);      /* Visibilité de la modale */
+const isEditing = ref(false);      /* true = édition, false = création */
+const editingId = ref(null);       /* ID du service en cours d'édition */
+const modalEl = ref(null);         /* Référence à l'élément DOM de la modale */
+const modalInstance = ref(null);   /* Instance Bootstrap de la modale */
 
+/* --- Formulaire --- */
 const form = ref({
     name: '', slug: '', description: '', icon: 'bi-gear', color: '#1a237e', is_active: true,
 });
 
+/* Options d'icônes Bootstrap disponibles pour les services */
 const iconOptions = [
     'bi-gear', 'bi-calculator', 'bi-file-text', 'bi-bar-chart', 'bi-people',
     'bi-building', 'bi-cash-stack', 'bi-graph-up', 'bi-shield', 'bi-search',
     'bi-pie-chart', 'bi-book', 'bi-clipboard-data', 'bi-grid-3x3-gap',
 ];
 
+/*
+ * fetchServices — Charge la liste des services depuis l'API.
+ */
 const fetchServices = async () => {
     loading.value = true;
     error.value = null;
@@ -38,10 +52,16 @@ const fetchServices = async () => {
     }
 };
 
+/*
+ * resetForm — Réinitialise le formulaire à ses valeurs par défaut.
+ */
 const resetForm = () => {
     form.value = { name: '', slug: '', description: '', icon: 'bi-gear', color: '#1a237e', is_active: true };
 };
 
+/*
+ * openCreateModal — Ouvre la modale en mode création.
+ */
 const openCreateModal = () => {
     resetForm();
     isEditing.value = false;
@@ -55,6 +75,9 @@ const openCreateModal = () => {
     });
 };
 
+/*
+ * openEditModal — Ouvre la modale en mode édition avec les données du service.
+ */
 const openEditModal = (svc) => {
     form.value = {
         name: svc.name || '',
@@ -75,11 +98,18 @@ const openEditModal = (svc) => {
     });
 };
 
+/*
+ * closeModal — Ferme la modale Bootstrap.
+ */
 const closeModal = () => {
     modalInstance.value?.hide();
     showModal.value = false;
 };
 
+/*
+ * submitForm — Crée ou met à jour un service selon le mode (création/édition).
+ * Envoie les données via fetch avec le token CSRF.
+ */
 const submitForm = async () => {
     submitting.value = true;
     try {
@@ -105,6 +135,9 @@ const submitForm = async () => {
     }
 };
 
+/*
+ * deleteService — Supprime un service après confirmation utilisateur.
+ */
 const deleteService = async (id) => {
     if (!confirm('Confirmer la suppression ?')) return;
     try {
@@ -120,6 +153,7 @@ const deleteService = async (id) => {
     }
 };
 
+/* Au montage du composant, on charge la liste des services. */
 onMounted(fetchServices);
 </script>
 

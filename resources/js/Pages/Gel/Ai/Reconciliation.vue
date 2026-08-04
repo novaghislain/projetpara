@@ -1,10 +1,20 @@
+<!--
+ * Reconciliation.vue - Rapprochement Bancaire Intelligent (IA)
+ * Module de matching automatique entre relevés bancaires et écritures comptables
+ * Statut : phase de développement initiale
+-->
 <script setup>
 import GelLayout from '../../../Layouts/GelLayout.vue';
 </script>
 
+<!--
+ * Gabarit du module de rapprochement bancaire
+ * Cartes descriptives des trois fonctionnalités prévues
+-->
 <template>
     <GelLayout pageTitle="Rapprochement Bancaire IA">
         <div class="ai-module-page">
+            <!-- Section d'en-tête : icône, titre, sous-titre -->
             <div class="ai-module-hero" style="--accent: #06B6D4">
                 <div class="ai-module-hero-icon"><i class="bi-arrow-left-right"></i></div>
                 <div>
@@ -13,6 +23,7 @@ import GelLayout from '../../../Layouts/GelLayout.vue';
                 </div>
             </div>
 
+            <!-- Grille des fonctionnalités : chaque carte présente un module IA -->
             <div class="ai-module-cards">
                 <div class="ai-feature-card">
                     <div class="ai-feature-icon" style="background: rgba(6,182,212,0.1); color: #06B6D4"><i class="bi-cloud-upload"></i></div>
@@ -38,6 +49,7 @@ import GelLayout from '../../../Layouts/GelLayout.vue';
 </template>
 
 <style scoped>
+/* ===== Styles du module Rapprochement Bancaire IA ===== */
 .ai-module-page { max-width: 1100px; }
 .ai-module-hero {
     display: flex; align-items: center; gap: 18px;

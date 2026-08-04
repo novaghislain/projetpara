@@ -1,13 +1,20 @@
+<!--
+  Composant : Trainings/Index.vue
+  Description : Gestion des formations RH avec suivi par statut (planifié,
+                en cours, terminé, annulé) et actions CRUD.
+-->
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 
+/* État réactif : formations, filtres, indicateurs */
 const trainings = ref([]);
 const loading = ref(true);
 const error = ref(null);
 const search = ref('');
 const statusFilter = ref('');
 
+/* Récupération des formations depuis l'API */
 const fetchTrainings = async () => {
     loading.value = true;
     error.value = null;
@@ -22,6 +29,7 @@ const fetchTrainings = async () => {
     }
 };
 
+/* Filtrage local : recherche et filtre par statut */
 const filteredTrainings = computed(() => {
     let list = trainings.value;
     if (search.value) {
@@ -38,6 +46,7 @@ const filteredTrainings = computed(() => {
     return list;
 });
 
+/* Classe CSS pour le badge de statut de la formation */
 const statusBadgeClass = (status) => {
     const map = {
         planifie: 'bg-info',
@@ -48,6 +57,7 @@ const statusBadgeClass = (status) => {
     return map[status] || 'bg-secondary';
 };
 
+/* Suppression d'une formation avec confirmation */
 const deleteTraining = async (id) => {
     if (!confirm('Confirmer la suppression de cette formation ?')) return;
     try {

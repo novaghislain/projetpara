@@ -25,7 +25,22 @@ return Application::configure(basePath: dirname(__DIR__))
         web: __DIR__.'/../routes/web.php',
         api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
+        channels: __DIR__.'/../routes/channels.php',
         health: '/up',
+        then: function () {
+            // Routage de l'Espace Client Externe
+            \Illuminate\Support\Facades\Route::middleware('web')
+                ->domain(env('PORTAL_DOMAIN', 'client.gelsabinet.com'))
+                ->group(base_path('routes/gel-client.php'));
+                
+            // Routage du Portail Administrateur
+            \Illuminate\Support\Facades\Route::middleware('web')
+                ->group(base_path('routes/gel-admin.php'));
+                
+            // Routage du Portail Super Administrateur (Niveau 2)
+            \Illuminate\Support\Facades\Route::middleware('web')
+                ->group(base_path('routes/gel-super-admin.php'));
+        },
     )
     ->withSchedule(function (Schedule $schedule): void {
         // ─── Tâches planifiées (CRON) ──────────────────────────────────
@@ -73,6 +88,7 @@ return Application::configure(basePath: dirname(__DIR__))
             // Middlewares multi-tenant (périmètre entreprise)
             'gel.admin'      => \App\Http\Middleware\CheckSuperAdmin::class,
             'gel.comptable'  => \App\Http\Middleware\CheckComptable::class,
+            'gel.secretaire' => \App\Http\Middleware\IsSecretaire::class,
             'ensure.company' => \App\Http\Middleware\EnsureCompanyAccess::class,
             'verified'       => \App\Http\Middleware\EnsureEmailVerified::class,
             'not_suspended'  => \App\Http\Middleware\CheckNotSuspended::class,
@@ -89,6 +105,15 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant.permission' => \App\Http\Middleware\CheckTenantPermission::class,
             // Spatie Permission — middleware intégré
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            // Onboarding GEL
+            'onboarding'       => \App\Http\Middleware\CheckOnboarding::class,
+            'enterprise.owner' => \App\Http\Middleware\CheckEnterpriseOwner::class,
+            // Custom for accountants
+            'check.client.access' => \App\Http\Middleware\CheckClientAccess::class,
+            // Admin Cabinet (Espace Administrateur)
+            'admin.cabinet'    => \App\Http\Middleware\AdminCabinetMiddleware::class,
+            // Super Administrateur (Niveau 2)
+            'super_admin'      => \App\Http\Middleware\SuperAdminMiddleware::class,
         ]);
 
         // ─── Middleware applicatif (exécuté après les globaux) ─────────

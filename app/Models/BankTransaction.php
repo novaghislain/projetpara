@@ -7,6 +7,41 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle représentant une transaction bancaire.
+ *
+ * Enregistre les mouvements financiers sur un compte bancaire.
+ * Chaque transaction est liée à un compte bancaire (BankAccount)
+ * et peut être associée à une écriture comptable ou une facture.
+ * Le statut is_reconciled indique si la transaction a été
+ * rapprochée avec le relevé bancaire.
+ *
+ * @property int $id
+ * @property int|null $client_id Identifiant du client (entreprise)
+ * @property int|null $bank_account_id Identifiant du compte bancaire
+ * @property string $transaction_date Date de la transaction
+ * @property string|null $value_date Date de valeur
+ * @property string $description Description de la transaction
+ * @property float|null $debit Montant au débit
+ * @property float|null $credit Montant au crédit
+ * @property float|null $balance Solde après transaction
+ * @property string|null $reference Référence bancaire
+ * @property string|null $cheque_number Numéro de chèque
+ * @property string|null $category Catégorie
+ * @property string $status Statut
+ * @property bool $is_reconciled Transaction rapprochée
+ * @property bool $is_imported Transaction importée
+ * @property int|null $journal_entry_id Écriture comptable associée
+ * @property int|null $invoice_id Facture associée
+ * @property string|null $notes Notes
+ *
+ * @property-read Client|null $client Client associé
+ * @property-read BankAccount|null $bankAccount Compte bancaire associé
+ * @property-read JournalEntry|null $journalEntry Écriture comptable
+ * @property-read Invoice|null $invoice Facture associée
+ *
+ * @table bank_transactions
+ */
 class BankTransaction extends Model
 {
     use HasFactory, SoftDeletes;

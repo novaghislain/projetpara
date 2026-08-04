@@ -44,9 +44,18 @@
     </GelLayout>
 </template>
 <script setup>
+/* ═══════════════════════════════════════════════════════
+   Signatures / Index — Liste des signatures électroniques
+   avec recherche par nom ou email et pagination.
+   ═══════════════════════════════════════════════════════ */
+
 import { ref } from 'vue'
 import GelLayout from '../../../Layouts/GelLayout.vue'
+
+/* ─── Props — signatures paginées ─── */
 defineProps({ signatures: { type: Object, default: () => ({ data: [], current_page: 1, last_page: 1 }) } })
+
+/* ─── Recherche avec debounce (400 ms) ─── */
 const search = ref('')
 let timer; const debouncedSearch = () => { clearTimeout(timer); timer = setTimeout(() => { window.location = `/signatures?search=${search.value}` }, 400) }
 </script>

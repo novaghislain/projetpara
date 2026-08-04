@@ -15,10 +15,23 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Contrôleur de comptabilité générale (Company).
+ *
+ * Gère le plan comptable SYSCOHADA, les journaux (écritures), la balance,
+ * le grand livre, le bilan, le compte de résultat, les statistiques comptables,
+ * ainsi que les fonctionnalités annexes (stock, emballages consignés).
+ *
+ * Toutes les méthodes sont protégées par le middleware EnsureCompanyAccess
+ * et vérifient l'appartenance au client via getClientId().
+ */
 class AccountingController extends BaseCompanyController
 {
     /**
-     * Affiche la page de comptabilité.
+     * Affiche la page de comptabilité (vue SPA).
+     *
+     * Partage les modules comptables actifs et la sidebar dynamique
+     * au moteur de vues Blade pour le rendu du menu latéral.
      */
     public function index()
     {
@@ -36,7 +49,12 @@ class AccountingController extends BaseCompanyController
     // ─── Plan comptable ─────────────────────────────────────────────
 
     /**
-     * API: Liste tous les comptes du client (plats).
+     * API: Liste tous les comptes du client (format plat, non hiérarchique).
+     *
+     * Retourne chaque compte avec ses soldes (débit, crédit, balance)
+     * et le libellé du type SYSCOHADA.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function accounts()
     {
@@ -68,7 +86,12 @@ class AccountingController extends BaseCompanyController
     }
 
     /**
-     * API: Arborescence des comptes.
+     * API: Arborescence des comptes (format arbre parent/enfants).
+     *
+     * Construit récursivement l'arborescence à partir des comptes
+     * racines (parent_id = null).
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function accountsTree()
     {
@@ -85,6 +108,16 @@ class AccountingController extends BaseCompanyController
         return response()->json($tree);
     }
 
+    /**
+     * Construit récursivement un nœud de l'arbre comptable.
+     *
+     * Parcourt les enfants du nœud courant et construit la structure
+     * arborescente complète pour le plan de comptes.
+     *
+     * @param object $node Nœud parent courant
+     * @param \Illuminate\Support\Collection $all Tous les comptes du client
+     * @return array Structure arborescente du nœud
+     */
     private function buildNode($node, $all)
     {
         $children = $all->where('parent_id', $node->id)->values()->map(function ($child) use ($all) {
@@ -107,6 +140,12 @@ class AccountingController extends BaseCompanyController
 
     /**
      * API: Crée un compte comptable.
+     *
+     * Valide les données, vérifie l'unicité du code compte
+     * dans le contexte du client, puis crée le compte.
+     *
+     * @param Request $request Requête HTTP avec les données du compte
+     * @return \Illuminate\Http\JsonResponse
      */
     public function storeAccount(Request $request)
     {
@@ -153,6 +192,13 @@ class AccountingController extends BaseCompanyController
 
     /**
      * API: Modifie un compte comptable.
+     *
+     * Vérifie l'appartenance au client avant mise à jour.
+     * Si le code est modifié, contrôle l'unicité du nouveau code.
+     *
+     * @param Request $request Requête HTTP avec les champs à modifier
+     * @param int $id Identifiant du compte comptable
+     * @return \Illuminate\Http\JsonResponse
      */
     public function updateAccount(Request $request, $id)
     {
@@ -192,6 +238,11 @@ class AccountingController extends BaseCompanyController
 
     /**
      * API: Supprime un compte comptable.
+     *
+     * Empêche la suppression si des écritures sont liées au compte.
+     *
+     * @param int $id Identifiant du compte comptable
+     * @return \Illuminate\Http\JsonResponse
      */
     public function deleteAccount($id)
     {
@@ -210,6 +261,13 @@ class AccountingController extends BaseCompanyController
 
     /**
      * API: Import CSV du plan comptable SYSCOHADA.
+     *
+     * Lit un fichier CSV contenant les colonnes code, name, type.
+     * Ignore les doublons (code existant) et importe les nouveaux comptes
+     * dans une transaction pour garantir l'intégrité des données.
+     *
+     * @param Request $request Requête HTTP avec le fichier CSV
+     * @return \Illuminate\Http\JsonResponse
      */
     public function importAccounts(Request $request)
     {
@@ -271,7 +329,12 @@ class AccountingController extends BaseCompanyController
     // ─── Journaux ──────────────────────────────────────────────────
 
     /**
-     * API: Liste les journaux.
+     * API: Liste les journaux (écritures comptables).
+     *
+     * Retourne tous les journaux du client avec le nombre de lignes,
+     * les totaux débit/crédit, et l'état d'équilibre.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function journals()
     {
@@ -306,7 +369,14 @@ class AccountingController extends BaseCompanyController
     }
 
     /**
-     * API: Crée un journal avec ses lignes.
+     * API: Crée un journal avec ses lignes (écriture comptable).
+     *
+     * Valide le type de journal, les lignes (au moins 2),
+     * vérifie que les comptes appartiennent au client,
+     * et crée le tout dans une transaction.
+     *
+     * @param Request $request Requête HTTP avec les données du journal et ses lignes
+     * @return \Illuminate\Http\JsonResponse
      */
     public function storeJournal(Request $request)
     {
@@ -401,7 +471,12 @@ class AccountingController extends BaseCompanyController
     }
 
     /**
-     * API: Affiche un journal avec ses lignes.
+     * API: Affiche un journal avec ses lignes (détail complet).
+     *
+     * Inclut les informations du compte (code, nom) pour chaque ligne.
+     *
+     * @param int $id Identifiant du journal
+     * @return \Illuminate\Http\JsonResponse
      */
     public function getJournal($id)
     {
@@ -450,7 +525,14 @@ class AccountingController extends BaseCompanyController
     }
 
     /**
-     * API: Poste un journal (draft → posted).
+     * API: Poste un journal (passe du statut brouillon à posté).
+     *
+     * Vérifie que le journal est équilibré (total débit = total crédit),
+     * assigne automatiquement un numéro de pièce via la séquence,
+     * et enregistre la piste d'audit.
+     *
+     * @param int $id Identifiant du journal à poster
+     * @return \Illuminate\Http\JsonResponse
      */
     public function postJournal($id)
     {
@@ -494,6 +576,12 @@ class AccountingController extends BaseCompanyController
 
     /**
      * API: Extourne un journal posté.
+     *
+     * Crée un nouveau journal en inversant débit/crédit de chaque ligne
+     * de l'écriture originale. Impossible d'extourner une extourne.
+     *
+     * @param int $id Identifiant du journal original à extourner
+     * @return \Illuminate\Http\JsonResponse
      */
     public function reverseJournal($id)
     {
@@ -547,7 +635,12 @@ class AccountingController extends BaseCompanyController
     }
 
     /**
-     * API: Supprime un journal en brouillon.
+     * API: Supprime un journal en brouillon (draft uniquement).
+     *
+     * Supprime les lignes associées avant le journal lui-même.
+     *
+     * @param int $id Identifiant du journal à supprimer
+     * @return \Illuminate\Http\JsonResponse
      */
     public function deleteJournal($id)
     {
@@ -564,7 +657,11 @@ class AccountingController extends BaseCompanyController
     }
 
     /**
-     * API: Liste les types de journaux disponibles.
+     * API: Liste les types de journaux disponibles avec leurs préfixes.
+     *
+     * Types standards SYSCOHADA : achat, vente, banque, caisse, OD, etc.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function journalTypes()
     {
@@ -586,7 +683,14 @@ class AccountingController extends BaseCompanyController
     // ─── Rapports ──────────────────────────────────────────────────
 
     /**
-     * API: Balance des comptes (4 colonnes).
+     * API: Balance des comptes (4 colonnes + agrégation par classe SYSCOHADA).
+     *
+     * Pour chaque compte actif, calcule le total débit, crédit et solde.
+     * Agrège également par classe SYSCOHADA (1 à 9) pour la balance 8 colonnes.
+     * Filtre optionnellement par exercice fiscal.
+     *
+     * @param Request $request Requête HTTP (paramètre optionnel : fiscal_year_id)
+     * @return \Illuminate\Http\JsonResponse
      */
     public function balance(Request $request)
     {
@@ -642,7 +746,14 @@ class AccountingController extends BaseCompanyController
     }
 
     /**
-     * API: Grand livre.
+     * API: Grand livre (détail chronologique des écritures).
+     *
+     * Liste toutes les lignes d'écritures postées, avec calcul
+     * du solde cumulé courant. Filtres disponibles : compte,
+     * période (date_from, date_to), type de journal, exercice.
+     *
+     * @param Request $request Requête HTTP avec les filtres optionnels
+     * @return \Illuminate\Http\JsonResponse
      */
     public function grandLivre(Request $request)
     {
@@ -722,6 +833,12 @@ class AccountingController extends BaseCompanyController
 
     /**
      * API: Bilan SYSCOHADA.
+     *
+     * Structure le bilan en Actif (classes 2,3,4,5) et Passif (classe 1)
+     * selon le plan comptable SYSCOHADA OHADA.
+     *
+     * @param Request $request Requête HTTP (paramètre optionnel : fiscal_year_id)
+     * @return \Illuminate\Http\JsonResponse
      */
     public function bilan(Request $request)
     {
@@ -764,6 +881,12 @@ class AccountingController extends BaseCompanyController
 
     /**
      * API: Compte de résultat SYSCOHADA.
+     *
+     * Structure le compte de résultat en Charges (classe 6) et Produits (classe 7).
+     * Calcule le résultat net = total produits - total charges.
+     *
+     * @param Request $request Requête HTTP (paramètre optionnel : fiscal_year_id)
+     * @return \Illuminate\Http\JsonResponse
      */
     public function resultat(Request $request)
     {
@@ -809,7 +932,13 @@ class AccountingController extends BaseCompanyController
     }
 
     /**
-     * API: Statistiques comptables.
+     * API: Statistiques comptables (comptes, journaux, KPI domaine).
+     *
+     * Retourne les indicateurs clés : nombre de comptes actifs/total,
+     * journaux postés/brouillons, totaux débit/crédit, répartition par type,
+     * et les KPI spécifiques au domaine d'activité.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function stats()
     {
@@ -843,6 +972,11 @@ class AccountingController extends BaseCompanyController
 
     /**
      * API: Retourne les KPI spécifiques au domaine pour le tableau de bord.
+     *
+     * Délègue au service DomainKpiService pour obtenir les indicateurs
+     * adaptés au secteur d'activité du client (transport, BTP, etc.).
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function domainKpis()
     {
@@ -864,6 +998,12 @@ class AccountingController extends BaseCompanyController
 
     /**
      * Retourne les KPIs adaptés au domaine (utilisé en interne).
+     *
+     * Délègue au service DomainKpiService pour obtenir les métriques
+     * spécifiques au secteur d'activité.
+     *
+     * @param \App\Models\Client $client Instance du client
+     * @return array Liste des indicateurs KPI
      */
     private function getDomainKpis(\App\Models\Client $client): array
     {
@@ -876,6 +1016,11 @@ class AccountingController extends BaseCompanyController
 
     /**
      * API: Liste les articles en stock du client.
+     *
+     * Calcule le stock réel à partir des mouvements (entrées - sorties).
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\Http\JsonResponse
      */
     public function stockItems(Request $request)
     {
@@ -906,6 +1051,9 @@ class AccountingController extends BaseCompanyController
 
     /**
      * API: Crée un nouvel article en stock.
+     *
+     * @param Request $request Requête HTTP avec les données de l'article
+     * @return \Illuminate\Http\JsonResponse
      */
     public function storeStockItem(Request $request)
     {
@@ -929,6 +1077,9 @@ class AccountingController extends BaseCompanyController
 
     /**
      * API: Supprime un article en stock.
+     *
+     * @param int $id Identifiant de l'article
+     * @return \Illuminate\Http\JsonResponse
      */
     public function deleteStockItem($id)
     {
@@ -940,6 +1091,13 @@ class AccountingController extends BaseCompanyController
 
     /**
      * API: Import CSV d'articles en stock.
+     *
+     * Lit un fichier CSV avec les colonnes reference, designation,
+     * purchase_price/prix_achat, selling_price/prix_vente, stock_alert/seuil_alerte.
+     * Ignore les doublons de référence. Limite à 5000 articles par import.
+     *
+     * @param Request $request Requête HTTP avec le fichier CSV
+     * @return \Illuminate\Http\JsonResponse
      */
     public function importStockItems(Request $request)
     {
@@ -1006,7 +1164,10 @@ class AccountingController extends BaseCompanyController
     }
 
     /**
-     * API: Mouvements de stock du client.
+     * API: Mouvements de stock du client (derniers 200).
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\Http\JsonResponse
      */
     public function stockMovements(Request $request)
     {
@@ -1038,6 +1199,11 @@ class AccountingController extends BaseCompanyController
 
     /**
      * API: Enregistre un mouvement de stock (entrée/sortie).
+     *
+     * Vérifie que l'article appartient bien au client avant création.
+     *
+     * @param Request $request Requête HTTP avec les données du mouvement
+     * @return \Illuminate\Http\JsonResponse
      */
     public function storeStockMovement(Request $request)
     {
@@ -1069,7 +1235,10 @@ class AccountingController extends BaseCompanyController
     // ─── Emballages consignés — API ────────────────────────────────
 
     /**
-     * API: Liste les emballages du client.
+     * API: Liste les emballages consignés du client (derniers 200).
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\Http\JsonResponse
      */
     public function emballages(Request $request)
     {
@@ -1100,6 +1269,9 @@ class AccountingController extends BaseCompanyController
 
     /**
      * API: Crée un emballage consigné.
+     *
+     * @param Request $request Requête HTTP avec les données de l'emballage
+     * @return \Illuminate\Http\JsonResponse
      */
     public function storeEmballage(Request $request)
     {
@@ -1128,7 +1300,10 @@ class AccountingController extends BaseCompanyController
     }
 
     /**
-     * API: Supprime un emballage.
+     * API: Supprime un emballage consigné.
+     *
+     * @param int $id Identifiant de l'emballage
+     * @return \Illuminate\Http\JsonResponse
      */
     public function deleteEmballage($id)
     {
@@ -1142,6 +1317,11 @@ class AccountingController extends BaseCompanyController
 
     /**
      * Libellé du type de compte SYSCOHADA.
+     *
+     * Traduit le code de classe SYSCOHADA (1-9) en libellé français.
+     *
+     * @param string $type Code de la classe (1 à 9)
+     * @return string Libellé correspondant en français
      */
     private function accountTypeLabel($type)
     {

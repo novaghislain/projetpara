@@ -28,10 +28,18 @@ class CheckCompanyAccess
     public function handle(Request $request, Closure $next): Response
     {
         if (Auth::check() && Auth::user()->client_id !== null) {
+            $user = Auth::user();
+
+            // Les secrétaires ont aussi un client_id mais restent sur leur portail
+            if ($user->isSecretaire()) {
+                return $next($request);
+            }
+
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Accès réservé au personnel du cabinet.'], 403);
             }
-            return redirect()->route('company.dashboard');
+            // Rediriger vers le nouveau portail entreprise (Blade)
+            return redirect('/gel-business/dashboard');
         }
 
         return $next($request);

@@ -1,17 +1,30 @@
 <script setup>
+/* ═══════════════════════════════════════════════════════════
+   BusinessUsers.vue - Gestion des utilisateurs POS
+   Associe des utilisateurs de la plateforme au module
+   commerce avec des rôles et permissions (connexion, vente).
+   ═══════════════════════════════════════════════════════════ */
 import { ref, onMounted } from 'vue'
 import GelLayout from '../../Layouts/GelLayout.vue'
 
-const state = ref('loading')
-const users = ref([])
-const roles = ref([])
-const availableUsers = ref([])
-const showModal = ref(false)
-const editingId = ref(null)
-const submitting = ref(false)
+/* ══════════════════════════════════════════
+   État réactif du composant
+   ══════════════════════════════════════════ */
+const state = ref('loading')              /* 'loading' | 'loaded' | 'error' */
+const users = ref([])                     /* Liste des utilisateurs POS */
+const roles = ref([])                     /* Liste des rôles commerciaux */
+const availableUsers = ref([])            /* Utilisateurs disponibles (non encore associés) */
+const showModal = ref(false)              /* Visibilité de la modale */
+const editingId = ref(null)               /* ID de l'utilisateur en cours d'édition */
+const submitting = ref(false)             /* État de soumission */
 
+/* Formulaire d'ajout / modification */
 const form = ref({ user_id: '', business_role_id: '', can_login: true, can_sell: true })
 
+/* ══════════════════════════════════════════
+   Requêtes API
+   ══════════════════════════════════════════ */
+/* Charge les utilisateurs POS existants */
 const fetchUsers = async () => {
   try {
     const res = await window.axios.get('/api/commerce/business-users')
@@ -20,6 +33,7 @@ const fetchUsers = async () => {
   finally { state.value = 'loaded' }
 }
 
+/* Charge la liste des rôles commerciaux */
 const fetchRoles = async () => {
   try {
     const res = await window.axios.get('/api/commerce/business-roles')
@@ -27,6 +41,7 @@ const fetchRoles = async () => {
   } catch (e) { /* */ }
 }
 
+/* Charge les utilisateurs plateforme non encore associés au POS */
 const fetchAvailable = async () => {
   try {
     const res = await window.axios.get('/api/commerce/business-users/available')
@@ -34,6 +49,10 @@ const fetchAvailable = async () => {
   } catch (e) { /* */ }
 }
 
+/* ══════════════════════════════════════════
+   Gestion du formulaire (création / édition)
+   ══════════════════════════════════════════ */
+/* Ouvre la modale en mode création */
 const openCreate = () => {
   form.value = { user_id: '', business_role_id: '', can_login: true, can_sell: true }
   editingId.value = null
@@ -41,12 +60,14 @@ const openCreate = () => {
   fetchAvailable()
 }
 
+/* Ouvre la modale en mode édition avec les données pré-remplies */
 const editUser = (u) => {
   form.value = { user_id: u.user_id, business_role_id: u.business_role_id || '', can_login: u.can_login, can_sell: u.can_sell }
   editingId.value = u.id
   showModal.value = true
 }
 
+/* Soumet le formulaire (création ou mise à jour) */
 const submit = async () => {
   submitting.value = true
   try {
@@ -62,6 +83,7 @@ const submit = async () => {
   } finally { submitting.value = false }
 }
 
+/* Supprime un utilisateur POS après confirmation */
 const deleteUser = async (id) => {
   if (!confirm('Confirmer la suppression ?')) return
   try {
@@ -70,8 +92,15 @@ const deleteUser = async (id) => {
   } catch (e) { alert('Erreur: ' + e.message) }
 }
 
+/* ══════════════════════════════════════════
+   Utilitaires
+   ══════════════════════════════════════════ */
+/* Renvoie le nom du rôle à partir de son ID */
 const roleName = (roleId) => roles.value.find(r => r.id === roleId)?.name || '—'
 
+/* ══════════════════════════════════════════
+   Cycle de vie
+   ══════════════════════════════════════════ */
 onMounted(async () => {
   await Promise.all([fetchUsers(), fetchRoles()])
 })

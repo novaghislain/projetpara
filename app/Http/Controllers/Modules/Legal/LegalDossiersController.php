@@ -5,8 +5,22 @@ namespace App\Http\Controllers\Modules\Legal;
 use App\Models\Legal\LegalDossier;
 use Illuminate\Http\Request;
 
+/**
+ * Contrôleur de gestion des dossiers juridiques.
+ *
+ * Gère le cycle de vie des dossiers : création, suivi, assignation,
+ * changement de statut et gestion des documents associés.
+ */
 class LegalDossiersController extends BaseLegalController
 {
+    /**
+     * Affiche la liste des dossiers juridiques.
+     *
+     * Filtre par statut et/ou priorité si spécifié dans la requête.
+     *
+     * @param Request $request La requête HTTP entrante avec filtres optionnels (statut, priorite)
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
+     */
     public function index(Request $request)
     {
         if (!$request->expectsJson()) {
@@ -25,6 +39,14 @@ class LegalDossiersController extends BaseLegalController
         return response()->json($query->orderBy('created_at', 'desc')->get());
     }
 
+    /**
+     * Enregistre un nouveau dossier juridique.
+     *
+     * Valide les données, génère une référence unique et crée le dossier.
+     *
+     * @param Request $request La requête HTTP avec les données du dossier
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
+     */
     public function store(Request $request)
     {
         if (!$request->expectsJson()) {
@@ -46,6 +68,12 @@ class LegalDossiersController extends BaseLegalController
         return response()->json(['success' => true, 'data' => $dossier]);
     }
 
+    /**
+     * Affiche les détails d'un dossier juridique.
+     *
+     * @param int|string $id L'identifiant du dossier
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
+     */
     public function show($id)
     {
         if (request()->expectsJson()) {
@@ -54,6 +82,13 @@ class LegalDossiersController extends BaseLegalController
         return view('app', ['page' => 'legal-dossiers-show']);
     }
 
+    /**
+     * Met à jour un dossier juridique existant.
+     *
+     * @param Request $request La requête HTTP avec les données mises à jour
+     * @param int|string $id L'identifiant du dossier
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function update(Request $request, $id)
     {
         $dossier = LegalDossier::findOrFail($id);
@@ -61,12 +96,25 @@ class LegalDossiersController extends BaseLegalController
         return response()->json(['success' => true, 'data' => $dossier]);
     }
 
+    /**
+     * Supprime un dossier juridique.
+     *
+     * @param int|string $id L'identifiant du dossier à supprimer
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function destroy($id)
     {
         LegalDossier::findOrFail($id)->delete();
         return response()->json(['success' => true]);
     }
 
+    /**
+     * Assigne un dossier juridique à un utilisateur.
+     *
+     * @param Request $request La requête HTTP contenant l'identifiant de l'utilisateur
+     * @param int|string $id L'identifiant du dossier
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function assign(Request $request, $id)
     {
         $dossier = LegalDossier::findOrFail($id);
@@ -74,6 +122,13 @@ class LegalDossiersController extends BaseLegalController
         return response()->json(['success' => true, 'data' => $dossier]);
     }
 
+    /**
+     * Change le statut d'un dossier juridique.
+     *
+     * @param Request $request La requête HTTP contenant le nouveau statut
+     * @param int|string $id L'identifiant du dossier
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function changerStatut(Request $request, $id)
     {
         $dossier = LegalDossier::findOrFail($id);
@@ -81,6 +136,13 @@ class LegalDossiersController extends BaseLegalController
         return response()->json(['success' => true, 'data' => $dossier]);
     }
 
+    /**
+     * Ajoute un document au dossier juridique.
+     *
+     * @param Request $request La requête HTTP contenant le nom et le chemin du document
+     * @param int|string $id L'identifiant du dossier
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function addDocument(Request $request, $id)
     {
         $dossier = LegalDossier::findOrFail($id);

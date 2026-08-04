@@ -5,6 +5,33 @@ namespace App\Models\Gel;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle RevenueRecognition (Reconnaissance de revenus).
+ *
+ * Gère l'étalement et la reconnaissance des revenus différés dans le temps.
+ * Permet de suivre le montant total, le montant différé, le montant déjà reconnu,
+ * ainsi que le taux de reconnaissance pour un produit ou service donné.
+ * Table associée : `gel_revenue_recognition`.
+ * Supporte la suppression douce (SoftDeletes).
+ *
+ * @property int $id
+ * @property int $cabinet_id ID du cabinet
+ * @property int $client_id ID du client
+ * @property int $compte_produit_id ID du compte comptable de produit
+ * @property string $libelle Libellé du revenu
+ * @property string $modele Modèle de reconnaissance
+ * @property float $montant_total Montant total du contrat
+ * @property float $montant_differe Montant différé
+ * @property float $montant_reconnu Montant déjà reconnu
+ * @property \Carbon\Carbon $date_debut Date de début de reconnaissance
+ * @property \Carbon\Carbon $date_fin Date de fin de reconnaissance
+ * @property string $frequence Fréquence de reconnaissance (mensuelle, trimestrielle, etc.)
+ * @property string $statut Statut (en_cours, termine)
+ *
+ * @property-read \App\Models\Gel\Cabinet $cabinet Cabinet associé
+ * @property-read \App\Models\Gel\Client $client Client associé
+ * @property-read \App\Models\Gel\CompteComptable|null $compteProduit Compte de produit comptable
+ */
 class RevenueRecognition extends Model
 {
     use SoftDeletes;

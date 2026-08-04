@@ -20,6 +20,18 @@
     </GelLayout>
 </template>
 <script>
-import GelLayout from '../../../../Layouts/GelLayout.vue';
-export default { components: { GelLayout } };
+/*
+ * Composant : DaeEmailsShow
+ * Role : Page de detail d'un email dans le module DAE.
+ * Affiche les informations de l'email avec retour a la boite email.
+ * Props : aucune (lecture depuis l'URL et l'API)
+ * Evenements : aucun
+ * Note : Composant minimal utilisant GelLayout pour l'affichage.
+ * Le contenu detaille est charge via une modale dans le composant Index.
+ * Ce composant sert principalement de page de transition/affichage statique.
+ */
+import GelLayout from '../../../../Layouts/GelLayout.vue'; /* Layout principal GEL avec menu lateral et header */
+export default {
+    components: { GelLayout }, /* Enregistrement du layout pour utilisation dans le template */
+};
 </script>

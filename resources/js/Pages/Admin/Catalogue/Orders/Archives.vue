@@ -1,34 +1,46 @@
 <script setup>
+/**
+ * Composant d'archivage des commandes (Livrée et Annulée).
+ * Affiche un tableau filtrable avec barre de recherche et sélecteur de statut,
+ * ainsi que des cartes de synthèse (total, livrées, annulées).
+ */
 import { ref, computed } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 
+/* ── Propriétés reçues du serveur ────────────────────────────────────────── */
 const props = defineProps({
-    orders: { type: Array, required: true },
+    orders: { type: Array, required: true },  // Liste des commandes archivées
 });
 
-const searchQuery = ref('');
-const statusFilter = ref('All');
+/* ── État réactif local pour les filtres ─────────────────────────────────── */
+const searchQuery = ref('');         // Texte de recherche libre
+const statusFilter = ref('All');     // Filtre par statut ("Tous", "Livrée", "Annulée")
 
+/* ── Configuration visuelle des badges de statut archivé ──────────────────── */
 const statusConfig = {
-    'Livrée': { cls: 'status-livree', label: 'Livrée', icon: 'bi-check-circle-fill' },
+    'Livrée':  { cls: 'status-livree',  label: 'Livrée',  icon: 'bi-check-circle-fill' },
     'Annulée': { cls: 'status-annulee', label: 'Annulée', icon: 'bi-x-circle-fill' },
 };
 
+/* ── Propriété calculée : commandes filtrées par texte et statut ──────────── */
 const filteredOrders = computed(() => {
     return props.orders.filter(order => {
+        // Recherche sur la référence, le nom du service ou le nom du client
         const matchesSearch =
             (order.reference && order.reference.toLowerCase().includes(searchQuery.value.toLowerCase())) ||
             (order.service?.nom && order.service.nom.toLowerCase().includes(searchQuery.value.toLowerCase())) ||
             (order.client?.name && order.client.name.toLowerCase().includes(searchQuery.value.toLowerCase()));
 
+        // Filtre par statut (tous si "All")
         const matchesStatus = statusFilter.value === 'All' || order.statut === statusFilter.value;
 
         return matchesSearch && matchesStatus;
     });
 });
 
-const totalLivrees = computed(() => props.orders.filter(o => o.statut === 'Livrée').length);
-const totalAnnulees = computed(() => props.orders.filter(o => o.statut === 'Annulée').length);
+/* ── Totaux pour les cartes de synthèse ───────────────────────────────────── */
+const totalLivrees   = computed(() => props.orders.filter(o => o.statut === 'Livrée').length);
+const totalAnnulees  = computed(() => props.orders.filter(o => o.statut === 'Annulée').length);
 </script>
 
 <template>

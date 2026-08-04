@@ -8,6 +8,48 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle Partner (Partenaire / Tiers).
+ *
+ * Gère les clients et fournisseurs (tiers) avec leurs coordonnées,
+ * informations fiscales (IFU, RCCM), conditions commerciales,
+ * limites de crédit, et comptes comptables par défaut.
+ * Un partenaire peut être à la fois client et fournisseur.
+ *
+ * @property int $id
+ * @property int $client_id ID du client propriétaire
+ * @property string $type Type (customer, supplier, both)
+ * @property string $code Code partenaire
+ * @property string|null $company_name Raison sociale
+ * @property string|null $last_name Nom (personne physique)
+ * @property string|null $first_name Prénom (personne physique)
+ * @property string|null $email Email
+ * @property string|null $phone Téléphone fixe
+ * @property string|null $mobile Téléphone mobile
+ * @property string|null $website Site web
+ * @property string|null $tax_id IFU (Identifiant Fiscal Unique)
+ * @property string|null $rccm Numéro RCCM
+ * @property string|null $address Adresse
+ * @property string|null $city Ville
+ * @property string|null $country Pays
+ * @property string|null $postal_code Code postal
+ * @property string $currency Devise par défaut
+ * @property float|null $credit_limit Limite de crédit
+ * @property int $payment_term_days Délai de paiement (jours)
+ * @property string|null $payment_method Méthode de paiement par défaut
+ * @property string|null $notes Notes
+ * @property string|null $iban IBAN
+ * @property string|null $swift Code SWIFT
+ * @property string $status Statut (actif, inactif)
+ * @property int|null $account_receivable_id Compte comptable client (411)
+ * @property int|null $account_payable_id Compte comptable fournisseur (401)
+ *
+ * @property-read \App\Models\Client $client Client propriétaire
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Invoice[] $invoices Factures
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Payment[] $payments Paiements
+ * @property-read \App\Models\AccountingAccount|null $accountReceivable Compte client
+ * @property-read \App\Models\AccountingAccount|null $accountPayable Compte fournisseur
+ */
 class Partner extends Model
 {
     use HasFactory, SoftDeletes;

@@ -17,5 +17,10 @@
     </GelLayout>
 </template>
 <script setup>
+/* ============================================================
+ * Rapports — Index
+ * Page de génération et consultation des rapports du cabinet.
+ * Affiche un placeholder en attendant le déploiement complet.
+ * ============================================================ */
 import GelLayout from '../../../Layouts/GelLayout.vue';
 </script>

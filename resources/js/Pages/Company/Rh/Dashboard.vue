@@ -1,12 +1,21 @@
 <script setup>
+/*
+ * Composant Dashboard RH
+ * Tableau de bord principal du module RH affichant des statistiques clés
+ * (nombre d'employés, congés en attente, paies, notes de frais, présences)
+ * et des liens d'accès rapide vers les sous-modules.
+ */
+
 import { ref, computed, onMounted } from 'vue';
 import CompanyLayout from '../../../Layouts/CompanyLayout.vue';
 import { authStore } from '../../../stores/auth';
 
+/* État réactif : statistiques, chargement et erreur */
 const stats = ref(null);
 const loading = ref(true);
 const error = ref(null);
 
+/* Récupération des statistiques depuis l'API RH */
 const fetchStats = async () => {
     loading.value = true;
     error.value = null;
@@ -21,6 +30,7 @@ const fetchStats = async () => {
     }
 };
 
+/* Cartes de statistiques calculées à partir des données récupérées */
 const statCards = computed(() => [
     { icon: 'bi-people', label: 'Employés', value: stats.value?.total_employees || 0, color: 'primary' },
     { icon: 'bi-person-check', label: 'Actifs', value: stats.value?.active_employees || 0, color: 'success' },
@@ -30,6 +40,7 @@ const statCards = computed(() => [
     { icon: 'bi-clock', label: 'Présents aujourd\'hui', value: stats.value?.present_today || 0, color: 'success' },
 ]);
 
+/* Liens rapides vers les sous-modules RH */
 const quickLinks = [
     { label: 'Mes employés', href: '/company/rh/employees', icon: 'bi-people' },
     { label: 'Mes congés', href: '/company/rh/leaves', icon: 'bi-calendar-check' },
@@ -38,6 +49,7 @@ const quickLinks = [
     { label: 'Formations', href: '/company/rh/trainings', icon: 'bi-book' },
 ];
 
+/* Chargement initial au montage du composant */
 onMounted(fetchStats);
 </script>
 

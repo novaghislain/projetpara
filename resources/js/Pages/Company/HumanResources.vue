@@ -1,4 +1,13 @@
 ﻿<script setup>
+/*
+ * HumanResources.vue — Gestion des Ressources Humaines (RH)
+ *
+ * Module RH complet : tableau de bord avec statistiques (effectif,
+ * conges, notes de frais), gestion des employes (CRUD), demandes
+ * de conges avec workflow d'approbation, et notes de frais avec
+ * suivi des statuts (en attente, approuve, rejete).
+ */
+
 import { ref, computed, onMounted } from 'vue';
 import CompanyLayout from '../../Layouts/CompanyLayout.vue';
 import { authStore } from '../../stores/auth';

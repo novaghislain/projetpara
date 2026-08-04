@@ -6,6 +6,17 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Modèle VatRate - Taux de TVA applicable.
+ *
+ * Table associée : 'vat_rates' (convention Laravel).
+ * Définit les taux de TVA par code, avec comptes comptables de collecte
+ * et de déduction associés. Supporte les taux UEMOA par pays.
+ * Relations :
+ * - client() : appartient à un client (Client).
+ * - collectAccount() : compte de collecte (AccountingAccount).
+ * - deductAccount() : compte de déduction (AccountingAccount).
+ */
 class VatRate extends Model
 {
     use HasFactory;

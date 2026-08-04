@@ -1,8 +1,15 @@
 <script setup>
+/* ============================================
+ * Composant : Gestion de Tresorerie (ERP)
+ * Module    : Tresorerie
+ * Role      : Visualiser les soldes, transactions
+ *            et gerer les comptes bancaires
+ * ============================================ */
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../Layouts/GelLayout.vue';
 import { authStore } from '../../../stores/auth';
 
+/* Etats reactifs : comptes, transactions et soldes */
 const accounts = ref([]);
 const transactions = ref([]);
 const balances = ref([]);
@@ -19,12 +26,14 @@ const accForm = ref({ name: '', type: 'current', account_number: '', initial_bal
 const showTxModal = ref(false);
 const txForm = ref({ account_id: '', type: 'income', amount: '', description: '', date: new Date().toISOString().substring(0, 10), reference: '' });
 
+/* Onglets de navigation : Soldes, Transactions, Comptes */
 const tabs = [
     { key: 'balances',     label: 'Soldes',        icon: 'bi-wallet2' },
     { key: 'transactions', label: 'Transactions',   icon: 'bi-arrow-left-right' },
     { key: 'accounts',     label: 'Comptes',        icon: 'bi-bank' },
 ];
 
+/* Recuperation des donnees depuis l'API */
 const fetchData = async () => {
     loading.value = true;
     error.value = null;
@@ -44,6 +53,7 @@ const fetchData = async () => {
     }
 };
 
+/* Creation d'un nouveau compte bancaire */
 const submitAccount = async () => {
     submitting.value = true;
     try {
@@ -64,6 +74,7 @@ const submitAccount = async () => {
     }
 };
 
+/* Enregistrement d'une nouvelle transaction (entree ou sortie) */
 const submitTransaction = async () => {
     submitting.value = true;
     try {
@@ -84,6 +95,7 @@ const submitTransaction = async () => {
     }
 };
 
+/* Initialisation : chargement des donnees au montage du composant */
 onMounted(fetchData);
 </script>
 
@@ -106,6 +118,7 @@ onMounted(fetchData);
         </div>
 
         <!-- Tabs -->
+        <!-- Onglets de navigation : Soldes, Transactions, Comptes -->
         <ul class="nav nav-tabs mb-4">
             <li v-for="t in tabs" :key="t.key" class="nav-item">
                 <button class="nav-link" :class="{ active: activeTab === t.key }" @click="activeTab = t.key">

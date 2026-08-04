@@ -190,9 +190,19 @@
 </template>
 
 <script>
+/*
+ * Composant : DaeCourriersIndex
+ * Role : Page principale de gestion des courriers du module DAE.
+ * Affiche la liste des courriers avec filtres (type, statut, urgence, date, recherche).
+ * Permet les actions : voir, traiter, repondre, assigner, archiver, dupliquer, supprimer.
+ * Inclut une modale d'assignation a un utilisateur.
+ * Props : aucune
+ * Evenements : row-click, action, page-change (via DaeDataTable)
+ */
 import axios from 'axios';
 import DaeDataTable from '../../../../Components/Dae/DaeDataTable.vue';
 
+// Mapping des statuts avec leurs libelles et classes de badge Bootstrap
 const STATUT_MAP = {
     brouillon: { label: 'Brouillon',   badge: 'bg-secondary' },
     envoye:    { label: 'Envoye',      badge: 'bg-primary' },
@@ -201,12 +211,14 @@ const STATUT_MAP = {
     archive:   { label: 'Archive',     badge: 'bg-dark' },
 };
 
+// Mapping des niveaux d'urgence avec leurs libelles et classes de badge
 const URGENCE_MAP = {
     normal:     { label: 'Normal',     badge: 'bg-success' },
     urgent:     { label: 'Urgent',     badge: 'bg-warning text-dark' },
     tre_urgent: { label: 'Tres urgent', badge: 'bg-danger' },
 };
 
+// Mapping des types de courrier vers leurs libelles
 const TYPE_MAP = {
     entrant: 'Entrant',
     sortant: 'Sortant',

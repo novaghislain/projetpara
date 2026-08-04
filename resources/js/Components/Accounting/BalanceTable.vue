@@ -1,5 +1,12 @@
+<!--
+ * BalanceTable.vue
+ * Tableau de balance comptable. Affiche la liste des comptes avec
+ * leurs totaux débit/crédit et le solde calculé. Supporte l'affichage
+ * optionnel de la classe SYSCOHADA et une coloration du solde.
+-->
 <template>
     <div class="balance-table">
+        <!-- Message si aucun élément -->
         <div v-if="!items.length" class="text-muted small py-3 text-center">Aucune donnée.</div>
         <table v-else class="table table-sm table-hover mb-0">
             <thead class="small text-muted">
@@ -13,6 +20,7 @@
                 </tr>
             </thead>
             <tbody>
+                <!-- Chaque ligne de compte avec code, nom, montants et solde -->
                 <tr v-for="item in items" :key="item.id || item.code">
                     <td><code>{{ item.code }}</code></td>
                     <td>{{ item.name || item.label }}</td>
@@ -26,6 +34,7 @@
                     </td>
                 </tr>
             </tbody>
+            <!-- Ligne des totaux généraux débit, crédit et solde -->
             <tfoot class="table-light fw-bold">
                 <tr>
                     <td colspan="2">TOTAUX</td>
@@ -43,15 +52,19 @@
 export default {
     name: 'BalanceTable',
     props: {
-        items: { type: Array, default: () => [] },
-        showClass: { type: Boolean, default: false },
+        items: { type: Array, default: () => [] },       /* Données de la balance */
+        showClass: { type: Boolean, default: false },    /* Affiche la colonne classe SYSCOHADA */
     },
     computed: {
+        /* Somme de tous les débits */
         totalDebit() { return this.items.reduce((s, i) => s + (parseFloat(i.total_debit || i.debit || 0)), 0); },
+        /* Somme de tous les crédits */
         totalCredit() { return this.items.reduce((s, i) => s + (parseFloat(i.total_credit || i.credit || 0)), 0); },
+        /* Somme de tous les soldes */
         totalSolde() { return this.items.reduce((s, i) => s + (parseFloat(i.solde || i.balance || 0)), 0); },
     },
     methods: {
+        /* Retourne la classe CSS de couleur selon le signe du solde */
         soldeClass(item) {
             const solde = item.solde || item.balance || 0;
             return solde >= 0 ? 'text-primary' : 'text-danger';

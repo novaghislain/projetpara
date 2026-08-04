@@ -5,6 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Modèle ProductVariant - Variante d'un produit.
+ *
+ * Table associée : 'product_variants' (convention Laravel).
+ * Permet de définir des déclinaisons d'un produit (taille, couleur, etc.)
+ * avec leur propre prix et stock.
+ * Relations :
+ * - product() : appartient à un produit (Product).
+ */
 class ProductVariant extends Model
 {
     protected $fillable = [

@@ -6,6 +6,17 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Client;
 
+/**
+ * Modèle représentant un budget prévisionnel pour un exercice comptable.
+ *
+ * Table associée : `budgets` (via convention Laravel, préfixe Compta)
+ *
+ * Relations :
+ * - Un budget appartient à un client (Client)
+ * - Un budget appartient à un exercice (Exercice)
+ *
+ * Les lignes budgétaires sont stockées sous forme de JSON dans le champ `lignes_budget`.
+ */
 class Budget extends Model
 {
     use HasFactory;

@@ -14,6 +14,19 @@ use Illuminate\View\View;
 
 class TontineController extends Controller
 {
+    /**
+     * Contrôleur de gestion des tontines.
+     * Permet de gérer les tontines (tournantes, épargne, crédit)
+     * avec leurs membres et cotisations, incluant le suivi
+     * des paiements par période.
+     */
+
+    /**
+     * Liste paginée des tontines avec filtres.
+     *
+     * @param Request $request La requête HTTP avec les filtres (client, statut)
+     * @return View
+     */
     public function index(Request $request): View
     {
         $query = Tontine::with('client');
@@ -25,12 +38,23 @@ class TontineController extends Controller
         return view('app', ['page' => 'gel-tontines', 'props' => compact('tontines', 'clients')]);
     }
 
+    /**
+     * Affiche le formulaire de création d'une tontine.
+     *
+     * @return View
+     */
     public function create(): View
     {
         $clients = Client::where('status', 'actif')->orderBy('company_name')->get(['id', 'company_name']);
         return view('app', ['page' => 'gel-tontines-form', 'props' => compact('clients')]);
     }
 
+    /**
+     * Enregistre une nouvelle tontine.
+     *
+     * @param Request $request La requête HTTP avec les données de la tontine
+     * @return RedirectResponse Redirection vers la liste
+     */
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -48,12 +72,25 @@ class TontineController extends Controller
         return redirect()->route('gel.tontines.index')->with('success', 'Tontine créée.');
     }
 
+    /**
+     * Affiche le détail d'une tontine avec ses membres et cotisations.
+     *
+     * @param Tontine $tontine La tontine à afficher (injection de modèle)
+     * @return View
+     */
     public function show(Tontine $tontine): View
     {
         $tontine->load(['client', 'membres.cotisations']);
         return view('app', ['page' => 'gel-tontines-show', 'props' => compact('tontine')]);
     }
 
+    /**
+     * Met à jour une tontine existante.
+     *
+     * @param Request $request La requête HTTP avec les données mises à jour
+     * @param Tontine $tontine La tontine à modifier (injection de modèle)
+     * @return RedirectResponse Redirection vers la fiche détail
+     */
     public function update(Request $request, Tontine $tontine): RedirectResponse
     {
         $validated = $request->validate([
@@ -71,6 +108,12 @@ class TontineController extends Controller
         return redirect()->route('gel.tontines.show', $tontine)->with('success', 'Tontine mise à jour.');
     }
 
+    /**
+     * Supprime une tontine.
+     *
+     * @param Tontine $tontine La tontine à supprimer (injection de modèle)
+     * @return RedirectResponse Redirection vers la liste
+     */
     public function destroy(Tontine $tontine): RedirectResponse
     {
         $old = $tontine->getAttributes();
@@ -80,6 +123,14 @@ class TontineController extends Controller
     }
 
     // ─── Members ──────────────────────────────────────────────
+
+    /**
+     * Ajoute un membre à une tontine.
+     *
+     * @param Request $request La requête HTTP avec les données du membre
+     * @param Tontine $tontine La tontine concernée (injection de modèle)
+     * @return RedirectResponse Redirection vers la fiche détail
+     */
     public function storeMembre(Request $request, Tontine $tontine): RedirectResponse
     {
         $validated = $request->validate([
@@ -95,6 +146,14 @@ class TontineController extends Controller
     }
 
     // ─── Contributions ────────────────────────────────────────
+
+    /**
+     * Enregistre une cotisation pour un membre d'une tontine.
+     *
+     * @param Request $request La requête HTTP avec les données de la cotisation
+     * @param Tontine $tontine La tontine concernée (injection de modèle)
+     * @return RedirectResponse Redirection vers la fiche détail
+     */
     public function storeCotisation(Request $request, Tontine $tontine): RedirectResponse
     {
         $validated = $request->validate([

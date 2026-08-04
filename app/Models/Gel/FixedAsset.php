@@ -5,6 +5,38 @@ namespace App\Models\Gel;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle FixedAsset (Immobilisation - espace Gel).
+ *
+ * Gère les actifs immobilisés d'un client avec calcul d'amortissement
+ * (linéaire ou dégressif). Permet la cession et le calcul de la VNC
+ * (Valeur Nette Comptable) ainsi que la génération d'écritures d'amortissement.
+ * Table associée : `gel_fixed_assets`.
+ * Supporte la suppression douce (SoftDeletes).
+ *
+ * @property int $id
+ * @property int $cabinet_id ID du cabinet
+ * @property int $client_id ID du client
+ * @property int|null $compte_id ID du compte comptable lié
+ * @property string $nom Nom de l'immobilisation
+ * @property string|null $description Description
+ * @property \Carbon\Carbon $date_acquisition Date d'acquisition
+ * @property float $cout_acquisition Coût d'acquisition
+ * @property float $valeur_residuelle Valeur résiduelle estimée
+ * @property int $duree_vie Durée de vie en années
+ * @property string $methode_amort Méthode d'amortissement (lineaire/degressif)
+ * @property float|null $taux_amort Taux d'amortissement (pour dégressif)
+ * @property float $amort_cumule Amortissement cumulé
+ * @property float $vnc Valeur Nette Comptable
+ * @property string $statut Statut (actif, cede)
+ * @property \Carbon\Carbon|null $date_cession Date de cession
+ * @property float|null $prix_cession Prix de cession
+ * @property float|null $plus_value Plus ou moins-value de cession
+ *
+ * @property-read \App\Models\Gel\Cabinet $cabinet Cabinet associé
+ * @property-read \App\Models\Gel\Client $client Client associé
+ * @property-read \App\Models\Gel\CompteComptable|null $compte Compte comptable lié
+ */
 class FixedAsset extends Model
 {
     use SoftDeletes;

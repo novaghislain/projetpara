@@ -9,22 +9,39 @@ use App\Services\Tax\VatDeclarationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur API des déclarations de TVA.
+ *
+ * Gère les taux, le calcul, la création, la soumission,
+ * le paiement et le tableau de bord des déclarations de TVA.
+ */
 class VatController extends Controller
 {
     private VatDeclarationService $vatService;
 
+    /**
+     * Constructeur avec injection du service de déclaration TVA.
+     */
     public function __construct(VatDeclarationService $vatService)
     {
         $this->vatService = $vatService;
     }
 
+    /**
+     * Récupère l'ID du client connecté.
+     *
+     * @return int
+     */
     protected function getClientId(): int
     {
         return (int) (Auth::user()->active_client_id ?? Auth::user()->client_id);
     }
 
     /**
-     * Taux de TVA configurés pour le client
+     * Retourne les taux de TVA configurés pour le client.
+     *
+     * @param  Request  $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function rates(Request $request)
     {
@@ -42,7 +59,10 @@ class VatController extends Controller
     }
 
     /**
-     * Calculer une déclaration (sans sauvegarder)
+     * Calcule une déclaration de TVA sans la sauvegarder (simulation).
+     *
+     * @param  Request  $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function compute(Request $request)
     {
@@ -77,7 +97,10 @@ class VatController extends Controller
     }
 
     /**
-     * Créer une déclaration
+     * Crée une déclaration de TVA pour une période donnée.
+     *
+     * @param  Request  $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function create(Request $request)
     {
@@ -110,7 +133,10 @@ class VatController extends Controller
     }
 
     /**
-     * Liste des déclarations
+     * Liste paginée des déclarations de TVA avec filtres (statut, année, type).
+     *
+     * @param Request $request La requête HTTP avec les filtres.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function index(Request $request)
     {
@@ -141,7 +167,10 @@ class VatController extends Controller
     }
 
     /**
-     * Afficher une déclaration
+     * Affiche une déclaration de TVA avec ses relations (lignes, factures, écritures).
+     *
+     * @param string $id L'identifiant de la déclaration.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function show(string $id)
     {
@@ -159,7 +188,10 @@ class VatController extends Controller
     }
 
     /**
-     * Soumettre la déclaration (générer l'écriture comptable)
+     * Soumet une déclaration de TVA et génère l'écriture comptable associée.
+     *
+     * @param string $id L'identifiant de la déclaration.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function submit(string $id)
     {
@@ -180,7 +212,11 @@ class VatController extends Controller
     }
 
     /**
-     * Payer la déclaration
+     * Enregistre le paiement d'une déclaration de TVA avec écriture comptable.
+     *
+     * @param string $id L'identifiant de la déclaration.
+     * @param Request $request La requête HTTP avec la date de paiement et le compte bancaire.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function pay(string $id, Request $request)
     {
@@ -206,7 +242,10 @@ class VatController extends Controller
     }
 
     /**
-     * Annuler une déclaration
+     * Annule une déclaration de TVA (uniquement si en brouillon ou calculée).
+     *
+     * @param string $id L'identifiant de la déclaration.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy(string $id)
     {
@@ -214,9 +253,11 @@ class VatController extends Controller
 
         $declaration = VatDeclaration::where('id', $id)
             ->where('client_id', $clientId)
+            // Seules les déclarations en brouillon ou calculées peuvent être annulées
             ->whereIn('status', ['draft', 'computed'])
             ->firstOrFail();
 
+        // Annulation logique : passage en statut annulé (pas de suppression physique)
         $declaration->status = VatDeclaration::STATUS_CANCELLED;
         $declaration->save();
 
@@ -227,7 +268,10 @@ class VatController extends Controller
     }
 
     /**
-     * Tableau de bord TVA - Résumé
+     * Tableau de bord TVA : dernière déclaration, totaux annuels et données mensuelles.
+     *
+     * @param Request $request La requête HTTP avec l'année optionnelle.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function dashboard(Request $request)
     {

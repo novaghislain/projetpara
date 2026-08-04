@@ -67,9 +67,24 @@
 </template>
 
 <script setup>
+/* ============================================================
+ * Composant : Ocr/Show
+ * Description : Page de resultat d'une analyse OCR.
+ *   Affiche les metadonnees du document, les entites
+ *   detectees (montants, dates, emails, IFU) et le texte
+ *   extrait par l'analyse.
+ * ============================================================ */
+
 import GelLayout from '../../../Layouts/GelLayout.vue';
+
+/* Propriete recue du controleur :
+ *   scan - Objet contenant les donnees de l'analyse OCR
+ *          (original_filename, status, client, mime_type,
+ *           confidence, processed_at, entities, extracted_text) */
 defineProps(['scan'])
 
+/* Fonction utilitaire : retourne la classe CSS du badge
+ * en fonction du statut de l'analyse */
 const statusClass = (s) => ({
     completed: 'bg-success',
     processing: 'bg-warning text-dark',

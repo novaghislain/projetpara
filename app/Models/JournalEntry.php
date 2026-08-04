@@ -8,6 +8,39 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle JournalEntry (Écriture de journal).
+ *
+ * Représente une écriture comptable dans un journal, avec ses totaux
+ * débit/crédit et son statut (brouillon, publiée, verrouillée, annulée).
+ * Peut être classifiée automatiquement par l'IA.
+ * Contient plusieurs lignes d'écriture (EntryLine).
+ *
+ * @property int $id
+ * @property int $client_id ID du client
+ * @property int $journal_id ID du journal
+ * @property int $fiscal_period_id ID de la période fiscale
+ * @property string $entry_number Numéro de l'écriture
+ * @property \Carbon\Carbon $entry_date Date de l'écriture
+ * @property \Carbon\Carbon|null $value_date Date de valeur
+ * @property string|null $reference Référence externe
+ * @property string|null $description Description
+ * @property float $total_debit Total au débit
+ * @property float $total_credit Total au crédit
+ * @property bool $is_balanced Si l'écriture est équilibrée
+ * @property string $status Statut (draft, posted, locked, cancelled)
+ * @property bool $classified_by_ai Si classifiée par l'IA
+ * @property int $created_by ID du créateur
+ * @property int|null $validated_by ID du validateur
+ * @property \Carbon\Carbon|null $validated_at Date de validation
+ *
+ * @property-read \App\Models\Client $client Client associé
+ * @property-read \App\Models\Journal $journal Journal associé
+ * @property-read \App\Models\FiscalPeriod $fiscalPeriod Période fiscale
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\EntryLine[] $lines Lignes d'écriture
+ * @property-read \App\Models\User $creator Utilisateur créateur
+ * @property-read \App\Models\User|null $validator Utilisateur validateur
+ */
 class JournalEntry extends Model
 {
     use HasFactory, SoftDeletes;

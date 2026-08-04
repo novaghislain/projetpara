@@ -113,29 +113,45 @@
 </template>
 
 <script setup>
+/*
+ * Composant : LegalContratsShow
+ * Role : Page de detail d'un contrat juridique.
+ * Affiche les informations du contrat (type, montant, dates, parties),
+ * les actions possibles (signer, renouveler, resilier) et les signatures.
+ * Props : aucune (l'ID est extrait de l'URL)
+ */
+
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 import ContratStatusBadge from '../../../../Components/Legal/ContratStatusBadge.vue';
 import PartiesTable from '../../../../Components/Legal/PartiesTable.vue';
 
+// Donnees du contrat charge
 const contrat = ref(null);
+// Message d'erreur en cas d'echec du chargement
 const error = ref(null);
+// ID extrait de l'URL courante
 const contratId = window.location.pathname.split('/').pop();
 
+// Mapping des types techniques vers leurs libelles
 const typeLabels = {
     prestation_service: 'Prestation', vente: 'Vente', bail_commercial: 'Bail commercial',
     travail: 'Travail', partenariat: 'Partenariat', confidentialite_nda: 'NDA',
 };
 
+/* Convertit le type technique en libelle lisible */
 function typeLabel(type) { return typeLabels[type] || type; }
+/* Formate une date au format francais court */
 function formatDate(date) {
     if (!date) return '—';
     return new Date(date + 'T00:00:00').toLocaleDateString('fr-FR');
 }
+/* Formate un montant en devise XOF */
 function formatCurrency(val) {
     return Number(val).toLocaleString('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0 });
 }
 
+/* Charge les details du contrat depuis l'API */
 async function loadContrat() {
     try {
         const res = await fetch('/juridique/contrats/' + contratId);
@@ -151,6 +167,7 @@ async function loadContrat() {
     }
 }
 
+/* Signe le contrat avec les donnees du cabinet GEL */
 async function signer() {
     if (!confirm('Confirmer la signature ?')) return;
     try {
@@ -163,6 +180,7 @@ async function signer() {
     } catch (e) { console.error(e); }
 }
 
+/* Declenche le renouvellement du contrat */
 async function renouveler() {
     try {
         const csrf = document.querySelector('meta[name=csrf-token]')?.content;
@@ -171,6 +189,7 @@ async function renouveler() {
     } catch (e) { console.error(e); }
 }
 
+/* Resilie le contrat apres confirmation utilisateur */
 async function resilier() {
     if (!confirm('Résilier ce contrat ?')) return;
     try {

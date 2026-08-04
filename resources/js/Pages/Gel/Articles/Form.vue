@@ -1,11 +1,19 @@
 <script setup>
+/* ============================================================
+ * Articles / Form.vue
+ * Formulaire de creation et modification d'un article.
+ * Gerre le slug automatique, les categories predefinies,
+ * la validation des champs et la soumission AJAX.
+ * ============================================================ */
 import { ref, computed, watch, onMounted } from 'vue';
 import GelLayout from '../../../Layouts/GelLayout.vue';
 
+/* Proprietes : article existant (mode edition) ou null (mode creation) */
 const props = defineProps({
     article: { type: Object, default: null },
 });
 
+/* Indique si le formulaire est en mode edition */
 const isEditing = computed(() => !!props.article);
 
 const pageTitle = computed(() => isEditing.value ? "Modifier l'article" : 'Nouvel article');
@@ -15,6 +23,7 @@ const errors = ref({});
 const success = ref('');
 
 // ── Preset categories ──
+/* Categories d'articles predefinies pour le selecteur */
 const categories = [
     { value: 'actualites',   label: 'Actualités' },
     { value: 'blog',         label: 'Blog' },
@@ -28,6 +37,7 @@ const categories = [
 ];
 
 // ── Form data ──
+/* Modele de donnees du formulaire */
 const form = ref({
     title: '',
     slug: '',
@@ -41,8 +51,14 @@ const form = ref({
 });
 
 // ── Slug auto-generation ──
+/* Flag : le slug a ete modifie manuellement par l'utilisateur */
 let slugManuallyEdited = false;
 
+/*
+ * Slug automatique depuis le titre :
+ * genere un slug SEO-friendly des que le titre change,
+ * sauf si l'utilisateur l'a deja personnalise.
+ */
 watch(() => form.value.title, (newTitle) => {
     if (!slugManuallyEdited && !isEditing.value) {
         form.value.slug = newTitle
@@ -57,6 +73,7 @@ const markSlugEdited = () => {
 };
 
 // ── Populate form when editing ──
+/* Charge les donnees de l'article existant dans le formulaire */
 const loadArticle = () => {
     if (!props.article) return;
     const a = props.article;
@@ -77,6 +94,11 @@ const loadArticle = () => {
 onMounted(loadArticle);
 
 // ── Submit ──
+/*
+ * Soumission du formulaire (creation ou mise a jour).
+ * Normalise les tags (chaine -> tableau), force le booleen is_published,
+ * et redirige vers la liste apres succes.
+ */
 const submitForm = async () => {
     submitting.value = true;
     errors.value = {};
@@ -130,17 +152,23 @@ const submitForm = async () => {
 };
 
 // ── Field error helper ──
+/* Retourne le message d'erreur pour un champ donne */
 const fieldError = (field) => {
     return errors.value[field] ? errors.value[field].join(', ') : '';
 };
 </script>
 
 <template>
+    <!-- ============================================================
+    Formulaire de creation / modification d'un article.
+    Champs : titre, slug, categorie, auteur, temps de lecture,
+    statut publication, extrait, contenu, tags.
+    ============================================================ -->
     <GelLayout :page-title="pageTitle">
 
         <div class="container-fluid py-3">
 
-            <!-- Success banner -->
+            <!-- Banniere de succes apres enregistrement -->
             <div v-if="success" class="alert alert-success d-flex align-items-center gap-2 mb-3">
                 <i class="bi-check-circle-fill"></i>
                 {{ success }}
@@ -329,6 +357,7 @@ const fieldError = (field) => {
                     </div><!-- /row -->
 
                     <!-- ── Actions ── -->
+                    <!-- Boutons d'action : annuler / enregistrer -->
                     <hr class="my-4" />
                     <div class="d-flex align-items-center justify-content-between">
                         <a href="/articles" class="btn btn-sm btn-outline-secondary">

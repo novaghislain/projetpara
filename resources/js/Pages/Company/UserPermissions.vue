@@ -1,12 +1,20 @@
+/*
+ * Composant : UserPermissions
+ * Role : Gestion des permissions utilisateur par module.
+ *        Affiche une grille de permissions regroupees par module
+ *        avec selection/deselection individuelle ou par lot.
+ */
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { authStore } from '../../stores/auth';
 import CompanyLayout from '../../Layouts/CompanyLayout.vue';
 
+/* Proprietes : identifiant de l'utilisateur a gerer */
 const props = defineProps({
     userId: { type: [Number, String], default: null },
 });
 
+/* Donnees reactives */
 const user = ref(null);
 const roles = ref([]);
 const allPermissions = ref([]);
@@ -16,6 +24,7 @@ const saving = ref(false);
 const success = ref('');
 const error = ref('');
 
+/* Mapping icones par module */
 const moduleIcons = {
     comptabilite: 'bi-calculator',
     facturation: 'bi-receipt',
@@ -31,6 +40,7 @@ const moduleIcons = {
     it_assets: 'bi-laptop',
 };
 
+/* Libelles affichables par module */
 const moduleLabels = {
     comptabilite: 'Comptabilité',
     facturation: 'Facturation',
@@ -46,7 +56,7 @@ const moduleLabels = {
     it_assets: 'IT Assets',
 };
 
-// Grouper les permissions par module
+/* Regroupe les permissions par module pour l'affichage en grille */
 const groupedPermissions = computed(() => {
     const groups = {};
     for (const perm of allPermissions.value) {
@@ -67,13 +77,14 @@ const groupedPermissions = computed(() => {
     return Object.values(groups);
 });
 
+/* Charge les donnees utilisateur et la liste de toutes les permissions disponibles */
 async function loadData() {
     loading.value = true;
     error.value = '';
     try {
         const csrf = document.querySelector('meta[name=csrf-token]')?.content;
 
-        // Load roles
+        /* Chargement des roles et permissions de l'utilisateur */
         if (props.userId) {
             const userRes = await fetch(`/api/company/users/${props.userId}`, {
                 headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf }
@@ -85,7 +96,7 @@ async function loadData() {
             }
         }
 
-        // Load all available permissions
+        /* Chargement de toutes les permissions disponibles */
         const permRes = await fetch('/api/company/permissions/available', {
             headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf }
         });
@@ -101,6 +112,7 @@ async function loadData() {
     }
 }
 
+/* Bascule l'etat d'une permission individuelle */
 function togglePermission(permId) {
     const idx = userPermissions.value.indexOf(permId);
     if (idx === -1) {
@@ -110,6 +122,7 @@ function togglePermission(permId) {
     }
 }
 
+/* Selectionne ou deselectionne toutes les permissions d'un module */
 function selectAllModule(moduleName) {
     const group = groupedPermissions.value.find(g => g.module === moduleName);
     if (!group) return;
@@ -121,6 +134,7 @@ function selectAllModule(moduleName) {
     }
 }
 
+/* Sauvegarde les permissions modifiees via l'API */
 async function savePermissions() {
     saving.value = true;
     error.value = '';

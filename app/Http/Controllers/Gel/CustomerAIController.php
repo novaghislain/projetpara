@@ -11,10 +11,22 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 
+/**
+ * Contrôleur d'intelligence artificielle pour les clients.
+ * Fournit des analyses avancées : scoring, prédiction de désabonnement,
+ * recommandations de relance, segmentation et suggestions d'actions
+ * via le service CustomerAiService.
+ */
 class CustomerAIController extends Controller
 {
     protected CustomerAiService $customerAi;
 
+    /**
+     * Constructeur avec injection du service IA client.
+     * Applique les middlewares de permission et de module CRM.
+     *
+     * @param CustomerAiService $customerAi Le service d'IA pour les clients
+     */
     public function __construct(CustomerAiService $customerAi)
     {
         $this->customerAi = $customerAi;
@@ -24,6 +36,10 @@ class CustomerAIController extends Controller
 
     /**
      * Affiche le tableau de bord de l'IA client.
+     * Présente les 20 derniers clients avec des indicateurs clés
+     * (total, actifs, en suspens, nouveaux du mois).
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
@@ -43,7 +59,13 @@ class CustomerAIController extends Controller
     }
 
     /**
-     * Analyse détaillée d'un client.
+     * Analyse détaillée d'un client par l'IA.
+     * Calcule le score lead, le risque de churn, suggère des actions
+     * et détecte les opportunités de vente croisée.
+     * Journalise l'analyse dans AuditTrail.
+     *
+     * @param int $clientId L'identifiant du client à analyser
+     * @return \Illuminate\Http\JsonResponse
      */
     public function analyzeClient($clientId)
     {
@@ -54,6 +76,7 @@ class CustomerAIController extends Controller
         $actions = $this->customerAi->suggestFollowUpActions($client);
         $opportunities = $this->customerAi->detectCrossSellOpportunities($client);
 
+        // Journalisation de l'analyse IA dans l'audit
         AuditTrail::create([
             'user_id' => Auth::id(),
             'event' => 'ia_client_analysis',
@@ -80,7 +103,11 @@ class CustomerAIController extends Controller
     }
 
     /**
-     * Prédiction de désabonnement (churn).
+     * Prédiction de désabonnement (churn) pour tous les clients.
+     * Filtre et retourne uniquement les clients à risque élevé ou critique,
+     * triés par score de risque décroissant.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function churnPrediction()
     {
@@ -89,6 +116,7 @@ class CustomerAIController extends Controller
 
         foreach ($clients as $client) {
             $risk = $this->customerAi->predictChurnRisk($client);
+            // Ne conserver que les clients à risque élevé ou critique
             if ($risk['risk_level'] === 'élevé' || $risk['risk_level'] === 'critique') {
                 $results[] = [
                     'client_id' => $client->id,
@@ -101,7 +129,7 @@ class CustomerAIController extends Controller
             }
         }
 
-        // Trier par risque décroissant
+        // Trier par risque décroissant (le plus risqué en premier)
         usort($results, fn($a, $b) => $b['risk_score'] <=> $a['risk_score']);
 
         return response()->json([
@@ -112,7 +140,10 @@ class CustomerAIController extends Controller
     }
 
     /**
-     * Recommandations de relance.
+     * Recommandations de relance pour tous les clients.
+     * Génère des actions de suivi via l'IA et les trie par priorité (haute, moyenne, basse).
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function relanceRecommendations()
     {
@@ -130,7 +161,7 @@ class CustomerAIController extends Controller
             }
         }
 
-        // Trier par priorité
+        // Trier par priorité (haute en premier, basse en dernier)
         $priorityOrder = ['haute' => 0, 'moyenne' => 1, 'basse' => 2];
         usort($recommendations, fn($a, $b) =>
             ($priorityOrder[$a['action']['priority']] ?? 99) <=> ($priorityOrder[$b['action']['priority']] ?? 99)
@@ -144,7 +175,11 @@ class CustomerAIController extends Controller
     }
 
     /**
-     * Segmentation client.
+     * Segmentation intelligente des clients.
+     * Répartit les clients en segments : forte valeur, à risque, prospects, dormants
+     * en fonction de leur score lead et de leur risque de churn.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function segmentation()
     {
@@ -160,6 +195,7 @@ class CustomerAIController extends Controller
             $score = $this->customerAi->calculateLeadScore($client);
             $risk = $this->customerAi->predictChurnRisk($client);
 
+            // Client à forte valeur (score >= 70)
             if ($score['score'] >= 70) {
                 $segments['high_value']['clients'][] = [
                     'id' => $client->id,
@@ -169,6 +205,7 @@ class CustomerAIController extends Controller
                 $segments['high_value']['count']++;
             }
 
+            // Client à risque (churn élevé ou critique)
             if ($risk['risk_level'] === 'élevé' || $risk['risk_level'] === 'critique') {
                 $segments['at_risk']['clients'][] = [
                     'id' => $client->id,
@@ -178,6 +215,7 @@ class CustomerAIController extends Controller
                 $segments['at_risk']['count']++;
             }
 
+            // Prospect (score faible)
             if (empty($client->score) || $score['score'] < 30) {
                 $segments['prospects']['count']++;
             }
@@ -190,7 +228,11 @@ class CustomerAIController extends Controller
     }
 
     /**
-     * Suggère une action personnalisée pour un client.
+     * Suggère une action personnalisée pour un client spécifique.
+     * Combine les actions de suivi et les opportunités de vente croisée.
+     *
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\Http\JsonResponse
      */
     public function suggestAction($clientId)
     {

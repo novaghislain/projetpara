@@ -13,8 +13,21 @@ use App\Models\Document;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Contrôleur API de recherche globale.
+ *
+ * Effectue une recherche multi-catégories (clients, factures,
+ * écritures comptables, contacts, employés, navigation)
+ * avec surlignage des correspondances.
+ */
 class SearchController extends Controller
 {
+    /**
+     * Recherche globale multi-entités (clients, factures, écritures, contacts, employés, navigation).
+     *
+     * @param Request $request La requête HTTP avec le terme de recherche (q) et le filtre type optionnel.
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function search(Request $request)
     {
         $q = trim($request->get('q', ''));
@@ -155,6 +168,13 @@ class SearchController extends Controller
         return response()->json(['results' => $results->values()]);
     }
 
+    /**
+     * Retourne les pages de navigation correspondant à la requête.
+     *
+     * @param  string  $q  Le terme recherché
+     * @param  callable  $highlight  Fonction de surlignage du texte
+     * @return array
+     */
     protected function getNavigationPages(string $q, callable $highlight): array
     {
         $pages = [

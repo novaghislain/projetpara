@@ -9,6 +9,14 @@ use App\Services\Reports\TrialBalanceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur API des états financiers.
+ *
+ * Regroupe les services de génération du bilan (Actif/Passif),
+ * du compte de résultat (P&L), des Soldes Intermédiaires de Gestion (SIG),
+ * du tableau de flux de trésorerie, de la balance de vérification
+ * et de la balance âgée clients/fournisseurs.
+ */
 class FinancialStatementsController extends Controller
 {
     private BalanceSheetService $balanceSheetService;
@@ -16,6 +24,14 @@ class FinancialStatementsController extends Controller
     private CashFlowStatementService $cashFlowService;
     private TrialBalanceService $trialBalanceService;
 
+    /**
+     * Constructeur avec injection des services d'états financiers.
+     *
+     * @param BalanceSheetService $balanceSheetService
+     * @param IncomeStatementService $incomeStatementService
+     * @param CashFlowStatementService $cashFlowService
+     * @param TrialBalanceService $trialBalanceService
+     */
     public function __construct(
         BalanceSheetService $balanceSheetService,
         IncomeStatementService $incomeStatementService,
@@ -29,7 +45,10 @@ class FinancialStatementsController extends Controller
     }
 
     /**
-     * Bilan comptable (Actif / Passif)
+     * Génère le bilan comptable (Actif / Passif) à une date donnée.
+     *
+     * @param Request $request La requête HTTP avec la date d'arrêté.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function balanceSheet(Request $request)
     {
@@ -47,7 +66,10 @@ class FinancialStatementsController extends Controller
     }
 
     /**
-     * Compte de résultat (P&L)
+     * Génère le compte de résultat (P&L) sur une période donnée.
+     *
+     * @param Request $request La requête HTTP avec la période.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function incomeStatement(Request $request)
     {
@@ -66,7 +88,10 @@ class FinancialStatementsController extends Controller
     }
 
     /**
-     * Soldes Intermédiaires de Gestion (SIG)
+     * Génère les Soldes Intermédiaires de Gestion (SIG) sur une période.
+     *
+     * @param Request $request La requête HTTP avec la période.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function sig(Request $request)
     {
@@ -85,7 +110,10 @@ class FinancialStatementsController extends Controller
     }
 
     /**
-     * Tableau de flux de trésorerie
+     * Génère le tableau de flux de trésorerie sur une période.
+     *
+     * @param Request $request La requête HTTP avec la période.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function cashFlow(Request $request)
     {
@@ -104,7 +132,10 @@ class FinancialStatementsController extends Controller
     }
 
     /**
-     * Balance de vérification (débits = crédits)
+     * Génère la balance de vérification (égalité débits = crédits) à une date donnée.
+     *
+     * @param Request $request La requête HTTP avec la date d'arrêté.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function trialBalance(Request $request)
     {
@@ -122,7 +153,10 @@ class FinancialStatementsController extends Controller
     }
 
     /**
-     * Balance âgée clients/fournisseurs
+     * Génère la balance âgée (clients ou fournisseurs) à une date donnée.
+     *
+     * @param Request $request La requête HTTP avec le type (customer/supplier) et la date.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function aging(Request $request)
     {

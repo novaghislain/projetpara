@@ -6,6 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle représentant un devis client.
+ *
+ * Table associée : `devis` (via convention Laravel)
+ *
+ * Relations :
+ * - Un devis appartient à un client (Client)
+ * - Un devis est créé par un utilisateur (User)
+ */
 class Devis extends Model
 {
     use SoftDeletes;

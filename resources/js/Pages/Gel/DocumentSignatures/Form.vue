@@ -10,6 +10,16 @@
 </template>
 
 <script setup>
+/* ============================================================
+ * Composant : DocumentSignatures/Form
+ * Description : Formulaire de creation d'une nouvelle
+ *   signature electronique. Permet de selectionner
+ *   le document a signer. (En cours de construction)
+ * ============================================================ */
+
 import GelLayout from '../../../Layouts/GelLayout.vue';
+
+/* Propriete recue du controleur :
+ *   documents - Liste des documents disponibles a la signature */
 defineProps(['documents'])
 </script>

@@ -92,6 +92,22 @@ $currentClientId = request('client_id', session('current_client_id'));
         <button class="gel-topbar-icon" title="Aide"><i class="fas fa-question-circle"></i></button>
         <button class="gel-topbar-icon" title="Applications"><i class="fas fa-th"></i></button>
 
+        {{-- Messagerie icon with unread badge --}}
+        @php
+            try {
+                $unreadMsgCount = \App\Models\Gel\GelMessage::where('cabinet_id', $cabinet?->id)
+                    ->where('sender_type', 'business')
+                    ->where('est_lu', false)
+                    ->count();
+            } catch(\Exception $e) { $unreadMsgCount = 0; }
+        @endphp
+        <a href="{{ route('gel-accountant.messagerie') }}" class="gel-topbar-icon" title="Messagerie" style="position:relative; text-decoration: none; color: inherit;">
+            <i class="fas fa-comments"></i>
+            @if($unreadMsgCount > 0)
+            <span style="position:absolute; top:-4px; right:-4px; background:var(--gel-danger); color:#fff; border-radius:50%; width:17px; height:17px; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; line-height:1;">{{ $unreadMsgCount > 9 ? '9+' : $unreadMsgCount }}</span>
+            @endif
+        </a>
+
         {{-- Notifications --}}
         <div class="gel-dropdown">
             <button class="gel-topbar-icon gel-notif-dot" onclick="toggleDropdown('notifDropdown')" title="Notifications">

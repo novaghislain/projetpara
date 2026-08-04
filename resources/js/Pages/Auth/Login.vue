@@ -102,8 +102,24 @@ async function login() {
     localStorage.setItem('token', data.access_token || data.token);
     axios.defaults.headers.common['Authorization'] = `Bearer ${data.access_token || data.token}`;
 
-    // Rediriger vers le dashboard
-    window.location.href = '/company/dashboard';
+    // Vérifier onboarding (nouveaux utilisateurs GEL)
+    const user = data.user || {};
+    if (!user.onboarding_completed && user.onboarding_token && user.account_type) {
+      window.location.href = `/onboarding/profil/${user.onboarding_token}`;
+      return;
+    }
+
+    // Rediriger selon le rôle utilisateur
+    const role = user.role || '';
+    const redirectMap = {
+      'company_admin':   '/gel-business/dashboard',
+      'company_manager': '/gel-business/dashboard',
+      'company_employee':'/gel-business/dashboard',
+      'comptable':       '/gel-accountant/dashboard',
+      'client':          '/gel-accountant/dashboard',
+      'super_admin':     '/dashboard',
+    };
+    window.location.href = redirectMap[role] || '/gel-business/dashboard';
   } catch (e) {
     if (e.response?.status === 422) {
       errors.value = e.response.data.errors || {};

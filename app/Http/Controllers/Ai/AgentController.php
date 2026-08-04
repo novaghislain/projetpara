@@ -16,6 +16,13 @@ use Illuminate\Support\Facades\Auth;
 
 class AgentController extends Controller
 {
+    /**
+     * Contrôleur des agents IA.
+     * Permet d'exécuter et de consulter les différents agents intelligents
+     * (OHADA, Fiscal, Rapprochement, Relance, OCR, Cashflow) ainsi que
+     * leurs tableaux de bord et suggestions.
+     */
+
     public function __construct(
         private OhadaAgentService $ohada,
         private FiscalBeninService $fiscal,
@@ -70,6 +77,8 @@ class AgentController extends Controller
 
     /**
      * Affiche la page des agents IA.
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
@@ -81,6 +90,9 @@ class AgentController extends Controller
 
     /**
      * Dashboard de tous les agents (résumé + statuts).
+     * Retourne les résumés de chaque agent ainsi que les dernières suggestions.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function dashboard()
     {
@@ -164,7 +176,10 @@ class AgentController extends Controller
     }
 
     /**
-     * Exécuter un agent spécifique.
+     * Exécute un agent spécifique selon son nom.
+     *
+     * @param string $agent Nom de l'agent (ohada, fiscal, reconciliation, relance, ocr, cashflow)
+     * @return \Illuminate\Http\JsonResponse
      */
     public function runAgent(string $agent)
     {

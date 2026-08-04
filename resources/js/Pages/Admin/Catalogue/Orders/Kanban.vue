@@ -1,40 +1,54 @@
 <script setup>
+/**
+ * Composant Kanban de gestion des commandes.
+ * Affiche un tableau de bord visuel avec colonnes de statut permettant
+ * le glisser-déposer des commandes pour changer leur état (Nouvelle Demande,
+ * En cours, En attente client, Livree, Annulee).
+ * Met a jour le statut via une requete PATCH asynchrone (optimistic UI).
+ */
 import { ref, computed } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 
+/* ── Proprietes recues du serveur (Inertia) ─────────────────────────────── */
 const props = defineProps({
-    kanban:  { type: Object, required: true },
-    statuts: { type: Array,  required: true },
-    team:    { type: Array,  required: true },
+    kanban:  { type: Object, required: true },  // Regroupement commandes par statut
+    statuts: { type: Array,  required: true },  // Liste ordonnee des colonnes
+    team:    { type: Array,  required: true },  // Equipe pour affectation
 });
 
-const localKanban = ref(JSON.parse(JSON.stringify(props.kanban)));
-const dragging    = ref(null);
-const overColumn  = ref(null);
+/* ── Etat reactif local ──────────────────────────────────────────────────── */
+const localKanban = ref(JSON.parse(JSON.stringify(props.kanban))); // Copie locale pour manipulation optimiste
+const dragging    = ref(null);   // Carte en cours de deplacement
+const overColumn  = ref(null);   // Colonne survolee
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
+/* ── Configuration visuelle des colonnes par statut ──────────────────────── */
 const statusConfig = {
     'Nouvelle Demande': { color: '#163A5E', bg: '#eef5fb', badge: '#163A5E', icon: 'bi-inbox' },
     'En cours':         { color: '#FF7900', bg: '#fff6ee', badge: '#FF7900', icon: 'bi-arrow-repeat' },
     'En attente client':{ color: '#8c6d00', bg: '#fffce8', badge: '#c49900', icon: 'bi-clock' },
-    'Livrée':           { color: '#198754', bg: '#f0faf4', badge: '#198754', icon: 'bi-check-circle' },
-    'Annulée':          { color: '#cd3c14', bg: '#fdf2f0', badge: '#cd3c14', icon: 'bi-x-circle' },
+    'Livree':           { color: '#198754', bg: '#f0faf4', badge: '#198754', icon: 'bi-check-circle' },
+    'Annulee':          { color: '#cd3c14', bg: '#fdf2f0', badge: '#cd3c14', icon: 'bi-x-circle' },
 };
 
+/* ── Propriete calculee : total des commandes toutes colonnes confondues ─── */
 const totalOrders = computed(() => {
     return Object.values(localKanban.value).reduce((sum, col) => sum + col.length, 0);
 });
 
-// ── Drag & Drop ───────────────────────────────────────────────────────────
+/* ── Drag & Drop ─────────────────────────────────────────────────────────── */
 
+/** Sauvegarde la commande et le statut source lors du debut du glissement */
 function onDragStart(order, fromStatut) {
     dragging.value = { order, fromStatut };
 }
 
+/** Enregistre la colonne survolee pour le retour visuel */
 function onDragOver(statut) {
     overColumn.value = statut;
 }
 
+/** Depose la commande dans la colonne cible et persiste le changement */
 async function onDrop(toStatut) {
     if (!dragging.value || dragging.value.fromStatut === toStatut) {
         dragging.value = null;
@@ -44,7 +58,7 @@ async function onDrop(toStatut) {
 
     const { order, fromStatut } = dragging.value;
 
-    // Mise à jour locale immédiate (optimistic UI)
+    // Mise a jour locale immediate (optimistic UI)
     const fromCol = localKanban.value[fromStatut];
     const idx = fromCol.findIndex(o => o.id === order.id);
     if (idx !== -1) {
@@ -53,7 +67,7 @@ async function onDrop(toStatut) {
         localKanban.value[toStatut].unshift(moved);
     }
 
-    // Appel API avec fetch
+    // Appel API pour persister le changement de statut
     try {
         await fetch(`/admin/catalogue/orders/${order.id}/status`, {
             method: 'PATCH',
@@ -65,13 +79,14 @@ async function onDrop(toStatut) {
             body: JSON.stringify({ statut: toStatut }),
         });
     } catch (e) {
-        console.error('Erreur mise à jour statut:', e);
+        console.error('Erreur mise a jour statut:', e);
     }
 
     dragging.value  = null;
     overColumn.value = null;
 }
 
+/** Nettoie l'etat de glissement apres annulation ou fin du drag */
 function onDragEnd() {
     dragging.value  = null;
     overColumn.value = null;

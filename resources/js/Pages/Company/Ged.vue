@@ -1,4 +1,14 @@
 <script setup>
+/*
+ * Ged.vue — Gestion Electronique de Documents (GED)
+ *
+ * Interface de gestion documentaire complete : navigation par
+ * dossiers, upload de fichiers, recherche, filtrage par type,
+ * apercu, versioning et archivage. Supporte les modes liste
+ * et grille. Chaque document peut etre telecharge, supprime
+ * ou archive depuis l'interface.
+ */
+
 import { ref, computed, onMounted } from 'vue';
 import CompanyLayout from '../../Layouts/CompanyLayout.vue';
 import { authStore } from '../../stores/auth';

@@ -9,13 +9,23 @@ use Illuminate\Http\Request;
 
 class CustomerAiController extends Controller
 {
+    /**
+     * Contrôleur d'intelligence artificielle pour la gestion client.
+     * Fournit des fonctionnalités de scoring, suivi, recommandations
+     * cross-sell, analyse de risque de churn et analyse complète client.
+     */
+
     public function __construct(
         private readonly CustomerAiService $customerAi
     ) {}
 
     /**
-     * Obtenir le score d'un client
+     * Calcule le score d'un client (lead scoring).
+     *
      * GET /api/ia/customer/score/{client}
+     *
+     * @param Client $client Le client à scorer
+     * @return \Illuminate\Http\JsonResponse Le score et les métriques associées
      */
     public function score(Client $client)
     {
@@ -28,8 +38,12 @@ class CustomerAiController extends Controller
     }
 
     /**
-     * Obtenir les actions de relance pour un client
+     * Suggère des actions de relance pour un client.
+     *
      * GET /api/ia/customer/follow-up/{client}
+     *
+     * @param Client $client Le client cible
+     * @return \Illuminate\Http\JsonResponse Les actions de relance suggérées
      */
     public function followUp(Client $client)
     {
@@ -42,8 +56,12 @@ class CustomerAiController extends Controller
     }
 
     /**
-     * Obtenir les opportunités cross-sell
+     * Détecte les opportunités de vente croisée (cross-sell).
+     *
      * GET /api/ia/customer/cross-sell/{client}
+     *
+     * @param Client $client Le client à analyser
+     * @return \Illuminate\Http\JsonResponse Les opportunités cross-sell
      */
     public function crossSell(Client $client)
     {
@@ -56,8 +74,12 @@ class CustomerAiController extends Controller
     }
 
     /**
-     * Analyser le risque de churn
+     * Analyse le risque de désabonnement (churn) d'un client.
+     *
      * GET /api/ia/customer/churn/{client}
+     *
+     * @param Client $client Le client à analyser
+     * @return \Illuminate\Http\JsonResponse L'analyse du risque de churn
      */
     public function churn(Client $client)
     {
@@ -70,11 +92,16 @@ class CustomerAiController extends Controller
     }
 
     /**
-     * Analyse complète d'un client
+     * Analyse complète d'un client : scoring, suivi, cross-sell et churn.
+     *
      * GET /api/ia/customer/full-analysis/{client}
+     *
+     * @param Client $client Le client à analyser
+     * @return \Illuminate\Http\JsonResponse L'analyse complète du client
      */
     public function fullAnalysis(Client $client)
     {
+        // Informations de base du client
         return response()->json([
             'success' => true,
             'client' => [
@@ -85,6 +112,7 @@ class CustomerAiController extends Controller
                 'secteur' => $client->secteur,
                 'score' => $client->score,
             ],
+            // Agrégation de toutes les analyses IA disponibles
             'scoring' => $this->customerAi->calculateLeadScore($client),
             'follow_up_actions' => $this->customerAi->suggestFollowUpActions($client),
             'cross_sell' => $this->customerAi->detectCrossSellOpportunities($client),

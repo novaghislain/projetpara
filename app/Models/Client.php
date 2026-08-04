@@ -8,6 +8,67 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle représentant une entreprise cliente du cabinet.
+ *
+ * C'est l'entité centrale de l'application. Chaque client est
+ * une entreprise qui utilise les services du cabinet comptable.
+ * Il possède un domaine d'activité, des modules comptables activés,
+ * des contacts, des dossiers, des documents, des missions et des
+ * licences. Inclut la gestion des aspects fiscaux (IFU, RCCM,
+ * régime fiscal, e-MECEf) et de sécurité (2FA, IPs autorisées).
+ *
+ * @property int $id
+ * @property string $company_name Raison sociale
+ * @property string|null $legal_form Forme juridique
+ * @property string|null $rccm RCCM
+ * @property string|null $ifu IFU (Identifiant Fiscal Unique)
+ * @property string|null $address Adresse
+ * @property string|null $city Ville
+ * @property string|null $secteur Secteur d'activité
+ * @property int|null $score Score de lead (0-100)
+ * @property string|null $country Pays
+ * @property string|null $phone Téléphone
+ * @property string|null $email Email
+ * @property string|null $website Site web
+ * @property string $status Statut (actif, inactif, prospect, suspendu)
+ * @property string|null $contract_type Type de contrat
+ * @property string|null $contract_start Date de début de contrat
+ * @property string|null $contract_end Date de fin de contrat
+ * @property string|null $notes Notes
+ * @property array|null $disabled_modules Modules désactivés
+ * @property bool $require_2fa Authentification à deux facteurs requise
+ * @property int $session_timeout_minutes Délai d'expiration de session
+ * @property array|null $allowed_ips Adresses IP autorisées
+ * @property string|null $regime_fiscal Régime fiscal
+ * @property string|null $emecef_nim NIM e-MECEf
+ * @property bool $emecef_is_active e-MECEf actif
+ * @property string|null $emecef_password Mot de passe e-MECEf (chiffré)
+ * @property int|null $created_by Identifiant du créateur
+ * @property string|null $domain_code Code du domaine
+ * @property int|null $domain_id Identifiant du domaine d'activité
+ * @property bool $domain_confirmed Domaine confirmé
+ * @property string|null $domain_confirmed_at Date de confirmation du domaine
+ *
+ * @property-read BusinessDomain|null $domain Domaine d'activité
+ * @property-read \Illuminate\Database\Eloquent\Collection|ClientAccountingModule[] $accountingModules Modules comptables
+ * @property-read \Illuminate\Database\Eloquent\Collection|ClientAccountingModule[] $activeAccountingModules Modules comptables actifs
+ * @property-read \Illuminate\Database\Eloquent\Collection|ClientContact[] $contacts Contacts
+ * @property-read ClientContact|null $primaryContact Contact principal
+ * @property-read \Illuminate\Database\Eloquent\Collection|Pole[] $poles Pôles d'activité
+ * @property-read \Illuminate\Database\Eloquent\Collection|Pole[] $activePoles Pôles actifs
+ * @property-read \Illuminate\Database\Eloquent\Collection|Mission[] $missions Missions
+ * @property-read \Illuminate\Database\Eloquent\Collection|Service[] $services Services souscrits
+ * @property-read \Illuminate\Database\Eloquent\Collection|ClientFolder[] $folders Dossiers
+ * @property-read \Illuminate\Database\Eloquent\Collection|Document[] $documents Documents
+ * @property-read User|null $createdBy Créateur
+ * @property-read \Illuminate\Database\Eloquent\Collection|License[] $licenses Licences
+ * @property-read \Illuminate\Database\Eloquent\Collection|License[] $activeLicenses Licences actives
+ * @property-read \Illuminate\Database\Eloquent\Collection|User[] $companyAdmins Administrateurs
+ * @property-read \Illuminate\Database\Eloquent\Collection|Devis[] $devis Devis
+ *
+ * @table clients
+ */
 class Client extends Model
 {
     use HasFactory, SoftDeletes;
@@ -43,6 +104,10 @@ class Client extends Model
         'domain_id',
         'domain_confirmed',
         'domain_confirmed_at',
+        'wants_accounting',
+        'wants_secretary',
+        'portal_slug',
+        'portal_active',
     ];
 
     protected function casts(): array
@@ -55,9 +120,36 @@ class Client extends Model
             'emecef_is_active' => 'boolean',
             'emecef_password' => 'encrypted',
             'allowed_ips' => 'json',
-            'domain_confirmed' => 'boolean',
             'domain_confirmed_at' => 'datetime',
+            'wants_accounting' => 'boolean',
+            'wants_secretary' => 'boolean',
+            'portal_active' => 'boolean',
         ];
+    }
+
+    public static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($client) {
+            if (empty($client->portal_slug) && !empty($client->company_name)) {
+                $client->portal_slug = $client->generateUniqueSlug($client->company_name);
+            }
+        });
+    }
+
+    public function generateUniqueSlug(string $name): string
+    {
+        $baseSlug = \Illuminate\Support\Str::slug($name);
+        $slug = $baseSlug;
+        $counter = 2;
+
+        while (static::where('portal_slug', $slug)->exists()) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+
+        return $slug;
     }
 
     public function domain()
@@ -172,5 +264,12 @@ class Client extends Model
     public function gelExercices()
     {
         return $this->hasMany(\App\Models\Gel\Comptabilite\ExerciceComptable::class, 'client_id');
+    }
+
+    public function portalContacts()
+    {
+        return $this->belongsToMany(PortalContact::class, 'contact_entreprise')
+            ->withPivot('is_active')
+            ->withTimestamps();
     }
 }

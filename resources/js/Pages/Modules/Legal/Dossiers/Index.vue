@@ -34,11 +34,21 @@
 </template>
 
 <script setup>
+/*
+ * Composant : LegalDossiersIndex
+ * Role : Page listant les dossiers juridiques sous forme de cartes.
+ * Affiche la reference, le titre, le type, la priorite, le statut,
+ * le nombre de documents et la personne assignee.
+ * Props : aucune
+ */
+
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 
+// Liste des dossiers chargee depuis l'API
 const dossiers = ref([]);
 
+/* Charge la liste des dossiers depuis l'API */
 async function load() {
     try { const res = await fetch('/juridique/dossiers'); dossiers.value = await res.json(); }
     catch (e) { console.error(e); }

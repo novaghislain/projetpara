@@ -11,8 +11,8 @@
 </div>
 
 {{-- Filtres --}}
-<div class="gel-card" style="margin-bottom:16px;">
-    <div class="gel-card-body">
+<div class="gel-card p-4 mb-4">
+    <div class="gel-card-body p-4 mb-4">
         <form method="GET" action="{{ route('gel-accountant.comptabilite.etats-financiers') }}" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
             <div class="gel-filter-group">
                 <label>Client</label>
@@ -43,8 +43,8 @@
 </div>
 
 {{-- Contenu --}}
-<div class="gel-card">
-    <div class="gel-card-header">
+<div class="gel-card p-4 mb-4">
+    <div class="gel-card-header p-4 mb-4">
         <strong>
             @if(request('type', 'bilan') === 'bilan')
                 Bilan comptable
@@ -55,7 +55,7 @@
             @endif
         </strong>
     </div>
-    <div class="gel-card-body">
+    <div class="gel-card-body p-4 mb-4">
         @if(!request('client_id'))
             <div class="gel-empty">
                 <i class="bi bi-file-earmark-bar-graph"></i>

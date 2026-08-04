@@ -56,10 +56,20 @@
 </template>
 
 <script setup>
+/*
+ * Composant : LegalAssembleesForm
+ * Role : Formulaire de creation / modification d'une assemblee generale.
+ * Saisie du type, annee, date, lieu et ordre du jour.
+ * Envoi des donnees en POST a l'API.
+ * Props : aucune
+ */
+
 import { ref } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 
+// Indicateur d'envoi du formulaire
 const saving = ref(false);
+// Valeurs par defaut du formulaire
 const form = ref({
     type: 'AGO',
     annee: new Date().getFullYear(),
@@ -67,8 +77,10 @@ const form = ref({
     lieu: 'Siège social',
     ordre_du_jour: [''],
 });
+// Mode edition (true si modification d'une AG existante)
 const isEdit = ref(false);
 
+/* Soumet le formulaire a l'API POST */
 async function save() {
     saving.value = true;
     try {

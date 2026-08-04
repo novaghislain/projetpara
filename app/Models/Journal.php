@@ -8,6 +8,32 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle Journal (Journal comptable SYSCOHADA).
+ *
+ * Définit les journaux comptables selon le plan SYSCOHADA.
+ * Types disponibles : Achats, Ventes, Banque, Caisse, Opérations Diverses,
+ * Salaires, À Nouveaux, Inventaire.
+ * Gère la numérotation séquentielle des écritures par préfixe et année.
+ *
+ * @property int $id
+ * @property int|null $tenant_id ID du tenant
+ * @property int $client_id ID du client
+ * @property int $fiscal_year_id ID de l'exercice fiscal
+ * @property string $code Code du journal (AC, VE, BQ, CA, OD, SA, AN, IN)
+ * @property string $label Libellé du journal
+ * @property string $type Type de journal
+ * @property bool $is_default Journal par défaut
+ * @property string $prefix Préfixe de numérotation
+ * @property int $next_number Prochain numéro d'écriture
+ * @property string|null $description Description
+ * @property bool $is_active Si le journal est actif
+ * @property int $sort_order Ordre d'affichage
+ *
+ * @property-read \App\Models\Client $client Client associé
+ * @property-read \App\Models\FiscalYear $fiscalYear Exercice fiscal
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\JournalEntry[] $entries Écritures comptables
+ */
 class Journal extends Model
 {
     use HasFactory, SoftDeletes;

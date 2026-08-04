@@ -5,6 +5,26 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Modèle représentant une séquence de numérotation pour les journaux.
+ *
+ * Gère la numérotation automatique et séquentielle des pièces comptables
+ * par type de journal, client et exercice fiscal. Chaque séquence
+ * est incrémentée à chaque nouvelle écriture pour générer une
+ * référence unique (ex: VTE-2024-0001).
+ *
+ * @property int $id
+ * @property int $client_id Identifiant du client (entreprise)
+ * @property string $journal_type Type de journal
+ * @property int $fiscal_year_id Identifiant de l'exercice fiscal
+ * @property int $last_number Dernier numéro utilisé
+ * @property string $prefix Préfixe de la référence
+ *
+ * @property-read User|null $client Client associé
+ * @property-read FiscalYear|null $fiscalYear Exercice fiscal associé
+ *
+ * @table accounting_journal_sequences
+ */
 class AccountingJournalSequence extends Model
 {
     protected $fillable = [

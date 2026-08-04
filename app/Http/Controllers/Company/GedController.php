@@ -14,6 +14,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
+/**
+ * Contrôleur pour la gestion électronique de documents (GED).
+ *
+ * Permet la gestion complète de l'arborescence de dossiers et des documents :
+ * création, modification, suppression, upload, versionning, téléchargement,
+ * archivage, recherche, statistiques et analyse IA.
+ */
 class GedController extends BaseCompanyController
 {
     /**

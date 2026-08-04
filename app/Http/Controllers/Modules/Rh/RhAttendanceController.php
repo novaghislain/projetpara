@@ -6,8 +6,23 @@ use App\Models\Rh\RhAttendance;
 use App\Models\Rh\RhEmployee;
 use Illuminate\Http\Request;
 
+/**
+ * Contrôleur de gestion des pointages / présences RH.
+ *
+ * Permet de consulter, enregistrer et supprimer les pointages
+ * des employés avec filtrage par date et type de présence.
+ */
 class RhAttendanceController extends BaseRhController
 {
+    /**
+     * Affiche la liste des pointages ou la vue associée.
+     *
+     * Si la requête attend du JSON, retourne les pointages paginés
+     * avec filtrage optionnel par date et type de présence.
+     *
+     * @param Request $request La requête HTTP avec les filtres (date_from, date_to, type_presence)
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View Liste paginée des pointages ou vue
+     */
     public function index(Request $request)
     {
         if ($request->expectsJson()) {
@@ -28,6 +43,12 @@ class RhAttendanceController extends BaseRhController
         return view('app', ['page' => 'rh-attendance']);
     }
 
+    /**
+     * Enregistre ou met à jour un pointage.
+     *
+     * @param Request $request La requête HTTP contenant les données du pointage
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse Pointage créé ou redirection
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -53,6 +74,13 @@ class RhAttendanceController extends BaseRhController
         return redirect()->route('rh.attendance.index')->with('success', 'Pointage enregistré.');
     }
 
+    /**
+     * Supprime un pointage.
+     *
+     * @param Request $request La requête HTTP
+     * @param mixed $id L'identifiant du pointage à supprimer
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse Message de confirmation ou redirection
+     */
     public function destroy(Request $request, $id)
     {
         $employeeIds = RhEmployee::byClient($this->getClientId($request))->pluck('id');

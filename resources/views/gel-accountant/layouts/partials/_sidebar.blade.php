@@ -13,6 +13,25 @@ $currentPage = $currentPage ?? '';
     </div>
 </div>
 
+{{-- ─── Client actif (Bascule comptable) ─── --}}
+@php
+    $currentClientId = session('current_client_id');
+    $activeClient = null;
+    if ($currentClientId) {
+        $activeClient = \App\Models\Client::find($currentClientId);
+    }
+@endphp
+@if($activeClient)
+<div class="gel-active-client-banner">
+    <i class="fas fa-desktop"></i>
+    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;" title="{{ $activeClient->nom_entreprise }}">
+        {{ $activeClient->nom_entreprise }}
+    </span>
+    <a href="{{ route('gel-accountant.client.deselect') }}" title="Quitter le client">Quitter</a>
+</div>
+@endif
+
+
 {{-- [+ New] button --}}
 <div style="padding:8px 12px;">
     <button class="gel-btn-new" onclick="showToast('Nouvelle action…','info')">
@@ -29,6 +48,12 @@ $currentPage = $currentPage ?? '';
        class="gel-nav-item {{ $currentSection === 'clients' ? 'active' : '' }}"
        onclick="closeAllNested()">
         <i class="fas fa-users"></i> Clients
+    </a>
+
+    <a href="{{ route('gel-accountant.messagerie') }}"
+       class="gel-nav-item {{ $currentSection === 'messagerie' ? 'active' : '' }}"
+       onclick="closeAllNested()">
+        <i class="fas fa-comments"></i> Messagerie
     </a>
 
     <button class="gel-nav-item" data-nav="workMenu"

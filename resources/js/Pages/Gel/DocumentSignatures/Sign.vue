@@ -10,6 +10,16 @@
 </template>
 
 <script setup>
+/* ============================================================
+ * Composant : DocumentSignatures/Sign
+ * Description : Page de signature electronique d'un document.
+ *   Interface permettant a l'utilisateur d'apposer
+ *   sa signature sur un document donne.
+ * ============================================================ */
+
 import GelLayout from '../../../Layouts/GelLayout.vue';
+
+/* Propriete recue du controleur :
+ *   signature - Objet contenant les donnees de la signature a apposer */
 defineProps(['signature'])
 </script>

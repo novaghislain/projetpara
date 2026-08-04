@@ -140,25 +140,40 @@
 </template>
 
 <script setup>
+/*
+ * AgingReport.vue - Balance âgée (clients / fournisseurs)
+ *
+ * Affiche la balance âgée des comptes clients ou fournisseurs avec
+ * le découpage par tranches d'âge : 0-30 jours, 31-60 jours,
+ * 61-90 jours et 91+ jours. Permet le filtrage par type
+ * (client/fournisseur) et par date d'arrêté, ainsi que l'export PDF.
+ * Des cartes récapitulatives présentent les totaux par tranche.
+ */
 import { ref, computed, onMounted } from 'vue'
 
+// Propriété : type par défaut (client ou fournisseur)
 const props = defineProps({
     type: { type: String, default: 'customer' },
 })
 
+// Données du rapport et états de chargement
 const data = ref(null)
 const loading = ref(false)
 const type = ref(props.type)
 const asOfDate = ref(new Date().toISOString().split('T')[0])
 const error = ref(null)
 
+// Formateur monétaire en francs CFA
 const fmt = (v) => new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(v ?? 0) + ' F'
+// Jeton CSRF pour les requêtes sécurisées
 const csrf = computed(() => document.querySelector('meta[name=csrf-token]')?.content || '')
+// Fonction utilitaire d'appel API
 const api = (path, opts = {}) => fetch(path, {
     headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf.value, ...opts.headers },
     ...opts,
 })
 
+// Chargement des données de la balance âgée depuis l'API
 async function loadData() {
     loading.value = true; error.value = null
     try {
@@ -169,10 +184,12 @@ async function loadData() {
     } catch (e) { error.value = e.message } finally { loading.value = false }
 }
 
+// Export PDF du rapport (ouverture dans un nouvel onglet)
 function exportPdf() {
     const params = new URLSearchParams({ type: type.value, as_of_date: asOfDate.value })
     window.open(`/api/reports/financial-statements/aging/pdf?${params}`, '_blank')
 }
 
+// Chargement automatique au montage du composant
 onMounted(loadData)
 </script>

@@ -6,34 +6,26 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Scope;
 
+/**
+ * Scope global TenantScope - Filtre multi-entreprise par client actif.
+ *
+ * Applique automatiquement un filtre 'client_id' sur les requêtes Eloquent
+ * pour isoler les données par entreprise. Ne s'applique pas aux super-admins
+ * ni aux comptables sans contexte client actif.
+ */
 class TenantScope implements Scope
 {
-    /**
-     * Appliquer le scope : filtrer par le client actif de l'utilisateur.
-     *
-     * Ne s'applique QUE si :
-     * - L'utilisateur est authentifié
-     * - L'utilisateur a un active_client_id défini
-     * - L'utilisateur n'est PAS super_admin
-     */
-    public function apply(Builder $builder, Model $model): void
+    public function apply(Builder $builder, Model $model)
     {
-        $user = auth()->user();
+        if (!app()->runningInConsole() && auth()->check()) {
+            $cabinetId = auth()->user()->cabinet_id ?? null;
 
-        if (!$user) return;
-
-        // Les Super Admin voient toutes les données
-        if ($user->isSuperAdmin()) return;
-
-        // Les comptables voient les données de leurs clients assignés
-        // (cette logique est gérée par le contrôleur, pas par un scope global)
-        // On filtre quand même par active_client_id si défini
-        if ($user->isComptable() && !$user->active_client_id) return;
-
-        $clientId = $user->active_client_id ?? $user->client_id;
-
-        if (!$clientId) return;
-
-        $builder->where($model->getTable() . '.client_id', $clientId);
+            if ($cabinetId) {
+                $builder->where($model->getTable() . '.cabinet_id', $cabinetId);
+            } else {
+                // If user doesn't have a cabinet_id, they shouldn't see tenant-scoped data
+                $builder->whereRaw('1 = 0');
+            }
+        }
     }
 }

@@ -11,10 +11,21 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Contrôleur de réconciliation bancaire (Company).
+ *
+ * Gère le rapprochement des relevés bancaires avec la comptabilité :
+ * création, mise à jour, statuts (brouillon → rapproché → approuvé).
+ *
+ * Chaque réconciliation est liée à un compte bancaire, une période,
+ * et compare le solde relevé au solde comptable.
+ */
 class BankReconciliationController extends BaseCompanyController
 {
     /**
-     * Liste des réconciliations.
+     * Liste des réconciliations bancaires du client.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function index()
     {
@@ -42,7 +53,12 @@ class BankReconciliationController extends BaseCompanyController
     }
 
     /**
-     * Crée une réconciliation.
+     * Crée une réconciliation bancaire.
+     *
+     * Calcule la différence entre le solde relevé et le solde comptable.
+     *
+     * @param Request $request Requête HTTP avec les données de réconciliation
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
     {
@@ -80,7 +96,10 @@ class BankReconciliationController extends BaseCompanyController
     }
 
     /**
-     * Affiche une réconciliation.
+     * Affiche une réconciliation bancaire (détail).
+     *
+     * @param int $id Identifiant de la réconciliation
+     * @return \Illuminate\Http\JsonResponse
      */
     public function show($id)
     {
@@ -90,7 +109,12 @@ class BankReconciliationController extends BaseCompanyController
     }
 
     /**
-     * Met à jour les montants de rapprochement.
+     * Met à jour les montants de rapprochement (dépôts en circulation,
+     * chèques impayés, frais bancaires, intérêts).
+     *
+     * @param Request $request Requête HTTP avec les montants
+     * @param int $id Identifiant de la réconciliation
+     * @return \Illuminate\Http\JsonResponse
      */
     public function update(Request $request, $id)
     {
@@ -114,7 +138,12 @@ class BankReconciliationController extends BaseCompanyController
     }
 
     /**
-     * Marque comme rapprochée.
+     * Marque la réconciliation comme rapprochée (statut "matched").
+     *
+     * Enregistre l'action dans la piste d'audit.
+     *
+     * @param int $id Identifiant de la réconciliation
+     * @return \Illuminate\Http\JsonResponse
      */
     public function match($id)
     {
@@ -134,7 +163,10 @@ class BankReconciliationController extends BaseCompanyController
     }
 
     /**
-     * Approuve la réconciliation.
+     * Approuve la réconciliation (statut "approved").
+     *
+     * @param int $id Identifiant de la réconciliation
+     * @return \Illuminate\Http\JsonResponse
      */
     public function approve($id)
     {
@@ -152,7 +184,10 @@ class BankReconciliationController extends BaseCompanyController
     }
 
     /**
-     * Supprime une réconciliation.
+     * Supprime une réconciliation (statut brouillon uniquement).
+     *
+     * @param int $id Identifiant de la réconciliation
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy($id)
     {

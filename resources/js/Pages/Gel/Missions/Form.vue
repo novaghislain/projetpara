@@ -1,4 +1,10 @@
 <script setup>
+/* ============================================================
+ * Missions — Formulaire (création / édition)
+ * Permet de créer une nouvelle mission ou d'en modifier une
+ * existante. Gère le chargement des données, la soumission
+ * et les messages de notification (toast).
+ * ============================================================ */
 import { ref, onMounted } from 'vue'
 import GelLayout from '../../../Layouts/GelLayout.vue'
 
@@ -10,18 +16,18 @@ const props = defineProps({
 })
 
 /* ══════════════════════════════════════════
-   State
+   État réactif
    ══════════════════════════════════════════ */
-const state = ref('loading')  // 'loading' | 'error' | 'loaded'
-const errorMsg = ref('')
-const toast = ref('')
-const toastType = ref('success')
-const submitting = ref(false)
-let toastTimer = null
+const state = ref('loading')     /* 'loading' | 'error' | 'loaded' */
+const errorMsg = ref('')         /* Message d'erreur en cas d'échec */
+const toast = ref('')            /* Texte du toast de notification */
+const toastType = ref('success') /* 'success' | 'error' */
+const submitting = ref(false)    /* true pendant la soumission */
+let toastTimer = null            /* Timer pour masquer automatiquement le toast */
 
-const mission = ref(null)
-const clients = ref([])
-const poles = ref([])
+const mission = ref(null)        /* Données de la mission en cours d'édition */
+const clients = ref([])          /* Liste des clients pour le sélecteur */
+const poles = ref([])            /* Liste des pôles pour le sélecteur */
 
 const form = ref({
     title: '', description: '', type: 'mission', status: 'en_attente', priority: 'moyenne',
@@ -29,15 +35,16 @@ const form = ref({
 })
 
 /* ══════════════════════════════════════════
-   Options
+   Options des listes déroulantes
    ══════════════════════════════════════════ */
 const statusOptions = ['en_attente', 'en_cours', 'terminee', 'annulee']
 const priorityOptions = ['basse', 'moyenne', 'haute', 'critique']
 const typeOptions = ['mission', 'tache', 'projet']
 
-/* ══════════════════════════════════════════
-   Toast helper
-   ══════════════════════════════════════════ */
+/*
+ * showToast — Affiche un message de notification temporaire (toast),
+ * automatiquement masqué après 3,5 secondes.
+ */
 function showToast(msg, type = 'success') {
     toast.value = msg
     toastType.value = type
@@ -45,9 +52,10 @@ function showToast(msg, type = 'success') {
     toastTimer = setTimeout(() => { toast.value = '' }, 3500)
 }
 
-/* ══════════════════════════════════════════
-   Data loading
-   ══════════════════════════════════════════ */
+/*
+ * fetchData — Charge les données initiales (clients, pôles et mission si édition)
+ * depuis l'API. Bascule l'état entre 'loading', 'error' et 'loaded'.
+ */
 async function fetchData() {
     state.value = 'loading'
     errorMsg.value = ''
@@ -87,9 +95,10 @@ async function fetchData() {
     }
 }
 
-/* ══════════════════════════════════════════
-   Submit
-   ══════════════════════════════════════════ */
+/*
+ * submitForm — Envoie le formulaire en création ou édition.
+ * Affiche un toast de confirmation ou d'erreur selon le résultat.
+ */
 async function submitForm() {
     submitting.value = true
     try {
@@ -116,10 +125,17 @@ async function submitForm() {
     }
 }
 
+/*
+ * goBack — Retourne à la page précédente dans l'historique du navigateur.
+ */
 const goBack = () => {
     window.history.back()
 }
 
+/*
+ * Au montage du composant, on charge les données nécessaires
+ * (clients, pôles et mission si un identifiant est fourni).
+ */
 onMounted(fetchData)
 </script>
 

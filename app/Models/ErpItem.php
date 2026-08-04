@@ -3,6 +3,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle représentant un article/produit dans le module ERP.
+ *
+ * Table associée : `erp_items` (via convention Laravel)
+ *
+ * Relations :
+ * - Un article appartient à une catégorie (ErpCategory)
+ * - Un article appartient à un client (Client)
+ * - Un article peut avoir plusieurs mouvements de stock (ErpStockMovement)
+ */
 class ErpItem extends Model {
     use SoftDeletes;
     protected $fillable = ['client_id','erp_category_id','reference','designation','purchase_price','selling_price','stock_alert','unit'];

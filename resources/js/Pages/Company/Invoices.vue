@@ -1,4 +1,14 @@
 ﻿<script setup>
+/*
+ * Invoices.vue — Facturation de l'entreprise
+ *
+ * Gere l'ensemble du cycle de facturation : creation de factures,
+ * devis et avoirs, suivi des paiements, statistiques. Affiche
+ * la liste des factures avec filtrage par statut, permet
+ * l'enregistrement de paiements et la consultation des details
+ * incluant la certification DGI (e-MECeF / QR code).
+ */
+
 import { ref, computed, onMounted } from 'vue';
 import CompanyLayout from '../../Layouts/CompanyLayout.vue';
 import { authStore } from '../../stores/auth';

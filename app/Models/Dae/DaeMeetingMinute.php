@@ -5,6 +5,14 @@ namespace App\Models\Dae;
 use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle représentant un procès-verbal de réunion (DAE).
+ *
+ * Table associée : `dae_meeting_minutes`
+ *
+ * Permet de documenter les réunions : participants, ordre du jour,
+ * discussions, décisions prises et date de la prochaine réunion.
+ */
 class DaeMeetingMinute extends DaeBaseModel
 {
     use SoftDeletes;

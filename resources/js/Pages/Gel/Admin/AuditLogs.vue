@@ -17,5 +17,10 @@
     </GelLayout>
 </template>
 <script setup>
+/* ═══════════════════════════════════════════════════════
+   Admin / AuditLogs — Journal d'audit pour la
+   consultation des logs et de l'activité système.
+   ═══════════════════════════════════════════════════════ */
+
 import GelLayout from '../../../Layouts/GelLayout.vue';
 </script>

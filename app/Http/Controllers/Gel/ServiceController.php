@@ -9,7 +9,15 @@ use Illuminate\Http\Request;
 class ServiceController extends Controller
 {
     /**
+     * Contrôleur de gestion des services proposés par le cabinet GEL.
+     * Permet de gérer le catalogue de services avec leurs métadonnées
+     * (icône, couleur, catégorie) et le suivi des clients associés.
+     */
+
+    /**
      * Page liste des services.
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
@@ -17,7 +25,10 @@ class ServiceController extends Controller
     }
 
     /**
-     * Page détail d'un service.
+     * Page détail d'un service avec ses clients associés.
+     *
+     * @param int $id L'identifiant du service
+     * @return \Illuminate\View\View
      */
     public function show($id)
     {
@@ -30,7 +41,9 @@ class ServiceController extends Controller
     // ─── API ────────────────────────────────────────────────────
 
     /**
-     * API: Liste de tous les services.
+     * API : Liste tous les services actifs avec le compteur de clients associés.
+     *
+     * @return \Illuminate\Http\JsonResponse La liste des services
      */
     public function listAll()
     {
@@ -40,7 +53,10 @@ class ServiceController extends Controller
     }
 
     /**
-     * API: Détail d'un service.
+     * API : Détail d'un service avec ses clients associés.
+     *
+     * @param int $id L'identifiant du service
+     * @return \Illuminate\Http\JsonResponse Le service avec ses relations
      */
     public function getService($id)
     {
@@ -51,7 +67,10 @@ class ServiceController extends Controller
     }
 
     /**
-     * API: Créer un service.
+     * API : Crée un nouveau service.
+     *
+     * @param Request $request La requête HTTP avec les données du service
+     * @return \Illuminate\Http\JsonResponse Le service créé
      */
     public function store(Request $request)
     {
@@ -71,7 +90,11 @@ class ServiceController extends Controller
     }
 
     /**
-     * API: Mettre à jour un service.
+     * API : Met à jour un service existant.
+     *
+     * @param Request $request La requête HTTP avec les données mises à jour
+     * @param int $id L'identifiant du service
+     * @return \Illuminate\Http\JsonResponse Le service mis à jour
      */
     public function update(Request $request, $id)
     {
@@ -93,7 +116,10 @@ class ServiceController extends Controller
     }
 
     /**
-     * API: Supprimer un service.
+     * API : Supprime un service.
+     *
+     * @param int $id L'identifiant du service
+     * @return \Illuminate\Http\JsonResponse Message de confirmation
      */
     public function destroy($id)
     {

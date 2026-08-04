@@ -5,6 +5,14 @@ namespace App\Models\Dae;
 use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle représentant un document dans le module DAE.
+ *
+ * Table associée : `dae_documents`
+ *
+ * Permet de stocker et gérer les documents avec leur version, type MIME,
+ * date d'expiration, statut de validation et de signature électronique.
+ */
 class DaeDocument extends DaeBaseModel
 {
     use SoftDeletes;

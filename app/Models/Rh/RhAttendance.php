@@ -4,6 +4,15 @@ namespace App\Models\Rh;
 
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle RhAttendance - Pointage / présence des employés.
+ *
+ * Table associée : 'rh_attendance'.
+ * Enregistre les heures d'arrivée, de départ, les pauses et les
+ * heures travaillées pour chaque employé, jour par jour.
+ * Relations :
+ * - employee() : appartient à un employé (RhEmployee).
+ */
 class RhAttendance extends RhBaseModel
 {
     use SoftDeletes;

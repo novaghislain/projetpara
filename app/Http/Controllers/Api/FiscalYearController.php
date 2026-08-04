@@ -10,15 +10,29 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
+/**
+ * Contrôleur API pour la gestion des exercices comptables.
+ *
+ * Permet de lister, créer, modifier, clôturer et supprimer
+ * les exercices comptables d'un client.
+ */
 class FiscalYearController extends Controller
 {
+    /**
+     * Récupère l'identifiant client depuis l'utilisateur authentifié.
+     *
+     * @return int
+     */
     protected function getClientId(): int
     {
         return (int) (Auth::user()->active_client_id ?? Auth::user()->client_id);
     }
 
     /**
-     * Liste des exercices comptables.
+     * Liste paginée des exercices comptables du client.
+     *
+     * @param Request $request La requête HTTP.
+     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
@@ -33,7 +47,10 @@ class FiscalYearController extends Controller
     }
 
     /**
-     * Détail d'un exercice.
+     * Affiche le détail d'un exercice avec ses périodes.
+     *
+     * @param int $id L'identifiant de l'exercice.
+     * @return JsonResponse
      */
     public function show(int $id): JsonResponse
     {
@@ -46,7 +63,10 @@ class FiscalYearController extends Controller
     }
 
     /**
-     * Créer un exercice.
+     * Crée un nouvel exercice comptable.
+     *
+     * @param Request $request La requête HTTP avec les données validées.
+     * @return JsonResponse
      */
     public function store(Request $request): JsonResponse
     {
@@ -60,6 +80,7 @@ class FiscalYearController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
+        // Vérifie si un exercice est déjà ouvert pour ce client
         $existing = FiscalYear::where('client_id', $clientId)
             ->where('status', 'open')
            ->first();
@@ -84,13 +105,18 @@ class FiscalYearController extends Controller
     }
 
     /**
-     * Modifier un exercice.
+     * Modifie un exercice comptable (uniquement s'il est ouvert).
+     *
+     * @param Request $request La requête HTTP avec les champs à modifier.
+     * @param int $id L'identifiant de l'exercice.
+     * @return JsonResponse
      */
     public function update(Request $request, int $id): JsonResponse
     {
         $clientId = $this->getClientId();
         $fiscalYear = FiscalYear::where('client_id', $clientId)->findOrFail($id);
 
+        // Un exercice clôturé ne peut pas être modifié
         if ($fiscalYear->isClosed()) {
             return response()->json(['message' => 'Impossible de modifier un exercice clôturé.'], 409);
         }
@@ -112,7 +138,10 @@ class FiscalYearController extends Controller
     }
 
     /**
-     * Clôturer un exercice.
+     * Clôture un exercice comptable (le rend non modifiable).
+     *
+     * @param int $id L'identifiant de l'exercice.
+     * @return JsonResponse
      */
     public function close(int $id): JsonResponse
     {
@@ -123,6 +152,7 @@ class FiscalYearController extends Controller
             return response()->json(['message' => 'Exercice déjà clôturé.'], 409);
         }
 
+        // Mise à jour du statut et enregistrement de la date/heure de clôture
         DB::transaction(function () use ($fiscalYear) {
             $fiscalYear->status = 'closed';
             $fiscalYear->closed_at = now();
@@ -137,7 +167,10 @@ class FiscalYearController extends Controller
     }
 
     /**
-     * Supprimer un exercice.
+     * Supprime un exercice comptable (uniquement s'il est ouvert et sans écritures).
+     *
+     * @param int $id L'identifiant de l'exercice.
+     * @return JsonResponse
      */
     public function destroy(int $id): JsonResponse
     {

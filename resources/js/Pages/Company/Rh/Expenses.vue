@@ -1,14 +1,25 @@
 <script setup>
+/*
+ * Composant Notes de Frais
+ * Permet de :
+ *   - Visualiser la liste des notes de frais avec leur statut
+ *   - Voir un récapitulatif (en attente / approuvés / remboursés) et le total
+ *   - Créer une nouvelle note de frais avec justificatif (PDF/image)
+ * Les montants sont formatés en FCFA avec la locale française.
+ */
+
 import { ref, computed, onMounted } from 'vue';
 import CompanyLayout from '../../../Layouts/CompanyLayout.vue';
 import { authStore } from '../../../stores/auth';
 
+/* État réactif : liste des notes de frais, chargement et modal */
 const expenses = ref([]);
 const loading = ref(true);
 const error = ref(null);
 const submitting = ref(false);
 const showCreateModal = ref(false);
 
+/* Formulaire de création d'une note de frais */
 const form = ref({
     categorie: 'transport',
     montant: '',
@@ -17,6 +28,7 @@ const form = ref({
     justificatif: null,
 });
 
+/* Récupération des notes de frais depuis l'API */
 const fetchExpenses = async () => {
     loading.value = true;
     error.value = null;
@@ -31,6 +43,7 @@ const fetchExpenses = async () => {
     }
 };
 
+/* Correspondance statut -> classe Bootstrap pour le badge */
 const statusBadgeClass = (status) => {
     const map = {
         en_attente: 'bg-warning text-dark',
@@ -41,19 +54,23 @@ const statusBadgeClass = (status) => {
     return map[status] || 'bg-secondary';
 };
 
+/* Calcul du montant total de toutes les notes de frais */
 const totalMontant = computed(() => {
     return expenses.value.reduce((s, e) => s + (parseFloat(e.montant) || 0), 0);
 });
 
+/* Formatage d'un nombre en monnaie locale FCFA */
 const formatCurrency = (value) => {
     if (value === null || value === undefined || isNaN(value)) return '0';
     return Number(value).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' FCFA';
 };
 
+/* Gestion du fichier justificatif sélectionné */
 const handleFileChange = (e) => {
     form.value.justificatif = e.target.files[0] || null;
 };
 
+/* Soumission d'une nouvelle note de frais (multipart/form-data) */
 const submitExpense = async () => {
     submitting.value = true;
     try {
@@ -85,6 +102,7 @@ const submitExpense = async () => {
     }
 };
 
+/* Chargement initial au montage */
 onMounted(fetchExpenses);
 </script>
 

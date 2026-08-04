@@ -1,5 +1,14 @@
+/* ============================================================
+ * Fichier : stores/cart.js
+ * Description : Store reactif du panier d'achat
+ * Gerer l'etat du panier (articles, quantites, total)
+ * Communique avec l'API backend via fetch()
+ * ============================================================ */
+
 import { reactive } from 'vue';
 
+// --- Store reactif du panier ---
+// Contient les articles, le nombre total et le montant total
 export const cartStore = reactive({
     items: [],
     count: 0,
@@ -7,8 +16,10 @@ export const cartStore = reactive({
     isLoading: false,
 });
 
+// Jeton CSRF mis en cache pour les requetes API
 let csrfToken = null;
 
+// Recupere le jeton CSRF depuis la balise meta du DOM
 function getCsrf() {
     if (!csrfToken) {
         csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
@@ -16,6 +27,8 @@ function getCsrf() {
     return csrfToken;
 }
 
+// --- Chargement initial du panier ---
+// Recupere les articles depuis l'API /api/cart
 export async function fetchCart() {
     cartStore.isLoading = true;
     try {
@@ -32,6 +45,8 @@ export async function fetchCart() {
     }
 }
 
+// --- Ajout d'un article au panier ---
+// Envoie une requete POST avec l'ID produit et la quantite
 export async function addToCart(productId, quantity = 1) {
     try {
         const res = await fetch('/api/cart/add', {
@@ -55,6 +70,8 @@ export async function addToCart(productId, quantity = 1) {
     }
 }
 
+// --- Mise a jour de la quantite d'un article ---
+// Envoie une requete PUT avec l'ID produit et la nouvelle quantite
 export async function updateCartItem(productId, quantity) {
     try {
         const res = await fetch('/api/cart/update', {
@@ -78,6 +95,8 @@ export async function updateCartItem(productId, quantity) {
     }
 }
 
+// --- Suppression d'un article du panier ---
+// Envoie une requete DELETE avec l'ID produit
 export async function removeFromCart(productId) {
     try {
         const res = await fetch('/api/cart/remove/' + productId, {
@@ -99,6 +118,8 @@ export async function removeFromCart(productId) {
     }
 }
 
+// --- Vidage complet du panier ---
+// Envoie une requete POST pour vider le panier et reinitialise le store
 export async function clearCart() {
     try {
         await fetch('/api/cart/clear', {

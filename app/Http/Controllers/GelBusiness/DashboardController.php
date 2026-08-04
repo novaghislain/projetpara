@@ -4,18 +4,44 @@ namespace App\Http\Controllers\GelBusiness;
 
 use App\Http\Controllers\Controller;
 use App\Models\Client;
+use App\Models\Gel\ClientInvitation;
 use App\Models\Gel\EcritureComptable;
-use Illuminate\Http\Request;
+use App\Models\UserClient;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur du tableau de bord de l'espace Gel Business.
+ *
+ * Ce contrôleur fournit les indicateurs clés de performance (KPI)
+ * pour l'entreprise connectée : chiffre d'affaires mensuel, charges,
+ * dernières écritures comptables et informations du cabinet comptable associé.
+ */
 class DashboardController extends Controller
 {
-    public function index()
+    /**
+     * Affiche le tableau de bord principal.
+     *
+     * Récupère et calcule les statistiques financières du mois en cours
+     * pour l'utilisateur authentifié : CA (classe 7), charges (classe 6),
+     * les 5 dernières écritures et les coordonnées du cabinet comptable.
+     *
+     * @return \Illuminate\View\View
+     */
+    public function index(\Illuminate\Http\Request $request)
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
+
+        // Switch context if a specific client is requested (usually by accountants)
+        if ($request->has('client_id')) {
+            $user->switchToClient($request->client_id);
+            $user->refresh();
+        }
+
+        // Déterminer l'ID client à partir de l'utilisateur connecté
         $clientId = $user->client_id ?? $user->active_client_id;
 
+        // Aucun client associé -> retourner des statistiques vides
         if (!$clientId) {
             $stats = [
                 'entreprise' => 'Mon Entreprise',
@@ -26,9 +52,10 @@ class DashboardController extends Controller
                 'comptable_telephone' => null,
             ];
             $recentEcritures = collect([]);
-            return view('gel-business.dashboard', compact('stats', 'recentEcritures'));
+            return view('gel-business.dashboard', compact('stats', 'recentEcritures') + ['currentSection' => 'dashboard']);
         }
 
+        // Client introuvable -> retourner des statistiques vides
         $client = Client::find($clientId);
         if (!$client) {
             $stats = [
@@ -40,18 +67,17 @@ class DashboardController extends Controller
                 'comptable_telephone' => null,
             ];
             $recentEcritures = collect([]);
-            return view('gel-business.dashboard', compact('stats', 'recentEcritures'));
+            return view('gel-business.dashboard', compact('stats', 'recentEcritures') + ['currentSection' => 'dashboard']);
         }
 
-        // Récupérer les écritures comptables liées à ce client
-        // (sans cabinet_id pour les clients démo)
+        // Récupérer les 5 dernières écritures comptables liées à ce client
         $recentEcritures = EcritureComptable::where('client_id', $clientId)
             ->with('journal:id,code')
             ->latest()
             ->take(5)
             ->get();
 
-        // CA mensuel (classe 7)
+        // Calcul du chiffre d'affaires mensuel (comptes de la classe 7 — produits)
         $caMensuel = EcritureComptable::where('client_id', $clientId)
             ->where('valide', true)
             ->whereMonth('date_ecriture', now()->month)
@@ -61,7 +87,7 @@ class DashboardController extends Controller
             })
             ->sum('total_credit');
 
-        // Charges mensuelles (classe 6)
+        // Calcul des charges mensuelles (comptes de la classe 6)
         $chargesMensuelles = EcritureComptable::where('client_id', $clientId)
             ->where('valide', true)
             ->whereMonth('date_ecriture', now()->month)
@@ -71,12 +97,12 @@ class DashboardController extends Controller
             })
             ->sum('total_debit');
 
-        // Vérifier si le client a un cabinet associé (gel_clients.cabinet_id)
+        // Récupération des informations du cabinet comptable associé au client
         $cabinetNom = 'Non assigné';
         $cabinetEmail = null;
         $cabinetTelephone = null;
 
-        // Chercher d'abord dans gel_clients (qui a cabinet_id)
+        // Tentative de récupération via la table gel_clients (qui contient cabinet_id)
         try {
             $gelClient = \App\Models\Gel\Client::find($clientId);
             if ($gelClient && $gelClient->cabinet_id) {
@@ -88,9 +114,11 @@ class DashboardController extends Controller
                 }
             }
         } catch (\Exception $e) {
-            // Silently fail - table gel_clients might not exist or have different structure
+            // Échec silencieux : la table gel_clients peut ne pas exister
+            // ou avoir une structure différente (clients démo / migration en cours)
         }
 
+        // Assemblage des statistiques à passer à la vue
         $stats = [
             'entreprise' => $client->company_name ?? 'Mon Entreprise',
             'ca_mensuel' => $caMensuel,
@@ -100,6 +128,36 @@ class DashboardController extends Controller
             'comptable_telephone' => $cabinetTelephone,
         ];
 
-        return view('gel-business.dashboard', compact('stats', 'recentEcritures'));
+        // ─── Logique de sélection d'espace (Comptabilité / Secrétariat / Gestion) ───
+        // Après l'onboarding, les 3 fonctionnalités sont toujours disponibles :
+        // on affiche le sélecteur tant que l'utilisateur n'a pas choisi d'espace.
+        if ($request->has('clear_workspace')) {
+            session()->forget('active_workspace');
+        }
+
+        if (!session()->has('active_workspace')) {
+            return view('gel-business.workspace-selector', compact('client') + ['currentSection' => 'dashboard']);
+        }
+
+        // Données pour le panneau "Accès collaborateurs" du dashboard
+        $invitations = ClientInvitation::where('client_id', $clientId)
+            ->latest()
+            ->get();
+        $collaborators = UserClient::where('client_id', $clientId)
+            ->with('user')
+            ->get();
+
+        return view('gel-business.dashboard', compact('stats', 'recentEcritures', 'invitations', 'collaborators') + ['currentSection' => 'dashboard']);
+    }
+
+    /**
+     * Change l'espace de travail actif (comptabilite, secretariat ou gestion).
+     */
+    public function setWorkspace($type)
+    {
+        if (\in_array($type, ['comptabilite', 'secretariat', 'gestion'])) {
+            session(['active_workspace' => $type]);
+        }
+        return redirect()->route('gel-business.dashboard');
     }
 }

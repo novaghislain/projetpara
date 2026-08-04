@@ -255,8 +255,16 @@
 </template>
 
 <script setup>
+/*
+ * Page : Asset Show
+ * Role : Affiche le détail complet d'un actif IT avec ses informations
+ *        d'identification, marque/modèle, affectation, achat/garantie,
+ *        informations système, licences associées et interventions.
+ * Props :
+ *   asset (Object) — Données complètes de l'actif (objet requis)
+ */
 import { computed } from 'vue';
-import GelLayout from '../../../../Layouts/GelLayout.vue';
+import GelLayout from '../../../../Layouts/GelLayout.vue'; // Layout principal du module GEL
 
 const props = defineProps({
     asset: { type: Object, required: true },
@@ -264,6 +272,7 @@ const props = defineProps({
 
 // ── Computed helpers ──────────────────────────────────────────
 
+// Mappage des catégories techniques vers des libellés lisibles en français
 const categoryLabels = {
     computer: 'Ordinateur',
     server: 'Serveur',
@@ -274,6 +283,7 @@ const categoryLabels = {
     other: 'Autre',
 };
 
+// Mappage des statuts techniques vers des libellés lisibles en français
 const statusLabels = {
     active: 'Actif',
     inactive: 'Inactif',
@@ -284,6 +294,7 @@ const statusLabels = {
 const categoryLabel = computed(() => categoryLabels[props.asset.category] || props.asset.category || '-');
 const statusLabel = computed(() => statusLabels[props.asset.status] || props.asset.status || '-');
 
+// Style de badge adapté au statut (couleur distinctive par état)
 const statusStyle = computed(() => ({
     active: { background: '#4caf50', color: '#fff' },
     inactive: { background: '#9e9e9e', color: '#fff' },
@@ -291,16 +302,19 @@ const statusStyle = computed(() => ({
     disposed: { background: '#424242', color: '#fff' },
 }[props.asset.status] || { background: '#9e9e9e', color: '#fff' }));
 
+// Vérifie si la garantie de l'actif est expirée
 const isWarrantyExpired = computed(() => {
     if (!props.asset.warranty_expires_at) return false;
     return new Date(props.asset.warranty_expires_at) < new Date();
 });
 
+// Classe CSS pour le statut de la garantie (danger si expirée)
 const warrantyClass = computed(() => {
     if (!props.asset.warranty_expires_at) return '';
     return isWarrantyExpired.value ? 'text-danger' : '';
 });
 
+// Style de badge pour le type d'intervention (couleur par type)
 const interventionTypeStyle = (type) => ({
     background: {
         maintenance: '#1565c0',

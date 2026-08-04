@@ -11,6 +11,40 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Modèle EcritureComptable (Écriture comptable).
+ *
+ * Représente une écriture comptable complète dans le module GEL/Comptabilite.
+ * Chaque écriture appartient à un journal, un exercice et un cabinet,
+ * et contient plusieurs lignes d'écriture (débit/crédit).
+ * Elle doit être équilibrée (total débit = total crédit) et peut être validée.
+ * Table associée : `gel_ecritures`.
+ *
+ * @property int $id
+ * @property int $cabinet_id ID du cabinet
+ * @property int $exercice_id ID de l'exercice comptable
+ * @property int $journal_id ID du journal
+ * @property int|null $client_id ID du client
+ * @property string|null $numero Numéro unique de l'écriture (format: CODE-ANNEE-NNNNN)
+ * @property \Carbon\Carbon $date_ecriture Date comptable
+ * @property \Carbon\Carbon|null $date_piece Date de la pièce justificative
+ * @property string|null $reference_piece Référence de la pièce justificative
+ * @property string|null $libelle Libellé de l'écriture
+ * @property float $total_debit Total au débit
+ * @property float $total_credit Total au crédit
+ * @property bool $valide Si l'écriture est validée
+ * @property int|null $valide_par ID de l'utilisateur validateur
+ * @property \Carbon\Carbon|null $date_validation Date de validation
+ * @property int $created_by ID du créateur
+ *
+ * @property-read \App\Models\Cabinet $cabinet Cabinet associé
+ * @property-read \App\Models\Gel\Comptabilite\ExerciceComptable $exercice Exercice comptable
+ * @property-read \App\Models\Gel\Comptabilite\Journal $journal Journal comptable
+ * @property-read \App\Models\Client|null $client Client associé
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Gel\Comptabilite\LigneEcriture[] $lignes Lignes d'écriture
+ * @property-read \App\Models\User|null $validateur Utilisateur validateur
+ * @property-read \App\Models\User|null $createur Utilisateur créateur
+ */
 class EcritureComptable extends Model
 {
     protected $table = 'gel_ecritures';

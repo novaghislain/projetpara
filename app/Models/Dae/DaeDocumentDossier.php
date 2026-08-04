@@ -5,6 +5,14 @@ namespace App\Models\Dae;
 use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle représentant un dossier (répertoire) de documents DAE.
+ *
+ * Table associée : `dae_document_dossiers`
+ *
+ * Permet d'organiser les documents dans une arborescence hiérarchique
+ * avec des dossiers parents et enfants.
+ */
 class DaeDocumentDossier extends DaeBaseModel
 {
     use SoftDeletes;

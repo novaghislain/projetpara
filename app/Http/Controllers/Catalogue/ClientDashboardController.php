@@ -12,7 +12,16 @@ use Illuminate\Support\Facades\Auth;
 class ClientDashboardController extends Controller
 {
     /**
-     * Liste des commandes du client
+     * Contrôleur pour le tableau de bord client.
+     * Permet aux clients de consulter leurs commandes,
+     * d'envoyer des messages et de télécharger les documents
+     * associés à leurs commandes.
+     */
+
+    /**
+     * Affiche la liste des commandes du client connecté.
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
@@ -28,7 +37,11 @@ class ClientDashboardController extends Controller
     }
 
     /**
-     * Détail d'une commande (Pipeline, Messages, Documents)
+     * Affiche le détail d'une commande client avec le pipeline,
+     * les messages et les documents associés.
+     *
+     * @param int $id Identifiant de la commande
+     * @return \Illuminate\View\View
      */
     public function show($id)
     {
@@ -54,7 +67,11 @@ class ClientDashboardController extends Controller
     }
 
     /**
-     * Envoi d'un message dans la commande
+     * Envoie un message dans le fil de discussion d'une commande.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param int $id Identifiant de la commande
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function storeMessage(Request $request, $id)
     {
@@ -76,7 +93,11 @@ class ClientDashboardController extends Controller
     }
 
     /**
-     * Téléchargement d'un document final (facture, résultat)
+     * Télécharge un document associé à une commande (facture, résultat, etc.).
+     * Vérifie que le document appartient bien au client connecté.
+     *
+     * @param int $id Identifiant du document
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
      */
     public function downloadDocument($id)
     {

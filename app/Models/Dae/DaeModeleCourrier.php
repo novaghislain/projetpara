@@ -5,6 +5,14 @@ namespace App\Models\Dae;
 use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle représentant un modèle de courrier pré-défini (DAE).
+ *
+ * Table associée : `dae_modeles_courriers`
+ *
+ * Permet de créer et gérer des modèles de courrier réutilisables
+ * avec variables dynamiques pour le contenu et l'objet.
+ */
 class DaeModeleCourrier extends DaeBaseModel
 {
     use SoftDeletes;

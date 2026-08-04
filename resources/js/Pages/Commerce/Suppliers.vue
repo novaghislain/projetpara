@@ -1,15 +1,27 @@
 <script setup>
+/* ═══════════════════════════════════════════════════════════
+   Suppliers.vue - Gestion des fournisseurs
+   CRUD complet : nom, contact, téléphone, email, adresse
+   et délai de livraison.
+   ═══════════════════════════════════════════════════════════ */
 import { ref, onMounted } from 'vue'
 import GelLayout from '../../Layouts/GelLayout.vue'
 
-const state = ref('loading')
-const suppliers = ref([])
-const showModal = ref(false)
-const isEditing = ref(false)
-const editingId = ref(null)
-const submitting = ref(false)
-const form = ref({ name: '', contact_name: '', phone: '', email: '', address: '', delivery_delay: 0, is_active: true })
+/* ══════════════════════════════════════════
+   État réactif du composant
+   ══════════════════════════════════════════ */
+const state = ref('loading')          /* 'loading' | 'loaded' | 'error' */
+const suppliers = ref([])             /* Liste des fournisseurs */
+const showModal = ref(false)          /* Visibilité de la modale */
+const isEditing = ref(false)          /* Mode édition (true) ou création (false) */
+const editingId = ref(null)           /* ID du fournisseur en cours d'édition */
+const submitting = ref(false)         /* État de soumission du formulaire */
+const form = ref({ name: '', contact_name: '', phone: '', email: '', address: '', delivery_delay: 0, is_active: true })  /* Formulaire */
 
+/* ══════════════════════════════════════════
+   Requêtes API
+   ══════════════════════════════════════════ */
+/* Charge la liste des fournisseurs */
 const fetch = async () => {
   try {
     const res = await window.axios.get('/api/commerce/suppliers')
@@ -18,15 +30,22 @@ const fetch = async () => {
   finally { state.value = 'loaded' }
 }
 
+/* ══════════════════════════════════════════
+   Gestion du formulaire (création / édition)
+   ══════════════════════════════════════════ */
+/* Réinitialise le formulaire à ses valeurs par défaut */
 const resetForm = () => { form.value = { name: '', contact_name: '', phone: '', email: '', address: '', delivery_delay: 0, is_active: true } }
 
+/* Ouvre la modale en mode création */
 const openCreate = () => { resetForm(); isEditing.value = false; editingId.value = null; showModal.value = true }
 
+/* Ouvre la modale en mode édition avec les données pré-remplies */
 const openEdit = (s) => {
   form.value = { name: s.name, contact_name: s.contact_name || '', phone: s.phone || '', email: s.email || '', address: s.address || '', delivery_delay: s.delivery_delay || 0, is_active: s.is_active }
   isEditing.value = true; editingId.value = s.id; showModal.value = true
 }
 
+/* Soumet le formulaire (création ou mise à jour) */
 const submit = async () => {
   submitting.value = true
   try {
@@ -40,12 +59,16 @@ const submit = async () => {
   } finally { submitting.value = false }
 }
 
+/* Supprime un fournisseur après confirmation */
 const deleteItem = async (id) => {
   if (!confirm('Confirmer la suppression ?')) return
   try { await window.axios.delete('/api/commerce/suppliers/' + id); await fetch() }
   catch (e) { alert('Erreur: ' + e.message) }
 }
 
+/* ══════════════════════════════════════════
+   Cycle de vie
+   ══════════════════════════════════════════ */
 onMounted(fetch)
 </script>
 

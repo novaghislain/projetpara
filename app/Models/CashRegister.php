@@ -6,6 +6,31 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Modèle représentant une caisse enregistreuse.
+ *
+ * Gère les caisses physiques ou logiques d'un point de vente.
+ * Chaque caisse est liée à un client (entreprise) et permet
+ * de suivre les encaissements et décaissements. Le solde est
+ * calculé automatiquement à partir des transactions.
+ *
+ * @property int $id
+ * @property int|null $client_id Identifiant du client (entreprise)
+ * @property string $name Nom de la caisse
+ * @property string $code Code unique de la caisse
+ * @property string $type Type (principale, secondaire, mobile)
+ * @property bool $is_active Caisse active
+ * @property bool $is_open Caisse ouverte
+ * @property float $balance Solde actuel
+ * @property string|null $last_opened_at Dernière ouverture
+ * @property string|null $last_closed_at Dernière fermeture
+ *
+ * @property-read Client|null $client Client associé
+ * @property-read \Illuminate\Database\Eloquent\Collection|CashTransaction[] $transactions Transactions
+ * @property-read \Illuminate\Database\Eloquent\Collection|CashRegisterLog[] $logs Journal d'activité
+ *
+ * @table cash_registers
+ */
 class CashRegister extends Model
 {
     protected $fillable = [

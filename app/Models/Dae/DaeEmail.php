@@ -5,6 +5,14 @@ namespace App\Models\Dae;
 use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle représentant un email dans le module DAE.
+ *
+ * Table associée : `dae_emails`
+ *
+ * Gère la réception et l'envoi d'emails avec suivi des pièces jointes,
+ * du statut de lecture, et organisation par dossiers.
+ */
 class DaeEmail extends DaeBaseModel
 {
     use SoftDeletes;

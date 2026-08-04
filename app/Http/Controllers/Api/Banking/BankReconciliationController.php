@@ -8,22 +8,42 @@ use App\Services\Banking\BankReconciliationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur API pour la gestion des rapprochements bancaires.
+ *
+ * Permet de créer, lister, visualiser, pointer des transactions,
+ * suggérer des pointages automatiques et finaliser/annuler un rapprochement.
+ */
 class BankReconciliationController extends Controller
 {
     private BankReconciliationService $reconciliationService;
 
+    /**
+     * Constructeur avec injection du service de rapprochement.
+     *
+     * @param BankReconciliationService $reconciliationService
+     */
     public function __construct(BankReconciliationService $reconciliationService)
     {
         $this->reconciliationService = $reconciliationService;
     }
 
+    /**
+     * Récupère l'identifiant client depuis l'utilisateur authentifié.
+     *
+     * @return int
+     */
     protected function getClientId(): int
     {
         return (int) (Auth::user()->active_client_id ?? Auth::user()->client_id);
     }
 
     /**
-     * Liste des rapprochements
+     * Liste paginée des rapprochements bancaires du client.
+     * Filtrable par compte bancaire et par statut.
+     *
+     * @param Request $request La requête HTTP contenant les filtres.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function index(Request $request)
     {
@@ -47,7 +67,10 @@ class BankReconciliationController extends Controller
     }
 
     /**
-     * Créer un rapprochement
+     * Crée un nouveau rapprochement bancaire.
+     *
+     * @param Request $request La requête HTTP avec les données validées.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
     {
@@ -76,7 +99,11 @@ class BankReconciliationController extends Controller
     }
 
     /**
-     * Afficher un rapprochement
+     * Affiche un rapprochement avec ses éléments pointés
+     * et les transactions en attente sur la période.
+     *
+     * @param string $id L'identifiant du rapprochement.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function show(string $id)
     {
@@ -105,7 +132,11 @@ class BankReconciliationController extends Controller
     }
 
     /**
-     * Pointer une transaction
+     * Pointe une transaction bancaire dans le cadre d'un rapprochement.
+     *
+     * @param Request $request La requête HTTP avec l'ID de transaction et le type de pointage.
+     * @param string $id L'identifiant du rapprochement.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function matchTransaction(Request $request, string $id)
     {
@@ -135,7 +166,10 @@ class BankReconciliationController extends Controller
     }
 
     /**
-     * Suggestion auto de pointage
+     * Suggère automatiquement des pointages de transactions via le service IA.
+     *
+     * @param string $id L'identifiant du rapprochement.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function autoSuggest(string $id)
     {
@@ -155,7 +189,10 @@ class BankReconciliationController extends Controller
     }
 
     /**
-     * Finaliser le rapprochement
+     * Finalise un rapprochement bancaire en validant les pointages.
+     *
+     * @param string $id L'identifiant du rapprochement.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function complete(string $id)
     {
@@ -176,7 +213,10 @@ class BankReconciliationController extends Controller
     }
 
     /**
-     * Annuler un rapprochement
+     * Annule un rapprochement bancaire (seulement s'il est en brouillon ou en cours).
+     *
+     * @param string $id L'identifiant du rapprochement.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy(string $id)
     {
@@ -185,6 +225,7 @@ class BankReconciliationController extends Controller
             ->whereIn('status', ['draft', 'in_progress'])
             ->firstOrFail();
 
+        // Passage en statut annulé plutôt que suppression physique
         $reconciliation->status = BankReconciliation::STATUS_CANCELLED;
         $reconciliation->save();
 

@@ -6,6 +6,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Modèle représentant une ligne d'écriture dans une pièce comptable.
+ *
+ * Table associée : `entry_lines` (via convention Laravel)
+ *
+ * Relations :
+ * - Une ligne appartient à un client (Client)
+ * - Une ligne appartient à une pièce comptable (JournalEntry)
+ * - Une ligne est liée à un compte comptable (AccountingAccount)
+ */
 class EntryLine extends Model
 {
     use HasFactory;

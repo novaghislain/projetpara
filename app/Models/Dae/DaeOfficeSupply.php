@@ -5,6 +5,14 @@ namespace App\Models\Dae;
 use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle représentant une fourniture de bureau dans le module DAE.
+ *
+ * Table associée : `dae_office_supplies`
+ *
+ * Gère l'inventaire des fournitures avec suivi des stocks,
+ * seuil d'alerte, prix unitaire et fournisseur.
+ */
 class DaeOfficeSupply extends DaeBaseModel
 {
     use SoftDeletes;

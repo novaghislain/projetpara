@@ -55,20 +55,30 @@
 </template>
 
 <script setup>
+/*
+ * Composant : Index.vue (Bibliotheque)
+ * Description : Liste des modèles d'actes juridiques avec filtrage par catégorie.
+ *               Permet de générer un acte, éditer un modèle ou en créer un nouveau.
+ * Route       : /juridique/bibliotheque
+ */
 import { ref, computed, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 
+/* Liste des actes, filtre actif et message d'erreur */
 const actes = ref([]);
 const filtreCategorie = ref('');
 const error = ref(null);
 
+/* Catégories disponibles extraites dynamiquement des actes chargés */
 const categories = computed(() => [...new Set(actes.value.map(a => a.categorie).filter(Boolean))]);
 
+/* Liste filtrée selon la catégorie sélectionnée */
 const filteredList = computed(() => {
     if (!filtreCategorie.value) return actes.value;
     return actes.value.filter(a => a.categorie === filtreCategorie.value);
 });
 
+/* Charge la liste des actes depuis l'API */
 async function load() {
     error.value = null;
     try {

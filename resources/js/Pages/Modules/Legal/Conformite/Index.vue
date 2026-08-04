@@ -42,22 +42,33 @@
 </template>
 
 <script setup>
+/*
+ * Composant : Index.vue (Conformite)
+ * Description : Liste des obligations de conformité réglementaire avec affichage
+ *               du statut (conforme, en retard, à venir) et de l'échéance.
+ *               Permet d'accéder au calendrier et de créer une nouvelle obligation.
+ * Route       : /juridique/conformite
+ */
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 
+/* Liste des obligations et message d'erreur éventuel */
 const conformites = ref([]);
 const error = ref(null);
 
+/* Formate une date ISO au format français */
 function formatDate(date) {
     if (!date) return '—';
     return new Date(date + 'T00:00:00').toLocaleDateString('fr-FR');
 }
 
+/* Vérifie si la date d'échéance est dépassée */
 function isOverdue(date) {
     if (!date) return false;
     return new Date(date + 'T00:00:00') < new Date();
 }
 
+/* Charge les obligations depuis l'API */
 async function load() {
     error.value = null;
     try {

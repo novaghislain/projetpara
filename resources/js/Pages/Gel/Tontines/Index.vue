@@ -10,6 +10,13 @@
 </template>
 
 <script setup>
+/*
+ * Page : Tontines Index
+ * Role : Liste des tontines (épargne collective) avec recherche, filtres et pagination
+ * Props :
+ *   tontines (Object) — Données paginées des tontines
+ *   clients  (Array)  — Liste des clients pour le filtre
+ */
 import GelLayout from '../../../Layouts/GelLayout.vue';
 defineProps(['tontines', 'clients'])
 </script>

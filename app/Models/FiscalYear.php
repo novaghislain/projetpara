@@ -6,6 +6,36 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Modèle FiscalYear (Exercice fiscal).
+ *
+ * Représente un exercice comptable pour un client.
+ * Contient les périodes (FiscalPeriod), journaux, déclarations TVA,
+ * immobilisations et rapprochements bancaires associés.
+ *
+ * @property int $id
+ * @property int $client_id ID du client propriétaire
+ * @property int $year Année de l'exercice
+ * @property \Carbon\Carbon $date_start Date de début
+ * @property \Carbon\Carbon $date_end Date de fin
+ * @property string $status Statut (open/closed)
+ * @property \Carbon\Carbon|null $closed_at Date de clôture
+ * @property int|null $closed_by ID de l'utilisateur ayant clôturé
+ * @property bool $check_balance Vérification balance effectuée
+ * @property bool $check_tva Vérification TVA effectuée
+ * @property bool $check_cnss Vérification CNSS effectuée
+ * @property bool $check_reconciliation Vérification rapprochement effectuée
+ * @property bool $check_inventory Vérification inventaire effectuée
+ * @property string|null $notes Notes additionnelles
+ *
+ * @property-read \App\Models\User $client Client propriétaire
+ * @property-read \App\Models\User|null $closedBy Utilisateur ayant clôturé
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\FiscalPeriod[] $periods Périodes fiscales
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\AccountingJournal[] $journals Journaux comptables
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\TvaDeclaration[] $tvaDeclarations Déclarations TVA
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\FixedAsset[] $fixedAssets Immobilisations
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\BankReconciliation[] $bankReconciliations Rapprochements bancaires
+ */
 class FiscalYear extends Model
 {
     protected $fillable = [

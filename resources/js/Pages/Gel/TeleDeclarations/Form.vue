@@ -1,12 +1,19 @@
 <template>
+    <!-- ============================================================
+    Formulaire de creation d'une declaration fiscale.
+    Saisie : client, type d'impot, periode, base imposable,
+    taux, montant du et notes optionnelles.
+    ============================================================ -->
     <GelLayout page-title="Nouvelle Déclaration">
         <div class="p-6">
             <div class="bg-white rounded-lg shadow p-4" style="max-width:720px;">
                 <h2 class="text-xl fw-bold mb-3">Nouvelle Déclaration Fiscale</h2>
 
                 <form method="POST" action="/tele-declarations">
+                    <!-- Protection CSRF -->
                     <input type="hidden" name="_token" :value="csrf" />
                     <div class="row g-3">
+                        <!-- Selection du client -->
                         <div class="col-md-6">
                             <label class="form-label small">Client</label>
                             <select name="client_id" class="form-select" required>
@@ -14,6 +21,7 @@
                                 <option v-for="c in clients" :key="c.id" :value="c.id">{{ c.company_name }}</option>
                             </select>
                         </div>
+                        <!-- Type d'impot -->
                         <div class="col-md-6">
                             <label class="form-label small">Type de déclaration</label>
                             <select name="tax_type" class="form-select" required>
@@ -26,6 +34,7 @@
                                 <option value="aib">AIB</option>
                             </select>
                         </div>
+                        <!-- Periode : annee, mois, trimestre -->
                         <div class="col-md-4">
                             <label class="form-label small">Année</label>
                             <select name="period_year" class="form-select" required>
@@ -50,6 +59,7 @@
                                 <option value="4">T4</option>
                             </select>
                         </div>
+                        <!-- Dates de la periode fiscale -->
                         <div class="col-md-4">
                             <label class="form-label small">Date début période</label>
                             <input type="date" name="date_debut" class="form-control" required />
@@ -62,6 +72,7 @@
                             <label class="form-label small">Date échéance</label>
                             <input type="date" name="date_echeance" class="form-control" required />
                         </div>
+                        <!-- Montants : base imposable, taux, montant du -->
                         <div class="col-md-4">
                             <label class="form-label small">Base imposable (FCFA)</label>
                             <input type="number" step="0.01" min="0" name="base_imposable" class="form-control" />
@@ -74,6 +85,7 @@
                             <label class="form-label small">Montant dû (FCFA)</label>
                             <input type="number" step="0.01" min="0" name="montant_dut" class="form-control" required />
                         </div>
+                        <!-- Notes optionnelles -->
                         <div class="col-12">
                             <label class="form-label small">Notes</label>
                             <textarea name="notes" rows="2" class="form-control"></textarea>
@@ -93,7 +105,13 @@
 </template>
 
 <script setup>
+/* ============================================================
+ * TeleDeclarations / Form.vue
+ * Formulaire de creation d'une nouvelle declaration fiscale.
+ * Champs : client, type, periode, base imposable, taux, montant.
+ * ============================================================ */
 import GelLayout from '../../../Layouts/GelLayout.vue';
 defineProps(['clients'])
+/* Recuperation du token CSRF depuis la balise meta */
 const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 </script>

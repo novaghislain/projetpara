@@ -1,10 +1,20 @@
+<!--
+ * Ocr.vue - OCR Factures Intelligent (IA)
+ * Module de numérisation automatique des factures avec extraction de données et pré-comptabilisation
+ * Statut : phase de développement initiale
+-->
 <script setup>
 import GelLayout from '../../../Layouts/GelLayout.vue';
 </script>
 
+<!--
+ * Gabarit du module OCR factures
+ * Cartes descriptives des trois fonctionnalités prévues
+-->
 <template>
     <GelLayout pageTitle="OCR Factures IA">
         <div class="ai-module-page">
+            <!-- Section d'en-tête : icône, titre, sous-titre -->
             <div class="ai-module-hero" style="--accent: #10B981">
                 <div class="ai-module-hero-icon"><i class="bi-upc-scan"></i></div>
                 <div>
@@ -13,6 +23,7 @@ import GelLayout from '../../../Layouts/GelLayout.vue';
                 </div>
             </div>
 
+            <!-- Grille des fonctionnalités : chaque carte présente un module IA -->
             <div class="ai-module-cards">
                 <div class="ai-feature-card">
                     <div class="ai-feature-icon" style="background: rgba(16,185,129,0.1); color: #10B981"><i class="bi-camera"></i></div>
@@ -38,6 +49,7 @@ import GelLayout from '../../../Layouts/GelLayout.vue';
 </template>
 
 <style scoped>
+/* ===== Styles du module OCR Factures IA ===== */
 .ai-module-page { max-width: 1100px; }
 .ai-module-hero {
     display: flex; align-items: center; gap: 18px;

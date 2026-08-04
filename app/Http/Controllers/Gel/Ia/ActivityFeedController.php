@@ -9,8 +9,19 @@ use Illuminate\Http\Request;
 class ActivityFeedController extends Controller
 {
     /**
-     * Lister les suggestions/événements avec filtres
+     * Contrôleur du fil d'activité des suggestions IA.
+     * Permet de lister, filtrer, approuver, rejeter, exécuter
+     * et supprimer les suggestions générées par les agents IA.
+     * Fournit également des statistiques pour le tableau de bord.
+     */
+
+    /**
+     * Liste les suggestions/événements avec filtres avancés.
+     *
      * GET /api/ia/feed
+     *
+     * @param Request $request La requête avec les filtres (agent, type, status, priorite, date, recherche)
+     * @return \Illuminate\Http\JsonResponse Les suggestions paginées avec métadonnées
      */
     public function index(Request $request)
     {
@@ -18,6 +29,7 @@ class ActivityFeedController extends Controller
         $clientId = $request->user()->active_client_id;
         $perPage = min((int) $request->input('per_page', 20), 100);
 
+        // Requête de base : suggestions de l'utilisateur pour son client actif
         $query = AiSuggestion::with(['client:id,company_name', 'approver:id,name'])
             ->where('user_id', $userId)
             ->where('client_id', $clientId);
@@ -37,7 +49,7 @@ class ActivityFeedController extends Controller
             $query->where('status', $request->input('status'));
         }
 
-        // Filtre par priorité (critical|high|normal|low) — stockée dans data JSON
+        // Filtre par priorité (critical|high|normal|low) stockée dans le champ JSON data
         if ($request->filled('priority')) {
             $query->whereRaw(
                 'JSON_UNQUOTE(JSON_EXTRACT(data, ?)) = ?',
@@ -45,7 +57,7 @@ class ActivityFeedController extends Controller
             );
         }
 
-        // Recherche textuelle
+        // Recherche textuelle dans le titre et la description
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
@@ -54,7 +66,7 @@ class ActivityFeedController extends Controller
             });
         }
 
-        // Filtre par date
+        // Filtre par plage de dates
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->input('date_from'));
         }
@@ -62,7 +74,7 @@ class ActivityFeedController extends Controller
             $query->whereDate('created_at', '<=', $request->input('date_to'));
         }
 
-        // Tri : priorité (critical en premier) puis plus récent
+        // Tri : priorité décroissante (critical en premier) puis date de création
         $query->orderByRaw("
             CASE
                 WHEN JSON_UNQUOTE(JSON_EXTRACT(data, '$.priority')) = 'critical' THEN 0
@@ -88,8 +100,12 @@ class ActivityFeedController extends Controller
     }
 
     /**
-     * Nombre de suggestions non lues
+     * Retourne le nombre de suggestions non lues.
+     *
      * GET /api/ia/feed/unread-count
+     *
+     * @param Request $request La requête HTTP
+     * @return \Illuminate\Http\JsonResponse Le nombre de suggestions non lues
      */
     public function unreadCount(Request $request)
     {
@@ -105,8 +121,13 @@ class ActivityFeedController extends Controller
     }
 
     /**
-     * Marquer une suggestion comme lue
+     * Marque une suggestion comme lue.
+     *
      * POST /api/ia/feed/{id}/read
+     *
+     * @param Request $request La requête HTTP
+     * @param AiSuggestion $suggestion La suggestion à marquer
+     * @return \Illuminate\Http\JsonResponse Message de confirmation
      */
     public function markAsRead(Request $request, AiSuggestion $suggestion)
     {
@@ -121,8 +142,12 @@ class ActivityFeedController extends Controller
     }
 
     /**
-     * Tout marquer comme lu
+     * Marque toutes les suggestions comme lues pour l'utilisateur.
+     *
      * POST /api/ia/feed/read-all
+     *
+     * @param Request $request La requête HTTP
+     * @return \Illuminate\Http\JsonResponse Message de confirmation
      */
     public function markAllAsRead(Request $request)
     {
@@ -138,8 +163,13 @@ class ActivityFeedController extends Controller
     }
 
     /**
-     * Approuver une suggestion
+     * Approuve une suggestion.
+     *
      * POST /api/ia/feed/{id}/approve
+     *
+     * @param Request $request La requête HTTP
+     * @param AiSuggestion $suggestion La suggestion à approuver
+     * @return \Illuminate\Http\JsonResponse Message de confirmation
      */
     public function approve(Request $request, AiSuggestion $suggestion)
     {
@@ -159,8 +189,13 @@ class ActivityFeedController extends Controller
     }
 
     /**
-     * Rejeter une suggestion
+     * Rejette une suggestion avec un motif.
+     *
      * POST /api/ia/feed/{id}/reject
+     *
+     * @param Request $request La requête HTTP avec le motif de rejet
+     * @param AiSuggestion $suggestion La suggestion à rejeter
+     * @return \Illuminate\Http\JsonResponse Message de confirmation
      */
     public function reject(Request $request, AiSuggestion $suggestion)
     {
@@ -183,8 +218,13 @@ class ActivityFeedController extends Controller
     }
 
     /**
-     * Exécuter une suggestion (marquer comme exécutée)
+     * Exécute une suggestion (marque comme exécutée).
+     *
      * POST /api/ia/feed/{id}/execute
+     *
+     * @param Request $request La requête HTTP
+     * @param AiSuggestion $suggestion La suggestion à exécuter
+     * @return \Illuminate\Http\JsonResponse Message de confirmation
      */
     public function execute(Request $request, AiSuggestion $suggestion)
     {
@@ -204,8 +244,13 @@ class ActivityFeedController extends Controller
     }
 
     /**
-     * Supprimer une suggestion
+     * Supprime une suggestion.
+     *
      * DELETE /api/ia/feed/{id}
+     *
+     * @param Request $request La requête HTTP
+     * @param AiSuggestion $suggestion La suggestion à supprimer
+     * @return \Illuminate\Http\JsonResponse Message de confirmation
      */
     public function destroy(Request $request, AiSuggestion $suggestion)
     {
@@ -220,18 +265,23 @@ class ActivityFeedController extends Controller
     }
 
     /**
-     * Statistiques du tableau de bord
+     * Statistiques du tableau de bord (par agent, statut, priorité).
+     *
      * GET /api/ia/feed/stats
+     *
+     * @param Request $request La requête HTTP
+     * @return \Illuminate\Http\JsonResponse Les statistiques détaillées
      */
     public function stats(Request $request)
     {
         $userId = $request->user()->id;
         $clientId = $request->user()->active_client_id;
 
+        // Requête de base pour les statistiques
         $base = AiSuggestion::where('user_id', $userId)
             ->where('client_id', $clientId);
 
-        // Statistiques par agent
+        // Statistiques par agent IA
         $byAgent = (clone $base)
             ->selectRaw('agent, COUNT(*) as total')
             ->groupBy('agent')
@@ -245,7 +295,7 @@ class ActivityFeedController extends Controller
             ->pluck('total', 'status')
             ->toArray();
 
-        // Priorités (depuis data JSON)
+        // Statistiques par priorité (depuis le champ JSON data)
         $priorities = (clone $base)
             ->selectRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '$.priority')) as priority, COUNT(*) as total")
             ->whereRaw("JSON_EXTRACT(data, '$.priority') IS NOT NULL")
@@ -270,7 +320,11 @@ class ActivityFeedController extends Controller
     }
 
     /**
-     * Vérifier que la suggestion appartient bien au client de l'utilisateur
+     * Vérifie que la suggestion appartient bien au client actif de l'utilisateur.
+     *
+     * @param Request $request La requête HTTP
+     * @param AiSuggestion $suggestion La suggestion à vérifier
+     * @return void
      */
     private function authorizeAccess(Request $request, AiSuggestion $suggestion): void
     {

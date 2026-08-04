@@ -1,3 +1,10 @@
+<!--
+ * Composant : Grand Livre
+ * Description : Affiche le Grand Livre d'un compte comptable sélectionné : détail
+ *              des écritures (date, référence, libellé, débit, crédit, solde cumulé)
+ *              avec filtrage par période.
+ * Utilisation : Page /rapports/grand-livre
+-->
 <template>
     <div class="container-fluid py-3">
         <div class="d-flex align-items-center gap-2 mb-3">
@@ -124,21 +131,24 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 
-const accounts = ref([])
-const data = ref(null)
+const accounts = ref([])     /* Liste des comptes comptables pour le select */
+const data = ref(null)       /* Données du Grand Livre */
 const loading = ref(false)
 const error = ref(null)
-const accountId = ref('')
-const dateFrom = ref(new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0])
-const dateTo = ref(new Date().toISOString().split('T')[0])
+const accountId = ref('')    /* Compte sélectionné */
+const dateFrom = ref(new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0])  /* Début d'année */
+const dateTo = ref(new Date().toISOString().split('T')[0])                                   /* Aujourd'hui */
 
+/* Formate un nombre en francs CFA */
 const fmt = (v) => new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(v || 0) + ' F'
 const csrf = computed(() => document.querySelector('meta[name=csrf-token]')?.content || '')
+/* Fonction utilitaire pour les appels API avec en-têtes communs */
 const api = (path, opts = {}) => fetch(path, {
     headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf.value, ...opts.headers },
     ...opts,
 })
 
+/* Charge la liste des comptes comptables pour le sélecteur */
 async function loadAccounts() {
     try {
         const r = await api('/api/chart-accounts')
@@ -146,6 +156,7 @@ async function loadAccounts() {
     } catch (e) { console.warn(e) }
 }
 
+/* Charge les écritures du Grand Livre pour le compte et la période sélectionnés */
 async function loadData() {
     if (!accountId.value) return
     loading.value = true; error.value = null
@@ -158,12 +169,14 @@ async function loadData() {
 }
 
 function refresh() { loadData() }
+/* Exporte le Grand Livre au format PDF */
 function exportPdf() {
     if (!accountId.value) return
     const params = new URLSearchParams({ account_id: accountId.value, date_from: dateFrom.value, date_to: dateTo.value })
     window.open(`/api/reports/ledger/${accountId.value}/pdf?${params}`, '_blank')
 }
 
+/* Formate une date au format français */
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR') : '—'
 
 onMounted(loadAccounts)

@@ -388,12 +388,22 @@
 </template>
 
 <script>
+/*
+ * Composant : DaeTachesIndex
+ * Role : Page de gestion des taches du module DAE.
+ * Propose deux vues : Liste (avec filtres et DataTable) et Kanban (avec colonnes par statut).
+ * Permet la creation, le changement de statut, l'assignation et la suppression de taches.
+ * Inclut les fonctionnalites de deplacement de taches entre colonnes Kanban.
+ * Props : aucune
+ * Evenements : action, page-change (via DaeDataTable)
+ */
 import axios from 'axios';
 import DaeDataTable from '../../../../Components/Dae/DaeDataTable.vue';
 import { Modal } from 'bootstrap';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
+// ─── Constantes des priorites ─────────────────────────────────────────────────
 const PRIORITE_MAP = {
     basse:    { label: 'Basse',    badge: 'bg-success' },
     moyenne:  { label: 'Moyenne',  badge: 'bg-info' },
@@ -401,6 +411,7 @@ const PRIORITE_MAP = {
     critique: { label: 'Critique', badge: 'bg-danger' },
 };
 
+// ─── Constantes des statuts ──────────────────────────────────────────────────
 const STATUT_MAP = {
     a_faire:     { label: 'A faire',     badge: 'bg-secondary' },
     en_cours:    { label: 'En cours',    badge: 'bg-primary' },
@@ -409,6 +420,7 @@ const STATUT_MAP = {
     annulee:     { label: 'Annulee',     badge: 'bg-dark' },
 };
 
+// ─── Ordre des statuts pour le deplacement Kanban ────────────────────────────
 const STATUT_ORDER = ['a_faire', 'en_cours', 'en_revision', 'terminee'];
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -422,26 +434,26 @@ export default {
 
     data() {
         return {
-            loading: false,
-            viewMode: 'liste',
+            loading: false,    // Indicateur de chargement
+            viewMode: 'liste', // Mode d'affichage : 'liste' ou 'kanban'
 
-            // Liste
-            taches: [],
-            currentPage: 1,
-            totalPages: 1,
-            totalItems: 0,
+            // ─── Liste ──────────────────────────────────────────────
+            taches: [],        // Liste des taches (mode liste)
+            currentPage: 1,    // Page courante de la pagination
+            totalPages: 1,     // Nombre total de pages
+            totalItems: 0,     // Nombre total de taches
             filters: {
                 statut: '',
                 priorite: '',
                 client_id: '',
                 recherche: '',
                 urgentes: false,
-            },
+            },                 // Filtres de la vue liste
 
-            // Kanban
-            kanbanColumns: {},
+            // ─── Kanban ──────────────────────────────────────────────
+            kanbanColumns: {}, // Colonnes du board Kanban
 
-            // Create form
+            // ─── Formulaire de creation ─────────────────────────────
             form: {
                 titre: '',
                 description: '',
@@ -451,28 +463,29 @@ export default {
                 client_id: '',
                 tags: '',
             },
-            submitting: false,
+            submitting: false,  // Indicateur d'envoi du formulaire
 
-            // Statut modal
+            // ─── Modale de changement de statut ──────────────────────
             statutModalTask: null,
             statutModalValue: 'a_faire',
             statutModalInstance: null,
 
-            // Assign modal
+            // ─── Modale d'assignation ─────────────────────────────────
             assignModalTask: null,
             assignModalValue: '',
             assignModalInstance: null,
 
-            // Delete modal
+            // ─── Modale de suppression ───────────────────────────────
             deleteModalTask: null,
             deleteModalInstance: null,
 
-            // Create modal
+            // ─── Modale de creation ──────────────────────────────────
             createModalInstance: null,
         };
     },
 
     computed: {
+        /* Definition des colonnes de la table (mode liste) */
         tableColumns() {
             return [
                 { key: 'titre',       label: 'Titre', class: 'text-truncate', width: '30%' },

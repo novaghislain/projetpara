@@ -32,9 +32,19 @@
     </GelLayout>
 </template>
 <script setup>
+/* ═══════════════════════════════════════════════════════
+   Workflows / Index — Liste des workflows d'approbation
+   Permet de filtrer par client et de naviguer vers
+   la création ou la modification d'un workflow.
+   ═══════════════════════════════════════════════════════ */
+
 import { ref } from 'vue'
 import GelLayout from '../../../Layouts/GelLayout.vue'
+
+/* ─── Props — liste des workflows et clients ─── */
 defineProps({ workflows: { type: Object, default: () => ({ data:[], current_page:1, last_page:1 }) }, clients: { type: Array, default: () => [] } })
+
+/* ─── Filtre par client ─── */
 const clientId = ref('')
 const filter = () => { window.location = `/approval-workflows?client_id=${clientId.value}` }
 </script>

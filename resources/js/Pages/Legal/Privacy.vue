@@ -1,3 +1,8 @@
+<!--
+  Composant : Legal/Privacy.vue
+  Description : Page statique "Politique de confidentialité" détaillant la collecte,
+                l'utilisation et la protection des données personnelles.
+-->
 <template>
   <div class="min-h-screen bg-gray-100 py-12 px-4">
     <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-8 animate-slide-up">
@@ -5,6 +10,7 @@
       <p class="text-sm text-gray-500 mb-8">Dernière mise à jour : janvier 2025</p>
 
       <div class="prose max-w-none">
+        <!-- Section : Données collectées -->
         <h2>1. Données collectées</h2>
         <p>Nous collectons les données suivantes lors de l'inscription et de l'utilisation :</p>
         <ul>
@@ -14,6 +20,7 @@
           <li>Données techniques : logs de connexion, adresse IP</li>
         </ul>
 
+        <!-- Section : Utilisation des données -->
         <h2>2. Utilisation des données</h2>
         <p>Vos données sont utilisées uniquement pour :</p>
         <ul>
@@ -23,9 +30,11 @@
           <li>Améliorer le service</li>
         </ul>
 
+        <!-- Section : Partage des données -->
         <h2>3. Partage des données</h2>
         <p>Nous ne partageons pas vos données comptables avec des tiers sans votre consentement explicite, sauf obligation légale.</p>
 
+        <!-- Section : Sécurité -->
         <h2>4. Sécurité</h2>
         <p>Nous utilisons des mesures de sécurité techniques et organisationnelles pour protéger vos données :</p>
         <ul>
@@ -35,9 +44,11 @@
           <li>Sauvegardes régulières</li>
         </ul>
 
+        <!-- Section : Conservation des données -->
         <h2>5. Conservation des données</h2>
         <p>Vos données comptables sont conservées pendant toute la durée de votre abonnement. Après résiliation, elles sont conservées 12 mois puis supprimées.</p>
 
+        <!-- Section : Droits des utilisateurs -->
         <h2>6. Vos droits</h2>
         <p>Conformément à la réglementation, vous disposez des droits suivants :</p>
         <ul>
@@ -47,9 +58,11 @@
           <li>Droit à l'effacement (suppression du compte)</li>
         </ul>
 
+        <!-- Section : Cookies -->
         <h2>7. Cookies</h2>
         <p>Nous utilisons des cookies de session nécessaires au fonctionnement de l'application. Aucun cookie publicitaire n'est utilisé.</p>
 
+        <!-- Section : Contact -->
         <h2>8. Contact</h2>
         <p>Pour exercer vos droits : <a href="mailto:dpo@comptasaas.ci" class="text-primary">dpo@comptasaas.ci</a></p>
       </div>

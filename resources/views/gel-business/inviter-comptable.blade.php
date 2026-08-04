@@ -1,12 +1,12 @@
 @extends('layouts.gel-business')
 
-@section('title', 'Inviter un comptable - Mon Entreprise')
+@section('title', 'Inviter un collaborateur - Mon Entreprise')
 
 @section('content')
 <div class="gel-page-header">
     <div>
-        <h1 class="gel-page-title">Inviter un comptable</h1>
-        <p class="gel-page-subtitle">Invitez votre cabinet comptable à gérer votre comptabilité</p>
+        <h1 class="gel-page-title">Inviter un collaborateur</h1>
+        <p class="gel-page-subtitle">Invitez un cabinet comptable ou une secrétaire à vous rejoindre</p>
     </div>
 </div>
 
@@ -34,9 +34,17 @@
                 @csrf
 
                 <div class="gel-form-group">
-                    <label>Email du cabinet comptable *</label>
-                    <input type="email" name="email" class="gel-form-control" required placeholder="comptable@cabinet.fr">
-                    <div class="gel-form-text">L'email du cabinet comptable qui gérera votre comptabilité.</div>
+                    <label>Rôle du collaborateur *</label>
+                    <select name="role_invite" class="gel-form-control" required>
+                        <option value="comptable">Comptable</option>
+                        <option value="secretaire">Secrétaire</option>
+                    </select>
+                </div>
+
+                <div class="gel-form-group">
+                    <label>Email du collaborateur *</label>
+                    <input type="email" name="email" class="gel-form-control" required placeholder="email@exemple.fr">
+                    <div class="gel-form-text">L'email de la personne que vous souhaitez inviter.</div>
                 </div>
 
                 <div class="gel-form-group">
@@ -102,7 +110,7 @@
                             <div>
                                 <div style="font-size:13px;">{{ $inv->email }}</div>
                                 <div style="font-size:11px;color:var(--gel-text-muted);">
-                                    {{ $inv->created_at->format('d/m/Y') }}
+                                    {{ $inv->created_at->format('d/m/Y') }} • {{ ucfirst($inv->role_invite ?? 'Comptable') }}
                                 </div>
                             </div>
                             <div>

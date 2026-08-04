@@ -1,15 +1,26 @@
 <script setup>
+/**
+ * Index.vue — Page publique de présentation du catalogue (services et modèles)
+ * Rôle : Affiche les catégories et services avec filtres, recherche, animations
+ *        et ajout au panier. Ce composant inclut navbar, hero, grille de services,
+ *        témoignages, CTA et footer.
+ * L'utilisateur peut filtrer par catégorie, rechercher, ajouter au panier.
+ * Dépendances : authStore pour l'état d'authentification
+ */
 import { ref, computed, reactive, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { authStore } from '../../../stores/auth';
 
+/* Props : liste des catégories (avec leurs services) reçue du backend */
 const props = defineProps({
     categories: { type: Array, required: true }
 });
 
+/* États locaux de filtrage et d'affichage */
 const searchQuery = ref('');
 const selectedCategory = ref('');
 const showAllServices = ref(false);
 
+/* Filtre les services par catégorie + scroll fluide vers la grille */
 const filterByCategory = (cat) => {
     selectedCategory.value = cat;
     showAllServices.value = false;
@@ -39,6 +50,7 @@ const csrfToken = computed(() => {
     return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 });
 
+/* État de l'UI : menu mobile, modale auth, animations et panier */
 const mobileOpen = ref(false);
 const showAuthModal = ref(false);
 const animated = ref(false);
@@ -46,6 +58,7 @@ const cartCount = ref(0);
 const processingCart = ref({});
 const cartAdded = ref({});
 
+/* Ajoute un service au panier via l'API /api/cart/add */
 const addToCart = async (serviceId) => {
     processingCart.value[serviceId] = true;
     try {

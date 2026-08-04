@@ -14,10 +14,21 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
+/**
+ * Contrôleur de gestion des écritures comptables.
+ * Opérations CRUD complètes avec validation de l'équilibre débit/crédit,
+ * gestion des lignes d'écriture, validation, export PDF et CSV.
+ * Respecte les règles SYSCOHADA : exercice comptable, journaux, etc.
+ */
 class EcritureController extends Controller
 {
     /**
-     * Liste paginée des écritures avec filtres.
+     * Liste paginée des écritures avec filtres multiples.
+     * Filtres disponibles : journal, exercice, client, période, statut, recherche texte.
+     * Données pour les filtres également retournées (journaux, exercices, clients).
+     *
+     * @param Request $request La requête HTTP avec les filtres optionnels
+     * @return \Illuminate\View\View|\Illuminate\Http\JsonResponse
      */
     public function index(Request $request)
     {
@@ -49,12 +60,12 @@ class EcritureController extends Controller
             $query->where('date_ecriture', '<=', $dateFin);
         }
 
-        // Filtre par statut
+        // Filtre par statut (validée ou non)
         if ($request->has('valide')) {
             $query->where('valide', $request->boolean('valide'));
         }
 
-        // Recherche par libellé, numéro, référence
+        // Recherche par libellé, numéro ou référence de pièce
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('numero', 'like', "%{$search}%")
@@ -68,7 +79,7 @@ class EcritureController extends Controller
             ->paginate($request->input('per_page', 20))
             ->withQueryString();
 
-        // Données pour les filtres
+        // Données pour les listes déroulantes des filtres
         $journaux = Journal::byCabinet($cabinetId)->actif()->get(['id', 'code', 'libelle']);
         $exercices = ExerciceComptable::byCabinet($cabinetId)->orderBy('date_debut', 'desc')->get(['id', 'libelle']);
         $clients = Client::whereHas('gelEcritures', function ($q) use ($cabinetId) {
@@ -86,7 +97,10 @@ class EcritureController extends Controller
     }
 
     /**
-     * Formulaire de création d'une écriture.
+     * Affiche le formulaire de création d'une écriture.
+     * Liste les journaux actifs, les exercices ouverts et les clients.
+     *
+     * @return \Illuminate\View\View
      */
     public function create()
     {
@@ -103,6 +117,12 @@ class EcritureController extends Controller
 
     /**
      * Enregistre une nouvelle écriture comptable.
+     * Valide les données, vérifie l'équilibre débit/crédit, crée l'écriture
+     * et ses lignes dans une transaction. Si l'utilisateur a les droits,
+     * l'écriture est automatiquement validée.
+     *
+     * @param Request $request La requête HTTP avec les données de l'écriture et ses lignes
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
     public function store(Request $request)
     {
@@ -139,7 +159,7 @@ class EcritureController extends Controller
         try {
             $journal = Journal::find($validated['journal_id']);
 
-            // Calcul des totaux
+            // Calcul des totaux débit et crédit
             $totalDebit = 0;
             $totalCredit = 0;
             $lignesData = [];
@@ -153,7 +173,7 @@ class EcritureController extends Controller
                 $lignesData[] = $ligne;
             }
 
-            // Vérifier l'équilibre
+            // Vérifier l'équilibre de l'écriture (tolérance de 0.01)
             if (abs($totalDebit - $totalCredit) > 0.01) {
                 DB::rollBack();
                 $error = "L'écriture n'est pas équilibrée (Débit: {$totalDebit}, Crédit: {$totalCredit}).";
@@ -166,6 +186,7 @@ class EcritureController extends Controller
             $userId = Auth::id();
             $canValider = Auth::user()->can('comptabilite.valider');
 
+            // Création de l'écriture avec validation automatique si droits suffisants
             $ecriture = EcritureComptable::create([
                 'cabinet_id' => $cabinetId,
                 'exercice_id' => $validated['exercice_id'],
@@ -184,7 +205,7 @@ class EcritureController extends Controller
                 'created_by' => $userId,
             ]);
 
-            // Créer les lignes
+            // Créer les lignes d'écriture
             foreach ($lignesData as $ligne) {
                 $ecriture->lignes()->create([
                     'compte_id' => $ligne['compte_id'],
@@ -222,7 +243,10 @@ class EcritureController extends Controller
     }
 
     /**
-     * Affiche le détail d'une écriture.
+     * Affiche le détail d'une écriture avec toutes ses lignes et relations.
+     *
+     * @param int $id L'identifiant de l'écriture
+     * @return \Illuminate\View\View|\Illuminate\Http\JsonResponse
      */
     public function show($id)
     {
@@ -250,7 +274,10 @@ class EcritureController extends Controller
     }
 
     /**
-     * Vue d'édition (uniquement si non validée).
+     * Affiche le formulaire d'édition (uniquement si l'écriture n'est pas validée).
+     *
+     * @param int $id L'identifiant de l'écriture
+     * @return \Illuminate\View\View
      */
     public function edit($id)
     {
@@ -273,6 +300,11 @@ class EcritureController extends Controller
 
     /**
      * Met à jour une écriture (uniquement si non validée).
+     * Remplace les anciennes lignes par les nouvelles après vérification de l'équilibre.
+     *
+     * @param Request $request La requête HTTP avec les données mises à jour
+     * @param int $id L'identifiant de l'écriture
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
     public function update(Request $request, $id)
     {
@@ -283,7 +315,6 @@ class EcritureController extends Controller
             return response()->json(['message' => 'Impossible de modifier une écriture validée.'], 403);
         }
 
-        // Même validation que store
         $validated = $request->validate([
             'journal_id' => 'required|exists:gel_journaux,id',
             'exercice_id' => 'required|exists:gel_exercices,id',
@@ -305,6 +336,7 @@ class EcritureController extends Controller
             $totalDebit = collect($validated['lignes'])->where('sens', 'debit')->sum('montant');
             $totalCredit = collect($validated['lignes'])->where('sens', 'credit')->sum('montant');
 
+            // Vérifier l'équilibre avant mise à jour
             if (abs($totalDebit - $totalCredit) > 0.01) {
                 DB::rollBack();
                 return response()->json(['message' => "L'écriture n'est pas équilibrée."], 422);
@@ -322,7 +354,7 @@ class EcritureController extends Controller
                 'total_credit' => $totalCredit,
             ]);
 
-            // Supprimer les anciennes lignes et recréer
+            // Supprimer les anciennes lignes et recréer avec les nouvelles données
             $ecriture->lignes()->delete();
             foreach ($validated['lignes'] as $ligne) {
                 $ecriture->lignes()->create([
@@ -351,6 +383,10 @@ class EcritureController extends Controller
 
     /**
      * Supprime une écriture (uniquement si non validée).
+     * Supprime d'abord les lignes associées, puis l'écriture elle-même.
+     *
+     * @param int $id L'identifiant de l'écriture
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy($id)
     {
@@ -369,6 +405,10 @@ class EcritureController extends Controller
 
     /**
      * Validation d'une écriture par un comptable senior.
+     * Délègue la validation au modèle EcritureComptable.
+     *
+     * @param int $id L'identifiant de l'écriture à valider
+     * @return \Illuminate\Http\JsonResponse
      */
     public function valider($id)
     {
@@ -384,7 +424,10 @@ class EcritureController extends Controller
     }
 
     /**
-     * Génération PDF d'une écriture.
+     * Génération et téléchargement PDF d'une écriture.
+     *
+     * @param int $id L'identifiant de l'écriture
+     * @return \Illuminate\Http\Response
      */
     public function pdf($id)
     {
@@ -403,6 +446,11 @@ class EcritureController extends Controller
 
     /**
      * Export CSV des écritures filtrées.
+     * Génère un fichier CSV avec BOM UTF-8 contenant les colonnes :
+     * Numéro, Date, Journal, Client, Libellé, Débit, Crédit, Validée, Date validation.
+     *
+     * @param Request $request La requête HTTP avec les filtres (date_debut, date_fin, journal_id)
+     * @return \Illuminate\Http\Response
      */
     public function export(Request $request)
     {
@@ -424,7 +472,7 @@ class EcritureController extends Controller
 
         $callback = function () use ($ecritures) {
             $output = fopen('php://output', 'w');
-            // BOM UTF-8
+            // BOM UTF-8 pour la compatibilité Excel
             fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
             fputcsv($output, ['Numéro', 'Date', 'Journal', 'Client', 'Libellé', 'Débit', 'Crédit', 'Validée', 'Date validation']);
 

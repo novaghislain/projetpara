@@ -9,13 +9,33 @@ use App\Models\Legal\LegalCompliance;
 use App\Models\Legal\LegalDossier;
 use Illuminate\Http\Request;
 
+/**
+ * Contrôleur du tableau de bord du module Juridique.
+ *
+ * Fournit les indicateurs clés et les statistiques pour la vue
+ * d'ensemble des activités juridiques de l'entreprise.
+ */
 class LegalDashboardController extends BaseLegalController
 {
+    /**
+     * Affiche la page du tableau de bord juridique.
+     *
+     * @return \Illuminate\View\View
+     */
     public function index()
     {
         return view('app', ['page' => 'legal-dashboard']);
     }
 
+    /**
+     * Retourne les statistiques et indicateurs du tableau de bord juridique.
+     *
+     * Calcule et renvoie les données agrégées : contrats actifs, contentieux en cours,
+     * conformités, assemblées planifiées et dossiers ouverts.
+     *
+     * @param Request $request La requête HTTP entrante
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function stats(Request $request)
     {
         $clientId = $this->getClientId($request);

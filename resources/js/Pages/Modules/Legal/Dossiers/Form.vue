@@ -37,10 +37,22 @@
     </GelLayout>
 </template>
 <script setup>
+/*
+ * Composant : LegalDossiersForm
+ * Role : Formulaire de creation d'un dossier juridique.
+ * Saisie du titre, type, priorite et description.
+ * Envoi des donnees en POST a l'API.
+ * Props : aucune
+ */
+
 import { ref } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
-const saving = ref(false);
+// Valeurs par defaut du formulaire
 const form = ref({ titre:'', type:'', priorite:'moyenne', description:'' });
+// Indicateur d'envoi du formulaire
+const saving = ref(false);
+
+/* Soumet le formulaire a l'API POST */
 async function save() {
     saving.value = true;
     try {

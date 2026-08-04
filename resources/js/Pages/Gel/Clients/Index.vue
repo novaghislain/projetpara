@@ -1,4 +1,10 @@
 <script setup>
+/* ============================================================
+ * Clients — Index
+ * Liste des clients du cabinet avec recherche, filtres
+ * (statut, pôle), création, modification et suppression.
+ * La recherche est optimisée par debounce.
+ * ============================================================ */
 import { ref, onMounted, watch, nextTick } from 'vue';
 import GelLayout from '../../../Layouts/GelLayout.vue';
 import { authStore } from '../../../stores/auth';
@@ -7,29 +13,29 @@ const props = defineProps({
     clientId: { type: [Number, String], default: null }
 });
 
-// ── Data ──
-const clients = ref([]);
-const poles = ref([]);
-const services = ref([]);
-const domains = ref([]);
-const loading = ref(true);
-const error = ref(null);
-const submitting = ref(false);
+/* --- Données --- */
+const clients = ref([]);      /* Liste des clients */
+const poles = ref([]);        /* Liste des pôles pour les filtres et le formulaire */
+const services = ref([]);     /* Liste des services pour le formulaire */
+const domains = ref([]);      /* Liste des domaines d'activité */
+const loading = ref(true);    /* Indicateur de chargement */
+const error = ref(null);      /* Message d'erreur */
+const submitting = ref(false); /* true pendant la soumission */
 
-// Filters
-const search = ref('');
-const filterStatus = ref('');
-const filterPole = ref('');
-const debounceTimer = ref(null);
+/* --- Filtres --- */
+const search = ref('');           /* Texte de recherche */
+const filterStatus = ref('');     /* Filtre par statut */
+const filterPole = ref('');       /* Filtre par pôle */
+const debounceTimer = ref(null);  /* Timer pour le debounce de la recherche */
 
-// Modal state
-const showModal = ref(false);
-const isEditing = ref(false);
-const editingId = ref(null);
-const modalInstance = ref(null);
-const modalEl = ref(null);
+/* --- État de la modale --- */
+const showModal = ref(false);      /* Visibilité de la modale */
+const isEditing = ref(false);      /* true = édition, false = création */
+const editingId = ref(null);       /* ID du client en cours d'édition */
+const modalInstance = ref(null);   /* Instance Bootstrap de la modale */
+const modalEl = ref(null);         /* Référence à l'élément DOM de la modale */
 
-// ── Form ──
+/* --- Formulaire --- */
 const form = ref({
     company_name: '', legal_form: '', rccm: '', ifu: '',
     address: '', city: '', country: '', phone: '', email: '', website: '',
@@ -40,11 +46,17 @@ const form = ref({
     service_ids: [],
 });
 
+/* Options pour les listes déroulantes */
 const statuses = ['actif', 'inactif', 'prospect'];
 const contractTypes = ['mensuel', 'trimestriel', 'semestriel', 'annuel', 'ponctuel'];
 const legalForms = ['SARL', 'SA', 'SAS', 'SASU', 'EURL', 'SNC', 'SCI', 'Association', 'Auto-entrepreneur', 'Autre'];
 
-// ── Fetch data ──
+/* --- Fonctions de chargement des données --- */
+
+/*
+ * fetchClients — Charge la liste des clients depuis l'API
+ * en appliquant les filtres actifs (recherche, statut, pôle).
+ */
 const fetchClients = async () => {
     const params = {};
     if (search.value) params.search = search.value;
@@ -60,6 +72,9 @@ const fetchClients = async () => {
     }
 };
 
+/*
+ * fetchPoles — Charge la liste des pôles pour les filtres et le formulaire.
+ */
 const fetchPoles = async () => {
     try {
         const res = await window.axios.get('api/poles');
@@ -69,6 +84,9 @@ const fetchPoles = async () => {
     }
 };
 
+/*
+ * fetchServices — Charge la liste des services pour le formulaire.
+ */
 const fetchServices = async () => {
     try {
         const res = await window.axios.get('api/services');
@@ -78,6 +96,9 @@ const fetchServices = async () => {
     }
 };
 
+/*
+ * fetchDomains — Charge la liste des domaines d'activité.
+ */
 const fetchDomains = async () => {
     try {
         const res = await window.axios.get('/api/domains');
@@ -87,14 +108,23 @@ const fetchDomains = async () => {
     }
 };
 
-// ── Search with debounce ──
+/*
+ * Watcher : la recherche est déclenchée 300 ms après la dernière
+ * frappe (debounce) pour limiter les appels API.
+ */
 watch(search, () => {
     clearTimeout(debounceTimer.value);
     debounceTimer.value = setTimeout(() => fetchClients(), 300);
 });
+/* Changement de filtre => rechargement immédiat */
 watch([filterStatus, filterPole], () => fetchClients());
 
-// ── Modal ──
+/* --- Opérations sur la modale --- */
+
+/*
+ * openCreateModal — Ouvre la modale en mode création.
+ * Réinitialise le formulaire et affiche l'instance Bootstrap.
+ */
 const openCreateModal = async () => {
     await nextTick();
     resetForm();
@@ -107,6 +137,11 @@ const openCreateModal = async () => {
     modalInstance.value?.show();
 };
 
+/*
+ * openEditModal — Ouvre la modale en mode édition.
+ * Charge les données du client depuis l'API et pré-remplit le formulaire,
+ * y compris les pôles et services associés.
+ */
 const openEditModal = async (id) => {
     try {
         const res = await window.axios.get('api/clients/' + id);
@@ -144,11 +179,17 @@ const openEditModal = async (id) => {
     }
 };
 
+/*
+ * closeModal — Ferme la modale Bootstrap.
+ */
 const closeModal = () => {
     modalInstance.value?.hide();
     showModal.value = false;
 };
 
+/*
+ * resetForm — Réinitialise le formulaire à ses valeurs par défaut.
+ */
 const resetForm = () => {
     form.value = {
         company_name: '', legal_form: '', rccm: '', ifu: '',
@@ -161,18 +202,28 @@ const resetForm = () => {
     };
 };
 
+/*
+ * togglePole — Ajoute ou retire un pôle de la sélection (check-box).
+ */
 const togglePole = (poleId) => {
     const idx = form.value.pole_ids.indexOf(poleId);
     if (idx === -1) form.value.pole_ids.push(poleId);
     else form.value.pole_ids.splice(idx, 1);
 };
 
+/*
+ * toggleService — Ajoute ou retire un service de la sélection (check-box).
+ */
 const toggleService = (serviceId) => {
     const idx = form.value.service_ids.indexOf(serviceId);
     if (idx === -1) form.value.service_ids.push(serviceId);
     else form.value.service_ids.splice(idx, 1);
 };
 
+/*
+ * submitForm — Envoie les données du formulaire en création ou édition.
+ * Utilise la méthode HTTP appropriée (POST ou PUT) selon le mode.
+ */
 const submitForm = async () => {
     submitting.value = true;
     try {
@@ -192,6 +243,9 @@ const submitForm = async () => {
     }
 };
 
+/*
+ * deleteClient — Supprime un client après confirmation utilisateur.
+ */
 const deleteClient = async (id) => {
     if (!confirm('Confirmer la suppression de ce client ?')) return;
     try {
@@ -202,7 +256,7 @@ const deleteClient = async (id) => {
     }
 };
 
-// ── Lifecycle ──
+/* Au montage du composant, on charge les données initiales en parallèle. */
 onMounted(async () => {
     await Promise.all([fetchClients(), fetchPoles(), fetchServices(), fetchDomains()]);
 });

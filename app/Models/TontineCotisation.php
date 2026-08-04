@@ -5,6 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Modèle TontineCotisation - Cotisation d'un membre à une tontine.
+ *
+ * Table associée : 'tontine_cotisations' (convention Laravel).
+ * Enregistre chaque versement : période, montant, statut (payé/en retard),
+ * mode de paiement, et référence de transaction.
+ * Relations :
+ * - tontine() : appartient à une tontine (Tontine).
+ * - membre() : appartient à un membre (TontineMembre).
+ */
 class TontineCotisation extends Model
 {
     protected $fillable = [

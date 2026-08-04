@@ -22,12 +22,31 @@ use App\Models\AccountingMobileTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur de comptabilité par domaine d'activité (Company).
+ *
+ * Gère les entités comptables spécifiques à chaque secteur :
+ * Hôtel (factures, chambres, réservations), Scolaire (factures, élèves),
+ * Location (quittances, biens), Tontine (cotisations, groupes),
+ * Transport (dossiers de transit), Pressing (commandes),
+ * Morgue (dépôts, factures), grilles tarifaires, commissions,
+ * et transactions Mobile Money.
+ *
+ * Chaque méthode CRUD filtre par client_id et utilise le type
+ * de modèle correspondant au domaine.
+ */
 class DomainAccountingController extends BaseCompanyController
 {
     // ═══════════════════════════════════════════════════════════════
     // HÔTEL — Factures
     // ═══════════════════════════════════════════════════════════════
 
+    /**
+     * API: Liste les factures hôtel (200 dernières).
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function hotelFactures(Request $request)
     {
         $clientId = $this->getClientId();
@@ -45,6 +64,14 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json($items);
     }
 
+    /**
+     * API: Crée une facture hôtel.
+     *
+     * Calcule automatiquement le montant TTC et le solde.
+     *
+     * @param Request $request Requête HTTP avec les données de la facture
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function storeHotelFacture(Request $request)
     {
         $clientId = $this->getClientId();
@@ -68,6 +95,12 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json(['message' => 'Facture hôtel créée.', 'item' => $item], 201);
     }
 
+    /**
+     * API: Supprime une facture hôtel.
+     *
+     * @param int $id Identifiant de la facture
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function deleteHotelFacture($id)
     {
         $item = AccountingHotelFacture::where('client_id', $this->getClientId())->findOrFail($id);
@@ -79,6 +112,12 @@ class DomainAccountingController extends BaseCompanyController
     // SCOLAIRE — Factures
     // ═══════════════════════════════════════════════════════════════
 
+    /**
+     * API: Liste les factures scolaires (200 dernières).
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function scolaireFactures(Request $request)
     {
         $clientId = $this->getClientId();
@@ -96,6 +135,14 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json($items);
     }
 
+    /**
+     * API: Crée une facture scolaire.
+     *
+     * Calcule automatiquement le montant net (montant_du - remise) et le solde.
+     *
+     * @param Request $request Requête HTTP avec les données de la facture
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function storeScolaireFacture(Request $request)
     {
         $clientId = $this->getClientId();
@@ -122,6 +169,12 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json(['message' => 'Facture scolaire créée.', 'item' => $item], 201);
     }
 
+    /**
+     * API: Supprime une facture scolaire.
+     *
+     * @param int $id Identifiant de la facture
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function deleteScolaireFacture($id)
     {
         $item = AccountingScolaireFacture::where('client_id', $this->getClientId())->findOrFail($id);
@@ -133,6 +186,12 @@ class DomainAccountingController extends BaseCompanyController
     // LOCATION — Quittances
     // ═══════════════════════════════════════════════════════════════
 
+    /**
+     * API: Liste les quittances de location (200 dernières).
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function quittances(Request $request)
     {
         $clientId = $this->getClientId();
@@ -150,6 +209,14 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json($items);
     }
 
+    /**
+     * API: Crée une quittance de location.
+     *
+     * Calcule automatiquement le montant total et le solde.
+     *
+     * @param Request $request Requête HTTP avec les données de la quittance
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function storeQuittance(Request $request)
     {
         $clientId = $this->getClientId();
@@ -172,6 +239,12 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json(['message' => 'Quittance créée.', 'item' => $item], 201);
     }
 
+    /**
+     * API: Supprime une quittance de location.
+     *
+     * @param int $id Identifiant de la quittance
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function deleteQuittance($id)
     {
         $item = AccountingQuittance::where('client_id', $this->getClientId())->findOrFail($id);
@@ -183,6 +256,12 @@ class DomainAccountingController extends BaseCompanyController
     // TONTINE — Cotisations
     // ═══════════════════════════════════════════════════════════════
 
+    /**
+     * API: Liste les cotisations tontine (200 dernières).
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function cotisations(Request $request)
     {
         $clientId = $this->getClientId();
@@ -197,6 +276,12 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json($items);
     }
 
+    /**
+     * API: Crée une cotisation tontine.
+     *
+     * @param Request $request Requête HTTP avec les données de la cotisation
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function storeCotisation(Request $request)
     {
         $clientId = $this->getClientId();
@@ -215,6 +300,12 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json(['message' => 'Cotisation créée.', 'item' => $item], 201);
     }
 
+    /**
+     * API: Supprime une cotisation tontine.
+     *
+     * @param int $id Identifiant de la cotisation
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function deleteCotisation($id)
     {
         $item = AccountingCotisation::where('client_id', $this->getClientId())->findOrFail($id);
@@ -226,6 +317,12 @@ class DomainAccountingController extends BaseCompanyController
     // TRANSPORT — Transit dossiers
     // ═══════════════════════════════════════════════════════════════
 
+    /**
+     * API: Liste les dossiers de transit (200 derniers).
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function transitDossiers(Request $request)
     {
         $clientId = $this->getClientId();
@@ -245,6 +342,14 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json($items);
     }
 
+    /**
+     * API: Crée un dossier de transit (transport/douane).
+     *
+     * Calcule automatiquement le total facture et le solde.
+     *
+     * @param Request $request Requête HTTP avec les données du dossier
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function storeTransitDossier(Request $request)
     {
         $clientId = $this->getClientId();
@@ -271,6 +376,12 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json(['message' => 'Dossier transit créé.', 'item' => $item], 201);
     }
 
+    /**
+     * API: Supprime un dossier de transit.
+     *
+     * @param int $id Identifiant du dossier
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function deleteTransitDossier($id)
     {
         $item = AccountingTransitDossier::where('client_id', $this->getClientId())->findOrFail($id);
@@ -282,6 +393,12 @@ class DomainAccountingController extends BaseCompanyController
     // HÔTEL — Chambres
     // ═══════════════════════════════════════════════════════════════
 
+    /**
+     * API: Liste les chambres d'hôtel.
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function hotelChambres(Request $request)
     {
         $clientId = $this->getClientId();
@@ -295,6 +412,12 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json($items);
     }
 
+    /**
+     * API: Crée une chambre d'hôtel.
+     *
+     * @param Request $request Requête HTTP avec les données de la chambre
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function storeHotelChambre(Request $request)
     {
         $clientId = $this->getClientId();
@@ -315,6 +438,12 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json(['message' => 'Chambre créée.', 'item' => $item], 201);
     }
 
+    /**
+     * API: Supprime une chambre d'hôtel.
+     *
+     * @param int $id Identifiant de la chambre
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function deleteHotelChambre($id)
     {
         $item = AccountingHotelChambre::where('client_id', $this->getClientId())->findOrFail($id);
@@ -326,6 +455,12 @@ class DomainAccountingController extends BaseCompanyController
     // HÔTEL — Réservations
     // ═══════════════════════════════════════════════════════════════
 
+    /**
+     * API: Liste les réservations hôtel (200 dernières).
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function hotelReservations(Request $request)
     {
         $clientId = $this->getClientId();
@@ -343,6 +478,14 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json($items);
     }
 
+    /**
+     * API: Crée une réservation hôtel.
+     *
+     * Calcule le solde = montant_total - acompte.
+     *
+     * @param Request $request Requête HTTP avec les données de réservation
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function storeHotelReservation(Request $request)
     {
         $clientId = $this->getClientId();
@@ -369,6 +512,12 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json(['message' => 'Réservation créée.', 'item' => $item], 201);
     }
 
+    /**
+     * API: Supprime une réservation hôtel.
+     *
+     * @param int $id Identifiant de la réservation
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function deleteHotelReservation($id)
     {
         $item = AccountingHotelReservation::where('client_id', $this->getClientId())->findOrFail($id);
@@ -380,6 +529,12 @@ class DomainAccountingController extends BaseCompanyController
     // SCOLAIRE — Élèves
     // ═══════════════════════════════════════════════════════════════
 
+    /**
+     * API: Liste les élèves (ordre alphabétique).
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function scolaireEleves(Request $request)
     {
         $clientId = $this->getClientId();
@@ -394,6 +549,12 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json($items);
     }
 
+    /**
+     * API: Crée un élève.
+     *
+     * @param Request $request Requête HTTP avec les données de l'élève
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function storeScolaireEleve(Request $request)
     {
         $clientId = $this->getClientId();
@@ -418,6 +579,12 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json(['message' => 'Élève créé.', 'item' => $item], 201);
     }
 
+    /**
+     * API: Supprime un élève.
+     *
+     * @param int $id Identifiant de l'élève
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function deleteScolaireEleve($id)
     {
         $item = AccountingScolaireEleve::where('client_id', $this->getClientId())->findOrFail($id);
@@ -429,6 +596,12 @@ class DomainAccountingController extends BaseCompanyController
     // LOCATION — Biens
     // ═══════════════════════════════════════════════════════════════
 
+    /**
+     * API: Liste les biens immobiliers (location).
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function locationBiens(Request $request)
     {
         $clientId = $this->getClientId();
@@ -443,6 +616,12 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json($items);
     }
 
+    /**
+     * API: Crée un bien immobilier (location).
+     *
+     * @param Request $request Requête HTTP avec les données du bien
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function storeLocationBien(Request $request)
     {
         $clientId = $this->getClientId();
@@ -469,6 +648,12 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json(['message' => 'Bien créé.', 'item' => $item], 201);
     }
 
+    /**
+     * API: Supprime un bien immobilier.
+     *
+     * @param int $id Identifiant du bien
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function deleteLocationBien($id)
     {
         $item = AccountingLocationBien::where('client_id', $this->getClientId())->findOrFail($id);
@@ -480,6 +665,12 @@ class DomainAccountingController extends BaseCompanyController
     // TONTINE — Groupes
     // ═══════════════════════════════════════════════════════════════
 
+    /**
+     * API: Liste les groupes de tontine.
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function tontines(Request $request)
     {
         $clientId = $this->getClientId();
@@ -493,6 +684,12 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json($items);
     }
 
+    /**
+     * API: Crée un groupe de tontine.
+     *
+     * @param Request $request Requête HTTP avec les données du groupe
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function storeTontine(Request $request)
     {
         $clientId = $this->getClientId();
@@ -512,6 +709,12 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json(['message' => 'Tontine créée.', 'item' => $item], 201);
     }
 
+    /**
+     * API: Supprime un groupe de tontine.
+     *
+     * @param int $id Identifiant de la tontine
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function deleteTontine($id)
     {
         $item = AccountingTontine::where('client_id', $this->getClientId())->findOrFail($id);
@@ -523,6 +726,12 @@ class DomainAccountingController extends BaseCompanyController
     // PRESSING — Commandes
     // ═══════════════════════════════════════════════════════════════
 
+    /**
+     * API: Liste les commandes pressing (200 dernières).
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function pressingCommandes(Request $request)
     {
         $clientId = $this->getClientId();
@@ -540,6 +749,14 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json($items);
     }
 
+    /**
+     * API: Crée une commande pressing.
+     *
+     * Calcule le solde = montant_total - acompte.
+     *
+     * @param Request $request Requête HTTP avec les données de la commande
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function storePressingCommande(Request $request)
     {
         $clientId = $this->getClientId();
@@ -563,6 +780,12 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json(['message' => 'Commande pressing créée.', 'item' => $item], 201);
     }
 
+    /**
+     * API: Supprime une commande pressing.
+     *
+     * @param int $id Identifiant de la commande
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function deletePressingCommande($id)
     {
         $item = AccountingPressingCommande::where('client_id', $this->getClientId())->findOrFail($id);
@@ -574,6 +797,12 @@ class DomainAccountingController extends BaseCompanyController
     // MORGUE — Dépôts
     // ═══════════════════════════════════════════════════════════════
 
+    /**
+     * API: Liste les dépôts morgue (200 derniers).
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function morgueDepots(Request $request)
     {
         $clientId = $this->getClientId();
@@ -593,6 +822,14 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json($items);
     }
 
+    /**
+     * API: Crée un dépôt morgue.
+     *
+     * Calcule le solde = montant_total - montant_paye.
+     *
+     * @param Request $request Requête HTTP avec les données du dépôt
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function storeMorgueDepot(Request $request)
     {
         $clientId = $this->getClientId();
@@ -619,6 +856,12 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json(['message' => 'Dépôt morgue créé.', 'item' => $item], 201);
     }
 
+    /**
+     * API: Supprime un dépôt morgue.
+     *
+     * @param int $id Identifiant du dépôt
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function deleteMorgueDepot($id)
     {
         $item = AccountingMorgueDepot::where('client_id', $this->getClientId())->findOrFail($id);
@@ -630,6 +873,12 @@ class DomainAccountingController extends BaseCompanyController
     // MORGUE — Factures
     // ═══════════════════════════════════════════════════════════════
 
+    /**
+     * API: Liste les factures morgue (200 dernières).
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function morgueFactures(Request $request)
     {
         $clientId = $this->getClientId();
@@ -646,6 +895,14 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json($items);
     }
 
+    /**
+     * API: Crée une facture morgue.
+     *
+     * Calcule le montant TTC et le solde.
+     *
+     * @param Request $request Requête HTTP avec les données de la facture
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function storeMorgueFacture(Request $request)
     {
         $clientId = $this->getClientId();
@@ -670,6 +927,12 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json(['message' => 'Facture morgue créée.', 'item' => $item], 201);
     }
 
+    /**
+     * API: Supprime une facture morgue.
+     *
+     * @param int $id Identifiant de la facture
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function deleteMorgueFacture($id)
     {
         $item = AccountingMorgueFacture::where('client_id', $this->getClientId())->findOrFail($id);
@@ -681,6 +944,12 @@ class DomainAccountingController extends BaseCompanyController
     // GRILLES TARIFAIRES
     // ═══════════════════════════════════════════════════════════════
 
+    /**
+     * API: Liste les grilles tarifaires.
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function grillesTarifaires(Request $request)
     {
         $clientId = $this->getClientId();
@@ -694,6 +963,12 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json($items);
     }
 
+    /**
+     * API: Crée une grille tarifaire.
+     *
+     * @param Request $request Requête HTTP avec les données de la grille
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function storeGrilleTarifaire(Request $request)
     {
         $clientId = $this->getClientId();
@@ -714,6 +989,12 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json(['message' => 'Grille tarifaire créée.', 'item' => $item], 201);
     }
 
+    /**
+     * API: Supprime une grille tarifaire.
+     *
+     * @param int $id Identifiant de la grille
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function deleteGrilleTarifaire($id)
     {
         $item = AccountingGrilleTarifaire::where('client_id', $this->getClientId())->findOrFail($id);
@@ -725,6 +1006,12 @@ class DomainAccountingController extends BaseCompanyController
     // COMMISSIONS
     // ═══════════════════════════════════════════════════════════════
 
+    /**
+     * API: Liste les commissions (200 dernières).
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function commissions(Request $request)
     {
         $clientId = $this->getClientId();
@@ -743,6 +1030,14 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json($items);
     }
 
+    /**
+     * API: Crée une commission.
+     *
+     * Calcule la commission, la TVA, le montant net et le solde.
+     *
+     * @param Request $request Requête HTTP avec les données de la commission
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function storeCommission(Request $request)
     {
         $clientId = $this->getClientId();
@@ -770,6 +1065,12 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json(['message' => 'Commission créée.', 'item' => $item], 201);
     }
 
+    /**
+     * API: Supprime une commission.
+     *
+     * @param int $id Identifiant de la commission
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function deleteCommission($id)
     {
         $item = AccountingCommission::where('client_id', $this->getClientId())->findOrFail($id);
@@ -781,6 +1082,12 @@ class DomainAccountingController extends BaseCompanyController
     // MOBILE MONEY
     // ═══════════════════════════════════════════════════════════════
 
+    /**
+     * API: Liste les transactions Mobile Money (200 dernières).
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function mobileTransactions(Request $request)
     {
         $clientId = $this->getClientId();
@@ -798,6 +1105,14 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json($items);
     }
 
+    /**
+     * API: Crée une transaction Mobile Money.
+     *
+     * Calcule le montant net = montant - frais.
+     *
+     * @param Request $request Requête HTTP avec les données de la transaction
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function storeMobileTransaction(Request $request)
     {
         $clientId = $this->getClientId();
@@ -823,6 +1138,12 @@ class DomainAccountingController extends BaseCompanyController
         return response()->json(['message' => 'Transaction Mobile Money créée.', 'item' => $item], 201);
     }
 
+    /**
+     * API: Supprime une transaction Mobile Money.
+     *
+     * @param int $id Identifiant de la transaction
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function deleteMobileTransaction($id)
     {
         $item = AccountingMobileTransaction::where('client_id', $this->getClientId())->findOrFail($id);
@@ -834,6 +1155,12 @@ class DomainAccountingController extends BaseCompanyController
     // VUES — Facturation (liste des écritures type vente)
     // ═══════════════════════════════════════════════════════════════
 
+    /**
+     * API: Liste les écritures de vente/achat (200 dernières).
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function invoices(Request $request)
     {
         $clientId = $this->getClientId();
@@ -853,6 +1180,12 @@ class DomainAccountingController extends BaseCompanyController
     // VUES — Taxe de séjour (filtre hotel_factures.taxe_sejour > 0)
     // ═══════════════════════════════════════════════════════════════
 
+    /**
+     * API: Liste les factures hôtel avec taxe de séjour.
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function taxeNuitees(Request $request)
     {
         $clientId = $this->getClientId();
@@ -874,6 +1207,12 @@ class DomainAccountingController extends BaseCompanyController
     // VUES — Loyers impayés (quittances solde > 0)
     // ═══════════════════════════════════════════════════════════════
 
+    /**
+     * API: Liste les quittances avec solde impayé.
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function loyersImpayes(Request $request)
     {
         $clientId = $this->getClientId();
@@ -894,6 +1233,14 @@ class DomainAccountingController extends BaseCompanyController
     // VUES — Trésorerie
     // ═══════════════════════════════════════════════════════════════
 
+    /**
+     * API: Vue trésorerie (solde, entrées, sorties, dernières écritures).
+     *
+     * Calcule le solde à partir des journaux postés (débit - crédit).
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function treasury(Request $request)
     {
         $clientId = $this->getClientId();

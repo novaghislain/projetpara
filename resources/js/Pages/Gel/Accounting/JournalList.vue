@@ -1,4 +1,13 @@
 <script setup>
+/*
+ * JournalList.vue - Liste des écritures comptables / Journal (GEL)
+ *
+ * Affiche l'ensemble des écritures comptables d'un client avec
+ * filtrage par période (date de début / date de fin).
+ * Chaque écriture peut être validée (post) ou supprimée si elle
+ * est encore à l'état "brouillon". Un clic sur une ligne affiche
+ * le détail des lignes d'écriture (compte, débit, crédit).
+ */
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../Layouts/GelLayout.vue';
 import { authStore } from '../../../stores/auth';
@@ -12,9 +21,11 @@ const loading = ref(true);
 const error = ref(null);
 const selectedJournal = ref(null);
 
+// Filtres de date pour la période d'affichage
 const dateFrom = ref('');
 const dateTo = ref('');
 
+// Chargement des écritures avec filtres optionnels
 const fetchJournals = async () => {
     loading.value = true;
     error.value = null;
@@ -35,6 +46,7 @@ const fetchJournals = async () => {
     }
 };
 
+// Validation (post) d'une écriture passant son statut à "valide"
 const postJournal = async (id) => {
     if (!confirm('Confirmer la validation de cette écriture ?')) return;
     try {
@@ -50,6 +62,7 @@ const postJournal = async (id) => {
     }
 };
 
+// Suppression (soft delete) d'une écriture en brouillon
 const deleteJournal = async (id) => {
     if (!confirm('Supprimer cette écriture ?')) return;
     try {
@@ -65,6 +78,7 @@ const deleteJournal = async (id) => {
     }
 };
 
+// Classe CSS du badge selon le statut de l'écriture
 const statusBadge = (status) => {
     const map = { brouillon: 'bg-secondary', valide: 'bg-success', 'annule': 'bg-danger' };
     return map[status] || 'bg-secondary';

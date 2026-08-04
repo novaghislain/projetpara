@@ -42,6 +42,11 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        
+        'portal' => [
+            'driver' => 'session',
+            'provider' => 'portal_contacts',
+        ],
     ],
 
     /*
@@ -65,6 +70,11 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', User::class),
+        ],
+        
+        'portal_contacts' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\PortalContact::class,
         ],
 
         // 'users' => [

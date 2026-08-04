@@ -13,6 +13,12 @@ use Illuminate\Support\Facades\Auth;
 
 class AdminOrderController extends Controller
 {
+    /**
+     * Contrôleur pour la gestion administrative des commandes.
+     * Permet le suivi via un tableau Kanban, la gestion des statuts,
+     * l'assignation des responsables, la messagerie interne,
+     * et le dépôt de documents pour chaque commande.
+     */
     const STATUTS = [
         'Nouvelle Demande',
         'En cours',
@@ -33,7 +39,9 @@ class AdminOrderController extends Controller
     ];
 
     /**
-     * Vue Kanban de toutes les commandes
+     * Affiche le tableau Kanban de toutes les commandes actives.
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
@@ -62,7 +70,10 @@ class AdminOrderController extends Controller
     }
 
     /**
-     * Détail d'une commande (vue admin)
+     * Affiche le détail d'une commande (vue admin).
+     *
+     * @param int $id Identifiant de la commande
+     * @return \Illuminate\View\View
      */
     public function show($id)
     {
@@ -83,7 +94,9 @@ class AdminOrderController extends Controller
     }
 
     /**
-     * Vue des commandes archivées
+     * Affiche la liste des commandes archivées (livrées ou annulées).
+     *
+     * @return \Illuminate\View\View
      */
     public function archives()
     {
@@ -101,7 +114,12 @@ class AdminOrderController extends Controller
     }
 
     /**
-     * Changer le statut d'une commande (drag & drop Kanban)
+     * Change le statut d'une commande (drag & drop Kanban).
+     * Enregistre l'historique du changement de statut.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param int $id Identifiant de la commande
+     * @return \Illuminate\Http\JsonResponse
      */
     public function updateStatus(Request $request, $id)
     {
@@ -130,7 +148,11 @@ class AdminOrderController extends Controller
     }
 
     /**
-     * Assigner un responsable à une commande
+     * Assigne un responsable à une commande.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param int $id Identifiant de la commande
+     * @return \Illuminate\Http\JsonResponse
      */
     public function assignResponsable(Request $request, $id)
     {
@@ -142,7 +164,11 @@ class AdminOrderController extends Controller
     }
 
     /**
-     * Envoyer un message interne (réponse admin)
+     * Envoie un message interne à une commande (réponse de l'équipe).
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param int $id Identifiant de la commande
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function storeMessage(Request $request, $id)
     {
@@ -161,7 +187,11 @@ class AdminOrderController extends Controller
     }
 
     /**
-     * Mettre à jour les notes internes + délai + montant
+     * Met à jour les notes internes, le délai estimé et le montant d'une commande.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param int $id Identifiant de la commande
+     * @return \Illuminate\Http\JsonResponse
      */
     public function updateDetails(Request $request, $id)
     {
@@ -181,7 +211,11 @@ class AdminOrderController extends Controller
     }
 
     /**
-     * Uploader un document final (facture, résultat)
+     * Télécharge et associe un document final à une commande (facture, résultat, etc.).
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param int $id Identifiant de la commande
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function storeDocument(Request $request, $id)
     {

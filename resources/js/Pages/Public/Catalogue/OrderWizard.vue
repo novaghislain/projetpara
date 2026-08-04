@@ -1,3 +1,9 @@
+<!--
+ * Composant : Assistant de commande
+ * Description : Assistant multi-étapes pour la commande de services : saisie des détails,
+ *              dépôt de documents, paiement Mobile Money et récapitulatif avant soumission.
+ * Utilisation : Page /commande/etape
+-->
 <script setup>
 import { ref, computed, reactive } from 'vue';
 
@@ -20,17 +26,18 @@ const props = defineProps({
     }
 });
 
-const currentStep = ref(1);
-const processing = ref(false);
+const currentStep = ref(1);     /* Étape courante de l'assistant */
+const processing = ref(false);  /* État de soumission */
 
+/* Données du formulaire de commande */
 const form = reactive({
-    form_data: {},
-    documents: [], // Array of { file: File, label: String }
+    form_data: {},              /* Champs dynamiques du service */
+    documents: [],              /* Fichiers joints : [{ file: File, label: String }] */
     payment_method: '',
     phone_number: ''
 });
 
-// Initialiser les champs dynamiques s'ils existent
+/* Initialisation des champs dynamiques du service (s'ils existent) */
 if (props.service.champs_formulaire_json) {
     props.service.champs_formulaire_json.forEach(champ => {
         form.form_data[champ.name] = '';
@@ -39,17 +46,15 @@ if (props.service.champs_formulaire_json) {
 
 const hasDynamicFields = computed(() => props.service.champs_formulaire_json?.length > 0);
 
+/* Calcule le nombre total d'étapes : champs dynamiques + paiement + récapitulatif */
 const totalSteps = computed(() => {
-    // Étape 1 : Champs dynamiques (si présents)
-    // Étape X : Paiement Mobile Money
-    // Étape Finale : Récap
-    return (hasDynamicFields.value ? 1 : 0) + 1 + 1; // +1 paiement, +1 récap
+    return (hasDynamicFields.value ? 1 : 0) + 1 + 1;
 });
 
-// Étape Paiement = avant-dernière (totalSteps - 1)
+/* L'étape de paiement est l'avant-dernière */
 const paymentStep = computed(() => totalSteps.value - 1);
 
-// Calcul du total depuis le panier (si disponible)
+/* Calculs du panier : articles, total et présence d'articles sur devis */
 const cartItems = computed(() => Object.values(props.cart || {}));
 const cartTotal = computed(() => cartItems.value.reduce((acc, item) => {
     if (item.tarif_type === 'fixe' && item.tarif_fcfa) return acc + (item.tarif_fcfa * (item.quantity || 1));
@@ -57,13 +62,14 @@ const cartTotal = computed(() => cartItems.value.reduce((acc, item) => {
 }, 0));
 const hasDevisItems = computed(() => cartItems.value.some(i => i.tarif_type !== 'fixe') || props.service.tarif_type !== 'fixe');
 
-// Montant depuis le service unique (fallback si pas de panier)
+/* Montant total : panier ou service unique (fallback) */
 const totalAmount = computed(() => {
     if (cartItems.value.length > 0) return cartTotal.value;
     if (props.service.tarif_type === 'fixe') return props.service.tarif_fcfa || 0;
     return 0;
 });
 
+/* Passe à l'étape suivante avec validation du numéro de téléphone */
 const nextStep = () => {
     if (currentStep.value === paymentStep.value && form.payment_method && !form.phone_number.trim()) {
         alert('Veuillez saisir votre numéro de téléphone Mobile Money.');
@@ -72,12 +78,14 @@ const nextStep = () => {
     currentStep.value++;
 };
 
+/* Retour à l'étape précédente */
 const prevStep = () => {
     currentStep.value--;
 };
 
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
+/* Ajoute les fichiers sélectionnés à la liste des documents */
 const handleFileUploads = (e) => {
     const files = Array.from(e.target.files);
     files.forEach(file => {
@@ -86,19 +94,20 @@ const handleFileUploads = (e) => {
             label: 'Document joint'
         });
     });
-    e.target.value = ''; // Réinitialiser le champ input
+    e.target.value = ''; /* Réinitialisation du champ input */
 };
 
+/* Gère l'upload d'un document requis (remplace si déjà présent) */
 const handleRequiredFileUpload = (e, docName) => {
     const file = e.target.files[0];
     if (!file) return;
-    
-    // Remplacer si un fichier existe déjà pour ce label
+
+    /* Remplace un fichier existant pour ce type de document */
     const existingIndex = form.documents.findIndex(d => d.label === docName);
     if (existingIndex !== -1) {
         form.documents.splice(existingIndex, 1);
     }
-    
+
     form.documents.push({
         file: file,
         label: docName
@@ -106,31 +115,35 @@ const handleRequiredFileUpload = (e, docName) => {
     e.target.value = '';
 };
 
+/* Vérifie si un document a été uploadé pour un type donné */
 const hasUploadedDoc = (docName) => {
     return form.documents.some(d => d.label === docName);
 };
 
+/* Retourne le nom du fichier uploadé pour un type donné */
 const getUploadedDocName = (docName) => {
     const doc = form.documents.find(d => d.label === docName);
     return doc ? doc.file.name : '';
 };
 
+/* Supprime un document de la liste */
 const removeDocument = (index) => {
     form.documents.splice(index, 1);
 };
 
+/* Soumet la commande complète (formulaire + fichiers + infos paiement) */
 const submitOrder = async () => {
     processing.value = true;
     try {
         const formData = new FormData();
-        // Ajouter les champs de formulaire
+        /* Ajout des champs de formulaire dynamiques */
         for (const [key, value] of Object.entries(form.form_data)) {
             formData.append(`form_data[${key}]`, value);
         }
-        // Ajouter infos paiement
+        /* Ajout des informations de paiement */
         formData.append('payment_method', form.payment_method);
         formData.append('phone_number', form.phone_number);
-        // Ajouter les fichiers et types
+        /* Ajout des fichiers joints et leurs types */
         form.documents.forEach((doc, index) => {
             formData.append(`documents[${index}]`, doc.file);
             formData.append(`document_types[${index}]`, doc.label);
@@ -144,7 +157,7 @@ const submitOrder = async () => {
             },
             body: formData
         });
-        
+
         if (res.ok) {
             const data = await res.json();
             window.location.href = data.redirect || '/mes-commandes';

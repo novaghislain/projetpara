@@ -18,5 +18,11 @@
     </GelLayout>
 </template>
 <script setup>
+/* ============================================
+ * Rapprochement.vue — Module de rapprochement bancaire
+ * Permet le rapprochement des relevés bancaires avec la comptabilité.
+ * ============================================ */
+
+/* Layout principal de l'interface GEL */
 import GelLayout from '../../../Layouts/GelLayout.vue';
 </script>

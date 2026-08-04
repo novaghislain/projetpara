@@ -8,10 +8,18 @@ use App\Models\Service;
 use App\Models\ClientService;
 use Illuminate\Http\Request;
 
+/**
+ * Contrôleur de gestion des services attachés aux clients.
+ * Permet d'attacher, détacher et mettre à jour le statut des services
+ * pour un client donné via l'API.
+ */
 class ClientServiceController extends Controller
 {
     /**
-     * API: Liste des services d'un client.
+     * API : Liste tous les services d'un client avec les données pivot.
+     *
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\Http\JsonResponse
      */
     public function listAll($clientId)
     {
@@ -25,7 +33,12 @@ class ClientServiceController extends Controller
     }
 
     /**
-     * API: Attacher un service à un client.
+     * API : Attache un service à un client.
+     * Vérifie que le service n'est pas déjà attaché avant de créer la liaison.
+     *
+     * @param Request $request La requête HTTP avec service_id, status, dates et settings
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\Http\JsonResponse
      */
     public function attach(Request $request, $clientId)
     {
@@ -39,7 +52,7 @@ class ClientServiceController extends Controller
             'settings' => 'nullable|json',
         ]);
 
-        // Vérifier si déjà attaché
+        // Vérifier si le service est déjà attaché pour éviter les doublons
         if ($client->services()->where('service_id', $validated['service_id'])->exists()) {
             return response()->json(['message' => 'Ce service est déjà attaché à ce client'], 409);
         }
@@ -55,7 +68,11 @@ class ClientServiceController extends Controller
     }
 
     /**
-     * API: Détacher un service d'un client.
+     * API : Détache un service d'un client.
+     *
+     * @param int $clientId L'identifiant du client
+     * @param int $serviceId L'identifiant du service à détacher
+     * @return \Illuminate\Http\JsonResponse
      */
     public function detach($clientId, $serviceId)
     {
@@ -67,7 +84,12 @@ class ClientServiceController extends Controller
     }
 
     /**
-     * API: Mettre à jour le statut d'un service client.
+     * API : Met à jour le statut et les paramètres d'un service client.
+     *
+     * @param Request $request La requête HTTP avec status, dates et settings
+     * @param int $clientId L'identifiant du client
+     * @param int $serviceId L'identifiant du service
+     * @return \Illuminate\Http\JsonResponse
      */
     public function updateStatus(Request $request, $clientId, $serviceId)
     {

@@ -1,4 +1,10 @@
 <script setup>
+/*
+ * Composant : UserProfileSettings
+ * Role : Permet à l'utilisateur de modifier sa photo de profil et son mot de passe
+ * Props : aucune (utilise le store d'authentification)
+ * Events : 'updated' — émis après une modification réussie de la photo
+ */
 import { ref, computed, onMounted } from 'vue';
 import { authStore } from '../stores/auth';
 

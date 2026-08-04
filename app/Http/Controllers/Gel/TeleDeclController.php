@@ -12,11 +12,25 @@ use Illuminate\View\View;
 
 class TeleDeclController extends Controller
 {
+    /**
+     * Contrôleur de gestion des télédéclarations fiscales.
+     * Permet la création, la soumission et le suivi des déclarations
+     * fiscales (TVA, IS, ITS, CNSS, VPS, AIB) avec leur cycle
+     * de vie : brouillon -> depose -> paye.
+     */
+
+    /**
+     * Liste paginée des déclarations fiscales avec filtres.
+     *
+     * @param Request $request La requête HTTP avec les filtres (client, type, statut)
+     * @return View
+     */
     public function index(Request $request): View
     {
         $query = AccountingTaxDeclaration::with('client')
             ->whereIn('tax_type', ['tva', 'is', 'its', 'cnss', 'vps', 'aib']);
 
+        // Filtres optionnels
         if ($request->filled('client_id')) $query->where('client_id', $request->client_id);
         if ($request->filled('tax_type')) $query->where('tax_type', $request->tax_type);
         if ($request->filled('status')) $query->where('status', $request->status);
@@ -26,12 +40,23 @@ class TeleDeclController extends Controller
         return view('app', ['page' => 'gel-tele-declarations', 'props' => compact('declarations', 'clients')]);
     }
 
+    /**
+     * Affiche le formulaire de création d'une déclaration fiscale.
+     *
+     * @return View
+     */
     public function create(): View
     {
         $clients = Client::where('status', 'actif')->orderBy('company_name')->get(['id', 'company_name']);
         return view('app', ['page' => 'gel-tele-declarations-form', 'props' => compact('clients')]);
     }
 
+    /**
+     * Enregistre une nouvelle déclaration fiscale.
+     *
+     * @param Request $request La requête HTTP avec les données de la déclaration
+     * @return RedirectResponse Redirection vers la liste
+     */
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -49,6 +74,7 @@ class TeleDeclController extends Controller
             'notes'         => 'nullable|string',
         ]);
 
+        // Détermination du type de période
         $validated['period_type'] = $validated['period_quarter'] ? 'trimestriel'
             : ($validated['period_month'] ? 'mensuel' : 'annuel');
         $validated['status'] = 'brouillon';
@@ -61,14 +87,27 @@ class TeleDeclController extends Controller
         return redirect()->route('gel.tele-declarations.index')->with('success', 'Déclaration fiscale créée.');
     }
 
+    /**
+     * Affiche le détail d'une déclaration fiscale.
+     *
+     * @param AccountingTaxDeclaration $declaration La déclaration à afficher (injection de modèle)
+     * @return View
+     */
     public function show(AccountingTaxDeclaration $declaration): View
     {
         $declaration->load('client', 'createdBy');
         return view('app', ['page' => 'gel-tele-declarations-show', 'props' => compact('declaration')]);
     }
 
+    /**
+     * Soumet une déclaration (passe de brouillon à déposé).
+     *
+     * @param AccountingTaxDeclaration $declaration La déclaration à soumettre
+     * @return RedirectResponse
+     */
     public function submit(AccountingTaxDeclaration $declaration): RedirectResponse
     {
+        // Seules les déclarations en brouillon peuvent être soumises
         if ($declaration->status !== 'brouillon') {
             return back()->withErrors(['Seules les déclarations en brouillon peuvent être soumises.']);
         }
@@ -84,8 +123,15 @@ class TeleDeclController extends Controller
             ->with('success', 'Déclaration déposée avec succès.');
     }
 
+    /**
+     * Supprime une déclaration (brouillon seulement).
+     *
+     * @param AccountingTaxDeclaration $declaration La déclaration à supprimer
+     * @return RedirectResponse
+     */
     public function destroy(AccountingTaxDeclaration $declaration): RedirectResponse
     {
+        // Seules les déclarations en brouillon peuvent être supprimées
         if (!in_array($declaration->status, ['brouillon'])) {
             return back()->withErrors(['Seules les déclarations en brouillon peuvent être supprimées.']);
         }

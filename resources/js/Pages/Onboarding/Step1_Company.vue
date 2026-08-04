@@ -1,3 +1,10 @@
+<!--
+ * Composant : Étape 1 du processus d'inscription — Informations entreprise
+ * Description : Formulaire de saisie des informations de base de l'entreprise
+ *              (nom, forme juridique, RCCM, IFU, adresse, contact).
+ *              Étape 1 sur 5 du parcours d'onboarding.
+ * Utilisation : Page /register/company/step/1
+-->
 <template>
     <div class="onboarding-wrapper">
         <div class="onboarding-card">
@@ -73,9 +80,12 @@
 
 <script setup>
 import { ref, reactive } from 'vue';
+
+/* États du formulaire : chargement et message d'erreur */
 const submitting = ref(false);
 const error = ref(null);
 
+/* Données réactives du formulaire d'entreprise */
 const form = reactive({
     company_name: '',
     legal_form: '',
@@ -88,8 +98,10 @@ const form = reactive({
     website: '',
 });
 
+/* Récupération du token CSRF depuis la balise meta */
 const csrfToken = document.querySelector('meta[name=csrf-token]')?.content || '';
 
+/* Envoie les données de l'étape 1 au serveur et redirige vers l'étape suivante */
 async function submitStep1() {
     submitting.value = true;
     error.value = null;
@@ -112,6 +124,7 @@ async function submitStep1() {
             return;
         }
 
+        /* Redirection vers l'étape suivante du parcours */
         if (data.success) {
             window.location.href = `/register/company/step/${data.next_step}`;
         }

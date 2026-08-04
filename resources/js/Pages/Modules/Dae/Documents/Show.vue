@@ -192,15 +192,26 @@
 </template>
 
 <script>
+/*
+ * Composant : DaeDocumentsShow
+ * Role : Page de detail d'un document dans le module DAE.
+ * Affiche les informations du document (type, categorie, version, taille, client...),
+ * les dates, les flags (valide, signe) et les mots-cles.
+ * Permet le telechargement et l'ajout d'une nouvelle version.
+ * Props : aucune (l'ID est extrait de l'URL)
+ * Evenements : aucun
+ */
 import axios from 'axios';
 import { Modal } from 'bootstrap';
 
+// Mapping des types de document vers leurs libelles
 const TYPE_MAP = {
     contrat: 'Contrat', rapport: 'Rapport', facture: 'Facture',
     courrier: 'Courrier', note: 'Note', devis: 'Devis',
     proces_verbal: 'Procès-verbal', autre: 'Autre',
 };
 
+// Mapping des categories de document vers leurs libelles
 const CATEGORIE_MAP = {
     administratif: 'Administratif', juridique: 'Juridique',
     financier: 'Financier', technique: 'Technique',

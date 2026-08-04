@@ -14,6 +14,12 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
 
+/**
+ * Contrôleur d'inscription des clients finaux via code entreprise.
+ *
+ * Permet à un utilisateur de créer un compte 'client' lié à une entreprise
+ * existante via un code d'accès fourni par celle-ci.
+ */
 class ClientRegistrationController extends Controller
 {
     /**

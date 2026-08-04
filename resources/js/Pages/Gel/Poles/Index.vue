@@ -1,21 +1,33 @@
 <script setup>
+/* ============================================================
+ * Pôles — Index
+ * Liste, création, modification et suppression des pôles
+ * d'activité du cabinet. Chaque pôle possède un nom, un slug,
+ * une description, une couleur et un statut actif/inactif.
+ * ============================================================ */
 import { ref, onMounted, nextTick } from 'vue';
 import GelLayout from '../../../Layouts/GelLayout.vue';
 import { authStore } from '../../../stores/auth';
 
-const poles = ref([]);
-const loading = ref(true);
-const error = ref(null);
-const submitting = ref(false);
+/* --- État réactif --- */
+const poles = ref([]);        /* Liste des pôles */
+const loading = ref(true);    /* Indicateur de chargement */
+const error = ref(null);      /* Message d'erreur */
+const submitting = ref(false); /* true pendant la soumission */
 
-const showModal = ref(false);
-const isEditing = ref(false);
-const editingId = ref(null);
-const modalEl = ref(null);
-const modalInstance = ref(null);
+/* --- État de la modale --- */
+const showModal = ref(false);      /* Visibilité de la modale */
+const isEditing = ref(false);      /* true = édition, false = création */
+const editingId = ref(null);       /* ID du pôle en cours d'édition */
+const modalEl = ref(null);         /* Référence à l'élément DOM de la modale */
+const modalInstance = ref(null);   /* Instance Bootstrap de la modale */
 
+/* --- Formulaire --- */
 const form = ref({ name: '', slug: '', description: '', color: '#1a237e', is_active: true });
 
+/*
+ * fetchPoles — Charge la liste des pôles depuis l'API.
+ */
 const fetchPoles = async () => {
     loading.value = true;
     error.value = null;
@@ -30,10 +42,16 @@ const fetchPoles = async () => {
     }
 };
 
+/*
+ * resetForm — Réinitialise le formulaire à ses valeurs par défaut.
+ */
 const resetForm = () => {
     form.value = { name: '', slug: '', description: '', color: '#1a237e', is_active: true };
 };
 
+/*
+ * openCreateModal — Ouvre la modale en mode création.
+ */
 const openCreateModal = () => {
     resetForm();
     isEditing.value = false;
@@ -47,6 +65,9 @@ const openCreateModal = () => {
     });
 };
 
+/*
+ * openEditModal — Ouvre la modale en mode édition avec les données du pôle.
+ */
 const openEditModal = (pole) => {
     form.value = {
         name: pole.name || '',
@@ -66,11 +87,18 @@ const openEditModal = (pole) => {
     });
 };
 
+/*
+ * closeModal — Ferme la modale Bootstrap.
+ */
 const closeModal = () => {
     modalInstance.value?.hide();
     showModal.value = false;
 };
 
+/*
+ * submitForm — Crée ou met à jour un pôle selon le mode (création/édition).
+ * Envoie les données via fetch avec le token CSRF.
+ */
 const submitForm = async () => {
     submitting.value = true;
     try {
@@ -96,6 +124,9 @@ const submitForm = async () => {
     }
 };
 
+/*
+ * deletePole — Supprime un pôle après confirmation utilisateur.
+ */
 const deletePole = async (id) => {
     if (!confirm('Confirmer la suppression de ce pôle ?')) return;
     try {
@@ -111,6 +142,7 @@ const deletePole = async (id) => {
     }
 };
 
+/* Au montage du composant, on charge la liste des pôles. */
 onMounted(fetchPoles);
 </script>
 

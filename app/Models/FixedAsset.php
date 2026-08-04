@@ -6,6 +6,36 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Modèle FixedAsset (Immobilisation).
+ *
+ * Représente un actif immobilisé (équipement, véhicule, bâtiment, etc.)
+ * avec ses paramètres d'amortissement (méthode, durée, valeur résiduelle).
+ * Permet de générer un plan d'amortissement complet.
+ *
+ * @property int $id
+ * @property int $client_id ID du client propriétaire
+ * @property int $fiscal_year_id ID de l'exercice fiscal
+ * @property string $designation Nom/Désignation du bien
+ * @property string $category Catégorie d'immobilisation
+ * @property \Carbon\Carbon $acquisition_date Date d'acquisition
+ * @property float $gross_value Valeur brute d'acquisition
+ * @property float $residual_value Valeur résiduelle estimée
+ * @property int $depreciation_months Durée d'amortissement en mois
+ * @property string $depreciation_method Méthode d'amortissement (linéaire, dégressif)
+ * @property float $net_book_value Valeur nette comptable
+ * @property string|null $account_code Code compte comptable d'immobilisation
+ * @property string|null $depreciation_account_code Code compte d'amortissement
+ * @property string $status Statut (actif, cédé, mis au rebut)
+ * @property \Carbon\Carbon|null $disposal_date Date de cession
+ * @property float|null $disposal_price Prix de cession
+ * @property float|null $capital_gain_loss Plus ou moins-value de cession
+ * @property string|null $notes Notes
+ *
+ * @property-read \App\Models\User $client Client propriétaire
+ * @property-read \App\Models\FiscalYear $fiscalYear Exercice fiscal
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\DepreciationSchedule[] $depreciationSchedules Échéanciers d'amortissement
+ */
 class FixedAsset extends Model
 {
     protected $fillable = [

@@ -69,13 +69,20 @@
     </div>
 </template>
 
+/*
+ * Composant : CompanyCodeDisplay
+ * Role : Affiche le code unique d'une entreprise ainsi que son QR code.
+ *        Permet de copier le code et, pour les administrateurs, de le regenerer.
+ */
 <script setup>
 import { ref, onMounted } from 'vue'
 
+/* Proprietes : identifiant du client/entreprise concerne */
 const props = defineProps({
     clientId: { type: [Number, String], required: true },
 })
 
+/* Donnees reactives pour le code, le QR code et les actions */
 const code = ref(null)
 const qrDataUri = ref(null)
 const canRegenerate = ref(false)
@@ -85,6 +92,7 @@ const copied = ref(false)
 const showConfirm = ref(false)
 const regenerating = ref(false)
 
+/* Charge le code entreprise et le QR code depuis l'API */
 async function fetchCode() {
     loading.value = true
     loadError.value = null
@@ -104,6 +112,7 @@ async function fetchCode() {
     }
 }
 
+/* Copie le code dans le presse-papier avec fallback pour les navigateurs anciens */
 async function copyCode() {
     if (!code.value) return
     try {
@@ -111,7 +120,7 @@ async function copyCode() {
         copied.value = true
         setTimeout(() => { copied.value = false }, 2000)
     } catch {
-        // Fallback
+        // Fallback : copie via un element textarea temporaire
         const ta = document.createElement('textarea')
         ta.value = code.value
         document.body.appendChild(ta)
@@ -123,6 +132,7 @@ async function copyCode() {
     }
 }
 
+/* Regenerate le code entreprise (action irreversible, confirmation requise) */
 async function regenerate() {
     regenerating.value = true
     try {

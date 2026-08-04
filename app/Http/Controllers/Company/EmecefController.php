@@ -5,6 +5,12 @@ namespace App\Http\Controllers\Company;
 use App\Models\Client;
 use Illuminate\Http\Request;
 
+/**
+ * Contrôleur pour la gestion de la configuration e-MECeF (facturation électronique).
+ *
+ * Permet d'afficher, configurer, tester et supprimer les paramètres
+ * de connexion au service e-MECeF pour la facturation électronique.
+ */
 class EmecefController extends BaseCompanyController
 {
     /**

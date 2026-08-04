@@ -1,13 +1,20 @@
 <script setup>
+/* ============================================================
+ * Clôture d'Exercice — Gestion des clôtures comptables
+ * Affiche les exercices fiscaux, leurs statuts et les écritures
+ * de clôture. Permet de clôturer ou rouvrir un exercice.
+ * ============================================================ */
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 import { authStore } from '../../../../stores/auth';
 import AccountingClientSelector from '../../../../Components/Gel/AccountingClientSelector.vue';
 
+/* Propriétés : identifiant client passé en prop */
 const props = defineProps({
     clientId: { type: [Number, String], default: null }
 });
 
+/* État réactif : écritures de clôture, statistiques, exercices fiscaux */
 const entries = ref([]);
 const stats = ref([]);
 const loading = ref(true);
@@ -15,13 +22,16 @@ const error = ref(null);
 const selectedFy = ref(null);
 const fiscalYears = ref([]);
 const message = ref('');
+/* ID client actif : priorité à la prop, puis au store d'authentification */
 const activeClientId = ref(props.clientId || authStore.user?.active_client_id || authStore.user?.client_id || null);
 
+/* onClientSelected — Mis à jour du client via le sélecteur et rechargement */
 const onClientSelected = (cid) => {
     activeClientId.value = cid;
     fetchData();
 };
 
+/* fetchData — Chargement des écritures, statistiques et exercices depuis l'API */
 const fetchData = async () => {
     loading.value = true;
     error.value = null;
@@ -46,6 +56,7 @@ const fetchData = async () => {
     finally { loading.value = false; }
 };
 
+/* closeYear — Clôture définitive de l'exercice sélectionné (action irréversible) */
 const closeYear = async () => {
     if (!selectedFy.value) return;
     if (!confirm('Confirmer la clôture de cet exercice ? Cette action est irréversible.')) return;
@@ -65,6 +76,7 @@ const closeYear = async () => {
     }
 };
 
+/* reopenYear — Réouverture d'un exercice précédemment clôturé */
 const reopenYear = async (fyId) => {
     if (!confirm('Réouvrir cet exercice ?')) return;
 
@@ -82,9 +94,12 @@ const reopenYear = async (fyId) => {
     }
 };
 
+/* statusBadge — Classe CSS du badge selon le statut de l'exercice */
 const statusBadge = (s) => ({ open: 'bg-success', closed: 'bg-secondary', locked: 'bg-dark' }[s] || 'bg-secondary');
+/* typeLabel — Libellé lisible du type d'écriture de clôture */
 const typeLabel = (t) => ({ inventaire: 'Inventaire', amortissement: 'Amort.', provision: 'Provision', regularisation: 'Régul.', resultat: 'Résultat', affectation: 'Affectation' }[t] || t);
 
+/* Chargement initial au montage du composant */
 onMounted(fetchData);
 </script>
 

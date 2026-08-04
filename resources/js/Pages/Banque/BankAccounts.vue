@@ -102,25 +102,40 @@
 </template>
 
 <script setup>
+/*
+ * BankAccounts.vue - Liste des comptes bancaires
+ *
+ * Affiche la liste des comptes bancaires sous forme de cartes (grid).
+ * Chaque carte présente le nom de la banque, le type de compte,
+ * le numéro de compte et le solde actuel. Permet de créer un nouveau
+ * compte ou d'en modifier un existant via un modal.
+ */
 import { ref, reactive, computed, onMounted } from 'vue'
 
+// Liste des comptes bancaires chargés depuis l'API
 const accounts = ref([])
 const loading = ref(true)
 const error = ref(null)
 const saving = ref(false)
 const showModal = ref(false)
+// Compte en cours d'édition (null si création)
 const editing = ref(null)
 
+// Formulaire vierge pour la création d'un nouveau compte
 const emptyForm = { bank_name: '', account_type: 'checking', account_number: '', balance: 0, is_active: true }
 const form = reactive({ ...emptyForm })
 
+// Formateur monétaire en francs CFA
 const fmt = (v) => new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(v || 0) + ' F'
+// Jeton CSRF pour les requêtes sécurisées
 const csrf = computed(() => document.querySelector('meta[name=csrf-token]')?.content || '')
+// Fonction utilitaire d'appel API avec en-têtes JSON par défaut
 const api = (path, opts = {}) => fetch(path, {
     headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf.value, ...opts.headers },
     ...opts,
 })
 
+// Chargement de la liste des comptes bancaires depuis l'API
 async function loadAccounts() {
     loading.value = true; error.value = null
     try {
@@ -130,6 +145,7 @@ async function loadAccounts() {
     } catch (e) { error.value = e.message } finally { loading.value = false }
 }
 
+// Pré-remplissage du formulaire avec les données d'un compte existant pour modification
 function editAccount(acc) {
     editing.value = acc
     Object.assign(form, {
@@ -142,6 +158,7 @@ function editAccount(acc) {
     showModal.value = true
 }
 
+// Enregistrement (création ou modification) d'un compte bancaire
 async function saveAccount() {
     saving.value = true
     try {
@@ -154,9 +171,11 @@ async function saveAccount() {
     } catch (e) { error.value = e.message } finally { saving.value = false }
 }
 
+// Redirection vers la page de détail d'un compte bancaire
 function viewDetail(acc) {
     window.location.href = `/comptabilite/banque/compte/${acc.id}`
 }
 
+// Chargement automatique au montage du composant
 onMounted(loadAccounts)
 </script>

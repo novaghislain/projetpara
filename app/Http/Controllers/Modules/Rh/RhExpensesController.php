@@ -7,8 +7,23 @@ use App\Models\Rh\RhEmployee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur de gestion des notes de frais RH.
+ *
+ * Permet de créer, consulter, approuver/rejeter et supprimer
+ * les notes de frais soumises par les employés.
+ */
 class RhExpensesController extends BaseRhController
 {
+    /**
+     * Affiche la liste des notes de frais ou la vue associée.
+     *
+     * Si la requête attend du JSON, retourne les notes de frais paginées
+     * avec filtrage optionnel par statut.
+     *
+     * @param Request $request La requête HTTP avec le filtre (statut)
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View Liste paginée des notes de frais ou vue
+     */
     public function index(Request $request)
     {
         if ($request->expectsJson()) {
@@ -23,6 +38,12 @@ class RhExpensesController extends BaseRhController
         return view('app', ['page' => 'rh-expenses']);
     }
 
+    /**
+     * Crée une nouvelle note de frais.
+     *
+     * @param Request $request La requête HTTP contenant les données de la note de frais
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse Note de frais créée ou redirection
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -42,6 +63,13 @@ class RhExpensesController extends BaseRhController
         return redirect()->route('rh.expenses.index')->with('success', 'Note de frais créée.');
     }
 
+    /**
+     * Approuve, rejette ou marque comme payée une note de frais.
+     *
+     * @param Request $request La requête HTTP contenant le statut et le justificatif
+     * @param mixed $id L'identifiant de la note de frais
+     * @return \Illuminate\Http\JsonResponse La note de frais mise à jour
+     */
     public function approuver(Request $request, $id)
     {
         $employeeIds = RhEmployee::byClient($this->getClientId($request))->pluck('id');
@@ -62,6 +90,13 @@ class RhExpensesController extends BaseRhController
         return response()->json($expense->load('employee'));
     }
 
+    /**
+     * Supprime une note de frais.
+     *
+     * @param Request $request La requête HTTP
+     * @param mixed $id L'identifiant de la note de frais à supprimer
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse Message de confirmation ou redirection
+     */
     public function destroy(Request $request, $id)
     {
         $employeeIds = RhEmployee::byClient($this->getClientId($request))->pluck('id');

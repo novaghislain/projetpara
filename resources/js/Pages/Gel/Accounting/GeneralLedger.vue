@@ -1,4 +1,12 @@
 <script setup>
+/*
+ * GeneralLedger.vue - Grand Livre comptable (GEL)
+ *
+ * Affiche le Grand Livre : l'ensemble des écritures comptables
+ * regroupées par compte, avec le solde cumulé (running balance)
+ * après chaque écriture. Permet le filtrage par compte individuel
+ * et charge la liste des comptes pour le sélecteur.
+ */
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../Layouts/GelLayout.vue';
 import { authStore } from '../../../stores/auth';
@@ -7,19 +15,22 @@ const props = defineProps({
     clientId: { type: [Number, String], default: null }
 });
 
+// Liste des comptes pour le filtre déroulant
 const accounts = ref([]);
+// Données du grand livre groupées par compte
 const data = ref(null);
 const selectedAccountId = ref('');
 const loading = ref(true);
 const error = ref(null);
 
+// Chargement des comptes + écritures du grand livre
 const fetchData = async () => {
     loading.value = true;
     error.value = null;
     const cid = props.clientId || authStore.user?.client_id;
     if (!cid) { error.value = 'Aucun client sélectionné.'; loading.value = false; return; }
     try {
-        // Fetch accounts first for filter
+        // Chargement des comptes pour le sélecteur de filtre
         const accRes = await fetch('/api/accounting/accounts/' + cid);
         if (accRes.ok) accounts.value = await accRes.json();
 
@@ -35,6 +46,7 @@ const fetchData = async () => {
     }
 };
 
+// Calcul du solde cumulé (running balance) après chaque ligne d'écriture
 const runningBalance = (entries) => {
     if (!entries?.length) return null;
     let balance = 0;

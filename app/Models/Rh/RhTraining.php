@@ -4,6 +4,15 @@ namespace App\Models\Rh;
 
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle RhTraining - Formation suivie par un employé.
+ *
+ * Table associée : 'rh_trainings'.
+ * Enregistre les formations : titre, organisme, dates, durée, coût,
+ * type, certificat et statut (planifiée/terminée/annulée).
+ * Relations :
+ * - employee() : appartient à un employé (RhEmployee).
+ */
 class RhTraining extends RhBaseModel
 {
     use SoftDeletes;

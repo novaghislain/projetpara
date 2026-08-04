@@ -64,17 +64,37 @@
 </template>
 
 <script>
+/*
+ * Composant : DaeDataTable
+ * Description : Tableau de données générique avec colonnes configurables,
+ *               pagination intégrée et menu d'actions par ligne.
+ * Props :
+ *   columns      (Array, requis)  -- Configuration des colonnes (label, key, class, width)
+ *   rows         (Array, défaut []) -- Données à afficher dans le tableau
+ *   actions      (Array, défaut null) -- Liste des actions du menu déroulant (key, label, icon, danger)
+ *   currentPage  (Number, défaut 1)  -- Page courante pour la pagination
+ *   totalPages   (Number, défaut 1)  -- Nombre total de pages
+ *   rowClickable (Boolean, défaut false) -- Rend les lignes cliquables
+ * Événements :
+ *   row-click  (ligne cliquée)    -- Émis quand on clique sur une ligne
+ *   action     ({ action, row })  -- Émis quand on sélectionne une action du menu
+ *   page-change (numéro de page)  -- Émis lors d'un changement de page
+ */
 export default {
     props: {
-        columns:     { type: Array, required: true },
-        rows:        { type: Array, default: () => [] },
-        actions:     { type: Array, default: null },
-        currentPage: { type: Number, default: 1 },
-        totalPages:  { type: Number, default: 1 },
-        rowClickable:{ type: Boolean, default: false },
+        columns:     { type: Array, required: true },     // Colonnes du tableau
+        rows:        { type: Array, default: () => [] },  // Lignes de données
+        actions:     { type: Array, default: null },      // Actions disponibles par ligne
+        currentPage: { type: Number, default: 1 },        // Page actuelle
+        totalPages:  { type: Number, default: 1 },        // Total des pages
+        rowClickable:{ type: Boolean, default: false },   // Lignes cliquables ?
     },
     emits: ['row-click', 'action', 'page-change'],
     methods: {
+        /*
+         * resolve — Résout une chaîne de chemin (ex: "utilisateur.nom")
+         *           sur un objet, retourne '' si la propriété est absente.
+         */
         resolve(obj, path) {
             return path.split('.').reduce((acc, part) => acc?.[part] ?? '', obj);
         },

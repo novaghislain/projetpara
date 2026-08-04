@@ -6,6 +6,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Client;
 
+/**
+ * Modèle représentant un compte du plan comptable SYSCOHADA.
+ *
+ * Table associée : `comptes` (via convention Laravel, préfixe Compta)
+ *
+ * Relations :
+ * - Un compte appartient à un client (Client)
+ * - Un compte peut avoir un compte parent (Compte hiérarchique)
+ * - Un compte peut avoir plusieurs sous-comptes enfants (Compte)
+ */
 class Compte extends Model
 {
     use HasFactory;

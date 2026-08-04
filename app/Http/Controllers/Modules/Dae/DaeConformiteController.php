@@ -6,8 +6,22 @@ use App\Models\Dae\DaeConformite;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur de gestion de la conformité réglementaire du module DAE.
+ *
+ * Permet le suivi des éléments de conformité avec validation,
+ * gestion des échéances et vérification de statut.
+ */
 class DaeConformiteController extends BaseDaeController
 {
+    /**
+     * Liste paginée des éléments de conformité avec filtres.
+     *
+     * Filtres disponibles : type, statut, recherche (titre, exigence).
+     *
+     * @param Request $request La requête HTTP avec les paramètres de filtre
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
+     */
     public function index(Request $request)
     {
         $query = DaeConformite::with(['client', 'verifiedBy'])->orderBy('created_at', 'desc');
@@ -28,6 +42,12 @@ class DaeConformiteController extends BaseDaeController
         return view('app', ['page' => 'dae-conformite']);
     }
 
+    /**
+     * Crée un nouvel élément de conformité.
+     *
+     * @param Request $request La requête HTTP avec les données de conformité
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -53,6 +73,12 @@ class DaeConformiteController extends BaseDaeController
         return redirect()->route('dae.conformite.index')->with('success', 'Élément de conformité créé.');
     }
 
+    /**
+     * Affiche un élément de conformité spécifique.
+     *
+     * @param int $id L'identifiant de l'élément de conformité
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
+     */
     public function show($id)
     {
         $item = DaeConformite::with(['client', 'verifiedBy'])->findOrFail($id);
@@ -60,6 +86,13 @@ class DaeConformiteController extends BaseDaeController
         return view('app', ['page' => 'dae-conformite-show']);
     }
 
+    /**
+     * Met à jour un élément de conformité existant.
+     *
+     * @param Request $request La requête HTTP avec les données de mise à jour
+     * @param int $id L'identifiant de l'élément de conformité
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function update(Request $request, $id)
     {
         $item = DaeConformite::findOrFail($id);
@@ -82,6 +115,12 @@ class DaeConformiteController extends BaseDaeController
         return redirect()->route('dae.conformite.index')->with('success', 'Conformité mise à jour.');
     }
 
+    /**
+     * Supprime un élément de conformité.
+     *
+     * @param int $id L'identifiant de l'élément à supprimer
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function destroy($id)
     {
         $item = DaeConformite::findOrFail($id);
@@ -91,6 +130,16 @@ class DaeConformiteController extends BaseDaeController
         return redirect()->route('dae.conformite.index')->with('success', 'Élément supprimé.');
     }
 
+    /**
+     * Vérifie et met à jour le statut d'un élément de conformité.
+     *
+     * Si le statut est "valide", enregistre la date de validation
+     * et l'utilisateur qui a effectué la vérification.
+     *
+     * @param Request $request La requête HTTP avec le nouveau statut et les notes
+     * @param int $id L'identifiant de l'élément de conformité
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function verifierStatut(Request $request, $id)
     {
         $item = DaeConformite::findOrFail($id);

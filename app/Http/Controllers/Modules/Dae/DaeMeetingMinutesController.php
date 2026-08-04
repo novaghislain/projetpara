@@ -7,8 +7,22 @@ use App\Models\Dae\DaeMeetingMinute;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur de gestion des procès-verbaux de réunion du module DAE.
+ *
+ * Permet la création, la finalisation, l'approbation et le suivi
+ * des PV de réunion avec gestion des participants et des décisions.
+ */
 class DaeMeetingMinutesController extends Controller
 {
+    /**
+     * Liste paginée des PV de réunion avec filtres.
+     *
+     * Filtres disponibles : statut, client_id, période (from, to).
+     *
+     * @param Request $request La requête HTTP avec les paramètres de filtre
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
+     */
     public function index(Request $request)
     {
         if (!$request->expectsJson()) {
@@ -41,6 +55,12 @@ class DaeMeetingMinutesController extends Controller
         );
     }
 
+    /**
+     * Crée un nouveau procès-verbal de réunion.
+     *
+     * @param Request $request La requête HTTP avec les données du PV
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -74,12 +94,25 @@ class DaeMeetingMinutesController extends Controller
         return response()->json($minute->load('redacteur', 'approbateur'), 201);
     }
 
+    /**
+     * Affiche un procès-verbal de réunion spécifique.
+     *
+     * @param int $id L'identifiant du PV
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function show($id)
     {
         $minute = DaeMeetingMinute::with('redacteur', 'approbateur')->findOrFail($id);
         return response()->json($minute);
     }
 
+    /**
+     * Met à jour un procès-verbal de réunion existant.
+     *
+     * @param Request $request La requête HTTP avec les données de mise à jour
+     * @param int $id L'identifiant du PV
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function update(Request $request, $id)
     {
         $minute = DaeMeetingMinute::findOrFail($id);
@@ -103,6 +136,12 @@ class DaeMeetingMinutesController extends Controller
         return response()->json($minute->load('redacteur', 'approbateur'));
     }
 
+    /**
+     * Supprime un procès-verbal de réunion.
+     *
+     * @param int $id L'identifiant du PV à supprimer
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function destroy($id)
     {
         $minute = DaeMeetingMinute::findOrFail($id);
@@ -111,6 +150,12 @@ class DaeMeetingMinutesController extends Controller
         return response()->json(['message' => 'PV supprimé.']);
     }
 
+    /**
+     * Finalise un procès-verbal de réunion en le marquant comme "final".
+     *
+     * @param int $id L'identifiant du PV
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function finaliser($id)
     {
         $minute = DaeMeetingMinute::findOrFail($id);
@@ -119,6 +164,14 @@ class DaeMeetingMinutesController extends Controller
         return response()->json($minute);
     }
 
+    /**
+     * Approuve un procès-verbal de réunion.
+     *
+     * Enregistre l'approbateur et la date d'approbation.
+     *
+     * @param int $id L'identifiant du PV
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function approuver($id)
     {
         $minute = DaeMeetingMinute::findOrFail($id);
@@ -131,6 +184,14 @@ class DaeMeetingMinutesController extends Controller
         return response()->json($minute->load('redacteur', 'approbateur'));
     }
 
+    /**
+     * Génère les données d'un PV pour export PDF.
+     *
+     * Retourne les données du PV pour génération côté frontend.
+     *
+     * @param int $id L'identifiant du PV
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function genererPdf($id)
     {
         $minute = DaeMeetingMinute::with('redacteur')->findOrFail($id);
@@ -139,6 +200,11 @@ class DaeMeetingMinutesController extends Controller
         return response()->json($minute);
     }
 
+    /**
+     * Retourne les statistiques des procès-verbaux de réunion.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function stats()
     {
         $user = Auth::user();

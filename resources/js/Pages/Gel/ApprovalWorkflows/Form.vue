@@ -10,6 +10,16 @@
 </template>
 
 <script setup>
+/* ============================================================
+ * Composant : ApprovalWorkflows/Form
+ * Description : Formulaire de creation / modification
+ *   d'un workflow d'approbation. Permet de definir
+ *   les etapes et les approbateurs associes.
+ * ============================================================ */
+
 import GelLayout from '../../../Layouts/GelLayout.vue';
+
+/* Propriete recue du controleur :
+ *   clients - Liste des clients pour l'association */
 defineProps(['clients'])
 </script>

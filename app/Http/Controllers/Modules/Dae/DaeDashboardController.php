@@ -13,13 +13,35 @@ use App\Models\Dae\DaeAuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur du tableau de bord du module DAE.
+ *
+ * Fournit les statistiques, l'activité récente, les événements du jour
+ * et les alertes pour le tableau de bord principal du module DAE.
+ */
 class DaeDashboardController extends Controller
 {
+    /**
+     * Affiche la page du tableau de bord DAE.
+     *
+     * @return \Illuminate\View\View
+     */
     public function index()
     {
         return view('app', ['page' => 'dae-dashboard']);
     }
 
+    /**
+     * Retourne les statistiques, l'activité récente, les événements du jour
+     * et les alertes pour le tableau de bord.
+     *
+     * Calcule les compteurs pour chaque module (courriers, emails, contrats, etc.),
+     * l'activité des 15 dernières actions, les événements du jour et les alertes
+     * (contrats expirant dans 30 jours, conformité en retard).
+     *
+     * @param Request $request La requête HTTP
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function stats(Request $request)
     {
         $user = Auth::user();

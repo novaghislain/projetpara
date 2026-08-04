@@ -73,9 +73,16 @@
     </div>
 </template>
 
+/*
+ * Composant : AddCompanyForm
+ * Role : Permet a un utilisateur de saisir un code entreprise pour
+ *        s'attacher a une entreprise existante. Inclut une verification
+ *        du code via appel API avant l'envoi du formulaire.
+ */
 <script setup>
 import { ref } from 'vue'
 
+/* Etat reactif du formulaire de saisie */
 const code = ref('')
 const error = ref(null)
 const sending = ref(false)
@@ -83,6 +90,7 @@ const lookingUp = ref(false)
 const lookupResult = ref(null)
 const success = ref(null)
 
+/* Verifie aupres du serveur si le code saisi correspond a une entreprise valide */
 async function lookupCode() {
     const c = code.value.trim().toUpperCase()
     if (!c) return
@@ -103,6 +111,7 @@ async function lookupCode() {
     }
 }
 
+/* Soumet la demande de rattachement a l'entreprise identifiee par le code */
 async function submitForm() {
     sending.value = true
     error.value = null

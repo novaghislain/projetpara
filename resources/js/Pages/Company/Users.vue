@@ -1,30 +1,44 @@
 ﻿<script setup>
+/*
+ * Users.vue — Gestion des utilisateurs de l'entreprise
+ *
+ * Permet de gerer les utilisateurs de l'espace client : creation,
+ * modification, activation/desactivation, suppression. Inclut
+ * la gestion fine des permissions par module (caisse, compta,
+ * facturation, RH, juridique, projets, GED). Chaque utilisateur
+ * peut se voir attribuer un role et un ensemble de permissions
+ * modulaires. "Ce qui n'est pas active n'existe pas" dans l'interface.
+ */
+
 import { ref, onMounted, nextTick } from 'vue';
 import CompanyLayout from '../../Layouts/CompanyLayout.vue';
 
-const users = ref([]);
-const roles = ref([]);
-const loading = ref(true);
-const error = ref(null);
-const submitting = ref(false);
-const savingPermissions = ref(false);
+// ─── État réactif ────────────────────────────────────────────────
+const users = ref([]);            // Liste des utilisateurs
+const roles = ref([]);            // Liste des rôles disponibles
+const loading = ref(true);        // Indicateur de chargement
+const error = ref(null);          // Message d'erreur éventuel
+const submitting = ref(false);    // État de soumission du formulaire
+const savingPermissions = ref(false);  // État de sauvegarde des permissions
 
-const showModal = ref(false);
-const showPermModal = ref(false);
-const isEditing = ref(false);
-const editingId = ref(null);
+// Contrôle des modales et édition
+const showModal = ref(false);     // Visibilité de la modale utilisateur
+const showPermModal = ref(false); // Visibilité de la modale permissions
+const isEditing = ref(false);     // Mode édition (vs création)
+const editingId = ref(null);      // ID de l'utilisateur en cours d'édition
 
 // ─── Modules disponibles (depuis API) ─────────────────────
-const availableModules = ref([]);
-const allPermissions = ref([]);
+const availableModules = ref([]);  // Modules avec leurs permissions
+const allPermissions = ref([]);    // Toutes les permissions (liste plate)
 
+// Formulaire de création / édition d'utilisateur
 const form = ref({
-    name: '',
-    email: '',
-    password: '',
-    role_id: '',
-    fonction: '',
-    permissions: [],
+    name: '',         // Nom complet
+    email: '',        // Adresse email
+    password: '',     // Mot de passe (vide si non modifié)
+    role_id: '',      // ID du rôle attribué
+    fonction: '',     // Fonction dans l'entreprise
+    permissions: [],  // IDs des permissions sélectionnées
 });
 
 // ─── Helpers ──────────────────────────────────────────────

@@ -1,3 +1,9 @@
+<!--
+ * Composant : Étape 4 du processus d'inscription — Compte administrateur
+ * Description : Création du compte administrateur principal de l'entreprise
+ *              (nom, email, téléphone, mot de passe). Étape 4 sur 5 du parcours d'onboarding.
+ * Utilisation : Page /register/company/step/4
+-->
 <template>
     <div class="onboarding-wrapper">
         <div class="onboarding-card">
@@ -62,6 +68,7 @@ import { ref, reactive } from 'vue';
 const submitting = ref(false);
 const error = ref(null);
 
+/* Données du formulaire de création du compte administrateur */
 const form = reactive({
     admin_name: '',
     admin_email: '',
@@ -72,7 +79,9 @@ const form = reactive({
 
 const csrfToken = document.querySelector('meta[name=csrf-token]')?.content || '';
 
+/* Envoie les données de l'administrateur après validation côté client */
 async function submitStep4() {
+    /* Vérification de la correspondance des mots de passe */
     if (form.password !== form.password_confirmation) {
         error.value = 'Les mots de passe ne correspondent pas.';
         return;

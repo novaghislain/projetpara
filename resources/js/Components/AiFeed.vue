@@ -1,17 +1,24 @@
 <script setup>
+/*
+ * AiFeed -- Fil d'actualité des suggestions de l'IA.
+ * Affiche les propositions des agents spécialisés (OHADA, Fiscal,
+ * Réconciliation, Relance, OCR, Cashflow) avec actions
+ * d'approbation / rejet. Mise à jour par polling automatique.
+ */
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 
 const emit = defineEmits(['navigate']);
 const props = defineProps({
-    limit: { type: Number, default: 10 },
-    showHeader: { type: Boolean, default: true },
-    pollingInterval: { type: Number, default: 30000 }, // ms
+    limit: { type: Number, default: 10 },                /* Nombre max de suggestions à charger */
+    showHeader: { type: Boolean, default: true },         /* Afficher ou non l'en-tête du fil */
+    pollingInterval: { type: Number, default: 30000 },   /* Intervalle de rafraîchissement (ms) */
 });
 
-const suggestions = ref([]);
-const loading = ref(false);
-const error = ref(null);
+const suggestions = ref([]);  /* Liste des suggestions chargées */
+const loading = ref(false);    /* Indicateur de chargement */
+const error = ref(null);       /* Message d'erreur éventuel */
 
+/* Définition des agents IA disponibles */
 const agents = {
     ohada:          { label: 'Agent OHADA',        icon: 'bi-calculator',     color: '#3B82F6' },
     fiscal:         { label: 'Agent Fiscal',       icon: 'bi-file-earmark-text', color: '#8B5CF6' },
@@ -21,6 +28,7 @@ const agents = {
     cashflow:       { label: 'Agent Cashflow',     icon: 'bi-cash-stack',     color: '#EF4444' },
 };
 
+/* Regroupe les suggestions par date de création */
 const groupedByDate = computed(() => {
     const groups = {};
     for (const s of suggestions.value) {
@@ -31,6 +39,7 @@ const groupedByDate = computed(() => {
     return groups;
 });
 
+/* Couleurs associées à chaque statut de suggestion */
 const statusColors = {
     pending:  '#F59E0B',
     approved: '#10B981',
@@ -38,6 +47,7 @@ const statusColors = {
     applied:  '#3B82F6',
 };
 
+/* Charge les suggestions depuis l'API */
 async function fetchSuggestions() {
     loading.value = true;
     error.value = null;
@@ -55,6 +65,7 @@ async function fetchSuggestions() {
     loading.value = false;
 }
 
+/* Approuve une suggestion et la retire de la liste */
 async function approve(id) {
     try {
         await window.axios.post(`/api/ai/suggestions/${id}/approve`);
@@ -62,6 +73,7 @@ async function approve(id) {
     } catch (e) { console.error(e); }
 }
 
+/* Rejette une suggestion avec motif, puis la retire de la liste */
 async function reject(id) {
     const reason = prompt('Motif du rejet :');
     if (!reason) return;
@@ -71,7 +83,7 @@ async function reject(id) {
     } catch (e) { console.error(e); }
 }
 
-let pollInterval = null;
+let pollInterval = null;  /* Référence de l'intervalle de polling */
 
 onMounted(() => {
     fetchSuggestions();
@@ -81,7 +93,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-    if (pollInterval) clearInterval(pollInterval);
+    if (pollInterval) clearInterval(pollInterval);  /* Nettoyage du polling */
 });
 </script>
 

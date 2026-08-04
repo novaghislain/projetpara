@@ -42,12 +42,23 @@
     </GelLayout>
 </template>
 <script setup>
+/*
+ * Composant : Form.vue (Bibliotheque)
+ * Description : Formulaire de création / modification d'un modèle d'acte juridique.
+ *               Permet de saisir le titre, la catégorie, le type de société, le contenu
+ *               et les variables dynamiques (ex: {{ nom_societe }}).
+ * Route       : /juridique/bibliotheque/create | /juridique/bibliotheque/{id}/edit
+ */
 import { ref, computed } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
+
+/* État du formulaire : indicateur de sauvegarde, mode édition, variables et données */
 const saving = ref(false);
 const isEdit = ref(false);
 const variablesStr = ref('');
 const form = ref({ titre:'', categorie:'', type_societe:'', contenu:'' });
+
+/* Enregistre le modèle d'acte via POST, puis redirige vers la liste */
 async function save() {
     saving.value = true;
     try {

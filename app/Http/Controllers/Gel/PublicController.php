@@ -11,7 +11,18 @@ use Illuminate\Http\Request;
 class PublicController extends Controller
 {
     /**
-     * Traite la soumission du formulaire de demande entreprise (page publique).
+     * Contrôleur des fonctionnalités publiques du site.
+     * Gère les soumissions de formulaires depuis les pages publiques,
+     * notamment les demandes d'inscription des entreprises.
+     */
+
+    /**
+     * Traite la soumission du formulaire de demande d'inscription entreprise
+     * depuis les pages publiques du site. Crée une demande et notifie
+     * tous les super-administrateurs.
+     *
+     * @param Request $request La requête HTTP avec les données du formulaire
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function storeDemande(Request $request)
     {
@@ -24,6 +35,7 @@ class PublicController extends Controller
             'requested_services' => 'nullable|array',
         ]);
 
+        // Création de la demande d'inscription avec statut "en attente"
         $companyRequest = CompanyRequest::create([
             'company_name'       => $validated['company_name'],
             'contact_name'       => $validated['contact_name'],
@@ -34,7 +46,7 @@ class PublicController extends Controller
             'status'             => 'pending',
         ]);
 
-        // Créer une notification pour tous les super admins
+        // Notification de tous les super-admins de la nouvelle demande
         $superAdmins = User::where('role', 'super_admin')->get();
 
         foreach ($superAdmins as $admin) {

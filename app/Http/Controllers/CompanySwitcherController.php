@@ -7,6 +7,12 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur de changement de contexte entreprise.
+ *
+ * Permet à un utilisateur de sélectionner et basculer entre
+ * les différentes entreprises auxquelles il est associé.
+ */
 class CompanySwitcherController extends Controller
 {
     /**

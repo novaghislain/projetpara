@@ -1,70 +1,112 @@
+/*
+ * CpaRegister.vue - Page d'inscription multi-etapes pour le portail CPA GEL Cabinet.
+ *
+ * Role     : Permet aux nouveaux utilisateurs de creer un compte sur la plateforme
+ *            GEL Cabinet via un formulaire en 3 etapes (Identite -> Localisation -> Securite).
+ *            Supporte trois types de compte : particulier, entreprise, association/ONG.
+ * Props    : Aucune (composant autonome).
+ * Emits    : Aucun (redirection HTTP classique apres succes).
+ * Store    : Aucun (requetes fetch directes).
+ *
+ * Fonctionnalites :
+ * - Wizard en 3 etapes avec barre de progression visuelle (cercles + ligne)
+ * - Selection du type de compte au debut du parcours
+ * - Champs : prenom, nom, email, telephone (avec indicatif pays), pays, ville
+ * - Indicateur de force du mot de passe (5 niveaux)
+ * - Validation cote client avant chaque etape
+ * - Soumission POST /register avec jeton CSRF
+ * - Retour automatique a l'etape pertinente en cas d'erreur serveur
+ * - Redirection vers /cpa-dashboard apres 2 secondes en cas de succes
+ * - Liste de 15 pays avec indicatifs telephoniques
+ * - Ville pre-remplie pour le Benin (20 villes), champ libre pour les autres pays
+ *
+ * Flux type :
+ *   1. Etape 1 : choix du type de compte + identite (prenom, nom, email, telephone)
+ *   2. Etape 2 : localisation (pays, ville) + informations specifiques Benin
+ *   3. Etape 3 : mot de passe + confirmation + acceptation des conditions
+ *   4. Validation finale -> POST /register -> redirection vers le dashboard
+ */
+
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
 
-// ─── Form State ───
+// ─── Etat du formulaire ───
 const form = ref({
     first_name: '',
     last_name: '',
     email: '',
     phone: '',
-    phone_prefix: '+229',
-    country: 'BJ',
+    phone_prefix: '+229',    // Indicatif telephone (defaut Benin)
+    country: 'BJ',           // Code pays (defaut Benin)
     city: '',
     password: '',
     password_confirmation: '',
     accept_terms: false,
-    account_type: 'particulier',
+    account_type: 'particulier',  // Type de compte : particulier | entreprise | association
 });
 
-const step = ref(1);
-const totalSteps = 3;
-const loading = ref(false);
-const success = ref(false);
-const error = ref('');
-const showPassword = ref(false);
-const showPasswordConfirm = ref(false);
-const fieldErrors = ref({});
+// ─── Etats du wizard ───
+const step = ref(1);                    // Etape courante (1-3)
+const totalSteps = 3;                   // Nombre total d'etapes
+const loading = ref(false);             // Indicateur d'envoi du formulaire
+const success = ref(false);             // Succes de l'inscription
+const error = ref('');                  // Message d'erreur general
+const showPassword = ref(false);        // Afficher/masquer le mot de passe
+const showPasswordConfirm = ref(false); // Afficher/masquer la confirmation
+const fieldErrors = ref({});            // Erreurs de validation champ par champ
 
-// ─── Countries ───
+// ─── Liste des pays disponibles ───
 const countries = [
-    { code: 'BJ', name: 'Bénin', prefix: '+229', flag: '🇧🇯' },
+    { code: 'BJ', name: 'Benin', prefix: '+229', flag: '🇧🇯' },
     { code: 'TG', name: 'Togo', prefix: '+228', flag: '🇹🇬' },
-    { code: 'CI', name: "Côte d'Ivoire", prefix: '+225', flag: '🇨🇮' },
-    { code: 'SN', name: 'Sénégal', prefix: '+221', flag: '🇸🇳' },
+    { code: 'CI', name: "Cote d'Ivoire", prefix: '+225', flag: '🇨🇮' },
+    { code: 'SN', name: 'Senegal', prefix: '+221', flag: '🇸🇳' },
     { code: 'BF', name: 'Burkina Faso', prefix: '+226', flag: '🇧🇫' },
     { code: 'ML', name: 'Mali', prefix: '+223', flag: '🇲🇱' },
     { code: 'NE', name: 'Niger', prefix: '+227', flag: '🇳🇪' },
-    { code: 'GN', name: 'Guinée', prefix: '+224', flag: '🇬🇳' },
+    { code: 'GN', name: 'Guinee', prefix: '+224', flag: '🇬🇳' },
     { code: 'GA', name: 'Gabon', prefix: '+241', flag: '🇬🇦' },
     { code: 'CM', name: 'Cameroun', prefix: '+237', flag: '🇨🇲' },
     { code: 'CD', name: 'RD Congo', prefix: '+243', flag: '🇨🇩' },
     { code: 'CG', name: 'Congo', prefix: '+242', flag: '🇨🇬' },
     { code: 'FR', name: 'France', prefix: '+33', flag: '🇫🇷' },
     { code: 'CA', name: 'Canada', prefix: '+1', flag: '🇨🇦' },
-    { code: 'US', name: 'États-Unis', prefix: '+1', flag: '🇺🇸' },
+    { code: 'US', name: 'Etats-Unis', prefix: '+1', flag: '🇺🇸' },
 ];
 
-// Benin cities
+// Liste des villes beninoises pour le select conditionnel
 const beninCities = [
     'Cotonou', 'Porto-Novo', 'Parakou', 'Djougou', 'Bohicon',
     'Abomey-Calavi', 'Kandi', 'Lokossa', 'Natitingou', 'Ouidah',
-    'Savè', 'Abomey', 'Nikki', 'Malanville', 'Savalou',
-    'Comè', 'Tchaourou', 'Allada', 'Dogbo-Tota', 'Pobè',
+    'Save', 'Abomey', 'Nikki', 'Malanville', 'Savalou',
+    'Come', 'Tchaourou', 'Allada', 'Dogbo-Tota', 'Pobe',
 ];
 
+// Types de compte proposes a l'etape 1
 const accountTypes = [
-    { value: 'particulier', label: 'Particulier', icon: 'bi-person', desc: 'Déclarations personnelles' },
-    { value: 'entreprise', label: 'Entreprise', icon: 'bi-building', desc: 'Comptabilité & fiscal' },
+    { value: 'particulier', label: 'Particulier', icon: 'bi-person', desc: 'Declarations personnelles' },
+    { value: 'entreprise', label: 'Entreprise', icon: 'bi-building', desc: 'Comptabilite & fiscal' },
     { value: 'association', label: 'Association / ONG', icon: 'bi-people', desc: 'Gestion associative' },
 ];
 
 // ─── Watchers ───
+// Met a jour l'indicatif telephone automatiquement lors du changement de pays
 watch(() => form.value.country, (val) => {
     const c = countries.find(x => x.code === val);
     if (c) form.value.phone_prefix = c.prefix;
 });
 
 // ─── Validation ───
+
+/**
+ * passwordStrength - Calcule la force du mot de passe sur 5 criteres :
+ *   1. Longueur >= 8 caracteres
+ *   2. Au moins une lettre majuscule
+ *   3. Au moins une lettre minuscule
+ *   4. Au moins un chiffre
+ *   5. Au moins un caractere special
+ * Retourne un objet { score, label, color } pour l'affichage.
+ */
 const passwordStrength = computed(() => {
     const p = form.value.password;
     if (!p) return { score: 0, label: '', color: '' };
@@ -76,23 +118,28 @@ const passwordStrength = computed(() => {
     if (/[^A-Za-z0-9]/.test(p)) score++;
     const levels = [
         { score: 0, label: '', color: '' },
-        { score: 1, label: 'Très faible', color: '#dc3545' },
+        { score: 1, label: 'Tres faible', color: '#dc3545' },
         { score: 2, label: 'Faible', color: '#fd7e14' },
         { score: 3, label: 'Moyen', color: '#ffc107' },
         { score: 4, label: 'Fort', color: '#198754' },
-        { score: 5, label: 'Très fort', color: '#0d6efd' },
+        { score: 5, label: 'Tres fort', color: '#0d6efd' },
     ];
     return levels[score] || levels[0];
 });
 
+/**
+ * validateStep - Valide les champs de l'etape courante.
+ * Retourne true si tous les champs sont valides, false sinon.
+ * Les erreurs sont stockees dans fieldErrors pour affichage dans le template.
+ */
 const validateStep = (stepNum) => {
     fieldErrors.value = {};
     if (stepNum === 1) {
-        if (!form.value.first_name.trim()) fieldErrors.value.first_name = 'Le prénom est requis';
+        if (!form.value.first_name.trim()) fieldErrors.value.first_name = 'Le prenom est requis';
         if (!form.value.last_name.trim()) fieldErrors.value.last_name = 'Le nom est requis';
         if (!form.value.email.trim()) fieldErrors.value.email = "L'email est requis";
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) fieldErrors.value.email = "Format d'email invalide";
-        if (!form.value.phone.trim()) fieldErrors.value.phone = 'Le téléphone est requis';
+        if (!form.value.phone.trim()) fieldErrors.value.phone = 'Le telephone est requis';
     }
     if (stepNum === 2) {
         if (!form.value.country) fieldErrors.value.country = 'Le pays est requis';
@@ -100,13 +147,14 @@ const validateStep = (stepNum) => {
     }
     if (stepNum === 3) {
         if (!form.value.password) fieldErrors.value.password = 'Le mot de passe est requis';
-        else if (form.value.password.length < 8) fieldErrors.value.password = 'Minimum 8 caractères';
+        else if (form.value.password.length < 8) fieldErrors.value.password = 'Minimum 8 caracteres';
         if (form.value.password !== form.value.password_confirmation) fieldErrors.value.password_confirmation = 'Les mots de passe ne correspondent pas';
         if (!form.value.accept_terms) fieldErrors.value.accept_terms = 'Vous devez accepter les conditions';
     }
     return Object.keys(fieldErrors.value).length === 0;
 };
 
+/** nextStep - Passe a l'etape suivante si la validation est reussie */
 const nextStep = () => {
     if (validateStep(step.value)) {
         step.value++;
@@ -114,12 +162,20 @@ const nextStep = () => {
     }
 };
 
+/** prevStep - Revient a l'etape precedente */
 const prevStep = () => {
     step.value--;
     window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-// ─── Submit ───
+// ─── Soumission du formulaire ───
+
+/**
+ * register - Soumet les donnees du formulaire au serveur.
+ * Construit le payload avec le nom complet concatene et l'indicatif telephone.
+ * En cas de succes (res.ok), affiche l'ecran de reussite et redirige apres 2s.
+ * En cas d'erreur, analyse les erreurs de validation et retourne a l'etape appropriee.
+ */
 const register = async () => {
     if (!validateStep(3)) return;
     loading.value = true;
@@ -159,7 +215,7 @@ const register = async () => {
                 Object.keys(data.errors).forEach(k => {
                     fieldErrors.value[k] = data.errors[k][0];
                 });
-                // Go back to relevant step
+                // Retour a l'etape pertinente selon le champ en erreur
                 if (data.errors.email || data.errors.first_name || data.errors.last_name || data.errors.phone) step.value = 1;
                 else if (data.errors.country || data.errors.city) step.value = 2;
                 else step.value = 3;
@@ -167,7 +223,7 @@ const register = async () => {
             error.value = data.message || "Erreur lors de l'inscription";
         }
     } catch (e) {
-        error.value = "Erreur réseau. Vérifiez votre connexion.";
+        error.value = "Erreur reseau. Verifiez votre connexion.";
     } finally {
         loading.value = false;
     }
@@ -179,7 +235,7 @@ const stepClasses = computed(() => ({
 }));
 
 onMounted(() => {
-    document.title = "Créer un compte | GEL Cabinet";
+    document.title = "Creer un compte | GEL Cabinet";
 });
 </script>
 

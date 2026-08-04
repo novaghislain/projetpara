@@ -16,6 +16,17 @@ use Illuminate\Support\Facades\DB;
 
 class PosSaleController extends Controller
 {
+    /**
+     * Contrôleur pour le Point de Vente (POS).
+     * Gère les sessions de caisse (ouverture/fermeture), les ventes,
+     * les retours, l'édition de reçus et la consultation de l'historique.
+     */
+
+    /**
+     * Affiche la page du Point de Vente (POS).
+     *
+     * @return \Illuminate\View\View
+     */
     public function index()
     {
         return view('app', ['page' => 'commerce-pos']);
@@ -23,6 +34,13 @@ class PosSaleController extends Controller
 
     // ── Sessions de caisse ──────────────────────────────────────
 
+    /**
+     * Ouvre une nouvelle session de caisse pour l'utilisateur connecté.
+     * Vérifie qu'aucune session n'est déjà ouverte.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function openSession(Request $request)
     {
         $clientId = Auth::user()->client_id ?? Auth::id();
@@ -57,6 +75,13 @@ class PosSaleController extends Controller
         return response()->json($session, 201);
     }
 
+    /**
+     * Ferme une session de caisse et calcule la différence de caisse.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param int $id Identifiant de la session de caisse
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function closeSession(Request $request, $id)
     {
         $session = PosSession::findOrFail($id);
@@ -85,6 +110,11 @@ class PosSaleController extends Controller
         return response()->json($session);
     }
 
+    /**
+     * Retourne la session de caisse ouverte pour l'utilisateur connecté.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function currentSession()
     {
         $clientId = Auth::user()->client_id ?? Auth::id();
@@ -114,6 +144,11 @@ class PosSaleController extends Controller
         return response()->json($session);
     }
 
+    /**
+     * Retourne l'historique paginé des sessions de caisse.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function sessions()
     {
         $clientId = Auth::user()->client_id ?? Auth::id();
@@ -127,6 +162,14 @@ class PosSaleController extends Controller
 
     // ── Ventes ──────────────────────────────────────────────────
 
+    /**
+     * Enregistre une nouvelle vente (transaction POS).
+     * Gère la vérification des stocks, la déduction, les paiements,
+     * les remises et la génération de référence dans une transaction DB.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function sell(Request $request)
     {
         $clientId = Auth::user()->client_id ?? Auth::id();
@@ -268,6 +311,14 @@ class PosSaleController extends Controller
         );
     }
 
+    /**
+     * Traite le retour d'une vente. Réintègre les produits dans le stock
+     * et met à jour le statut de la vente.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param int $id Identifiant de la vente à retourner
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function returnSale(Request $request, $id)
     {
         $sale = Sale::findOrFail($id);
@@ -320,6 +371,12 @@ class PosSaleController extends Controller
         return response()->json(['message' => 'Retour effectué', 'sale' => $sale->fresh()]);
     }
 
+    /**
+     * Retourne les données d'une vente pour l'impression du reçu.
+     *
+     * @param int $id Identifiant de la vente
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function receipt($id)
     {
         $sale = Sale::with(['items', 'payments', 'businessUser.user', 'client'])
@@ -328,6 +385,13 @@ class PosSaleController extends Controller
         return response()->json($sale);
     }
 
+    /**
+     * Retourne la liste paginée des ventes avec filtres optionnels
+     * (date, statut, mode de paiement).
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function salesList(Request $request)
     {
         $clientId = Auth::user()->client_id ?? Auth::id();

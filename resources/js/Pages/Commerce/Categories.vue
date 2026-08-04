@@ -1,15 +1,27 @@
 <script setup>
+/* ═══════════════════════════════════════════════════════════
+   Categories.vue - Gestion des catégories de produits
+   CRUD complet avec support des sous-catégories (parent),
+   code couleur et état actif/inactif.
+   ═══════════════════════════════════════════════════════════ */
 import { ref, onMounted } from 'vue'
 import GelLayout from '../../Layouts/GelLayout.vue'
 
-const state = ref('loading')
-const categories = ref([])
-const showModal = ref(false)
-const isEditing = ref(false)
-const editingId = ref(null)
-const submitting = ref(false)
-const form = ref({ name: '', color: '#6c757d', parent_id: '', is_active: true })
+/* ══════════════════════════════════════════
+   État réactif du composant
+   ══════════════════════════════════════════ */
+const state = ref('loading')          /* 'loading' | 'loaded' | 'error' */
+const categories = ref([])            /* Liste des catégories */
+const showModal = ref(false)          /* Visibilité de la modale */
+const isEditing = ref(false)          /* Mode édition (true) ou création (false) */
+const editingId = ref(null)           /* ID de la catégorie en cours d'édition */
+const submitting = ref(false)         /* État de soumission du formulaire */
+const form = ref({ name: '', color: '#6c757d', parent_id: '', is_active: true })  /* Formulaire */
 
+/* ══════════════════════════════════════════
+   Requêtes API
+   ══════════════════════════════════════════ */
+/* Charge la liste complète des catégories */
 const fetchCategories = async () => {
   try {
     const res = await window.axios.get('/api/commerce/categories')
@@ -18,15 +30,22 @@ const fetchCategories = async () => {
   finally { state.value = 'loaded' }
 }
 
+/* ══════════════════════════════════════════
+   Gestion du formulaire (création / édition)
+   ══════════════════════════════════════════ */
+/* Réinitialise le formulaire à ses valeurs par défaut */
 const resetForm = () => { form.value = { name: '', color: '#6c757d', parent_id: '', is_active: true } }
 
+/* Ouvre la modale en mode création */
 const openCreate = () => { resetForm(); isEditing.value = false; editingId.value = null; showModal.value = true }
 
+/* Ouvre la modale en mode édition avec les données pré-remplies */
 const openEdit = (cat) => {
   form.value = { name: cat.name, color: cat.color || '#6c757d', parent_id: cat.parent_id || '', is_active: cat.is_active }
   isEditing.value = true; editingId.value = cat.id; showModal.value = true
 }
 
+/* Soumet le formulaire (création ou mise à jour) */
 const submit = async () => {
   submitting.value = true
   try {
@@ -40,6 +59,7 @@ const submit = async () => {
   } finally { submitting.value = false }
 }
 
+/* Supprime une catégorie après confirmation */
 const deleteCat = async (id) => {
   if (!confirm('Confirmer la suppression ?')) return
   try {
@@ -48,6 +68,9 @@ const deleteCat = async (id) => {
   } catch (e) { alert('Erreur: ' + e.message) }
 }
 
+/* ══════════════════════════════════════════
+   Cycle de vie
+   ══════════════════════════════════════════ */
 onMounted(fetchCategories)
 </script>
 

@@ -6,6 +6,40 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Modèle représentant un journal comptable (écriture comptable).
+ *
+ * Chaque écriture est liée à un client (entreprise) et à un exercice fiscal.
+ * Elle contient des lignes (AccountingJournalLine) au débit et au crédit.
+ * Un journal peut être une contre-passation (is_reversal) d'un autre journal.
+ * Le statut suit le cycle de vie : brouillon -> posted (validé).
+ *
+ * @property int $id
+ * @property int|null $client_id Identifiant du client (entreprise)
+ * @property string $journal_type Type de journal (ventes, achats, banque, caisse, operations_diverses)
+ * @property string $entry_date Date de l'écriture
+ * @property string $reference Référence de l'écriture
+ * @property string|null $description Description de l'écriture
+ * @property string $status Statut (draft, posted)
+ * @property int|null $created_by Identifiant de l'utilisateur créateur
+ * @property int|null $fiscal_year_id Identifiant de l'exercice fiscal
+ * @property string|null $numero_piece Numéro de pièce comptable
+ * @property int|null $validated_by Identifiant du validateur
+ * @property string|null $validated_at Date de validation
+ * @property bool $is_reversal Indique si c'est une contre-passation
+ * @property int|null $reversed_journal_id Identifiant du journal contre-passé
+ * @property string|null $source_module Module source de l'écriture
+ *
+ * @property-read Client|null $client Client (entreprise) associé
+ * @property-read \Illuminate\Database\Eloquent\Collection|AccountingJournalLine[] $lines Lignes d'écritures (débit/crédit)
+ * @property-read User|null $createdBy Utilisateur créateur
+ * @property-read FiscalYear|null $fiscalYear Exercice fiscal associé
+ * @property-read User|null $validatedBy Utilisateur validateur
+ * @property-read AccountingJournal|null $reversedJournal Journal d'origine contre-passé
+ * @property-read \Illuminate\Database\Eloquent\Collection|AccountingJournal[] $reversals Contre-passations de ce journal
+ *
+ * @table accounting_journals
+ */
 class AccountingJournal extends Model
 {
     protected $fillable = [

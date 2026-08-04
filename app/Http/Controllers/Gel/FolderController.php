@@ -10,7 +10,16 @@ use Illuminate\Http\Request;
 class FolderController extends Controller
 {
     /**
+     * Contrôleur de gestion des dossiers documentaires clients.
+     * Permet de créer, modifier, supprimer et lister les dossiers
+     * organisés en arborescence pour chaque client.
+     */
+
+    /**
      * Page explorateur de dossiers pour un client.
+     *
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\View\View
      */
     public function index($clientId)
     {
@@ -21,7 +30,10 @@ class FolderController extends Controller
     }
 
     /**
-     * Créer un dossier.
+     * Crée un nouveau dossier.
+     *
+     * @param Request $request La requête HTTP contenant les données du dossier
+     * @return \Illuminate\Http\JsonResponse Le dossier créé
      */
     public function store(Request $request)
     {
@@ -40,7 +52,11 @@ class FolderController extends Controller
     }
 
     /**
-     * Mettre à jour un dossier.
+     * Met à jour un dossier existant.
+     *
+     * @param Request $request La requête HTTP avec les données mises à jour
+     * @param int $id L'identifiant du dossier
+     * @return \Illuminate\Http\JsonResponse Le dossier mis à jour
      */
     public function update(Request $request, $id)
     {
@@ -59,13 +75,16 @@ class FolderController extends Controller
     }
 
     /**
-     * Supprimer un dossier.
+     * Supprime un dossier.
+     *
+     * @param int $id L'identifiant du dossier
+     * @return \Illuminate\Http\JsonResponse Message de confirmation
      */
     public function destroy($id)
     {
         $folder = ClientFolder::findOrFail($id);
 
-        // Empêcher la suppression des dossiers système
+        // Empêche la suppression des dossiers système
         if ($folder->is_system) {
             return response()->json(['message' => 'Impossible de supprimer un dossier système'], 403);
         }
@@ -78,10 +97,14 @@ class FolderController extends Controller
     // ─── API ────────────────────────────────────────────────────
 
     /**
-     * API: Liste des dossiers pour un client (arborescence).
+     * API : Liste des dossiers d'un client avec leur arborescence.
+     *
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\Http\JsonResponse L'arborescence des dossiers
      */
     public function listAll($clientId)
     {
+        // Récupération des dossiers racine avec leurs enfants et le comptage de documents
         $folders = ClientFolder::where('client_id', $clientId)
             ->with(['children' => fn($q) => $q->withCount('documents')])
             ->withCount('documents')

@@ -1,13 +1,23 @@
 <script setup>
+/*
+ * Composant Liste des Employés
+ * Affiche la liste de tous les employés dans un tableau avec :
+ *   - Recherche en temps réel (filtre local par nom, prénom ou poste)
+ *   - Indicateur de statut coloré (actif, inactif, suspendu, congé)
+ *   - Chargement asynchrone depuis l'API RH
+ */
+
 import { ref, computed, onMounted } from 'vue';
 import CompanyLayout from '../../../Layouts/CompanyLayout.vue';
 import { authStore } from '../../../stores/auth';
 
+/* État réactif : liste des employés, état de chargement, erreur et terme de recherche */
 const employees = ref([]);
 const loading = ref(true);
 const error = ref(null);
 const search = ref('');
 
+/* Récupération de la liste des employés depuis l'API */
 const fetchEmployees = async () => {
     loading.value = true;
     error.value = null;
@@ -22,6 +32,7 @@ const fetchEmployees = async () => {
     }
 };
 
+/* Liste filtrée selon la recherche (nom, prénom ou poste) */
 const filteredEmployees = computed(() => {
     let list = employees.value;
     if (search.value) {
@@ -35,6 +46,7 @@ const filteredEmployees = computed(() => {
     return list;
 });
 
+/* Correspondance statut -> classe Bootstrap pour le badge */
 const statusBadgeClass = (status) => {
     const map = {
         actif: 'bg-success',
@@ -45,6 +57,7 @@ const statusBadgeClass = (status) => {
     return map[status] || 'bg-secondary';
 };
 
+/* Chargement initial des données au montage */
 onMounted(fetchEmployees);
 </script>
 

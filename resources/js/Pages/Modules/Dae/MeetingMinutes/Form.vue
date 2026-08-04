@@ -1,3 +1,10 @@
+<!--
+ * Composant : Formulaire de procès-verbal de réunion
+ * Description : Formulaire de création et modification des PV de réunion du module DAE.
+ *              Gère les informations générales, les participants, l'ordre du jour,
+ *              les discussions, les décisions et la prochaine réunion.
+ * Utilisation : Pages /dae/pv-reunions/create et /dae/pv-reunions/{id}/edit
+-->
 <template>
     <GelLayout>
         <div class="dae-courriers-index">
@@ -166,6 +173,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import GelLayout from '../../../../Layouts/GelLayout.vue'
 
+/* Extrait l'ID du PV depuis l'URL (supporte création et édition) */
 const id = computed(() => {
     const match = window.location.pathname.match(/\/dae\/pv-reunions\/(\d+)(?:\/edit)?/)
     return match ? match[1] : null
@@ -174,15 +182,18 @@ const isEdit = computed(() => !!id.value)
 const saving = ref(false)
 const clients = ref([])
 
+/* Données réactives du formulaire */
 const form = reactive({
     client_id: '', titre: '', objet: '', lieu: '', date_reunion: '',
     heure_debut: '', heure_fin: '', participants: [],
     ordre_du_jour: [], discussion: [], decisions: [], prochaine_reunion: '',
 })
 
+/* Ajoute un participant vide ou une décision vide au tableau */
 function addParticipant() { form.participants.push({ nom: '', email: '', present: true }) }
 function addDecision() { form.decisions.push({ decision: '', responsable: '', echeance: '', statut: 'a_faire' }) }
 
+/* Charge les données d'un PV existant pour le mode édition */
 async function fetchMinute() {
     if (!isEdit.value) return
     try {
@@ -199,11 +210,13 @@ async function fetchMinute() {
     } catch (err) { console.error(err) }
 }
 
+/* Charge la liste des clients pour le select */
 async function fetchClients() {
     try { const res = await window.axios.get('/api/clients/list'); clients.value = res.data || [] }
     catch { /* ignore */ }
 }
 
+/* Enregistre le PV (création ou mise à jour) puis redirige vers la liste */
 async function save() {
     saving.value = true
     try {
@@ -220,6 +233,7 @@ async function save() {
     } finally { saving.value = false }
 }
 
+/* Initialisation au montage : charge les clients et éventuellement le PV */
 onMounted(() => { fetchClients(); fetchMinute() })
 </script>
 

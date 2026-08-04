@@ -23,16 +23,23 @@
 </template>
 
 <script setup>
+/*
+ * RhStatCard -- Carte de statistique RH.
+ * Affiche un indicateur clé (icône, libellé, valeur) avec une tendance
+ * optionnelle (hausse / baisse en pourcentage). Utilisée dans les
+ * tableaux de bord des ressources humaines.
+ */
 import { computed } from 'vue'
 
 const props = defineProps({
-    icon:  { type: String, required: true },
-    label: { type: String, required: true },
-    value: { type: [String, Number], required: true },
-    color: { type: String, default: 'primary' },
-    trend: { type: Number, default: null },
+    icon:  { type: String, required: true },            /* Classe Bootstrap Icon */
+    label: { type: String, required: true },            /* Libellé de la statistique */
+    value: { type: [String, Number], required: true },  /* Valeur affichée */
+    color: { type: String, default: 'primary' },        /* Variante de couleur : primary, success, info, warning, danger */
+    trend: { type: Number, default: null },              /* Tendance en pourcentage (positif = hausse, négatif = baisse) */
 })
 
+/* Met en forme la valeur : format numérique français ou texte brut */
 const displayValue = computed(() => {
     if (props.value == null || props.value === '') return '—'
     const num = Number(props.value)

@@ -1,10 +1,19 @@
+<!--
+ * Composant : Panier d'achat du catalogue
+ * Description : Affiche le contenu du panier avec la liste des services sélectionnés,
+ *              les quantités, les prix et un récapitulatif. Permet de retirer des
+ *              articles, vider le panier et valider la commande.
+ * Utilisation : Page /panier
+-->
 <script setup>
 import { ref, onMounted } from 'vue';
 
+/* Données du panier : articles, nombre total et montant total */
 const cart = ref({ items: [], count: 0, total: 0 });
 const loading = ref(true);
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
+/* Récupère le contenu du panier depuis l'API */
 const fetchCart = async () => {
     loading.value = true;
     try {
@@ -18,6 +27,7 @@ const fetchCart = async () => {
     }
 };
 
+/* Supprime un article du panier */
 const removeItem = async (id) => {
     if (!confirm('Retirer ce service du panier ?')) return;
     try {
@@ -26,13 +36,14 @@ const removeItem = async (id) => {
             headers: { 'X-CSRF-TOKEN': csrfToken }
         });
         await fetchCart();
-        // Mettre à jour le badge navbar
+        /* Mettre à jour le compteur dans la barre de navigation */
         updateNavBadge(cart.value.count);
     } catch (e) {
         console.error(e);
     }
 };
 
+/* Vide complètement le panier */
 const clearCart = async () => {
     if (!confirm('Vider tout le panier ?')) return;
     try {
@@ -47,6 +58,7 @@ const clearCart = async () => {
     }
 };
 
+/* Met à jour le badge du panier dans la barre de navigation */
 const updateNavBadge = (count) => {
     const badge = document.getElementById('cart-badge-count');
     if (badge) {

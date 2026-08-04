@@ -11,11 +11,29 @@ use Illuminate\Support\Facades\Auth;
 
 class CommerceDashboardController extends Controller
 {
+    /**
+     * Contrôleur pour le tableau de bord du module Commerce.
+     * Fournit les statistiques clés : chiffre d'affaires, transactions,
+     * stocks, top produits, répartition par catégorie et mode de paiement.
+     */
+
+    /**
+     * Affiche la page du tableau de bord Commerce.
+     *
+     * @return \Illuminate\View\View
+     */
     public function index()
     {
         return view('app', ['page' => 'commerce-dashboard']);
     }
 
+    /**
+     * Calcule et retourne les statistiques complètes pour le tableau de bord :
+     * revenus (jour/mois/an), transactions, ticket moyen, top produits,
+     * ventes par catégorie/paiement/caissier, évolution journalière et alertes stock.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function stats()
     {
         $clientId = Auth::user()->client_id ?? Auth::id();

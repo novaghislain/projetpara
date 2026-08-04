@@ -1,13 +1,20 @@
+<!--
+  Composant : Contracts/Index.vue
+  Description : Liste des contrats RH avec recherche, filtre par statut,
+                téléchargement et actions CRUD.
+-->
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 
+/* État réactif : contrats, filtres, indicateurs */
 const contracts = ref([]);
 const loading = ref(true);
 const error = ref(null);
 const search = ref('');
 const statusFilter = ref('');
 
+/* Récupération des contrats depuis l'API */
 const fetchContracts = async () => {
     loading.value = true;
     error.value = null;
@@ -22,6 +29,7 @@ const fetchContracts = async () => {
     }
 };
 
+/* Filtrage local : recherche textuelle + filtre par statut */
 const filteredContracts = computed(() => {
     let list = contracts.value;
     if (search.value) {
@@ -38,6 +46,7 @@ const filteredContracts = computed(() => {
     return list;
 });
 
+/* Classe CSS pour le badge de statut du contrat */
 const statusBadgeClass = (status) => {
     const map = {
         actif: 'bg-success',
@@ -48,6 +57,7 @@ const statusBadgeClass = (status) => {
     return map[status] || 'bg-secondary';
 };
 
+/* Suppression d'un contrat avec confirmation */
 const deleteContract = async (id) => {
     if (!confirm('Confirmer la suppression de ce contrat ?')) return;
     try {
@@ -63,6 +73,7 @@ const deleteContract = async (id) => {
     }
 };
 
+/* Téléchargement du fichier PDF du contrat */
 const downloadContract = async (id) => {
     try {
         const res = await fetch('/rh/contracts/' + id + '/download');

@@ -1,26 +1,41 @@
+/* ============================================================
+ *  RH & Paie - Gestion des ressources humaines
+ *  Module  : Employés et traitement des paies
+ *  Écran   : Liste des employés et génération de fiches de paie
+ *  Fonctions : Ajout d'employé, génération de paie,
+ *              calcul automatique du net à payer
+ * ============================================================ */
+
 <script setup>
+// Importation des utilitaires Vue (réactivité, cycle de vie)
 import { ref, onMounted } from 'vue';
+// Layout spécifique au module GEL (Gestion Électronique Libre)
 import GelLayout from '../../../Layouts/GelLayout.vue';
+// Store global d'authentification (utilisateur connecté, permissions)
 import { authStore } from '../../../stores/auth';
 
-const employees = ref([]);
-const payrolls = ref([]);
-const loading = ref(true);
-const error = ref(null);
-const activeTab = ref('employees');
-const submitting = ref(false);
+// --- États réactifs du composant ---
+const employees = ref([]);       // Liste des employés
+const payrolls = ref([]);        // Liste des fiches de paie
+const loading = ref(true);       // Indicateur de chargement en cours
+const error = ref(null);         // Message d'erreur éventuel
+const activeTab = ref('employees'); // Onglet actif : 'employees' ou 'payrolls'
+const submitting = ref(false);   // Indicateur de soumission en cours
 
-// Employee modal
+// Contrôle de la visibilité du modal d'ajout d'employé
 const showEmpModal = ref(false);
+// Données du formulaire d'ajout d'employé
 const empForm = ref({
     first_name: '', last_name: '', email: '', phone: '', position: '',
     salary: '', hire_date: '', status: 'active',
 });
 
-// Payroll modal
+// Contrôle de la visibilité du modal de génération de paie
 const showPayModal = ref(false);
+// Données du formulaire de génération de paie
 const payForm = ref({ employee_id: '', period: '', base_salary: '', bonuses: '', deductions: '', net_amount: '' });
 
+// --- Récupération des données (employés + paies) via l'API ---
 const fetchData = async () => {
     loading.value = true;
     error.value = null;
@@ -38,9 +53,11 @@ const fetchData = async () => {
     }
 };
 
+// --- Création d'un nouvel employé (POST vers l'API) ---
 const submitEmployee = async () => {
     submitting.value = true;
     try {
+        // Récupération du jeton CSRF pour la requête
         const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
         const res = await fetch('/erp/hr/employees', {
             method: 'POST',
@@ -49,7 +66,9 @@ const submitEmployee = async () => {
         });
         if (!res.ok) throw new Error('Erreur');
         showEmpModal.value = false;
+        // Réinitialisation du formulaire après création réussie
         empForm.value = { first_name: '', last_name: '', email: '', phone: '', position: '', salary: '', hire_date: '', status: 'active' };
+        // Rechargement des données pour refléter les changements
         await fetchData();
     } catch (e) {
         alert('Erreur: ' + e.message);
@@ -58,9 +77,11 @@ const submitEmployee = async () => {
     }
 };
 
+// --- Génération d'une fiche de paie (POST vers l'API) ---
 const generatePayroll = async () => {
     submitting.value = true;
     try {
+        // Récupération du jeton CSRF pour la requête
         const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
         const res = await fetch('/erp/hr/payrolls', {
             method: 'POST',
@@ -69,7 +90,9 @@ const generatePayroll = async () => {
         });
         if (!res.ok) throw new Error('Erreur');
         showPayModal.value = false;
+        // Réinitialisation du formulaire après génération réussie
         payForm.value = { employee_id: '', period: '', base_salary: '', bonuses: '', deductions: '', net_amount: '' };
+        // Rechargement des données pour mettre à jour la liste des paies
         await fetchData();
     } catch (e) {
         alert('Erreur: ' + e.message);
@@ -78,6 +101,7 @@ const generatePayroll = async () => {
     }
 };
 
+// --- Calcul automatique du net à payer (base + primes - retenues) ---
 const calcNet = () => {
     const base = parseFloat(payForm.value.base_salary) || 0;
     const bonus = parseFloat(payForm.value.bonuses) || 0;
@@ -85,11 +109,13 @@ const calcNet = () => {
     payForm.value.net_amount = (base + bonus - ded).toFixed(2);
 };
 
+// --- Chargement initial des données au montage du composant ---
 onMounted(fetchData);
 </script>
 
 <template>
     <GelLayout page-title="RH & Paie">
+        <!-- Navigation par onglets : Employés / Paies -->
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
             <ul class="nav nav-pills">
                 <li class="nav-item"><button class="nav-link" :class="{ active: activeTab === 'employees' }" @click="activeTab = 'employees'">Employés ({{ employees.length }})</button></li>
@@ -101,12 +127,14 @@ onMounted(fetchData);
             </div>
         </div>
 
+        <!-- Indicateur de chargement pendant l'appel API -->
         <div v-if="loading" class="d-flex justify-content-center py-5">
             <div class="spinner-border text-primary"><span class="visually-hidden">Chargement...</span></div>
         </div>
+        <!-- Affichage d'une éventuelle erreur -->
         <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
 
-        <!-- Employees -->
+        <!-- Onglet : Liste des employés -->
         <div v-else-if="activeTab === 'employees'" class="bg-white rounded-lg shadow p-6">
             <div class="table-responsive">
                 <table class="table table-sm align-middle mb-0">
@@ -126,7 +154,7 @@ onMounted(fetchData);
             </div>
         </div>
 
-        <!-- Payrolls -->
+        <!-- Onglet : Liste des fiches de paie -->
         <div v-else class="bg-white rounded-lg shadow p-6">
             <div class="table-responsive">
                 <table class="table table-sm align-middle mb-0">
@@ -146,7 +174,7 @@ onMounted(fetchData);
             </div>
         </div>
 
-        <!-- Employee Modal -->
+        <!-- Modal : Formulaire d'ajout d'un nouvel employé -->
         <div v-if="showEmpModal" class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -177,7 +205,7 @@ onMounted(fetchData);
             </div>
         </div>
 
-        <!-- Payroll Modal -->
+        <!-- Modal : Formulaire de génération d'une fiche de paie -->
         <div v-if="showPayModal" class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);">
             <div class="modal-dialog">
                 <div class="modal-content">

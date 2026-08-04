@@ -264,9 +264,15 @@
     </div>
 </template>
 
+/*
+ * Composant : JournalEntries (Ecritures comptables)
+ * Role : Liste et gestion des ecritures comptables avec filtres,
+ *        pagination, creation via modal, validation et consultation.
+ */
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 
+/* Donnees principales */
 const entries = ref([])
 const journals = ref([])
 const accounts = ref([])
@@ -277,6 +283,7 @@ const showCreateModal = ref(false)
 const viewingEntry = ref(null)
 const pagination = ref(null)
 
+/* Filtres de recherche */
 const filters = reactive({
     journal_id: '',
     date_from: '',
@@ -285,6 +292,7 @@ const filters = reactive({
     page: 1,
 })
 
+/* Formulaire de creation (modal) */
 const form = reactive({
     journal_id: '',
     entry_date: new Date().toISOString().split('T')[0],
@@ -297,20 +305,25 @@ const form = reactive({
     ],
 })
 
+/* Calculs d'equilibre debit/credit */
 const formTotalDebit = computed(() => form.lines.reduce((s, l) => s + (parseFloat(l.debit) || 0), 0))
 const formTotalCredit = computed(() => form.lines.reduce((s, l) => s + (parseFloat(l.credit) || 0), 0))
 const isBalanced = computed(() => Math.abs(formTotalDebit.value - formTotalCredit.value) < 0.01 && formTotalDebit.value > 0)
 
+/* Formateur monetaire */
 const fmt = (v) => new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(v || 0) + ' F'
 
+/* Token CSRF */
 const csrf = computed(() => document.querySelector('meta[name=csrf-token]')?.content || '')
 
+/* Helper API */
 const api = (path, opts = {}) =>
     fetch(path, {
         headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf.value, ...opts.headers },
         ...opts,
     })
 
+/* Charge les ecritures depuis l'API avec les filtres actifs */
 async function loadEntries() {
     loading.value = true; error.value = null
     try {
@@ -328,6 +341,7 @@ async function loadEntries() {
     } catch (e) { error.value = e.message } finally { loading.value = false }
 }
 
+/* Charge la liste des journaux comptables */
 async function loadJournals() {
     try {
         const r = await api('/api/journals')
@@ -335,6 +349,7 @@ async function loadJournals() {
     } catch (e) { console.warn(e) }
 }
 
+/* Charge le plan comptable */
 async function loadAccounts() {
     try {
         const r = await api('/api/chart-accounts')
@@ -342,16 +357,20 @@ async function loadAccounts() {
     } catch (e) { console.warn(e) }
 }
 
+/* Reinitialise les filtres et recharge */
 function resetFilters() {
     filters.journal_id = ''; filters.date_from = ''; filters.date_to = ''; filters.status = ''; filters.page = 1
     loadEntries()
 }
 
+/* Navigation paginee */
 function goPage(p) { filters.page = p; loadEntries() }
 
+/* Ajout/suppression de lignes dans le formulaire */
 function addLine() { form.lines.push({ account_id: '', label: '', debit: 0, credit: 0 }) }
 function removeLine(i) { if (form.lines.length > 2) form.lines.splice(i, 1) }
 
+/* Sauvegarde une nouvelle ecriture */
 async function saveEntry(status) {
     submitting.value = true
     try {
@@ -377,6 +396,7 @@ async function saveEntry(status) {
     } catch (e) { error.value = e.message } finally { submitting.value = false }
 }
 
+/* Reinitialise le formulaire de creation */
 function resetForm() {
     form.journal_id = ''
     form.entry_date = new Date().toISOString().split('T')[0]
@@ -387,6 +407,7 @@ function resetForm() {
     ]
 }
 
+/* Valide (poste) une ecriture au statut brouillon */
 async function postEntry(e) {
     if (!confirm('Valider cette écriture ? Elle ne pourra plus être modifiée.')) return
     try {
@@ -397,6 +418,7 @@ async function postEntry(e) {
     } catch (e) { error.value = e.message }
 }
 
+/* Ouvre le detail d'une ecriture */
 async function viewEntry(e) {
     try {
         const r = await api(`/api/entries/${e.id}`)
@@ -404,6 +426,7 @@ async function viewEntry(e) {
     } catch (e) { error.value = e.message }
 }
 
+/* Utilitaires d'affichage */
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR') : '—'
 const statusLabel = (s) => ({ posted: 'Validée', draft: 'Brouillon', cancelled: 'Annulée' })[s] || s
 const statusBadge = (s) => ({ posted: 'badge bg-success', draft: 'badge bg-warning text-dark', cancelled: 'badge bg-secondary' })[s] || 'badge bg-secondary'

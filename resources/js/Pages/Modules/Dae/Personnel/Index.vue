@@ -237,10 +237,20 @@
 </template>
 
 <script>
+/*
+ * Composant : DaePersonnelIndex
+ * Role : Page de gestion du personnel (RH) du module DAE.
+ * Affiche la liste des membres avec filtres (statut, departement, client, recherche).
+ * Permet l'ajout et la modification de membres via une modale, ainsi que la suppression.
+ * Inclut des colonnes avec initiales, statut, salaire et date d'embauche.
+ * Props : aucune
+ * Evenements : row-click, action, page-change (via DaeDataTable)
+ */
 import axios from 'axios';
 import { Modal } from 'bootstrap';
 import DaeDataTable from '../../../../Components/Dae/DaeDataTable.vue';
 
+// Mapping des statuts du personnel avec leurs libelles et classes de badge
 const STATUT_MAP = {
     actif:     { label: 'Actif',     badge: 'bg-success' },
     conge:     { label: 'Congé',     badge: 'bg-warning text-dark' },

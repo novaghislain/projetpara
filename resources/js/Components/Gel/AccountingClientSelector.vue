@@ -1,13 +1,20 @@
 <script setup>
+/*
+ * AccountingClientSelector -- Sélecteur de dossier client pour les comptables.
+ * Affiche une carte permettant de choisir l'entreprise cliente sur laquelle
+ * travailler. Visible uniquement pour les rôles comptable, super_admin
+ * et director.
+ */
 import { ref, onMounted, computed } from 'vue';
 import { authStore } from '../../stores/auth';
 
 const emit = defineEmits(['select']);
 
-const clients = ref([]);
-const selectedId = ref(null);
-const loading = ref(true);
+const clients = ref([]);     /* Liste des clients disponibles */
+const selectedId = ref(null); /* ID du client sélectionné */
+const loading = ref(true);    /* Indicateur de chargement */
 
+/* Charge la liste des clients depuis l'API */
 const fetchClients = async () => {
     loading.value = true;
     try {
@@ -17,10 +24,12 @@ const fetchClients = async () => {
     finally { loading.value = false; }
 };
 
+/* Émet l'événement de sélection avec l'ID choisi */
 const onSelect = () => {
     if (selectedId.value) emit('select', Number(selectedId.value));
 };
 
+/* Vérifie si l'utilisateur actuel a le droit d'accéder au sélecteur */
 const isComptable = computed(() =>
     ['comptable', 'super_admin', 'director'].includes(authStore.user?.role)
 );

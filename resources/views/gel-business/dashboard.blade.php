@@ -113,6 +113,90 @@
     </div>
 </div>
 
+{{-- LIGNE — Accès collaborateurs --}}
+<div class="gel-card" style="margin-bottom:24px;">
+    <div class="gel-card-header">
+        <span style="font-weight:700;">👥 Accès collaborateurs</span>
+        <a href="{{ route('gel-business.inviter-comptable') }}" class="gel-btn gel-btn-primary gel-btn-sm">
+            <i class="fas fa-user-plus"></i> Inviter
+        </a>
+    </div>
+    <div class="gel-card-body" style="padding:0;">
+        @php
+            $collaborators = $collaborators ?? collect([]);
+            $invitations = $invitations ?? collect([]);
+        @endphp
+
+        @if($collaborators->isNotEmpty() || $invitations->isNotEmpty())
+        <table class="gel-table">
+            <tr><th>Collaborateur</th><th>Rôle</th><th>Statut</th><th>Données manipulables</th></tr>
+            @foreach($collaborators as $uc)
+            @php $u = $uc->user; @endphp
+            <tr>
+                <td>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <div class="gel-avatar" style="background:var(--gel-primary);">{{ strtoupper(substr($u->name ?? $u->email, 0, 2)) }}</div>
+                        <div>
+                            <div style="font-weight:600;font-size:13px;">{{ $u->name ?? $u->email }}</div>
+                            <div style="font-size:12px;color:var(--gel-text-secondary);">{{ $u->email }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    @if(($uc->role ?? '') === 'secretaire')
+                        <span class="gel-badge gel-badge-info">Secrétaire</span>
+                    @elseif(($uc->role ?? '') === 'company_admin')
+                        <span class="gel-badge gel-badge-success">Administrateur</span>
+                    @else
+                        <span class="gel-badge" style="background:var(--gel-primary-light);color:var(--gel-primary);">Comptable</span>
+                    @endif
+                </td>
+                <td><span class="gel-badge gel-badge-success">Accepté</span></td>
+                <td style="font-size:12px;color:var(--gel-text-secondary);">
+                    @if(($uc->role ?? '') === 'secretaire')
+                        Agenda, relances, documents (GED), tâches
+                    @elseif(($uc->role ?? '') === 'company_admin')
+                        Tous les espaces (gestion complète)
+                    @else
+                        Comptabilité, écritures, états financiers
+                    @endif
+                </td>
+            </tr>
+            @endforeach
+            @foreach($invitations->where('statut', 'en_attente') as $inv)
+            <tr>
+                <td>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <div class="gel-avatar" style="background:var(--gel-text-muted);color:#fff;">?</div>
+                        <div>
+                            <div style="font-weight:600;font-size:13px;">{{ $inv->nom ?: $inv->email }}</div>
+                            <div style="font-size:12px;color:var(--gel-text-secondary);">Invité le {{ optional($inv->created_at)->format('d/m/Y') }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    @if(($inv->role_invite ?? '') === 'secretaire')
+                        <span class="gel-badge gel-badge-info">Secrétaire</span>
+                    @else
+                        <span class="gel-badge" style="background:var(--gel-primary-light);color:var(--gel-primary);">Comptable</span>
+                    @endif
+                </td>
+                <td><span class="gel-badge gel-badge-warning">En attente</span></td>
+                <td style="font-size:12px;color:var(--gel-text-secondary);">En attente d'acceptation de l'invitation</td>
+            </tr>
+            @endforeach
+        </table>
+        @else
+        <div class="gel-empty" style="padding:30px;">
+            <i class="fas fa-user-plus"></i>
+            <h3>Aucun collaborateur</h3>
+            <p>Invitez votre comptable ou votre secrétaire : ils devront accepter l'invitation avant de manipuler vos données.</p>
+            <a href="{{ route('gel-business.inviter-comptable') }}" class="gel-btn gel-btn-primary gel-btn-sm">Inviter un collaborateur</a>
+        </div>
+        @endif
+    </div>
+</div>
+
 {{-- LIGNE 4 — Contacter mon comptable --}}
 <div class="gel-card" style="margin-bottom:24px;">
     <div class="gel-card-header"><span style="font-weight:700;">📞 Contacter mon comptable</span></div>
@@ -127,9 +211,9 @@
                 <div style="font-size:13px;color:var(--gel-text-secondary);">{{ $stats['comptable_telephone'] ?? '+229 01 23 45 67' }}</div>
             </div>
             <div style="display:flex;gap:8px;">
-                <button class="gel-btn gel-btn-primary gel-btn-sm" onclick="showToast('Message envoyé','success')">
-                    <i class="fas fa-envelope"></i> Envoyer
-                </button>
+                <a href="{{ route('gel-business.messagerie') }}" class="gel-btn gel-btn-primary gel-btn-sm">
+                    <i class="fas fa-comments"></i> Discuter / Envoyer
+                </a>
             </div>
         </div>
     </div>
@@ -150,6 +234,73 @@
         </div>
         <div class="gel-bank-account-balance">CFA 0</div>
     </div>
-    <div class="gel-bank-connect"><i class="fas fa-plus-circle"></i> Connecter une banque</div>
+    <div class="gel-bank-connect" onclick="openConnectBankPanel()" style="cursor: pointer;"><i class="fas fa-plus-circle"></i> Connecter une banque</div>
 </div>
+
+{{-- Templates for slide panels --}}
+<template id="contactAccountantTemplate">
+    <div class="gel-form-group">
+        <label>Sujet</label>
+        <input type="text" class="gel-form-control" placeholder="Objet de votre message">
+    </div>
+    <div class="gel-form-group">
+        <label>Message</label>
+        <textarea class="gel-form-control" rows="5" placeholder="Votre message détaillé pour l'expert-comptable..."></textarea>
+    </div>
+    <div class="gel-form-group">
+        <label>Pièce jointe (optionnel)</label>
+        <input type="file" class="gel-form-control">
+    </div>
+</template>
+
+<template id="contactAccountantFooter">
+    <button class="gel-btn gel-btn-secondary" onclick="closePanel()">Annuler</button>
+    <button class="gel-btn gel-btn-primary" onclick="showToast('Votre message a été envoyé à l\'expert-comptable', 'success'); closePanel();">Envoyer le message</button>
+</template>
+
+<template id="connectBankTemplate">
+    <div style="text-align:center; padding: 20px;">
+        <i class="fas fa-university" style="font-size: 40px; color: var(--gel-primary); margin-bottom: 16px;"></i>
+        <h3 style="margin-bottom: 8px;">Sélectionnez votre banque</h3>
+        <p style="color: var(--gel-text-secondary); margin-bottom: 24px;">Connectez votre compte bancaire en toute sécurité via notre partenaire pour synchroniser automatiquement vos relevés.</p>
+        
+        <div class="gel-form-group" style="text-align: left;">
+            <input type="text" class="gel-form-control" placeholder="Rechercher une banque...">
+        </div>
+        
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px;">
+            <div class="gel-card" style="padding: 12px; cursor: pointer; border: 1px solid var(--gel-primary-light);">
+                <strong>Ecobank</strong>
+            </div>
+            <div class="gel-card" style="padding: 12px; cursor: pointer;">
+                <strong>BOA</strong>
+            </div>
+            <div class="gel-card" style="padding: 12px; cursor: pointer;">
+                <strong>UBA</strong>
+            </div>
+            <div class="gel-card" style="padding: 12px; cursor: pointer;">
+                <strong>Orabank</strong>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="connectBankFooter">
+    <button class="gel-btn gel-btn-secondary" onclick="closePanel()">Annuler</button>
+    <button class="gel-btn gel-btn-primary" onclick="showToast('Redirection vers la passerelle bancaire...', 'info'); closePanel();">Continuer vers la banque</button>
+</template>
+
+<script>
+function openContactAccountantPanel() {
+    var bodyHtml = document.getElementById('contactAccountantTemplate').innerHTML;
+    var footerHtml = document.getElementById('contactAccountantFooter').innerHTML;
+    openPanel('Contacter mon comptable', bodyHtml, footerHtml);
+}
+
+function openConnectBankPanel() {
+    var bodyHtml = document.getElementById('connectBankTemplate').innerHTML;
+    var footerHtml = document.getElementById('connectBankFooter').innerHTML;
+    openPanel('Connexion bancaire sécurisée', bodyHtml, footerHtml);
+}
+</script>
 @endsection

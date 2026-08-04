@@ -35,11 +35,19 @@
 </template>
 
 <script setup>
+/*
+ * Composant : Calendrier.vue (Conformite)
+ * Description : Vue calendrier des obligations de conformité regroupées par mois.
+ *               Affiche les échéances avec leur statut et met en évidence les retards.
+ * Route       : /juridique/conformite/calendrier
+ */
 import { ref, computed, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 
+/* Liste complète des obligations de conformité */
 const conformites = ref([]);
 
+/* Regroupe les obligations par mois après tri chronologique */
 const groupedByMonth = computed(() => {
     const groups = {};
     const sorted = [...conformites.value].sort((a, b) => (a.date_echeance || '').localeCompare(b.date_echeance || ''));
@@ -53,15 +61,18 @@ const groupedByMonth = computed(() => {
     return groups;
 });
 
+/* Formate une date ISO au format français */
 function formatDate(date) {
     if (!date) return '—';
     return new Date(date + 'T00:00:00').toLocaleDateString('fr-FR');
 }
+/* Vérifie si la date d'échéance est dépassée */
 function isOverdue(date) {
     if (!date) return false;
     return new Date(date + 'T00:00:00') < new Date();
 }
 
+/* Charge les obligations depuis l'API */
 async function load() {
     try { const res = await fetch('/juridique/conformite'); conformites.value = await res.json(); }
     catch (e) { console.error(e); }

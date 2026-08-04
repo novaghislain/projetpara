@@ -6,6 +6,27 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Modèle FiscalPeriod (Période fiscale).
+ *
+ * Représente une période au sein d'un exercice fiscal (ex: mois, trimestre).
+ * Chaque période est liée à un exercice (FiscalYear) et peut être ouverte ou clôturée.
+ *
+ * @property int $id
+ * @property int $fiscal_year_id
+ * @property string $code Code de la période (ex: M01, T1)
+ * @property string $label Libellé de la période
+ * @property \Carbon\Carbon $start_date Date de début
+ * @property \Carbon\Carbon $end_date Date de fin
+ * @property string $status Statut (open/closed)
+ * @property bool $is_current Indique si c'est la période courante
+ * @property \Carbon\Carbon|null $closed_at Date de clôture
+ * @property int|null $closed_by ID de l'utilisateur ayant clôturé
+ * @property string|null $notes Notes additionnelles
+ *
+ * @property-read \App\Models\FiscalYear $fiscalYear Exercice fiscal parent
+ * @property-read \App\Models\User|null $closedBy Utilisateur ayant clôturé la période
+ */
 class FiscalPeriod extends Model
 {
     protected $fillable = [

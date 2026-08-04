@@ -12,10 +12,20 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Contrôleur API pour la gestion du plan comptable.
+ *
+ * Supporte à la fois le contexte locataire (tenant) pour les plans comptables
+ * partagés et le contexte client pour les plans comptables SYSCOHADA personnalisés.
+ * Permet les opérations CRUD, l'arborescence et l'export des comptes.
+ */
 class ChartAccountController extends Controller
 {
     /**
-     * Récupère l'identifiant du tenant ou du client selon le contexte.
+     * Détermine le contexte (tenant ou client) à partir de l'utilisateur authentifié.
+     *
+     * @param Request $request La requête HTTP.
+     * @return array{type: string, id: int}
      */
     private function getContext(Request $request): array
     {
@@ -28,7 +38,10 @@ class ChartAccountController extends Controller
     }
 
     /**
-     * Retourne le modèle de requête selon le contexte.
+     * Retourne la requête de base selon le contexte (tenant ou client).
+     *
+     * @param Request $request La requête HTTP.
+     * @return \Illuminate\Database\Eloquent\Builder
      */
     private function baseQuery(Request $request)
     {
@@ -40,7 +53,10 @@ class ChartAccountController extends Controller
     }
 
     /**
-     * Liste paginée des comptes.
+     * Liste paginée des comptes avec filtres (classe, type, recherche, actif/inactif).
+     *
+     * @param Request $request La requête HTTP avec les filtres.
+     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
@@ -78,7 +94,10 @@ class ChartAccountController extends Controller
     }
 
     /**
-     * Arborescence complète des comptes.
+     * Retourne l'arborescence complète des comptes (comptes racines avec leurs enfants).
+     *
+     * @param Request $request La requête HTTP.
+     * @return JsonResponse
      */
     public function tree(Request $request): JsonResponse
     {
@@ -94,7 +113,10 @@ class ChartAccountController extends Controller
     }
 
     /**
-     * Détail d'un compte.
+     * Affiche le détail d'un compte avec ses relations (parent/enfants).
+     *
+     * @param int $id L'identifiant du compte.
+     * @return JsonResponse
      */
     public function show(int $id): JsonResponse
     {
@@ -111,7 +133,10 @@ class ChartAccountController extends Controller
     }
 
     /**
-     * Créer un nouveau compte.
+     * Crée un nouveau compte comptable dans le contexte approprié.
+     *
+     * @param StoreChartAccountRequest $request La requête validée de création.
+     * @return JsonResponse
      */
     public function store(StoreChartAccountRequest $request): JsonResponse
     {
@@ -131,7 +156,11 @@ class ChartAccountController extends Controller
     }
 
     /**
-     * Modifier un compte.
+     * Modifie un compte comptable existant.
+     *
+     * @param UpdateChartAccountRequest $request La requête validée de modification.
+     * @param int $id L'identifiant du compte.
+     * @return JsonResponse
      */
     public function update(UpdateChartAccountRequest $request, int $id): JsonResponse
     {
@@ -154,7 +183,11 @@ class ChartAccountController extends Controller
     }
 
     /**
-     * Supprimer un compte.
+     * Supprime un compte comptable.
+     * Vérifie au préalable l'absence de sous-comptes et d'écritures associées.
+     *
+     * @param int $id L'identifiant du compte.
+     * @return JsonResponse
      */
     public function destroy(int $id): JsonResponse
     {
@@ -183,7 +216,9 @@ class ChartAccountController extends Controller
     }
 
     /**
-     * Exporter la liste des comptes (format simple).
+     * Exporte la liste des comptes au format JSON simplifié.
+     *
+     * @return JsonResponse
      */
     public function export(): JsonResponse
     {
@@ -203,7 +238,11 @@ class ChartAccountController extends Controller
     }
 
     /**
-     * Mapping des champs du request vers les colonnes du modèle.
+     * Mappe les champs de la requête vers les colonnes du modèle,
+     * en tenant compte du contexte (tenant ou client).
+     *
+     * @param Request $request La requête HTTP.
+     * @return array Les données formatées pour la création/mise à jour.
      */
     protected function mapRequestToFields($request): array
     {

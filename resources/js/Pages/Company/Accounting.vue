@@ -1,22 +1,32 @@
 <script setup>
+/*
+ * Accounting.vue – Module de comptabilité générale
+ *
+ * Composant central de la comptabilité intégrant le plan comptable SYSCOHADA,
+ * les journaux, la balance, le grand livre, le bilan, le compte de résultat,
+ * la TVA, les immobilisations, les exercices fiscaux, la réconciliation bancaire,
+ * la trésorerie, et les modules métier (stock, hôtel, scolaire, location, etc.).
+ * Les onglets sont dynamiques en fonction des modules activés pour le client.
+ */
 import { ref, computed, onMounted } from 'vue';
 import CompanyLayout from '../../Layouts/CompanyLayout.vue';
 import { authStore } from '../../stores/auth';
 
-const activeTab = ref('dashboard');
-const loading = ref(false);
-const error = ref(null);
-const successMsg = ref('');
-const showImportCsv = ref(false);
+const activeTab = ref('dashboard');          // Onglet actif du module de comptabilité
+const loading = ref(false);                   // Indicateur de chargement
+const error = ref(null);                      // Message d'erreur global
+const successMsg = ref('');                   // Message de succès temporaire
+const showImportCsv = ref(false);             // Visibilité de l'import CSV du plan comptable
 
 const csrfToken = computed(() => document.querySelector('meta[name=csrf-token]')?.content || '');
 
-// Modules domaine activés pour ce client
+// Modules domaine activés pour ce client (définis dans window.__ACCOUNTING_MODULES__)
 const activeModules = computed(() => {
     try { return window.__ACCOUNTING_MODULES__ || []; } catch(e) { return []; }
 });
 const hasModule = (mod) => activeModules.value.includes(mod);
 
+// Définition des onglets de base (toujours affichés)
 const baseTabs = [
     { key: 'dashboard', label: 'Dashboard', icon: 'bi-speedometer2' },
     { key: 'accounts', label: 'Plan comptable', icon: 'bi-book' },
@@ -36,6 +46,7 @@ const baseTabs = [
     { key: 'rapports', label: 'Rapports', icon: 'bi-file-earmark-pdf' },
 ];
 
+// Définition des onglets métier (affichés conditionnellement selon les modules activés)
 const metierTabsDef = [
     { key: 'invoices', label: 'Facturation', icon: 'bi-receipt-cutoff', module: 'facturation' },
     { key: 'stock', label: 'Stock', icon: 'bi-box-seam', module: 'stock' },
@@ -60,6 +71,7 @@ const metierTabsDef = [
     { key: 'taxe-nuitee', label: 'Taxe de séjour', icon: 'bi-cash-stack', module: 'taxe_nuitee' },
 ];
 
+// Onglets finaux : onglets de base + onglets métier filtrés par module activé
 const tabs = computed(() => {
     const filtered = [...baseTabs];
     metierTabsDef.forEach(t => {
@@ -70,6 +82,7 @@ const tabs = computed(() => {
     return filtered;
 });
 
+// Fonctions utilitaires de formatage
 const formatCurrency = (v) => { if(v===null||v===undefined||isNaN(v))return'0,00';return Number(v).toLocaleString('fr-FR',{minimumFractionDigits:2}); };
 const formatDate = (d) => d?new Date(d).toLocaleDateString('fr-FR'):'';
 const journalTypeLabel = (t) => ({achat:'Achats',vente:'Ventes',banque:'Banque',caisse:'Caisse',operations_diverses:'Op. diverses',od:'OD',salaire:'Salaires',investissement:'Investissement',paie:'Paie',hav:'Hav',anouveaux:'A Nouveaux'}[t]||t);
@@ -81,11 +94,11 @@ const accountTypes = [
     {value:'7',label:'Produits (classe 7)'},{value:'8',label:'Comptes spéciaux (classe 8)'},{value:'9',label:'Comptes analytiques (classe 9)'},
 ];
 
-// Dashboard
+// --- Dashboard : indicateurs clés ---
 const stats = ref(null);
 const loadStats = async () => { try{const r=await fetch('/api/company/accounting/stats');if(r.ok)stats.value=await r.json()}catch(e){console.error(e)} };
 
-// Plan comptable
+// --- Plan comptable SYSCOHADA : CRUD et import CSV ---
 const accounts = ref([]);
 const accountsLoading = ref(false);
 const showAccountModal = ref(false);
@@ -96,13 +109,18 @@ const importFile = ref(null);
 const importError = ref('');
 const importSuccess = ref('');
 
+// Charge la liste des comptes depuis l'API
 const loadAccounts = async () => { accountsLoading.value=true; try{const r=await fetch('/api/company/accounting/accounts');if(!r.ok)throw Error('Erreur');accounts.value=await r.json()}catch(e){error.value=e.message}finally{accountsLoading.value=false} };
+// Ouvre la modale de création/édition d'un compte
 const openAccountModal = (a=null) => { error.value=null; if(a){editingAccount.value=a;accountForm.value={code:a.code,name:a.name,type:a.type,syscohada_class:a.syscohada_class||a.type,is_active:a.is_active,has_tva:a.has_tva||false,tva_rate:a.tva_rate||18}}else{editingAccount.value=null;accountForm.value={code:'',name:'',type:'1',syscohada_class:'1',is_active:true,has_tva:false,tva_rate:18}};showAccountModal.value=true; };
+// Crée ou met à jour un compte comptable
 const submitAccount = async () => { accountSubmitting.value=true;error.value=null;try{const isEdit=!!editingAccount.value;const r=await fetch(isEdit?`/api/company/accounting/accounts/${editingAccount.value.id}`:'/api/company/accounting/accounts',{method:isEdit?'PUT':'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':csrfToken.value,Accept:'application/json'},body:JSON.stringify(accountForm.value)});const d=await r.json();if(!r.ok)throw Error(d.message||'Erreur');successMsg.value=d.message;showAccountModal.value=false;await loadAccounts();setTimeout(()=>successMsg.value='',3000)}catch(e){error.value=e.message}finally{accountSubmitting.value=false} };
+// Supprime un compte comptable après confirmation
 const deleteAccount = async (id) => { if(!confirm('Supprimer ce compte ?'))return; try{const r=await fetch(`/api/company/accounting/accounts/${id}`,{method:'DELETE',headers:{'X-CSRF-TOKEN':csrfToken.value,Accept:'application/json'}});const d=await r.json();if(!r.ok)throw Error(d.message||'Erreur');successMsg.value=d.message;await loadAccounts();setTimeout(()=>successMsg.value='',3000)}catch(e){error.value=e.message} };
+// Importe des comptes depuis un fichier CSV
 const importAccounts = async () => { if(!importFile.value){importError.value='Sélectionnez un fichier CSV.';return}importError.value='';importSuccess.value='';const fd=new FormData();fd.append('csv',importFile.value);try{const r=await fetch('/api/company/accounting/accounts/import',{method:'POST',headers:{'X-CSRF-TOKEN':csrfToken.value,Accept:'application/json'},body:fd});const d=await r.json();if(!r.ok)throw Error(d.message||'Erreur');importSuccess.value=d.message;await loadAccounts()}catch(e){importError.value=e.message} };
 
-// Journaux
+// --- Journaux : écritures comptables ---
 const journals = ref([]);
 const journalsLoading = ref(false);
 const showJournalModal = ref(false);
@@ -116,22 +134,29 @@ const journalIsBalanced = computed(() => Math.abs(journalTotalDebit.value-journa
 const addJournalLine = () => journalForm.value.lines.push({account_id:'',label:'',debit:'',credit:''});
 const removeJournalLine = (i) => { if(journalForm.value.lines.length>2)journalForm.value.lines.splice(i,1) };
 
+// Charge les journaux depuis l'API
 const loadJournals = async () => { journalsLoading.value=true; try{const r=await fetch('/api/company/accounting/journals');if(!r.ok)throw Error('Erreur');journals.value=await r.json()}catch(e){error.value=e.message}finally{journalsLoading.value=false} };
+// Ouvre la modale de création d'une écriture comptable
 const openJournalModal = () => { error.value=null;journalForm.value={journal_type:'operations_diverses',entry_date:new Date().toISOString().split('T')[0],reference:'',description:'',lines:[{account_id:'',label:'',debit:'',credit:''},{account_id:'',label:'',debit:'',credit:''}]};showJournalModal.value=true; };
+// Soumet une nouvelle écriture comptable
 const submitJournal = async () => { journalSubmitting.value=true;error.value=null;try{const r=await fetch('/api/company/accounting/journals',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':csrfToken.value,Accept:'application/json'},body:JSON.stringify(journalForm.value)});const d=await r.json();if(!r.ok)throw Error(d.message||'Erreur');successMsg.value=d.message;showJournalModal.value=false;await loadJournals();setTimeout(()=>successMsg.value='',3000)}catch(e){error.value=e.message}finally{journalSubmitting.value=false} };
+// Charge le détail d'une écriture pour affichage
 const loadJournalDetail = async (id) => { try{const r=await fetch(`/api/company/accounting/journals/${id}`);if(!r.ok)throw Error('Erreur');const d=await r.json();selectedJournal.value=d.journal;showJournalDetailModal.value=true}catch(e){error.value=e.message} };
+// Poste (valide) une écriture comptable
 const postJournal = async (id) => { if(!confirm('Poster cette écriture ?'))return; try{const r=await fetch(`/api/company/accounting/journals/${id}/post`,{method:'POST',headers:{'X-CSRF-TOKEN':csrfToken.value,Accept:'application/json'}});const d=await r.json();if(!r.ok)throw Error(d.message||'Erreur');successMsg.value=d.message;await loadJournals();setTimeout(()=>successMsg.value='',3000)}catch(e){error.value=e.message} };
+// Crée une extourne (contre-passation) d'une écriture
 const reverseJournal = async (id) => { if(!confirm('Créer une extourne ?'))return; try{const r=await fetch(`/api/company/accounting/journals/${id}/reverse`,{method:'POST',headers:{'X-CSRF-TOKEN':csrfToken.value,Accept:'application/json'}});const d=await r.json();if(!r.ok)throw Error(d.message||'Erreur');successMsg.value=d.message;await loadJournals();setTimeout(()=>successMsg.value='',3000)}catch(e){error.value=e.message} };
+// Supprime un brouillon d'écriture comptable
 const deleteJournal = async (id) => { if(!confirm('Supprimer ce brouillon ?'))return; try{const r=await fetch(`/api/company/accounting/journals/${id}`,{method:'DELETE',headers:{'X-CSRF-TOKEN':csrfToken.value,Accept:'application/json'}});const d=await r.json();if(!r.ok)throw Error(d.message||'Erreur');successMsg.value=d.message;await loadJournals();setTimeout(()=>successMsg.value='',3000)}catch(e){error.value=e.message} };
 
-// Balance
+// --- Balance des comptes ---
 const balanceData = ref(null);
 const balanceLoading = ref(false);
 const showBalanceByClass = ref(false);
 const fiscalYearFilter = ref('');
 const loadBalance = async () => { balanceLoading.value=true; try{const p=new URLSearchParams();if(fiscalYearFilter.value)p.append('fiscal_year_id',fiscalYearFilter.value);const r=await fetch('/api/company/accounting/reports/balance'+(p.toString()?'?'+p.toString():''));if(!r.ok)throw Error('Erreur');balanceData.value=await r.json()}catch(e){error.value=e.message}finally{balanceLoading.value=false} };
 
-// Grand livre
+// --- Grand livre ---
 const grandLivreLines = ref([]);
 const grandLivreTotals = ref(null);
 const grandLivreAccounts = ref([]);
@@ -139,17 +164,17 @@ const grandLivreFilter = ref({account_id:'',date_from:'',date_to:'',journal_type
 const grandLivreLoading = ref(false);
 const loadGrandLivre = async () => { grandLivreLoading.value=true; try{const p=new URLSearchParams();if(grandLivreFilter.value.account_id)p.append('account_id',grandLivreFilter.value.account_id);if(grandLivreFilter.value.date_from)p.append('date_from',grandLivreFilter.value.date_from);if(grandLivreFilter.value.date_to)p.append('date_to',grandLivreFilter.value.date_to);if(grandLivreFilter.value.journal_type)p.append('journal_type',grandLivreFilter.value.journal_type);const r=await fetch('/api/company/accounting/reports/grand-livre'+(p.toString()?'?'+p.toString():''));if(!r.ok)throw Error('Erreur');const d=await r.json();grandLivreLines.value=d.lines;grandLivreTotals.value=d.totals;grandLivreAccounts.value=d.accounts}catch(e){error.value=e.message}finally{grandLivreLoading.value=false} };
 
-// Bilan
+// --- Bilan comptable ---
 const bilanData = ref(null);
 const bilanLoading = ref(false);
 const loadBilan = async () => { bilanLoading.value=true; try{const p=new URLSearchParams();if(fiscalYearFilter.value)p.append('fiscal_year_id',fiscalYearFilter.value);const r=await fetch('/api/company/accounting/reports/bilan'+(p.toString()?'?'+p.toString():''));if(!r.ok)throw Error('Erreur');bilanData.value=await r.json()}catch(e){error.value=e.message}finally{bilanLoading.value=false} };
 
-// Résultat
+// --- Compte de résultat ---
 const resultatData = ref(null);
 const resultatLoading = ref(false);
 const loadResultat = async () => { resultatLoading.value=true; try{const p=new URLSearchParams();if(fiscalYearFilter.value)p.append('fiscal_year_id',fiscalYearFilter.value);const r=await fetch('/api/company/accounting/reports/resultat'+(p.toString()?'?'+p.toString():''));if(!r.ok)throw Error('Erreur');resultatData.value=await r.json()}catch(e){error.value=e.message}finally{resultatLoading.value=false} };
 
-// TVA
+// --- TVA : déclarations et calcul ---
 const tvaDeclarations = ref([]);
 const tvaLoading = ref(false);
 const showTvaModal = ref(false);

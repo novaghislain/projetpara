@@ -41,9 +41,20 @@
     </GelLayout>
 </template>
 <script setup>
+/* ═══════════════════════════════════════════════════════
+   Signatures / Form — Création et modification d'une
+   demande de signature électronique.
+   ═══════════════════════════════════════════════════════ */
+
 import { reactive } from 'vue'
 import GelLayout from '../../../Layouts/GelLayout.vue'
+
+/* ─── Props — signature existante (édition) ou null (création) ─── */
 const props = defineProps({ signature: { type: Object, default: null }, documents: { type: Array, default: () => [] } })
+
+/* ─── Formulaire réactif ─── */
 const form = reactive({ document_id: props.signature?.document_id || '', signer_name: props.signature?.signer_name || '', signer_email: props.signature?.signer_email || '', signer_phone: props.signature?.signer_phone || '', message: '' })
+
+/* ─── Soumission — création ou mise à jour ─── */
 const submit = () => { const isEdit = !!props.signature; const url = isEdit ? `/signatures/${props.signature.id}` : '/signatures'; const method = isEdit ? 'PUT' : 'POST'; fetch(url, { method, headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content }, body: JSON.stringify(form) }).then(r => { if (r.ok) window.location = '/signatures'; else alert('Erreur') }) }
 </script>

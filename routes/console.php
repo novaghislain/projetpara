@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -20,3 +21,7 @@ Artisan::command('relances:process', function () {
 
 // Agent Finance — classe auto-découverte dans app/Console/Commands
 // Utilisation : php artisan ai:agent-finance --client-id=1 --fiscal-year-id=1
+
+Schedule::job(new \App\Jobs\DailyDigestJob)->dailyAt('07:00');
+Schedule::job(new \App\Jobs\TaskEscalationJob)->hourly();
+Schedule::job(new \App\Jobs\ContactBirthdayJob)->dailyAt('08:00');

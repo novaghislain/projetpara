@@ -10,6 +10,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Contrôleur pour la gestion des immobilisations.
+ *
+ * Permet de lister, créer, afficher, modifier, générer un plan d'amortissement,
+ * céder et supprimer les immobilisations d'un client.
+ */
 class FixedAssetController extends BaseCompanyController
 {
     /**

@@ -6,17 +6,31 @@ use App\Services\FiscalBeninService;
 use App\Models\AiSuggestion;
 use Illuminate\Http\Request;
 
+/**
+ * Contrôleur API pour l'agent fiscal intelligent.
+ *
+ * Propose des déclarations TVA pré-remplies, génère des alertes fiscales,
+ * applique les suggestions approuvées et fournit un résumé fiscal.
+ */
 class FiscalAgentController extends BaseApiController
 {
     protected FiscalBeninService $fiscalBenin;
 
+    /**
+     * Constructeur avec injection du service fiscal Bénin.
+     *
+     * @param FiscalBeninService $fiscalBenin
+     */
     public function __construct(FiscalBeninService $fiscalBenin)
     {
         $this->fiscalBenin = $fiscalBenin;
     }
 
     /**
-     * Proposer une déclaration TVA pré-remplie pour une période.
+     * Propose une déclaration TVA pré-remplie pour une période donnée.
+     *
+     * @param Request $request La requête HTTP avec la période (YYYY-MM) et l'exercice optionnel.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function proposeTva(Request $request)
     {
@@ -36,7 +50,9 @@ class FiscalAgentController extends BaseApiController
     }
 
     /**
-     * Générer les alertes fiscales.
+     * Génère les alertes fiscales pour le client (échéances, rappels).
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function alerts()
     {
@@ -47,7 +63,10 @@ class FiscalAgentController extends BaseApiController
     }
 
     /**
-     * Appliquer une suggestion TVA approuvée.
+     * Applique une suggestion TVA préalablement approuvée par l'utilisateur.
+     *
+     * @param int $id L'identifiant de la suggestion IA.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function applyTva(int $id)
     {
@@ -57,6 +76,7 @@ class FiscalAgentController extends BaseApiController
             ->where('type', 'tva_declaration')
             ->findOrFail($id);
 
+        // Vérification : seule une suggestion approuvée peut être appliquée
         if ($suggestion->status !== 'approved') {
             return response()->json(['message' => 'La suggestion doit être approuvée d\'abord'], 400);
         }
@@ -74,7 +94,10 @@ class FiscalAgentController extends BaseApiController
     }
 
     /**
-     * Résumé fiscal : dernières déclarations + alertes.
+     * Fournit un résumé fiscal complet : dernières déclarations,
+     * suggestions en attente et alertes fiscales.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function summary()
     {

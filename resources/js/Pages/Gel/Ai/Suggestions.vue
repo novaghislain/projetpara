@@ -17,5 +17,10 @@
     </GelLayout>
 </template>
 <script setup>
+/* ============================================================
+ * Suggestions IA (Intelligence Artificielle)
+ * Page d'accueil du module de suggestions et recommandations
+ * intelligentes. Affiche un placeholder pendant le déploiement.
+ * ============================================================ */
 import GelLayout from '../../../Layouts/GelLayout.vue';
 </script>

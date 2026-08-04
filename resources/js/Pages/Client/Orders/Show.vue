@@ -1,7 +1,13 @@
+/*
+ * Composant : Show (Detail d'une commande)
+ * Role : Affiche le detail complet d'une commande client : informations,
+ *        historique des statuts, documents, messagerie integree avec l'equipe.
+ */
 <script setup>
 import { ref } from 'vue';
 import CompanyLayout from '../../../Layouts/CompanyLayout.vue';
 
+/* Proprietes : recoit l'objet commande complet depuis le backend */
 const props = defineProps({
     order: {
         type: Object,
@@ -9,13 +15,15 @@ const props = defineProps({
     }
 });
 
+/* Donnees reactives pour le formulaire d'envoi de message */
 const contenu = ref('');
 const processing = ref(false);
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
+/* Envoie un message dans la discussion liee a la commande */
 const sendMessage = async () => {
     if (!contenu.value.trim()) return;
-    
+
     processing.value = true;
     try {
         const res = await fetch(`/mes-commandes/${props.order.id}/messages`, {
@@ -27,7 +35,7 @@ const sendMessage = async () => {
             },
             body: JSON.stringify({ contenu: contenu.value })
         });
-        
+
         if (res.ok || res.redirected) {
             window.location.reload();
         }
@@ -38,6 +46,7 @@ const sendMessage = async () => {
     }
 };
 
+/* Associe une classe de couleur Bootstrap a chaque statut possible */
 const getStatusColor = (status) => {
     const colors = {
         'Nouvelle Demande': 'bg-primary text-white',

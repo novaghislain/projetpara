@@ -1,4 +1,11 @@
 <script setup>
+/*
+ * Page : Tickets Index
+ * Role : Liste des tickets IT support avec recherche, filtres (client, statut, priorité), et pagination AJAX
+ * Props :
+ *   tickets (Object) — Données paginées initiales des tickets (Laravel paginator JSON)
+ *   clients (Array)  — Liste des clients pour le filtre
+ */
 import { ref, computed, watch, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 
@@ -7,7 +14,7 @@ const props = defineProps({
     clients: Array,
 });
 
-// ── Filters ──
+// ── Filtres de recherche ──
 const search = ref('');
 const filterClientId = ref('');
 const filterStatus = ref('');
@@ -16,7 +23,8 @@ const ticketsData = ref(null);
 const loading = ref(false);
 let debounceTimer = null;
 
-// ── Helpers ──
+// ── Helpers d'affichage ──
+// Libellé lisible pour chaque niveau de priorité
 const priorityLabel = (p) =>
     ({ low: 'Basse', medium: 'Moyenne', high: 'Haute', critical: 'Critique' }[p] || p);
 
@@ -29,14 +37,16 @@ const statusLabel = (s) =>
 const statusClass = (s) =>
     ({ open: 'bg-primary', assigned: 'bg-info', in_progress: 'bg-warning text-dark', pending: 'bg-secondary', resolved: 'bg-success', closed: 'bg-dark' }[s] || 'bg-secondary');
 
+// Calcule la classe CSS du badge SLA en fonction du temps restant
 const slaBadge = (dueAt) => {
     if (!dueAt) return 'bg-secondary';
     const hoursLeft = (new Date(dueAt) - new Date()) / (1000 * 60 * 60);
-    if (hoursLeft < 0) return 'bg-danger';
-    if (hoursLeft <= 4) return 'bg-warning text-dark';
-    return 'bg-success';
+    if (hoursLeft < 0) return 'bg-danger';       // SLA dépassé
+    if (hoursLeft <= 4) return 'bg-warning text-dark'; // Urgent (< 4h)
+    return 'bg-success';                          // Dans les temps
 };
 
+// Libellé lisible pour l'état SLA
 const slaLabel = (dueAt) => {
     if (!dueAt) return 'N/A';
     const hoursLeft = (new Date(dueAt) - new Date()) / (1000 * 60 * 60);
@@ -45,6 +55,7 @@ const slaLabel = (dueAt) => {
     return 'OK';
 };
 
+// Formate une date au format court (jour mois année) pour l'affichage du SLA
 const formatDateShort = (d) => {
     if (!d) return '-';
     return new Date(d).toLocaleDateString('fr-FR', {
@@ -52,6 +63,7 @@ const formatDateShort = (d) => {
     });
 };
 
+// Formate une date au format long (jour mois année heure:minute) pour l'affichage des colonnes
 const formatDate = (d) => {
     if (!d) return '-';
     return new Date(d).toLocaleDateString('fr-FR', {
@@ -60,9 +72,10 @@ const formatDate = (d) => {
     });
 };
 
+// Indique si des tickets existent dans les données chargées
 const hasTickets = computed(() => ticketsData.value?.data?.length > 0);
 
-// ── Data fetching (SPA: JSON via Accept header) ──
+// ── Récupération des données (SPA : requêtes JSON via header Accept) ──
 const fetchTickets = async (page) => {
     loading.value = true;
     try {
@@ -86,21 +99,21 @@ const fetchTickets = async (page) => {
     }
 };
 
-// ── Watchers ──
+// ── Watchers : déclenchent le rechargement au changement des filtres ──
 watch(search, () => {
     clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => fetchTickets(), 350);
+    debounceTimer = setTimeout(() => fetchTickets(), 350); // Debounce 350ms pour la recherche textuelle
 });
 watch([filterClientId, filterStatus, filterPriority], () => fetchTickets());
 
-// ── Pagination ──
+// ── Pagination : extrait le numéro de page depuis l'URL et recharge ──
 const goToPage = (url) => {
     if (!url) return;
     const u = new URL(url, window.location.origin);
     fetchTickets(u.searchParams.get('page'));
 };
 
-// ── Lifecycle ──
+// ── Cycle de vie : initialise les données avec les props reçues du serveur ──
 onMounted(() => {
     ticketsData.value = props.tickets;
 });

@@ -150,9 +150,19 @@
 </template>
 
 <script>
+/*
+ * Composant : DaeContratsIndex
+ * Role : Page principale de gestion des contrats du module DAE.
+ * Affiche la liste des contrats avec filtres (statut, type, client, recherche).
+ * Met en evidence les contrats arrivant a expiration dans les 30 jours.
+ * Permet les actions : voir, renouveler, telecharger, supprimer.
+ * Props : aucune
+ * Evenements : row-click, action, page-change (via DaeDataTable)
+ */
 import axios from 'axios';
 import DaeDataTable from '../../../../Components/Dae/DaeDataTable.vue';
 
+// Mapping des statuts avec leurs libelles et classes de badge Bootstrap
 const STATUT_MAP = {
     brouillon: { label: 'Brouillon', badge: 'bg-secondary' },
     actif:     { label: 'Actif',     badge: 'bg-success' },
@@ -161,6 +171,7 @@ const STATUT_MAP = {
     renouvele: { label: 'Renouvelé', badge: 'bg-info' },
 };
 
+// Mapping des types de contrat vers leurs libelles
 const TYPE_CONTRAT_MAP = {
     prestation:  'Prestation',
     bail:        'Bail',
@@ -221,6 +232,7 @@ export default {
         },
 
         expiringContracts() {
+            // Filtre les contrats actifs dont la date de fin est dans les 30 prochains jours
             const now = new Date();
             const thirtyDays = 30 * 24 * 60 * 60 * 1000;
 

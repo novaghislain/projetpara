@@ -172,10 +172,22 @@
 </template>
 
 <script>
+/*
+ * Composant : DaeRapportsIndex
+ * Role : Page de gestion des rapports du module DAE.
+ * Affiche la liste des rapports avec filtres (type, statut, client, recherche).
+ * Permet la generation de nouveaux rapports via une modale.
+ * Permet la consultation, le telechargement et la suppression.
+ * Props : aucune
+ * Evenements : row-click, action, page-change (via DaeDataTable)
+ */
+
+// Importation du client HTTP et des composants
 import axios from 'axios';
 import { Modal } from 'bootstrap';
 import DaeDataTable from '../../../../Components/Dae/DaeDataTable.vue';
 
+// Mapping des statuts de rapport avec leurs libelles et classes de badge
 const STATUT_MAP = {
     brouillon: { label: 'Brouillon', badge: 'bg-secondary' },
     genere:    { label: 'Généré',    badge: 'bg-primary' },
@@ -188,24 +200,25 @@ export default {
     components: { DaeDataTable },
     data() {
         return {
-            loading: true,
-            items: [],
-            clients: [],
-            currentPage: 1,
-            totalPages: 1,
-            totalItems: 0,
-            filters: { type_rapport: '', statut: '', client_id: '', recherche: '' },
+            loading: true,         // Indicateur de chargement des donnees
+            items: [],             // Liste des rapports
+            clients: [],           // Liste des clients pour les filtres
+            currentPage: 1,        // Page courante de la pagination
+            totalPages: 1,         // Nombre total de pages
+            totalItems: 0,         // Nombre total de rapports
+            filters: { type_rapport: '', statut: '', client_id: '', recherche: '' }, // Filtres actifs
             // Generer form
-            genererModalInstance: null,
+            genererModalInstance: null, // Instance de la modale de generation
             form: {
                 client_id: '', titre: '', type_rapport: '',
                 description: '', periode_debut: '', periode_fin: '',
-            },
-            formLoading: false,
-            formError: '',
+            },                     // Donnees du formulaire de generation
+            formLoading: false,    // Indicateur d'envoi du formulaire
+            formError: '',         // Message d'erreur du formulaire
         };
     },
     computed: {
+        /* Definition des colonnes de la table des rapports */
         tableColumns() {
             return [
                 { key: 'titre', label: 'Titre', class: 'text-truncate', width: '30%' },
@@ -214,6 +227,7 @@ export default {
                 { key: 'created_at', label: 'Date' },
             ];
         },
+        /* Actions disponibles pour chaque ligne de la table */
         tableActions() {
             return [
                 { key: 'voir', label: 'Voir', icon: 'bi-eye' },
@@ -223,17 +237,20 @@ export default {
         },
     },
     created() {
+        /* Chargement initial : clients et rapports en parallele */
         Promise.all([this.fetchClients(), this.fetchItems()]).finally(() => { this.loading = false; });
     },
     methods: {
+        /* Recupere la liste des clients depuis l'API */
         async fetchClients() {
             try { const r = await axios.get('/api/clients'); this.clients = Array.isArray(r.data) ? r.data : (r.data.data || []); }
             catch (e) { console.error('Erreur clients:', e); }
         },
+        /* Recupere la liste paginee des rapports selon les filtres actifs */
         async fetchItems() {
             try {
                 const params = { page: this.currentPage, ...this.filters };
-                Object.keys(params).forEach(k => { if (!params[k]) delete params[k]; });
+                Object.keys(params).forEach(k => { if (!params[k]) delete params[k]; }); // Supprime les filtres vides
                 const r = await axios.get('/dae/rapports', { params });
                 const d = r.data;
                 this.items = d.data || [];
@@ -245,27 +262,35 @@ export default {
                 this.items = []; this.totalPages = 1; this.totalItems = 0;
             }
         },
+        /* Reinitialise la pagination et applique les filtres */
         applyFilters() { this.currentPage = 1; this.fetchItems(); },
+        /* Change de page dans la pagination */
         changePage(p) { this.currentPage = p; this.fetchItems(); },
+        /* Redirige vers la page de detail d'un rapport */
         handleRowClick(row) { window.location.href = `/dae/rapports/${row.id}`; },
+        /* Aiguille les actions de la table vers les methodes appropriees */
         handleAction({ action, row }) {
             if (action === 'voir') window.location.href = `/dae/rapports/${row.id}`;
             if (action === 'telecharger') window.location.href = `/dae/rapports/${row.id}/telecharger`;
             if (action === 'supprimer') this.deleteItem(row);
         },
+        /* Supprime un rapport apres confirmation */
         async deleteItem(row) {
             if (!confirm(`Supprimer "${row.titre}" ?`)) return;
             try { await axios.delete(`/dae/rapports/${row.id}`); this.fetchItems(); }
             catch (e) { alert('Impossible de supprimer.'); }
         },
 
-        // Generer modal
+        /* ─── MODALE DE GENERATION ───────────────────────────── */
+
+        /* Ouvre la modale de creation d'un rapport */
         openGenererModal() {
             this.formError = '';
             this.form = { client_id: '', titre: '', type_rapport: '', description: '', periode_debut: '', periode_fin: '' };
             this.genererModalInstance = new Modal(this.$refs.genererModal);
             this.genererModalInstance.show();
         },
+        /* Soumet le formulaire de generation d'un rapport */
         async submitGenerer() {
             this.formLoading = true;
             this.formError = '';
@@ -278,7 +303,9 @@ export default {
             } finally { this.formLoading = false; }
         },
 
-        // Helpers
+        /* ─── HELPERS D'AFFICHAGE ────────────────────────────── */
+
+        /* Convertit le type technique en libelle lisible */
         typeLabel(t) { const m = { activite: 'Activité', financier: 'Financier', rh: 'Ressources humaines', conformite: 'Conformité', mission: 'Mission' }; return m[t] || t || '-'; },
         statutBadge(s) { return STATUT_MAP[s]?.badge || 'bg-secondary'; },
         statutLabel(s) { return STATUT_MAP[s]?.label || s || '-'; },

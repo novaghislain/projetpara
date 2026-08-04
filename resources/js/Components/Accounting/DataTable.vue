@@ -1,13 +1,21 @@
+<!--
+ * DataTable.vue
+ * Tableau de données générique avec tris, colonnes typées
+ * (monnaie, date, statut, booléen, nombre) et pagination.
+ * Supporte un slot "toolbar" pour les actions en en-tête
+ * et un slot "actions" par ligne.
+-->
 <template>
     <div class="isup-table-wrapper bg-white rounded shadow-sm">
-        <!-- Toolbar -->
+        <!-- Toolbar : slot pour les actions en en-tête (filtres, boutons, etc.) -->
         <div v-if="$slots.toolbar" class="p-3 border-bottom">
             <slot name="toolbar" />
         </div>
 
-        <!-- Table -->
+        <!-- Tableau principal -->
         <div class="table-responsive">
             <table class="table table-hover isup-table mb-0">
+                <!-- En-tête avec colonnes triables -->
                 <thead class="table-light">
                     <tr>
                         <th v-for="col in columns" :key="col.key"
@@ -17,6 +25,7 @@
                             @click="col.sortable !== false && sort(col.key)">
                             <span class="d-inline-flex align-items-center gap-1">
                                 {{ col.label }}
+                                <!-- Indicateur de direction du tri -->
                                 <span v-if="sortKey === col.key" class="text-primary">
                                     {{ sortDir === 'asc' ? '↑' : '↓' }}
                                 </span>
@@ -28,6 +37,7 @@
                     </tr>
                 </thead>
                 <tbody>
+                    <!-- Lignes de données avec rendu typé par colonne -->
                     <tr v-for="(row, index) in sortedData" :key="row.id || index"
                         class="cursor-pointer"
                         :class="{ 'isup-row-clickable': clickable }"
@@ -35,32 +45,40 @@
                         <td v-for="col in columns" :key="col.key"
                             class="px-3 py-2 small"
                             :style="{ textAlign: col.type === 'money' || col.type === 'number' ? 'right' : 'left' }">
+                            <!-- Format monétaire -->
                             <span v-if="col.type === 'money'" class="fw-medium font-mono">
                                 {{ formatMoney(row[col.key]) }}
                             </span>
+                            <!-- Format date -->
                             <span v-else-if="col.type === 'date'" class="text-muted">
                                 {{ formatDate(row[col.key]) }}
                             </span>
+                            <!-- Badge de statut coloré -->
                             <span v-else-if="col.type === 'status'"
                                   :class="getStatusBadge(row[col.key])">
                                 {{ getStatusLabel(row[col.key]) }}
                             </span>
+                            <!-- Booléen : Oui / Non -->
                             <span v-else-if="col.type === 'boolean'">
                                 <span :class="row[col.key] ? 'text-success' : 'text-muted'">
                                     {{ row[col.key] ? 'Oui' : 'Non' }}
                                 </span>
                             </span>
+                            <!-- Nombre formaté -->
                             <span v-else-if="col.type === 'number'" class="text-end">
                                 {{ formatNumber(row[col.key]) }}
                             </span>
+                            <!-- Texte brut par défaut -->
                             <template v-else>
                                 {{ row[col.key] }}
                             </template>
                         </td>
+                        <!-- Slot d'actions par ligne -->
                         <td v-if="$slots.actions" class="px-3 py-2 text-end">
                             <slot name="actions" :row="row" />
                         </td>
                     </tr>
+                    <!-- Ligne vide quand il n'y a aucune donnée -->
                     <tr v-if="data.length === 0">
                         <td :colspan="columns.length + (!!$slots.actions ? 1 : 0)"
                             class="text-center text-muted py-5 small">
@@ -71,7 +89,7 @@
             </table>
         </div>
 
-        <!-- Pagination -->
+        <!-- Pagination : navigation entre les pages -->
         <div v-if="pagination" class="d-flex justify-content-between align-items-center px-3 py-2 border-top small">
             <span class="text-muted">
                 Page {{ pagination.current_page }} / {{ pagination.last_page }}
@@ -94,18 +112,21 @@
 <script setup>
 import { ref, computed } from 'vue';
 
+/* Propriétés du composant DataTable */
 const props = defineProps({
-    columns: { type: Array, required: true },
-    data: { type: Array, default: () => [] },
-    pagination: { type: Object, default: null },
-    clickable: { type: Boolean, default: false },
+    columns: { type: Array, required: true },     /* Configuration des colonnes : { key, label, type, sortable } */
+    data: { type: Array, default: () => [] },      /* Données à afficher */
+    pagination: { type: Object, default: null },   /* Objet de pagination { current_page, last_page, total, ... } */
+    clickable: { type: Boolean, default: false },  /* Rend les lignes cliquables (émet rowClick) */
 });
 
 const emit = defineEmits(['rowClick', 'pageChange']);
 
-const sortKey = ref('');
-const sortDir = ref('asc');
+/* État interne du tri */
+const sortKey = ref('');   /* Colonne actuellement triée */
+const sortDir = ref('asc'); /* Direction du tri */
 
+/* Données triées selon la colonne et la direction actives */
 const sortedData = computed(() => {
     if (!sortKey.value) return props.data;
     return [...props.data].sort((a, b) => {
@@ -116,6 +137,7 @@ const sortedData = computed(() => {
     });
 });
 
+/* Bascule le tri : change la direction si même colonne, sinon nouvelle colonne */
 function sort(key) {
     if (sortKey.value === key) {
         sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc';
@@ -125,20 +147,24 @@ function sort(key) {
     }
 }
 
+/* Formate un montant monétaire avec le symbole F */
 function formatMoney(value) {
     return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(value || 0) + ' F';
 }
 
+/* Formate un nombre avec le séparateur de milliers français */
 function formatNumber(value) {
     return new Intl.NumberFormat('fr-FR').format(value || 0);
 }
 
+/* Formate une date au format local français */
 function formatDate(value) {
     if (!value) return '';
     const d = new Date(value);
     return d.toLocaleDateString('fr-FR');
 }
 
+/* Retourne les classes CSS pour le badge de statut */
 function getStatusBadge(status) {
     const map = {
         posted: 'badge bg-success bg-opacity-10 text-success',
@@ -154,6 +180,7 @@ function getStatusBadge(status) {
     return map[status] || 'badge bg-secondary bg-opacity-10 text-secondary';
 }
 
+/* Retourne le libellé français d'un statut */
 function getStatusLabel(status) {
     const map = {
         posted: 'Validée',

@@ -1,21 +1,27 @@
 <script setup>
+/* ============================================================
+ * Articles / Index.vue
+ * Page de liste des articles avec recherche, filtres
+ * (categorie, statut), pagination et gestion modale
+ * (creation, modification, suppression).
+ * ============================================================ */
 import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import GelLayout from '../../../Layouts/GelLayout.vue';
 
-// ── Data ──
+/* Donnees réactives du composant : liste des articles, categories, etats de chargement et de soumission */
 const articles = ref([]);
 const categories = ref([]);
 const loading = ref(true);
 const error = ref(null);
 const submitting = ref(false);
 
-// Filters
+/* Filtres de recherche : texte, categorie, statut et temporisateur pour le debounce */
 const search = ref('');
 const filterCategory = ref('');
 const filterStatus = ref('');
 const debounceTimer = ref(null);
 
-// Pagination
+/* Etat de la pagination : page courante, nombre total de pages et d'elements */
 const pagination = ref({
     current_page: 1,
     last_page: 1,
@@ -25,14 +31,14 @@ const pagination = ref({
     to: 0,
 });
 
-// Modal state
+/* Etat de la fenetre modale : visibilite, mode edition et identifiant de l'article edite */
 const showModal = ref(false);
 const isEditing = ref(false);
 const editingId = ref(null);
 const modalInstance = ref(null);
 const modalEl = ref(null);
 
-// Form
+/* Modele du formulaire de creation / edition d'article */
 const form = ref({
     title: '',
     slug: '',
@@ -46,11 +52,12 @@ const form = ref({
     published_at: '',
 });
 
+/* Liste des statuts possibles et leurs labels / couleurs */
 const statuses = ['published', 'draft', 'archived'];
 const statusLabels = { published: 'Publié', draft: 'Brouillon', archived: 'Archivé' };
 const statusColors = { published: 'bg-success', draft: 'bg-warning text-dark', archived: 'bg-secondary' };
 
-// ── Fetch articles ──
+/* Recuperation paginee des articles depuis l'API avec les filtres actifs */
 const fetchArticles = async (page) => {
     loading.value = true;
     error.value = null;
@@ -89,7 +96,7 @@ const fetchArticles = async (page) => {
     }
 };
 
-// ── Fetch categories ──
+/* Chargement de la liste des categories pour le filtre déroulant */
 const fetchCategories = async () => {
     try {
         const res = await fetch('/api/categories');
@@ -100,14 +107,14 @@ const fetchCategories = async () => {
     } catch (e) { /* non-critique */ }
 };
 
-// ── Search with debounce ──
+/* Recherche avec debounce : declenche une requete 350 ms apres la fin de la saisie */
 watch(search, () => {
     clearTimeout(debounceTimer.value);
     debounceTimer.value = setTimeout(() => fetchArticles(1), 350);
 });
 watch([filterCategory, filterStatus], () => fetchArticles(1));
 
-// ── Pagination helpers ──
+/* Utilitaires de pagination : navigation et calcul de la plage de pages visibles */
 const goToPage = (page) => {
     if (page < 1 || page > pagination.value.last_page) return;
     fetchArticles(page);
@@ -122,7 +129,7 @@ const pageRange = computed(() => {
     return range;
 });
 
-// ── Modal ──
+/* Gestion de la fenetre modale : ouverture, fermeture, soumission et suppression */
 const openCreateModal = async () => {
     resetForm();
     isEditing.value = false;
@@ -171,6 +178,7 @@ const closeModal = () => {
     showModal.value = false;
 };
 
+/* Reinitialisation du formulaire a ses valeurs par defaut */
 const resetForm = () => {
     form.value = {
         title: '',
@@ -186,6 +194,7 @@ const resetForm = () => {
     };
 };
 
+/* Soumission du formulaire : creation ou mise a jour d'un article via l'API */
 const submitForm = async () => {
     submitting.value = true;
     try {
@@ -216,6 +225,7 @@ const submitForm = async () => {
     }
 };
 
+/* Suppression d'un article avec confirmation et rechargement de la liste */
 const deleteArticle = async (id) => {
     if (!confirm('Confirmer la suppression de cet article ?')) return;
     try {
@@ -231,26 +241,35 @@ const deleteArticle = async (id) => {
     }
 };
 
+/* Formatage d'une date au format francais (jour, mois abrege, annee) */
 const formatDate = (dateStr) => {
     if (!dateStr) return '-';
     const d = new Date(dateStr);
     return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
+/* Troncature d'un texte a une longueur maximale avec ajout de points de suspension */
 const truncate = (text, len = 80) => {
     if (!text) return '';
     return text.length > len ? text.substring(0, len) + '...' : text;
 };
 
-// ── Lifecycle ──
+/* Cycle de vie du composant : chargement initial des articles et des categories */
 onMounted(async () => {
     await Promise.all([fetchArticles(1), fetchCategories()]);
 });
 </script>
 
 <template>
+    <!-- ============================================================
+    Page de gestion des articles (CRUD).
+    Barre de filtres (recherche, categorie, statut),
+    tableau pagine avec actions (modifier, supprimer),
+    et fenetre modale pour la creation / modification.
+    ============================================================ -->
     <GelLayout page-title="Articles">
-        <!-- Filters bar -->
+        <!-- Barre de filtres : recherche textuelle, categorie, statut -->
+
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
             <div class="d-flex flex-wrap align-items-center gap-2">
                 <div class="input-group input-group-sm" style="max-width:280px;">
@@ -353,7 +372,7 @@ onMounted(async () => {
             </div>
         </div>
 
-        <!-- Create/Edit Modal -->
+        <!-- Fenetre modale de creation / modification d'article -->
         <div ref="modalEl" class="modal fade" tabindex="-1" @hidden.self="showModal = false">
             <div class="modal-dialog modal-lg modal-dialog-scrollable">
                 <div class="modal-content">
@@ -410,6 +429,7 @@ onMounted(async () => {
                                     <input v-model="form.featured_image" class="form-control form-control-sm" placeholder="https://...">
                                 </div>
 
+                                <!-- Section SEO : meta-title et meta-description -->
                                 <div class="col-12 mt-3">
                                     <h6 class="fw-bold text-primary border-bottom pb-2">SEO (optionnel)</h6>
                                 </div>

@@ -182,6 +182,26 @@ const flatLinks = computed(() =>
     sidebarLinks.value.flatMap(g => g.items)
 );
 
+const currentPath = computed(() => {
+    if (typeof window !== 'undefined') return window.location.pathname;
+    return '';
+});
+
+const isSubnavActive = (href) => {
+    const path = currentPath.value;
+    
+    // Empêcher les racines de correspondre à tout
+    if (href === '/company/accounting' && path !== '/company/accounting') return false;
+    if (href === '/company/dae' && path !== '/company/dae') return false;
+    if (href === '/company/rh' && path !== '/company/rh') return false;
+    if (href === '/company/legal' && path !== '/company/legal') return false;
+    if (href === '/company/projects' && path !== '/company/projects') return false;
+    
+    if (path === href) return true;
+    if (path.startsWith(href + '/')) return true;
+    return false;
+};
+
 const sectionTitles = {
     'company-dashboard': 'Accueil',
     'mes-commandes': 'Commandes',
@@ -354,6 +374,14 @@ async function markAllRead() {
 onMounted(() => {
     fetchNotifications();
     pollInterval = setInterval(fetchNotifications, 30000);
+
+    if (window.Echo && authStore.user) {
+        window.Echo.private(`user.${authStore.user.id}`)
+            .listen('.NotificationRecuEvent', (e) => {
+                // Add the new notification to the top of the list
+                notifications.value.unshift(e.notificationData);
+            });
+    }
 });
 
 onUnmounted(() => {
@@ -363,7 +391,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div class="g-shell d-flex flex-column" style="min-height:100vh; background:#f0f4f8;">
+    <div class="g-shell d-flex flex-column" style="min-height:100vh; background:#F5F0FF;">
 
         <!-- === TOP BAR --- Logo + User === -->
         <header class="g-topbar d-flex align-items-center justify-content-between px-3">
@@ -382,13 +410,13 @@ onUnmounted(() => {
                         <i class="bi-bell" style="font-size:16px;"></i>
                         <span v-if="unreadCount > 0"
                               class="position-absolute top-0 start-100 translate-middle badge rounded-pill"
-                              style="background:#FF7900; color:#fff; font-size:9px; padding:2px 5px;">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+                              style="background:#7C3AED; color:#fff; font-size:9px; padding:2px 5px;">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
                     </button>
                     <div class="dropdown-menu dropdown-menu-end g-dropdown" style="width:360px;">
                         <div class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
                             <h6 class="mb-0 fw-bold" style="font-size:13px;">Notifications</h6>
                             <button v-if="unreadCount > 0" @click="markAllRead"
-                                    class="btn btn-sm btn-link p-0 text-decoration-none" style="font-size:12px;color:#FF7900;">
+                                    class="btn btn-sm btn-link p-0 text-decoration-none" style="font-size:12px;color:#7C3AED;">
                                 Tout marquer lu
                             </button>
                         </div>
@@ -426,7 +454,7 @@ onUnmounted(() => {
                     <ul class="dropdown-menu dropdown-menu-end g-dropdown">
                         <li>
                             <div class="g-dd-user px-3 py-2 border-bottom">
-                                <div class="fw-bold" style="font-size:13px; color:#163A5E;">{{ company?.name }} -- {{ authStore.user?.name }}</div>
+                                <div class="fw-bold" style="font-size:13px; color:#2D1B69;">{{ company?.name }} -- {{ authStore.user?.name }}</div>
                                 <div style="font-size:11px; color:#888;">{{ authStore.user?.email }}</div>
                             </div>
                         </li>
@@ -477,7 +505,8 @@ onUnmounted(() => {
                         <template v-for="link in flatLinks" :key="link.label">
                             <span v-if="link.group" class="gs-subnav-group">{{ link.group }}</span>
                             <a :href="link.href"
-                               class="gs-subnav-link">
+                               class="gs-subnav-link"
+                               :class="{ 'gs-subnav-active': isSubnavActive(link.href) }">
                                 <i :class="link.icon"></i>
                                 {{ link.label }}
                             </a>
@@ -499,21 +528,22 @@ onUnmounted(() => {
 
 <style scoped>
 /* == PORTAL CLIENT LAYOUT --- Sidebar verticale + Subnav == */
+/* 🎨 Theme violet #7C3AED — identité distincte du portail client */
 
 /* -- Top bar simplifiee ------------------------ */
 .g-topbar {
-    background: #163A5E;
+    background: #2D1B69;
     height: 52px;
     flex-shrink: 0;
-    border-bottom: 2px solid #FF7900;
-    box-shadow: 0 2px 6px rgba(22,58,94,0.12);
+    border-bottom: 2px solid #7C3AED;
+    box-shadow: 0 2px 6px rgba(45,27,105,0.15);
     position: sticky;
     top: 0;
     z-index: 1030;
 }
 .g-logo-icon {
     width: 30px; height: 30px;
-    background: #FF7900; color: #fff;
+    background: #7C3AED; color: #fff;
     border-radius: 4px;
     display: flex; align-items: center; justify-content: center;
     font-size: 14px; flex-shrink: 0;
@@ -550,8 +580,8 @@ onUnmounted(() => {
 .g-role-badge {
     font-size: 9px; font-weight: 800; letter-spacing: 0.06em;
     text-transform: uppercase;
-    background: rgba(255,121,0,0.2);
-    color: #FF7900;
+    background: rgba(124,58,237,0.15);
+    color: #7C3AED;
     padding: 3px 8px; border-radius: 3px;
 }
 .g-user-btn {
@@ -563,7 +593,7 @@ onUnmounted(() => {
 .g-user-btn:hover { background: rgba(255,255,255,0.18); }
 .g-avatar {
     width: 28px; height: 28px;
-    background: #fff; color: #163A5E;
+    background: #fff; color: #2D1B69;
     font-weight: 800; font-size: 11px;
     border-radius: 4px;
     display: flex; align-items: center; justify-content: center;
@@ -573,22 +603,22 @@ onUnmounted(() => {
 .g-dropdown { border-radius: 4px !important; min-width: 210px; margin-top: 6px; border: 1px solid #dce3ee !important; box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important; }
 .g-dd-user { background: #f8fbff; }
 .g-dd-item { font-size: 13px; padding: 9px 16px; color: #333; }
-.g-dd-item:hover { background: #FFF3E0 !important; color: #FF7900 !important; }
+.g-dd-item:hover { background: #F3EEFF !important; color: #7C3AED !important; }
 .g-dd-danger { color: #e53935 !important; }
 .g-dd-danger:hover { background: #fdecea !important; color: #e53935 !important; }
 .g-notif-all {
     display: block; text-align: center; padding: 7px;
-    background: #FFF3E0; color: #FF7900; border-radius: 4px;
+    background: #F3EEFF; color: #7C3AED; border-radius: 4px;
     font-size: 12px; font-weight: 600; text-decoration: none;
 }
-.g-notif-all:hover { background: #FFE0B2; color: #e06700; }
+.g-notif-all:hover { background: #E4D9FF; color: #6D28D9; }
 
 /* -- Sidebar ------------------------------------- */
 .g-body { position: relative; }
 .g-sidebar {
     width: 240px;
-    background: #1a2938;
-    border-right: 1px solid #1e3244;
+    background: #1F1147;
+    border-right: 1px solid #2D1B69;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
@@ -629,8 +659,8 @@ onUnmounted(() => {
 }
 .gs-nav-active {
     color: #fff !important;
-    background: rgba(255,121,0,0.15);
-    border-left-color: #FF7900;
+    background: rgba(124,58,237,0.2);
+    border-left-color: #7C3AED;
 }
 .gs-nav-icon {
     font-size: 16px;
@@ -638,7 +668,7 @@ onUnmounted(() => {
     text-align: center;
     flex-shrink: 0;
 }
-.gs-nav-active .gs-nav-icon { color: #FF7900; }
+.gs-nav-active .gs-nav-icon { color: #7C3AED; }
 .gs-nav-label { line-height: 1; }
 
 /* -- Bas de sidebar --- Compte --------------- */
@@ -673,7 +703,7 @@ onUnmounted(() => {
     font-family: 'Outfit', sans-serif;
     font-size: 16px;
     font-weight: 700;
-    color: #163A5E;
+    color: #2D1B69;
     white-space: nowrap;
     margin-right: 8px;
 }
@@ -707,18 +737,28 @@ onUnmounted(() => {
     white-space: nowrap;
 }
 .gs-subnav-link:hover {
-    color: #FF7900;
-    background: #FFF3E0;
-    border-color: #FFE0B2;
+    color: #7C3AED;
+    background: #F3EEFF;
+    border-color: #DDD6FE;
 }
 .gs-subnav-link i {
     font-size: 12px;
     color: #999;
 }
-.gs-subnav-link:hover i { color: #FF7900; }
+.gs-subnav-link:hover i { color: #7C3AED; }
+
+.gs-subnav-active {
+    color: #fff !important;
+    background: #7C3AED !important;
+    border-color: #7C3AED !important;
+    box-shadow: 0 2px 4px rgba(124,58,237,0.3);
+}
+.gs-subnav-active i {
+    color: #fff !important;
+}
 
 /* -- Main -------------------------------------- */
-.g-main { background: #f0f4f8; min-width: 0; }
+.g-main { background: #F5F0FF; min-width: 0; }
 
 /* -- Mobile overlay ---------------------------- */
 .g-overlay {
@@ -731,23 +771,23 @@ onUnmounted(() => {
 /* -- Deep overrides ------------------------ */
 :deep(.btn) { border-radius: 4px !important; font-size: 13px; }
 :deep(.btn-primary) {
-    background: #FF7900 !important; border-color: #FF7900 !important;
+    background: #7C3AED !important; border-color: #7C3AED !important;
     color: #fff !important; font-weight: 700 !important;
 }
-:deep(.btn-primary:hover) { background: #e06700 !important; border-color: #e06700 !important; }
-:deep(.btn-outline-primary) { color: #FF7900 !important; border-color: #FF7900 !important; }
-:deep(.btn-outline-primary:hover) { background: #FF7900 !important; color: #fff !important; }
+:deep(.btn-primary:hover) { background: #6D28D9 !important; border-color: #6D28D9 !important; }
+:deep(.btn-outline-primary) { color: #7C3AED !important; border-color: #7C3AED !important; }
+:deep(.btn-outline-primary:hover) { background: #7C3AED !important; color: #fff !important; }
 :deep(.btn-outline-secondary) { color: #888 !important; border-color: #ddd !important; }
 :deep(.btn-outline-secondary:hover) { background: #f5f5f5 !important; color: #555 !important; }
-:deep(.card) { border-radius: 6px !important; border: 1px solid #dce3ee; box-shadow: 0 1px 4px rgba(22,58,94,0.06); }
+:deep(.card) { border-radius: 6px !important; border: 1px solid #dce3ee; box-shadow: 0 1px 4px rgba(45,27,105,0.06); }
 :deep(.card-header) {
-    background: linear-gradient(90deg, #163A5E, #1e4d7a);
+    background: linear-gradient(90deg, #2D1B69, #4C1D95);
     border-bottom: none; font-size: 13px; font-weight: 700;
     padding: 10px 16px; border-radius: 6px 6px 0 0 !important; color: #fff;
 }
 :deep(.table) { font-size: 13px; }
 :deep(.table thead th) {
-    background: #EEF3F9; color: #163A5E; font-weight: 700;
+    background: #EEF3F9; color: #2D1B69; font-weight: 700;
     font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
     border-color: #dce3ee; padding: 10px 12px;
 }
@@ -758,12 +798,12 @@ onUnmounted(() => {
     border-radius: 4px !important; font-size: 13px; border: 1px solid #dce3ee;
 }
 :deep(.form-control:focus), :deep(.form-select:focus) {
-    border-color: #FF7900; box-shadow: 0 0 0 2px rgba(255,121,0,0.15);
+    border-color: #7C3AED; box-shadow: 0 0 0 2px rgba(124,58,237,0.15);
 }
-:deep(.text-primary) { color: #FF7900 !important; }
-:deep(.bg-primary) { background: #FF7900 !important; }
-:deep(.border-primary) { border-color: #FF7900 !important; }
-:deep(.progress-bar) { background: #FF7900; }
+:deep(.text-primary) { color: #7C3AED !important; }
+:deep(.bg-primary) { background: #7C3AED !important; }
+:deep(.border-primary) { border-color: #7C3AED !important; }
+:deep(.progress-bar) { background: #7C3AED; }
 
 /* == RESPONSIVE == */
 @media (max-width: 991.98px) {

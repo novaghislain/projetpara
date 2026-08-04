@@ -102,10 +102,23 @@
 </template>
 
 <script setup>
+/* ============================================================
+ * Audit — Journal d'Audit
+ * Affiche l'historique des événements (création, modification,
+ * suppression, connexion, export) avec filtres et pagination.
+ * ============================================================ */
 import GelLayout from '../../../Layouts/GelLayout.vue';
+
+/* Props : logs fourni par le backend (objet paginé) */
 defineProps(['logs'])
+
+/* URL d'export Excel construite à partir des paramètres de requête actuels */
 const exportUrl = '/administration/audit/export?' + new URLSearchParams(window.location.search).toString()
 
+/*
+ * eventClass — Retourne la classe Bootstrap pour le badge
+ * en fonction du type d'événement (create, update, delete, login, etc.).
+ */
 const eventClass = (e) => ({
     create: 'bg-success',
     update: 'bg-primary',

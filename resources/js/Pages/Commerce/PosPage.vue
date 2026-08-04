@@ -1,30 +1,37 @@
 <script setup>
+/* ═══════════════════════════════════════════════════════════
+   PosPage.vue - Point de vente (caisse enregistreuse)
+   Gestion des sessions, panier, passage en caisse,
+   paiement multi-modes, reçu et retour vente.
+   Supporte la saisie par lecteur code-barres.
+   ═══════════════════════════════════════════════════════════ */
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import GelLayout from '../../Layouts/GelLayout.vue'
 
 /* ══════════════════════════════════════════
-   State
+   État réactif du composant
    ══════════════════════════════════════════ */
-const state = ref('loading')
-const errorMsg = ref('')
-const products = ref([])
-const categories = ref([])
-const session = ref(null)
-const cart = ref([])
-const showPaymentModal = ref(false)
-const showSessionModal = ref(false)
-const submitting = ref(false)
-const searchQuery = ref('')
-const filterCat = ref('')
-const selectedPayment = ref('especes')
-const amountGiven = ref(0)
-const saleResult = ref(null)
-const receiptData = ref(null)
-const barcodeBuffer = ref('')
-const barcodeTimer = ref(null)
-const showReceiptModal = ref(false)
-const returnedSale = ref(null)
+const state = ref('loading')              /* 'loading' | 'loaded' | 'error' */
+const errorMsg = ref('')                  /* Message d'erreur éventuel */
+const products = ref([])                  /* Catalogue des produits disponibles */
+const categories = ref([])                /* Catégories pour le filtre */
+const session = ref(null)                 /* Session de caisse active */
+const cart = ref([])                      /* Panier (liste des articles) */
+const showPaymentModal = ref(false)       /* Visibilité de la modale de paiement */
+const showSessionModal = ref(false)       /* Visibilité de la modale d'ouverture session */
+const submitting = ref(false)             /* État de soumission */
+const searchQuery = ref('')               /* Recherche textuelle dans les produits */
+const filterCat = ref('')                 /* Filtre par catégorie */
+const selectedPayment = ref('especes')    /* Mode de paiement sélectionné */
+const amountGiven = ref(0)                /* Montant remis par le client */
+const saleResult = ref(null)              /* Résultat de la vente (après soumission) */
+const receiptData = ref(null)             /* Données du reçu à afficher */
+const barcodeBuffer = ref('')             /* Buffer pour le lecteur de code-barres */
+const barcodeTimer = ref(null)            /* Timer de réinitialisation du buffer */
+const showReceiptModal = ref(false)       /* Visibilité du reçu */
+const returnedSale = ref(null)            /* Référence de vente à retourner */
 
+/* Modes de paiement disponibles */
 const paymentMethods = [
   { value: 'especes', label: 'Espèces', icon: 'bi-cash' },
   { value: 'momo', label: 'MTN MoMo', icon: 'bi-phone' },
@@ -34,21 +41,25 @@ const paymentMethods = [
 ]
 
 /* ══════════════════════════════════════════
-   Computed
+   Propriétés calculées
    ══════════════════════════════════════════ */
+/* Total TTC du panier */
 const subtotal = computed(() =>
   cart.value.reduce((sum, item) => sum + (item.price_ttc * item.qty), 0)
 )
 
+/* Nombre total d'articles dans le panier */
 const totalItems = computed(() =>
   cart.value.reduce((sum, item) => sum + item.qty, 0)
 )
 
+/* Monnaie à rendre (uniquement pour paiement en espèces) */
 const changeAmount = computed(() => {
   if (selectedPayment.value !== 'especes') return 0
   return Math.max(0, Number(amountGiven.value) - subtotal.value)
 })
 
+/* Produits filtrés par recherche, catégorie, et disponibilité (stock > 0) */
 const filteredProducts = computed(() => {
   let list = products.value
   if (searchQuery.value) {
@@ -66,8 +77,9 @@ const filteredProducts = computed(() => {
 })
 
 /* ══════════════════════════════════════════
-   Methods
+   Gestion des sessions
    ══════════════════════════════════════════ */
+/* Charge la session de caisse active */
 const loadSession = async () => {
   try {
     const res = await window.axios.get('/api/commerce/pos/sessions')
@@ -75,6 +87,7 @@ const loadSession = async () => {
   } catch (e) { /* pas de session ouverte */ }
 }
 
+/* Charge le catalogue produits */
 const loadProducts = async () => {
   try {
     const res = await window.axios.get('/api/commerce/products', { params: { per_page: 200, is_active: 1 } })
@@ -82,6 +95,7 @@ const loadProducts = async () => {
   } catch (e) { /* */ }
 }
 
+/* Charge les catégories pour le filtre */
 const loadCategories = async () => {
   try {
     const res = await window.axios.get('/api/commerce/categories')
@@ -89,6 +103,7 @@ const loadCategories = async () => {
   } catch (e) { /* */ }
 }
 
+/* Ouvre une nouvelle session de caisse */
 const openSession = async () => {
   try {
     const res = await window.axios.post('/api/commerce/pos/sessions/open')
@@ -99,6 +114,7 @@ const openSession = async () => {
   }
 }
 
+/* Ferme la session de caisse active */
 const closeSession = async () => {
   if (!confirm('Fermer la session de caisse ?')) return
   try {
@@ -109,7 +125,10 @@ const closeSession = async () => {
   }
 }
 
-/* Cart */
+/* ══════════════════════════════════════════
+   Gestion du panier
+   ══════════════════════════════════════════ */
+/* Ajoute un produit au panier (incrémente la quantité si déjà présent) */
 const addToCart = (product) => {
   const existing = cart.value.find(item => item.id === product.id)
   if (existing) {
@@ -120,6 +139,7 @@ const addToCart = (product) => {
   searchQuery.value = ''
 }
 
+/* Modifie la quantité d'un article (+1 ou -1), supprime si <= 0 */
 const updateQty = (item, delta) => {
   const newQty = item.qty + delta
   if (newQty <= 0) {
@@ -129,16 +149,21 @@ const updateQty = (item, delta) => {
   }
 }
 
+/* Retire un article du panier */
 const removeFromCart = (itemId) => {
   cart.value = cart.value.filter(i => i.id !== itemId)
 }
 
+/* Vide le panier après confirmation */
 const clearCart = () => {
   if (cart.value.length && !confirm('Vider le panier ?')) return
   cart.value = []
 }
 
-/* Sale */
+/* ══════════════════════════════════════════
+   Passage en caisse
+   ══════════════════════════════════════════ */
+/* Ouvre la modale de paiement */
 const openPayment = () => {
   if (!cart.value.length) return
   selectedPayment.value = 'especes'
@@ -147,6 +172,7 @@ const openPayment = () => {
   showPaymentModal.value = true
 }
 
+/* Soumet la vente (envoie le panier et les paiements à l'API) */
 const submitSale = async () => {
   submitting.value = true
   try {
@@ -173,7 +199,10 @@ const submitSale = async () => {
   }
 }
 
-/* Return */
+/* ══════════════════════════════════════════
+   Retour vente
+   ══════════════════════════════════════════ */
+/* Effectue le retour d'une vente par sa référence */
 const returnSale = async (reference) => {
   if (!confirm('Confirmer le retour de la vente ' + reference + ' ?')) return
   try {
@@ -185,7 +214,10 @@ const returnSale = async (reference) => {
   }
 }
 
-/* Barcode scanner simulation */
+/* ══════════════════════════════════════════
+   Lecteur code-barres
+   ══════════════════════════════════════════ */
+/* Simule la lecture d'un code-barres via le clavier */
 const onBarcodeInput = (e) => {
   clearTimeout(barcodeTimer.value)
   barcodeBuffer.value += e.key
@@ -203,10 +235,15 @@ const onBarcodeInput = (e) => {
   }
 }
 
-/* Format */
+/* ══════════════════════════════════════════
+   Utilitaires de formatage
+   ══════════════════════════════════════════ */
 const fmtCurr = (n) => Number(n || 0).toLocaleString('fr-FR') + ' F'
 const fmt = (n) => Number(n || 0).toLocaleString('fr-FR')
 
+/* ══════════════════════════════════════════
+   Cycle de vie
+   ══════════════════════════════════════════ */
 onMounted(async () => {
   await Promise.all([loadSession(), loadProducts(), loadCategories()])
   state.value = 'loaded'

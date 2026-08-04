@@ -7,6 +7,18 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Client;
 use App\Models\User;
 
+/**
+ * Modèle représentant une écriture comptable (pièce comptable).
+ *
+ * Table associée : `ecritures` (via convention Laravel, préfixe Compta)
+ *
+ * Relations :
+ * - Une écriture appartient à un client (Client)
+ * - Une écriture appartient à un journal (Journal)
+ * - Une écriture appartient à un exercice (Exercice)
+ * - Une écriture a plusieurs lignes d'écriture (LigneEcriture)
+ * - Une écriture peut être validée par un utilisateur (User)
+ */
 class Ecriture extends Model
 {
     use HasFactory;

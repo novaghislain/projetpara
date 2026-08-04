@@ -1,7 +1,13 @@
+<!--
+  Composant : Payrolls/Index.vue
+  Description : Liste des fiches de paie avec filtres par mois et statut,
+                résumé des montants et actions (édition, impression).
+-->
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 
+/* État réactif : paies, filtres, indicateurs */
 const payrolls = ref([]);
 const loading = ref(true);
 const error = ref(null);
@@ -9,6 +15,7 @@ const search = ref('');
 const statusFilter = ref('');
 const monthFilter = ref('');
 
+/* Récupération des paies avec filtre optionnel par mois */
 const fetchPayrolls = async () => {
     loading.value = true;
     error.value = null;
@@ -26,6 +33,7 @@ const fetchPayrolls = async () => {
     }
 };
 
+/* Filtrage local : recherche, statut */
 const filteredPayrolls = computed(() => {
     let list = payrolls.value;
     if (search.value) {
@@ -41,6 +49,7 @@ const filteredPayrolls = computed(() => {
     return list;
 });
 
+/* Classe CSS pour le badge de statut de la paie */
 const statusBadgeClass = (status) => {
     const map = {
         brouillon: 'bg-secondary',
@@ -51,11 +60,13 @@ const statusBadgeClass = (status) => {
     return map[status] || 'bg-secondary';
 };
 
+/* Formatage monétaire en FCFA */
 const formatCurrency = (value) => {
     if (value === null || value === undefined || isNaN(value)) return '0';
     return Number(value).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' FCFA';
 };
 
+/* Cumul du net à payer pour toutes les paies affichées */
 const totalNetAPayer = computed(() => {
     return payrolls.value.reduce((s, p) => s + (parseFloat(p.net_a_payer) || 0), 0);
 });

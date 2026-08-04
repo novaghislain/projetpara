@@ -33,15 +33,47 @@
 </template>
 
 <script setup>
+/*
+ * ClientLogin.vue - Page de connexion pour le portail client GEL Cabinet.
+ *
+ * Role     : Permet aux clients du cabinet GEL de s'authentifier via email
+ *            et mot de passe. Interface securisee avec badge SSL visuel.
+ * Props    : Aucune (composant autonome).
+ * Emits    : Aucun (la redirection est faite par le routeur apres succes).
+ * Store    : Aucun (appel API direct via axios).
+ * Route    : POST /api/login -> redirection vers '/' si OK.
+ *
+ * Fonctionnalites :
+ * - Champ email + mot de passe avec validation cote client
+ * - Appel API REST via axios pour l'authentification
+ * - Affichage d'un message d'erreur en cas d'echec
+ * - Etat de chargement avec spinner pendant la requete
+ * - Lien "Mot de passe oublie" vers la page de reinitialisation
+ * - Badge "Propulse par IA -- GEL Cabinet" en pied de carte
+ *
+ * Flux type :
+ *   1. L'utilisateur saisit email + mot de passe
+ *   2. Clic sur "Se connecter" ou touche Entree
+ *   3. Appel POST /api/login avec les identifiants
+ *   4. Succes  -> router.push('/')
+ *   5. Erreur  -> affichage du message d'erreur dans le template
+ */
+
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 
+// --- Reactif local ---
 const router = useRouter()
-const form = ref({ email: '', password: '' })
-const loading = ref(false)
-const error = ref("")
+const form = ref({ email: '', password: '' })   // Identifiants de connexion (liaison v-model)
+const loading = ref(false)                       // Etat du chargement (desactive le bouton + spinner)
+const error = ref("")                            // Message d'erreur a afficher dans le template
 
+/**
+ * login - Soumet les identifiants a l'API d'authentification.
+ * En cas de succes, redirige vers la page d'accueil.
+ * En cas d'echec, affiche le message d'erreur retourne par le serveur.
+ */
 const login = async () => {
   loading.value = true
   error.value = ""
@@ -49,6 +81,7 @@ const login = async () => {
     await axios.post('/api/login', form.value)
     router.push('/')
   } catch (e) {
+    // Recupere le message d'erreur depuis la reponse JSON ou la description native
     error.value = e.response?.data?.message || e.message
   } finally {
     loading.value = false

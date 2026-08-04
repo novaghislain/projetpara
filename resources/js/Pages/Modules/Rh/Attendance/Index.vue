@@ -1,7 +1,13 @@
+<!--
+  Composant : Attendance/Index.vue
+  Description : Pointage des employés avec filtres par date et présence,
+                résumé statistique et actions CRUD.
+-->
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 
+/* État réactif : pointages, filtres, indicateurs */
 const attendances = ref([]);
 const loading = ref(true);
 const error = ref(null);
@@ -9,6 +15,7 @@ const search = ref('');
 const dateFilter = ref('');
 const presenceFilter = ref('');
 
+/* Récupération des pointages avec filtres optionnels (date, présence) */
 const fetchAttendance = async () => {
     loading.value = true;
     error.value = null;
@@ -27,6 +34,7 @@ const fetchAttendance = async () => {
     }
 };
 
+/* Filtrage local par recherche textuelle */
 const filteredAttendance = computed(() => {
     let list = attendances.value;
     if (search.value) {
@@ -39,6 +47,7 @@ const filteredAttendance = computed(() => {
     return list;
 });
 
+/* Classe CSS pour le badge de présence */
 const presenceBadgeClass = (presence) => {
     const map = {
         present: 'bg-success',
@@ -50,11 +59,13 @@ const presenceBadgeClass = (presence) => {
     return map[presence] || 'bg-secondary';
 };
 
+/* Formatage des heures travaillées (ex: 7.50h) */
 const formatHeures = (heures) => {
     if (heures === null || heures === undefined) return '-';
     return Number(heures).toFixed(2) + 'h';
 };
 
+/* Suppression d'une entrée de pointage */
 const deleteAttendance = async (id) => {
     if (!confirm('Confirmer la suppression de cette entrée ?')) return;
     try {

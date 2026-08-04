@@ -14,10 +14,19 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use PragmaRX\Google2FALaravel\Google2FA;
 
+/**
+ * Contrôleur API d'authentification.
+ *
+ * Gère l'inscription, la connexion, la vérification 2FA,
+ * le rafraîchissement de token et la déconnexion via API.
+ */
 class AuthController extends Controller
 {
     /**
-     * Inscription d'un nouvel utilisateur.
+     * Inscription d'un nouvel utilisateur avec création de token et refresh token.
+     *
+     * @param  RegisterRequest  $request
+     * @return JsonResponse
      */
     public function register(RegisterRequest $request): JsonResponse
     {
@@ -47,7 +56,10 @@ class AuthController extends Controller
     }
 
     /**
-     * Connexion utilisateur.
+     * Connexion utilisateur avec vérification 2FA si activée.
+     *
+     * @param  LoginRequest  $request
+     * @return JsonResponse
      */
     public function login(LoginRequest $request): JsonResponse
     {
@@ -112,7 +124,10 @@ class AuthController extends Controller
     }
 
     /**
-     * Vérification du code 2FA après login.
+     * Vérification du code 2FA après connexion (second facteur).
+     *
+     * @param  TwoFactorRequest  $request
+     * @return JsonResponse
      */
     public function verifyTwoFactor(TwoFactorRequest $request): JsonResponse
     {
@@ -149,7 +164,10 @@ class AuthController extends Controller
     }
 
     /**
-     * Activer 2FA (génère le secret et le QR code).
+     * Activer 2FA (génère le secret et le QR code pour l'application d'authentification).
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function enableTwoFactor(Request $request): JsonResponse
     {
@@ -174,7 +192,10 @@ class AuthController extends Controller
     }
 
     /**
-     * Confirmer l'activation 2FA après vérification du code.
+     * Confirmer l'activation 2FA après vérification du code par l'utilisateur.
+     *
+     * @param  TwoFactorRequest  $request
+     * @return JsonResponse
      */
     public function confirmTwoFactor(TwoFactorRequest $request): JsonResponse
     {
@@ -201,7 +222,10 @@ class AuthController extends Controller
     }
 
     /**
-     * Désactiver 2FA.
+     * Désactiver 2FA pour l'utilisateur connecté.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function disableTwoFactor(Request $request): JsonResponse
     {
@@ -218,7 +242,10 @@ class AuthController extends Controller
     }
 
     /**
-     * Rafraîchir le token d'accès.
+     * Rafraîchir le token d'accès via un refresh token valide.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function refreshToken(Request $request): JsonResponse
     {
@@ -254,7 +281,10 @@ class AuthController extends Controller
     }
 
     /**
-     * Déconnexion (révocation du token).
+     * Déconnexion : révoque le token d'accès et les refresh tokens valides.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function logout(Request $request): JsonResponse
     {
@@ -268,7 +298,10 @@ class AuthController extends Controller
     }
 
     /**
-     * Profil de l'utilisateur connecté.
+     * Profil de l'utilisateur connecté avec relations.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function me(Request $request): JsonResponse
     {
@@ -280,7 +313,10 @@ class AuthController extends Controller
     }
 
     /**
-     * Formater l'utilisateur pour les réponses API.
+     * Formate les données de l'utilisateur pour les réponses API.
+     *
+     * @param  User  $user  L'utilisateur à formater
+     * @return array
      */
     protected function formatUser(User $user): array
     {
@@ -297,6 +333,9 @@ class AuthController extends Controller
             'two_factor_enabled' => $user->two_factor_confirmed_at !== null,
             'has_active_client' => $user->active_client_id !== null,
             'active_client_id' => $user->active_client_id,
+            'onboarding_completed' => $user->hasCompletedOnboarding(),
+            'onboarding_token' => $user->onboarding_token,
+            'account_type' => $user->account_type,
             'created_at' => $user->created_at,
             'updated_at' => $user->updated_at,
         ];

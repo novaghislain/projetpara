@@ -63,40 +63,57 @@
 </template>
 
 <script setup>
+/*
+ * Composant : LegalContratsIndex
+ * Role : Page listant les contrats juridiques.
+ * Affiche la reference, le titre, le type, les parties, le montant et le statut.
+ * Met en evidence les contrats expirant dans moins de 30 jours.
+ * Props : aucune
+ */
+
 import { ref, computed, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 import ContratStatusBadge from '../../../../Components/Legal/ContratStatusBadge.vue';
 
+// Liste des contrats chargee depuis l'API
 const contrats = ref([]);
 
+/* Nombre de contrats actifs expirant dans moins de 30 jours */
 const urgentCount = computed(() =>
     contrats.value.filter(c => ['signé', 'actif'].includes(c.statut) && c.date_fin && daysLeft(c.date_fin) <= 30).length
 );
 
+/* Mapping des types techniques vers leurs libelles */
 const typeLabels = {
     prestation_service: 'Prestation', vente: 'Vente', bail_commercial: 'Bail commercial',
     travail: 'Travail', partenariat: 'Partenariat', confidentialite_nda: 'NDA',
     pret: 'Prêt', cautionnement: 'Cautionnement',
 };
 
+/* Convertit le type technique en libelle lisible */
 function typeLabel(type) { return typeLabels[type] || type; }
 
+/* Formate une date au format francais court */
 function formatDate(date) {
     if (!date) return '—';
     return new Date(date + 'T00:00:00').toLocaleDateString('fr-FR');
 }
 
+/* Formate un montant en devise XOF */
 function formatCurrency(val) {
     return Number(val).toLocaleString('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
+/* Calcule le nombre de jours restants avant une date */
 function daysLeft(date) {
     if (!date) return 999;
     return Math.ceil((new Date(date + 'T00:00:00') - new Date()) / (1000 * 60 * 60 * 24));
 }
 
+/* Verifie si un contrat expire dans les 30 jours */
 function isExpiringSoon(date) { return date && daysLeft(date) <= 30 && daysLeft(date) > 0; }
 
+/* Charge la liste des contrats depuis l'API */
 async function loadContrats() {
     try {
         const res = await fetch('/juridique/contrats');

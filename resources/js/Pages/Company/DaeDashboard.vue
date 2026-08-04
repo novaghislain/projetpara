@@ -47,6 +47,14 @@
 </template>
 
 <script>
+/*
+ * DaeDashboard.vue – Tableau de bord du secrétariat DAE
+ *
+ * Page d'accueil du module DAE (Document, Archives, Échanges).
+ * Affiche les cartes de statistiques (courriers, documents, contrats, tâches),
+ * les liens d'accès rapide vers les sous-modules, et le fil d'activité récente.
+ * Les données sont chargées via l'API /company/dae/api/stats.
+ */
 import CompanyLayout from '../../Layouts/CompanyLayout.vue';
 import DaeStatCard from '../../Components/Dae/DaeStatCard.vue';
 import DaeActivityFeed from '../../Components/Dae/DaeActivityFeed.vue';
@@ -56,14 +64,15 @@ export default {
     components: { CompanyLayout, DaeStatCard, DaeActivityFeed },
     data() {
         return {
-            loading: true,
-            stats: {},
-            activite: [],
-            statCards: [],
+            loading: true,   // Indicateur de chargement initial
+            stats: {},         // Données brutes des statistiques retournées par l'API
+            activite: [],      // Liste des activités récentes (fil d'activité)
+            statCards: [],     // Tableau des cartes construites pour l'affichage
         };
     },
     computed: {
         quickLinks() {
+            /* Liens de navigation rapide vers les sous-modules DAE */
             return [
                 { label: 'Courriers', icon: 'bi-envelope', href: '/company/dae/courriers' },
                 { label: 'Documents', icon: 'bi-file-earmark', href: '/company/dae/documents' },
@@ -76,6 +85,7 @@ export default {
         this.fetchStats();
     },
     methods: {
+        /* Récupère les statistiques globales et l'activité récente depuis l'API */
         fetchStats() {
             axios.get('/company/dae/api/stats').then(res => {
                 this.stats = res.data.stats || {};
@@ -85,6 +95,7 @@ export default {
                 this.loading = false;
             });
         },
+        /* Construit le tableau statCards à partir des données brutes pour l'affichage */
         buildCards() {
             const s = this.stats;
             this.statCards = [

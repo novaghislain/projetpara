@@ -9,7 +9,15 @@ use Illuminate\Http\Request;
 class PoleController extends Controller
 {
     /**
+     * Contrôleur de gestion des pôles (départements) du cabinet GEL.
+     * Permet de gérer les pôles d'activité avec leurs métriques
+     * (nombre d'utilisateurs, missions, clients associés).
+     */
+
+    /**
      * Page liste des pôles.
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
@@ -17,7 +25,10 @@ class PoleController extends Controller
     }
 
     /**
-     * Créer un pôle.
+     * Crée un nouveau pôle (web).
+     *
+     * @param Request $request La requête HTTP avec les données du pôle
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function store(Request $request)
     {
@@ -37,6 +48,9 @@ class PoleController extends Controller
 
     /**
      * Page détail d'un pôle.
+     *
+     * @param int $id L'identifiant du pôle
+     * @return \Illuminate\View\View
      */
     public function show($id)
     {
@@ -47,7 +61,11 @@ class PoleController extends Controller
     }
 
     /**
-     * Mettre à jour un pôle.
+     * Met à jour un pôle (web).
+     *
+     * @param Request $request La requête HTTP avec les données mises à jour
+     * @param int $id L'identifiant du pôle
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function update(Request $request, $id)
     {
@@ -68,7 +86,10 @@ class PoleController extends Controller
     }
 
     /**
-     * Supprimer un pôle.
+     * Supprime un pôle (web).
+     *
+     * @param int $id L'identifiant du pôle
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function destroy($id)
     {
@@ -80,7 +101,9 @@ class PoleController extends Controller
     }
 
     /**
-     * API: Liste de tous les pôles.
+     * API : Liste tous les pôles avec les compteurs associés.
+     *
+     * @return \Illuminate\Http\JsonResponse La liste des pôles
      */
     public function listAll()
     {
@@ -90,7 +113,10 @@ class PoleController extends Controller
     }
 
     /**
-     * API: Créer un pôle.
+     * API : Crée un nouveau pôle.
+     *
+     * @param Request $request La requête HTTP avec les données du pôle
+     * @return \Illuminate\Http\JsonResponse Le pôle créé
      */
     public function apiStore(Request $request)
     {
@@ -108,7 +134,11 @@ class PoleController extends Controller
     }
 
     /**
-     * API: Mettre à jour un pôle.
+     * API : Met à jour un pôle.
+     *
+     * @param Request $request La requête HTTP avec les données mises à jour
+     * @param int $id L'identifiant du pôle
+     * @return \Illuminate\Http\JsonResponse Le pôle mis à jour
      */
     public function apiUpdate(Request $request, $id)
     {
@@ -128,7 +158,10 @@ class PoleController extends Controller
     }
 
     /**
-     * API: Supprimer un pôle.
+     * API : Supprime un pôle.
+     *
+     * @param int $id L'identifiant du pôle
+     * @return \Illuminate\Http\JsonResponse Message de confirmation
      */
     public function apiDestroy($id)
     {

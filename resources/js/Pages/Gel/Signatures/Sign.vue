@@ -28,21 +28,50 @@
     </GelLayout>
 </template>
 <script setup>
+/* ═══════════════════════════════════════════════════════
+   Signatures / Sign — Interface de signature électronique
+   avec canvas de dessin, gestion tactile et envoi.
+   ═══════════════════════════════════════════════════════ */
+
 import { ref, onMounted } from 'vue'
 import GelLayout from '../../../Layouts/GelLayout.vue'
+
+/* ─── Props — signature avec token ─── */
 const props = defineProps({ signature: { type: Object, required: true } })
+
+/* ─── Références du canvas et état du formulaire ─── */
 const canvas = ref(null)
 const signerName = ref(props.signature?.signer_name || '')
 const submitting = ref(false)
+
+/* ─── État interne du dessin ─── */
 let drawing = false, ctx = null
+
+/* ─── Initialisation du contexte 2D après montage ─── */
 onMounted(() => { if (canvas.value) ctx = canvas.value.getContext('2d') })
+
+/* ─── Calcul de la position relative au canvas (souris) ─── */
 const getPos = (e) => { const r = canvas.value.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top } }
+
+/* ─── Début du tracé (souris) ─── */
 const startDraw = (e) => { drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y) }
+
+/* ─── Tracé en cours (souris) ─── */
 const draw = (e) => { if (!drawing) return; const p = getPos(e); ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#111827'; ctx.lineTo(p.x, p.y); ctx.stroke() }
+
+/* ─── Fin du tracé ─── */
 const stopDraw = () => { drawing = false }
+
+/* ─── Début du tracé (tactile) ─── */
 const startDrawTouch = (e) => { drawing = true; const t = e.touches[0]; const r = canvas.value.getBoundingClientRect(); ctx.beginPath(); ctx.moveTo(t.clientX - r.left, t.clientY - r.top) }
+
+/* ─── Tracé en cours (tactile) ─── */
 const drawTouch = (e) => { if (!drawing) return; const t = e.touches[0]; const r = canvas.value.getBoundingClientRect(); ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#111827'; ctx.lineTo(t.clientX - r.left, t.clientY - r.top); ctx.stroke() }
+
+/* ─── Effacement du canvas ─── */
 const clearCanvas = () => { if (ctx) ctx.clearRect(0, 0, 500, 200) }
+
+/* ─── Soumission de la signature ─── */
 const submit = async () => {
     if (!signerName.value) return alert('Veuillez confirmer votre nom.')
     if (!canvas.value) return

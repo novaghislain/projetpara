@@ -1,4 +1,12 @@
 <script setup>
+/*
+ * Accounts.vue - Gestion du plan comptable (GEL)
+ *
+ * Permet de lister, créer, modifier et supprimer les comptes comptables
+ * d'un client. Chaque compte possède un code, un nom, un type (actif,
+ * passif, capitaux, charges, produits), une catégorie et un solde.
+ * CRUD complet via modale Bootstrap.
+ */
 import { ref, onMounted, nextTick } from 'vue';
 import GelLayout from '../../../Layouts/GelLayout.vue';
 import { authStore } from '../../../stores/auth';
@@ -7,21 +15,25 @@ const props = defineProps({
     clientId: { type: [Number, String], default: null }
 });
 
+// État des données chargées depuis l'API
 const accounts = ref([]);
 const loading = ref(true);
 const error = ref(null);
 const submitting = ref(false);
 
+// Contrôle de la modale de création/édition
 const showModal = ref(false);
 const isEditing = ref(false);
 const editingId = ref(null);
 
+// Formulaire lié à la modale
 const form = ref({
     code: '', name: '', type: 'asset', category: '', description: '', balance: 0,
 });
 
 const accountTypes = ['asset', 'liability', 'equity', 'revenue', 'expense'];
 
+// Chargement de la liste des comptes depuis l'API
 const fetchAccounts = async () => {
     loading.value = true;
     error.value = null;
@@ -38,10 +50,12 @@ const fetchAccounts = async () => {
     }
 };
 
+// Réinitialisation du formulaire
 const resetForm = () => {
     form.value = { code: '', name: '', type: 'asset', category: '', description: '', balance: 0 };
 };
 
+// Ouverture de la modale en mode création
 const openCreateModal = () => {
     resetForm();
     isEditing.value = false;
@@ -49,6 +63,7 @@ const openCreateModal = () => {
     showModal.value = true;
 };
 
+// Ouverture de la modale en mode édition (pré-remplie avec les données du compte)
 const openEditModal = (acc) => {
     form.value = {
         code: acc.code || '',
@@ -65,6 +80,7 @@ const openEditModal = (acc) => {
 
 const closeModal = () => { showModal.value = false; };
 
+// Soumission du formulaire (création ou mise à jour)
 const submitForm = async () => {
     const cid = props.clientId || authStore.user?.client_id;
     if (!cid) { alert('Aucun client sélectionné.'); return; }
@@ -92,6 +108,7 @@ const submitForm = async () => {
     }
 };
 
+// Suppression d'un compte avec confirmation
 const deleteAccount = async (id) => {
     if (!confirm('Confirmer la suppression ?')) return;
     try {
@@ -107,6 +124,7 @@ const deleteAccount = async (id) => {
     }
 };
 
+// Classe CSS du badge selon le type de compte
 const typeBadgeClass = (type) => {
     const map = { asset: 'bg-primary', liability: 'bg-info', equity: 'bg-dark', expense: 'bg-warning', revenue: 'bg-success' };
     return map[type] || 'bg-secondary';

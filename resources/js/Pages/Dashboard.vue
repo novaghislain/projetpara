@@ -185,19 +185,28 @@
     </div>
 </template>
 
+/*
+ * Composant : Dashboard (Tableau de bord comptable)
+ * Role : Affiche les indicateurs cles (KPI) de la comptabilite :
+ *        produits, charges, resultat net, tresorerie, evolution mensuelle,
+ *        dernieres ecritures, soldes bancaires et actions rapides.
+ */
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 
+/* Donnees reactives */
 const stats = ref(null)
 const loading = ref(true)
 const error = ref(null)
 const chartCanvas = ref(null)
 const chartData = ref(null)
 
+/* Periode courante affichee dans l'en-tete */
 const currentPeriod = computed(() => {
     return new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long' })
 })
 
+/* Formate un montant en francs CFA */
 const fmt = (v) => new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(v || 0) + ' F'
 const csrf = computed(() => document.querySelector('meta[name=csrf-token]')?.content || '')
 const api = (path, opts = {}) => fetch(path, {
@@ -205,6 +214,7 @@ const api = (path, opts = {}) => fetch(path, {
     ...opts,
 })
 
+/* Charge les statistiques du tableau de bord depuis l'API */
 async function loadStats() {
     loading.value = true; error.value = null
     try {
@@ -217,6 +227,7 @@ async function loadStats() {
     } catch (e) { error.value = e.message } finally { loading.value = false }
 }
 
+/* Genere le graphique d'evolution mensuelle via Chart.js */
 function renderChart() {
     if (!chartCanvas.value || !chartData.value) return
     try {
@@ -257,6 +268,7 @@ function renderChart() {
     } catch (e) { console.warn('Chart render skipped:', e) }
 }
 
+/* Utilitaires d'affichage */
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR') : '—'
 const statusLabel = (s) => ({ posted: 'Validée', draft: 'Brouillon', cancelled: 'Annulée' })[s] || s
 const statusBadge = (s) => ({ posted: 'badge bg-success', draft: 'badge bg-warning text-dark', cancelled: 'badge bg-secondary' })[s] || 'badge bg-secondary'

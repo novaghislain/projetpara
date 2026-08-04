@@ -67,12 +67,23 @@
 </template>
 
 <script setup>
+/*
+ * Composant : LegalContratsForm
+ * Role : Formulaire de creation / modification d'un contrat juridique.
+ * Saisie du titre, type, montant, objet, dates et parties contractantes.
+ * Envoi des donnees en POST a l'API.
+ * Props : aucune
+ */
+
 import { ref } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 import PartiesTable from '../../../../Components/Legal/PartiesTable.vue';
 
+// Indicateur d'envoi du formulaire
 const saving = ref(false);
+// Mode edition (true si modification d'un contrat existant)
 const isEdit = ref(false);
+// Valeurs par defaut du formulaire
 const form = ref({
     titre: '', type: 'prestation_service', objet: '',
     montant: null, devise: 'XOF',
@@ -81,6 +92,7 @@ const form = ref({
     parties: [],
 });
 
+/* Soumet le formulaire a l'API POST */
 async function save() {
     saving.value = true;
     try {

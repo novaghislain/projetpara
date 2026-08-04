@@ -6,6 +6,59 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle représentant une déclaration fiscale.
+ *
+ * Gère les déclarations de différents types d'impôts et taxes :
+ * TVA, Impôt sur les Sociétés (IS), ITS, CNSS, VPS, AIB, etc.
+ * Chaque déclaration est liée à un client (entreprise) et à un
+ * exercice fiscal, avec un suivi des périodes (mensuelle, trimestrielle).
+ * Inclut le calcul des bases imposables, des montants dus et payés,
+ * des pénalités et des acomptes.
+ *
+ * @property int $id
+ * @property int|null $client_id Identifiant du client (entreprise)
+ * @property int|null $fiscal_year_id Identifiant de l'exercice fiscal
+ * @property string $tax_type Type de taxe (tva, is, its, cnss, vps, aib)
+ * @property string $reference Référence de la déclaration
+ * @property string $period_type Type de période (mensuelle, trimestrielle, annuelle)
+ * @property int|null $period_month Mois concerné
+ * @property int|null $period_quarter Trimestre concerné
+ * @property int $period_year Année concernée
+ * @property string|null $date_debut Date de début de période
+ * @property string|null $date_fin Date de fin de période
+ * @property string|null $date_echeance Date d'échéance
+ * @property string|null $date_depot Date de dépôt
+ * @property float|null $base_imposable Base imposable
+ * @property float|null $taux Taux d'imposition
+ * @property float $montant_dut Montant dû
+ * @property float $montant_paye Montant payé
+ * @property float $penalites Pénalités de retard
+ * @property float $solde Solde restant
+ * @property float|null $tva_collectee TVA collectée
+ * @property float|null $tva_recuperable TVA récupérable
+ * @property float|null $tva_net TVA nette à payer
+ * @property float|null $credit_tva Crédit de TVA (si tva_net < 0)
+ * @property float|null $resultat_fiscal Résultat fiscal
+ * @property float|null $acomptes_verses Acomptes déjà versés
+ * @property array|null $tranches Tranches d'imposition (JSON)
+ * @property float|null $part_employeur Part employeur (CNSS)
+ * @property float|null $part_salarie Part salarié (CNSS)
+ * @property string $status Statut (brouillon, calcule, depose, paye)
+ * @property string|null $notes Notes
+ * @property int|null $created_by Identifiant du créateur
+ * @property int|null $validated_by Identifiant du validateur
+ * @property string|null $validated_at Date de validation
+ * @property int|null $journal_id Identifiant du journal comptable associé
+ *
+ * @property-read Client|null $client Client (entreprise) associé
+ * @property-read FiscalYear|null $fiscalYear Exercice fiscal associé
+ * @property-read AccountingJournal|null $journal Journal comptable associé
+ * @property-read User|null $createdBy Utilisateur créateur
+ * @property-read User|null $validatedBy Utilisateur validateur
+ *
+ * @table accounting_tax_declarations
+ */
 class AccountingTaxDeclaration extends Model
 {
     use SoftDeletes;

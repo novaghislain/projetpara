@@ -1,16 +1,25 @@
+/*
+ * Composant : Services/Show.vue
+ * Description : Page de detail d'un service du module GEL.
+ *              Affiche les informations du service (nom, description,
+ *              icone, couleur) et la liste des clients qui l'utilisent.
+ */
 <script setup>
 import { ref, onMounted } from 'vue';
-import GelLayout from '../../../Layouts/GelLayout.vue';
-import { authStore } from '../../../stores/auth';
+import GelLayout from '../../../Layouts/GelLayout.vue';   /* Layout principal du module GEL */
+import { authStore } from '../../../stores/auth';         /* Store d'authentification */
 
+/* Propriete recue : identifiant du service a afficher */
 const props = defineProps({
     serviceId: { type: [Number, String], required: true }
 });
 
-const service = ref(null);
-const loading = ref(true);
-const error = ref(null);
+/* ─── Etat local ─── */
+const service = ref(null);   /* Donnees du service charge depuis l'API */
+const loading = ref(true);   /* Indicateur de chargement */
+const error = ref(null);     /* Message d'erreur en cas d'echec */
 
+/* ─── Chargement du service ─── */
 const fetchService = async () => {
     loading.value = true;
     error.value = null;
@@ -25,7 +34,7 @@ const fetchService = async () => {
     }
 };
 
-onMounted(fetchService);
+onMounted(fetchService);  /* Declenche le chargement au montage du composant */
 </script>
 
 <template>

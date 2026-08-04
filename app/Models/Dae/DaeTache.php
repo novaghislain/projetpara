@@ -5,6 +5,14 @@ namespace App\Models\Dae;
 use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle représentant une tâche dans le module DAE.
+ *
+ * Table associée : `dae_taches`
+ *
+ * Permet la gestion des tâches avec priorité, échéance, assignation,
+ * et organisation hiérarchique (tâches parent/enfant).
+ */
 class DaeTache extends DaeBaseModel
 {
     use SoftDeletes;

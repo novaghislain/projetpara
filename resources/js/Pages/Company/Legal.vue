@@ -1,11 +1,23 @@
 ﻿<script setup>
+/* ==========================================================
+ * Legal.vue - Gestion juridique de l'entreprise
+ * Gerer les contrats (prestation, NDA, licence, emploi)
+ * et les contentieux / cas juridiques avec suivi de priorite.
+ *
+ * Sections principales :
+ *   - Tableau de bord (statistiques contractuelles)
+ *   - Contrats (CRUD avec recherche et filtrage)
+ *   - Contentieux / Cas (CRUD avec suivi de priorite)
+ * ========================================================== */
 import { ref, computed, onMounted } from 'vue';
 import CompanyLayout from '../../Layouts/CompanyLayout.vue';
 import { authStore } from '../../stores/auth';
 
+/* Onglet actif du sous-menu */
 const activeTab = ref('dashboard');
 const setTab = (tab) => { activeTab.value = tab; };
 
+/* Etat reactif : donnees, chargement, messages */
 const stats = ref(null);
 const contracts = ref([]);
 const cases = ref([]);
@@ -13,27 +25,32 @@ const loading = ref(false);
 const error = ref(null);
 const successMsg = ref('');
 
+/* Controle d'ouverture des modales et element en cours d'edition */
 const showContractModal = ref(false);
 const showCaseModal = ref(false);
 const editingContract = ref(null);
 const editingCase = ref(null);
 const isSubmitting = ref(false);
 
+/* Formulaire de contrat */
 const contractForm = ref({
     title: '', reference: '', type: 'prestation', party_name: '',
     party_contact: '', description: '', start_date: '', end_date: '',
     value: null, status: 'draft', file_path: '', signed_by: '', signed_at: '',
 });
 
+/* Formulaire de cas juridique */
 const caseForm = ref({
     title: '', reference: '', type: 'contentieux', status: 'open',
     description: '', assigned_to: '', priority: 'medium',
     start_date: '', resolution_date: '', notes: '',
 });
 
+/* Filtres de recherche */
 const searchContract = ref('');
 const searchCase = ref('');
 
+/* Filtrage cote client des contrats par titre, reference, partie ou type */
 const filteredContracts = computed(() => {
     if (!searchContract.value) return contracts.value;
     const q = searchContract.value.toLowerCase();
@@ -45,6 +62,7 @@ const filteredContracts = computed(() => {
     );
 });
 
+/* Filtrage cote client des cas juridiques */
 const filteredCases = computed(() => {
     if (!searchCase.value) return cases.value;
     const q = searchCase.value.toLowerCase();
@@ -56,6 +74,7 @@ const filteredCases = computed(() => {
     );
 });
 
+/* Utilitaires de formatage et d'affichage */
 const formatCurrency = (value) => {
     if (value === null || value === undefined || isNaN(value)) return '0,00';
     return Number(value).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -92,6 +111,7 @@ const isStatusGreen = (s) => ['active', 'closed'].includes(s);
 const isStatusRed = (s) => ['terminated', 'expired'].includes(s);
 const isStatusOrange = (s) => ['draft', 'open', 'in_progress'].includes(s) || ['critical'].includes(s);
 
+/* ─── API calls ─── */
 async function fetchStats() {
     try { const res = await fetch('/api/company/legal/stats'); if (res.ok) stats.value = await res.json(); } catch (e) { console.error(e); }
 }
@@ -102,6 +122,7 @@ async function fetchCases() {
     try { const res = await fetch('/api/company/legal/cases'); if (res.ok) cases.value = await res.json(); } catch (e) { console.error(e); }
 }
 
+/* ─── CRUD Contrats ─── */
 function openCreateContract() {
     editingContract.value = null;
     contractForm.value = { title: '', reference: '', type: 'prestation', party_name: '', party_contact: '', description: '', start_date: '', end_date: '', value: null, status: 'draft', file_path: '', signed_by: '', signed_at: '' };
@@ -128,6 +149,7 @@ async function deleteContract(id) {
     try { const res = await fetch(`/api/company/legal/contracts/${id}`, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content } }); if (!res.ok) throw new Error('Erreur'); successMsg.value = 'Contrat supprimé'; await fetchContracts(); await fetchStats(); setTimeout(() => successMsg.value = '', 3000); } catch (e) { alert(e.message); }
 }
 
+/* ─── CRUD Cas juridiques ─── */
 function openCreateCase() {
     editingCase.value = null; caseForm.value = { title: '', reference: '', type: 'contentieux', status: 'open', description: '', assigned_to: '', priority: 'medium', start_date: '', resolution_date: '', notes: '' }; showCaseModal.value = true;
 }
@@ -150,6 +172,7 @@ async function deleteCase(id) {
     try { const res = await fetch(`/api/company/legal/cases/${id}`, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content } }); if (!res.ok) throw new Error('Erreur'); successMsg.value = 'Cas supprimé'; await fetchCases(); await fetchStats(); setTimeout(() => successMsg.value = '', 3000); } catch (e) { alert(e.message); }
 }
 
+/* Chargement initial au montage du composant */
 onMounted(async () => { loading.value = true; await Promise.all([fetchStats(), fetchContracts(), fetchCases()]); loading.value = false; });
 </script>
 

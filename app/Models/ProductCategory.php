@@ -7,6 +7,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle ProductCategory - Catégorie de produits.
+ *
+ * Table associée : 'product_categories' (convention Laravel).
+ * Permet de hiérarchiser les produits par catégorie, avec support
+ * des catégories parent/enfant (arborescence).
+ * Relations :
+ * - client() : appartient à un client (Client).
+ * - parent() : appartient à la catégorie parente (auto-référence).
+ * - children() : a plusieurs catégories enfants (auto-référence).
+ * - products() : a plusieurs produits (Product).
+ */
 class ProductCategory extends Model
 {
     use SoftDeletes;

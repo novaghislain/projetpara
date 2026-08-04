@@ -7,6 +7,16 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Client;
 use App\Models\User;
 
+/**
+ * Modèle représentant un rapprochement bancaire.
+ *
+ * Table associée : `rapprochements` (via convention Laravel, préfixe Compta)
+ *
+ * Relations :
+ * - Un rapprochement appartient à un client (Client)
+ * - Un rapprochement est lié à un compte comptable (Compte)
+ * - Un rapprochement peut être validé par un utilisateur (User)
+ */
 class Rapprochement extends Model
 {
     use HasFactory;

@@ -157,27 +157,43 @@
 </template>
 
 <script setup>
+/*
+ * BankAccountDetail.vue - Détail d'un compte bancaire
+ *
+ * Affiche les informations détaillées d'un compte bancaire avec
+ * trois onglets : Transactions (liste des opérations), Rapprochements
+ * (historique des rapprochements) et Import (import de relevé bancaire).
+ * Permet de filtrer les transactions par période et d'importer
+ * des fichiers CSV/OFX/QIF.
+ */
 import { ref, reactive, computed, onMounted } from 'vue'
 
+// Identifiant du compte extrait de l'URL
 const accountId = ref(null)
 const loading = ref(true)
 const error = ref(null)
 const account = ref(null)
 const transactions = ref([])
 const reconciliations = ref([])
+// Onglet actif : transactions, reconciliations ou import
 const tab = ref('transactions')
 const selectedFile = ref(null)
 const importing = ref(false)
 
+// Filtres de date pour les transactions
 const txFilters = reactive({ date_from: '', date_to: '' })
 
+// Formateur monétaire en francs CFA
 const fmt = (v) => new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(v || 0) + ' F'
+// Jeton CSRF pour les requêtes sécurisées
 const csrf = computed(() => document.querySelector('meta[name=csrf-token]')?.content || '')
+// Fonction utilitaire d'appel API avec en-têtes JSON par défaut
 const api = (path, opts = {}) => fetch(path, {
     headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf.value, ...opts.headers },
     ...opts,
 })
 
+// Chargement des données du compte bancaire depuis l'API
 async function loadAccount() {
     if (!accountId.value) return
     loading.value = true
@@ -188,6 +204,7 @@ async function loadAccount() {
     } catch (e) { error.value = e.message } finally { loading.value = false }
 }
 
+// Chargement des transactions avec filtres optionnels (date début/fin)
 async function loadTransactions() {
     try {
         const params = new URLSearchParams()
@@ -202,6 +219,7 @@ async function loadTransactions() {
     } catch (e) { console.warn(e) }
 }
 
+// Chargement de l'historique des rapprochements bancaires
 async function loadReconciliations() {
     try {
         const params = new URLSearchParams()
@@ -214,18 +232,22 @@ async function loadReconciliations() {
     } catch (e) { console.warn(e) }
 }
 
+// Redirection vers l'assistant de rapprochement pour ce compte
 function startReconciliation() {
     window.location.href = `/comptabilite/banque/rapprochement?account=${accountId.value}`
 }
 
+// Redirection vers le détail d'un rapprochement existant
 function viewReconciliation(r) {
     window.location.href = `/comptabilite/banque/rapprochement/${r.id}`
 }
 
+// Sélection du fichier de relevé bancaire à importer
 function importFile(e) {
     selectedFile.value = e.target.files[0] || null
 }
 
+// Import du fichier de relevé bancaire sélectionné (CSV/OFX/QIF)
 async function uploadFile() {
     if (!selectedFile.value) return
     importing.value = true
@@ -245,8 +267,10 @@ async function uploadFile() {
     } catch (e) { error.value = e.message } finally { importing.value = false }
 }
 
+// Formatage d'une date au format français JJ/MM/AAAA
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR') : '—'
 
+// Initialisation : extraction de l'ID du compte depuis l'URL et chargement des données
 onMounted(() => {
     const pathParts = window.location.pathname.split('/')
     const lastSegment = pathParts[pathParts.length - 1]

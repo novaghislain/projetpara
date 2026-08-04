@@ -10,6 +10,12 @@ use Illuminate\Support\Facades\Auth;
 class MeController extends Controller
 {
     /**
+     * Contrôleur pour la gestion du profil utilisateur connecté.
+     * Fournit les informations utilisateur, les permissions, les entreprises
+     * accessibles, les restrictions de champs et le changement de contexte.
+     */
+
+    /**
      * Retourne les informations de l'utilisateur connecté,
      * ses permissions formatées, ses entreprises, et les restrictions de champs.
      */

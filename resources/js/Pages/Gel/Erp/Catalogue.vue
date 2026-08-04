@@ -1,8 +1,16 @@
 <script setup>
+/*
+ * Composant : Catalogue ERP
+ * Role : Gestion du catalogue d'articles (produits/services) avec recherche,
+ *        filtrage par catégorie, création d'articles et de catégories.
+ * Props : aucune (données chargées via API)
+ * Events : aucun (actions locales avec appels API)
+ */
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../Layouts/GelLayout.vue';
 import { authStore } from '../../../stores/auth';
 
+/* Données principales : articles et catégories */
 const items = ref([]);
 const categories = ref([]);
 const loading = ref(true);
@@ -11,14 +19,15 @@ const searchTerm = ref('');
 const filterCategory = ref('');
 const submitting = ref(false);
 
-// Item modal
+/* Modal de création d'article */
 const showItemModal = ref(false);
 const itemForm = ref({ reference: '', designation: '', description: '', price: '', category_id: '', stock_alert: 10 });
 
-// Category modal
+/* Modal de création de catégorie */
 const showCatModal = ref(false);
 const catForm = ref({ name: '', description: '' });
 
+/* Charge les articles et catégories depuis l'API */
 const fetchData = async () => {
     loading.value = true;
     error.value = null;
@@ -36,6 +45,7 @@ const fetchData = async () => {
     }
 };
 
+/* Filtre les articles selon le terme de recherche et la catégorie sélectionnée */
 const filteredItems = () => {
     return items.value.filter(item => {
         const matchesSearch = !searchTerm.value ||
@@ -46,6 +56,7 @@ const filteredItems = () => {
     });
 };
 
+/* Soumet un nouvel article via l'API */
 const submitItem = async () => {
     submitting.value = true;
     try {
@@ -66,6 +77,7 @@ const submitItem = async () => {
     }
 };
 
+/* Soumet une nouvelle catégorie via l'API */
 const submitCategory = async () => {
     submitting.value = true;
     try {
@@ -86,6 +98,7 @@ const submitCategory = async () => {
     }
 };
 
+/* Au montage, charge les données initiales */
 onMounted(fetchData);
 </script>
 

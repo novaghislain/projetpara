@@ -5,6 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Modèle RelanceRule - Règle de relance client.
+ *
+ * Table associée : 'relance_rules' (convention Laravel).
+ * Définit les règles de relance automatique pour les impayés :
+ * délai de déclenchement, canal de communication, modèle de message.
+ * Relations :
+ * - client() : appartient à un client (Client).
+ */
 class RelanceRule extends Model
 {
     protected $fillable = [

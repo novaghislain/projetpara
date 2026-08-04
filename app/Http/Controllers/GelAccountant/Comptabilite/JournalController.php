@@ -8,8 +8,25 @@ use App\Models\Gel\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur de gestion des journaux comptables.
+ *
+ * Permet de consulter et de créer les journaux (ventes, achats, banque,
+ * caisse, etc.) rattachés à un cabinet. Les journaux peuvent être filtrés
+ * par client pour n'afficher que ceux qui lui sont accessibles.
+ */
 class JournalController extends Controller
 {
+    /**
+     * Affiche la liste des journaux comptables du cabinet.
+     *
+     * Si un filtre `client_id` est fourni, seuls les journaux propres
+     * à ce client et ceux sans client (globaux) sont affichés.
+     *
+     * @param  Request $request La requête avec le filtre optionnel
+     *                          `client_id`.
+     * @return \Illuminate\View\View
+     */
     public function index(Request $request)
     {
         /** @var \App\Models\User $user */
@@ -18,6 +35,8 @@ class JournalController extends Controller
 
         $query = Journal::where('cabinet_id', $cabinetId);
 
+        // Filtre par client : on conserve les journaux du client ET
+        // les journaux génériques (sans client_id)
         if ($clientId = $request->input('client_id')) {
             $query->where(function ($q) use ($clientId) {
                 $q->where('client_id', $clientId)
@@ -31,9 +50,19 @@ class JournalController extends Controller
 
         $clients = Client::where('cabinet_id', $cabinetId)->actif()->get(['id', 'nom_entreprise']);
 
-        return view('gel-accountant.comptabilite.journaux.index', compact('journaux', 'clients'));
+        return view('gel-accountant.comptabilite.journaux.index', compact('journaux', 'clients') + ['currentSection' => 'comptabilite', 'currentPage' => 'journaux']);
     }
 
+    /**
+     * Crée un nouveau journal comptable.
+     *
+     * La règle de validation `unique` vérifie que le code du journal
+     * n'existe pas déjà pour le même cabinet. Le journal est rattaché
+     * au cabinet de l'utilisateur.
+     *
+     * @param  Request $request La requête contenant les données du journal.
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function store(Request $request)
     {
         /** @var \App\Models\User $user */

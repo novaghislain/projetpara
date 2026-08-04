@@ -18,9 +18,9 @@
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
         {{-- Colonne gauche --}}
-        <div class="gel-card">
-            <div class="gel-card-header"><strong>Informations générales</strong></div>
-            <div class="gel-card-body">
+        <div class="gel-card p-4 mb-4">
+            <div class="gel-card-header p-4 mb-4"><strong>Informations générales</strong></div>
+            <div class="gel-card-body p-4 mb-4">
                 <div class="gel-form-group">
                     <label>Client *</label>
                     <select name="client_id" class="gel-form-select" required>
@@ -63,9 +63,9 @@
         </div>
 
         {{-- Colonne droite --}}
-        <div class="gel-card">
-            <div class="gel-card-header"><strong>Libellé</strong></div>
-            <div class="gel-card-body">
+        <div class="gel-card p-4 mb-4">
+            <div class="gel-card-header p-4 mb-4"><strong>Libellé</strong></div>
+            <div class="gel-card-body p-4 mb-4">
                 <div class="gel-form-group">
                     <label>Libellé de l'écriture *</label>
                     <textarea name="libelle" class="gel-form-control" rows="3" required>{{ old('libelle') }}</textarea>
@@ -80,8 +80,8 @@
     </div>
 
     {{-- Lignes d'écriture --}}
-    <div class="gel-card" style="margin-top:20px;">
-        <div class="gel-card-header">
+    <div class="gel-card p-4 mb-4" style="margin-top:20px;">
+        <div class="gel-card-header p-4 mb-4">
             <strong>Lignes d'écriture</strong>
             <div>
                 <span id="totalDebitDisplay" style="margin-right:20px;font-size:13px;color:var(--gel-text-secondary);">
@@ -93,7 +93,7 @@
                 <span id="equilibreDisplay" style="margin-left:16px;font-size:13px;font-weight:600;"></span>
             </div>
         </div>
-        <div class="gel-card-body" style="padding:0;">
+        <div class="gel-card-body p-4 mb-4">
             <table class="gel-table" id="lignesTable">
                 <thead>
                     <tr>

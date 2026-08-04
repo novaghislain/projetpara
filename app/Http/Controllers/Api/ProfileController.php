@@ -10,10 +10,19 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * Contrôleur API du profil utilisateur.
+ *
+ * Gère la mise à jour du mot de passe, la gestion
+ * de la photo de profil et les informations personnelles.
+ */
 class ProfileController extends Controller
 {
     /**
-     * Update the authenticated user's password.
+     * Met à jour le mot de passe de l'utilisateur connecté.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function updatePassword(Request $request): JsonResponse
     {
@@ -32,7 +41,10 @@ class ProfileController extends Controller
     }
 
     /**
-     * Update the authenticated user's profile photo/avatar.
+     * Met à jour la photo de profil de l'utilisateur connecté.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function updatePhoto(Request $request): JsonResponse
     {
@@ -42,7 +54,7 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        // Delete old photo if exists
+        // Supprimer l'ancienne photo si elle existe
         if ($user->photo && Storage::disk('public')->exists($user->photo)) {
             Storage::disk('public')->delete($user->photo);
         }
@@ -59,7 +71,10 @@ class ProfileController extends Controller
     }
 
     /**
-     * Delete the user's profile photo.
+     * Supprime la photo de profil de l'utilisateur connecté.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function deletePhoto(Request $request): JsonResponse
     {
@@ -78,7 +93,10 @@ class ProfileController extends Controller
     }
 
     /**
-     * Get current user profile data with photo URL.
+     * Retourne les données du profil de l'utilisateur connecté avec photo.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function me(Request $request): JsonResponse
     {

@@ -1,15 +1,22 @@
 <script setup>
+/* ═══════════════════════════════════════════════════════
+   Admin / Requests / Index — Gestion des demandes entrantes
+   des entreprises (liste, statut, suppression).
+   ═══════════════════════════════════════════════════════ */
+
 import { ref, onMounted, nextTick } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 
+/* ─── État général ─── */
 const requests = ref([]);
 const loading = ref(true);
 const error = ref(null);
 const submitting = ref(false);
 
+/* ─── État de l'expansion des détails ─── */
 const expandedId = ref(null);
 
-// Status update modal
+/* ─── Modal de mise à jour du statut ─── */
 const showStatusModal = ref(false);
 const editingRequest = ref(null);
 const statusForm = ref({
@@ -19,22 +26,26 @@ const statusForm = ref({
 const modalEl = ref(null);
 const modalInstance = ref(null);
 
+/* ─── Classe CSS pour le badge de statut ─── */
 const statusBadgeClass = (status) => {
     const map = { pending: 'bg-warning text-dark', contacted: 'bg-info', validated: 'bg-success', rejected: 'bg-danger' };
     return map[status] || 'bg-secondary';
 };
 
+/* ─── Libellé du statut en français ─── */
 const statusLabel = (status) => {
     const map = { pending: 'En attente', contacted: 'Contacté', validated: 'Validé', rejected: 'Rejeté' };
     return map[status] || status;
 };
 
+/* ─── Formatage d'une date au format français ─── */
 const formatDate = (dateStr) => {
     if (!dateStr) return '';
     const d = new Date(dateStr);
     return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 };
 
+/* ─── Chargement de la liste des demandes ─── */
 const fetchRequests = async () => {
     loading.value = true;
     error.value = null;
@@ -49,10 +60,12 @@ const fetchRequests = async () => {
     }
 };
 
+/* ─── Expansion / réduction des détails d'une demande ─── */
 const toggleExpand = (id) => {
     expandedId.value = expandedId.value === id ? null : id;
 };
 
+/* ─── Ouverture de la modal de changement de statut ─── */
 const openStatusModal = (req) => {
     editingRequest.value = req;
     statusForm.value = {
@@ -68,12 +81,14 @@ const openStatusModal = (req) => {
     });
 };
 
+/* ─── Fermeture de la modal ─── */
 const closeStatusModal = () => {
     modalInstance.value?.hide();
     showStatusModal.value = false;
     editingRequest.value = null;
 };
 
+/* ─── Mise à jour du statut via l'API ─── */
 const updateStatus = async () => {
     if (!editingRequest.value) return;
     submitting.value = true;
@@ -102,6 +117,7 @@ const updateStatus = async () => {
     }
 };
 
+/* ─── Suppression d'une demande ─── */
 const deleteRequest = async (id) => {
     if (!confirm('Confirmer la suppression de cette demande ?')) return;
     try {
@@ -117,6 +133,7 @@ const deleteRequest = async (id) => {
     }
 };
 
+/* ─── Chargement initial au montage ─── */
 onMounted(fetchRequests);
 </script>
 

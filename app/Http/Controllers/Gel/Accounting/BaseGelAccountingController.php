@@ -8,16 +8,27 @@ use Illuminate\Http\Request;
 abstract class BaseGelAccountingController extends Controller
 {
     /**
-     * Récupère le client_id depuis la requête.
+     * Contrôleur de base pour les fonctionnalités comptables.
+     * Fournit des méthodes utilitaires partagées entre les contrôleurs
+     * du module de comptabilité (AccountController, BudgetController,
+     * ClosingController, JournalController, etc.).
+     */
+
+    /**
+     * Récupère l'identifiant du client depuis la requête.
      *
      * Priorité :
      * 1. Paramètre de route {clientId}
      * 2. Champ client_id du body de la requête
      *
-     * abort(403) si aucun client trouvé.
+     * @param Request $request La requête HTTP entrante
+     * @return int L'identifiant du client
+     *
+     * @throws \Symfony\Component\HttpKernel\Exception\HttpException
      */
     protected function getClientId(Request $request): int
     {
+        // Extraction du client_id depuis la route ou le corps de la requête
         $clientId = $request->route('clientId') ?? $request->input('client_id');
 
         if (!$clientId) {

@@ -48,6 +48,18 @@
 </template>
 
 <script setup>
+/* ============================================================
+ * Composant : CostCenters/Show
+ * Description : Page de detail d'un centre de cout.
+ *   Affiche le code, le type, le client associe,
+ *   le centre parent et les centres enfants.
+ * ============================================================ */
+
 import GelLayout from '../../../Layouts/GelLayout.vue';
+
+/* Propriete recue du controleur :
+ *   center - Objet contenant les donnees du centre de cout
+ *            (id, code, name, type, client, parent, children,
+ *             is_active) */
 defineProps(['center'])
 </script>

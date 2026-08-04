@@ -2,6 +2,15 @@
 
 namespace App\Models\Rh;
 
+/**
+ * Modèle RhAlert - Alerte RH (rappel de contrat, visite médicale, etc.).
+ *
+ * Table associée : 'rh_alerts'.
+ * Permet de créer des alertes liées aux employés (fin de contrat,
+ * date d'échéance, etc.) avec un déclenchement avant la date limite.
+ * Relations :
+ * - employee() : appartient à un employé (RhEmployee).
+ */
 class RhAlert extends RhBaseModel
 {
     protected $table = 'rh_alerts';

@@ -84,13 +84,25 @@
 </template>
 
 <script setup>
+/*
+ * Composant : LegalDossiersShow
+ * Role : Page de detail d'un dossier juridique.
+ * Affiche les informations du dossier (type, priorite, description),
+ * ses documents et les actions possibles (changer statut, clore).
+ * Props : aucune (l'ID est extrait de l'URL)
+ */
+
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 
+// Donnees du dossier charge
 const dossier = ref(null);
+// Message d'erreur en cas d'echec du chargement
 const error = ref(null);
+// ID extrait de l'URL courante
 const id = window.location.pathname.split('/').pop();
 
+/* Charge les details du dossier depuis l'API */
 async function load() {
     try {
         const res = await fetch('/juridique/dossiers/' + id);
@@ -106,6 +118,7 @@ async function load() {
     }
 }
 
+/* Change le statut du dossier via un prompt utilisateur */
 async function changerStatut() {
     const nouveau = prompt('Nouveau statut (ouvert, en_cours, suspendu, clos, archive) :');
     if (!nouveau) return;
@@ -120,6 +133,7 @@ async function changerStatut() {
     } catch (e) { console.error(e); }
 }
 
+/* Clot le dossier apres confirmation utilisateur */
 async function clore() {
     if (!confirm('Clore ce dossier ?')) return;
     try {

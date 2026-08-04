@@ -1,3 +1,10 @@
+<!--
+ * Composant : Balance de vérification
+ * Description : Affiche la balance de vérification avec les totaux débiteurs et créditeurs
+ *              par compte comptable sur une période donnée. Vérifie l'équilibre
+ *              entre débit et crédit.
+ * Utilisation : Page /rapports/balance-de-verification
+-->
 <template>
     <div class="container-fluid py-3">
         <div class="d-flex align-items-center gap-2 mb-3">
@@ -112,17 +119,19 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 
-const data = ref(null)
+const data = ref(null)            /* Données de la balance de vérification */
 const loading = ref(true)
 const error = ref(null)
-const dateFrom = ref(new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0])
-const dateTo = ref(new Date().toISOString().split('T')[0])
+const dateFrom = ref(new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0])  /* Début d'année */
+const dateTo = ref(new Date().toISOString().split('T')[0])                                   /* Aujourd'hui */
 
+/* Vérifie si la balance est équilibrée (différence inférieure à 0,01) */
 const isBalanced = computed(() => {
     if (!data.value) return true
     return Math.abs((data.value.difference || 0)) < 0.01
 })
 
+/* Formate un nombre en francs CFA */
 const fmt = (v) => new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(v || 0) + ' F'
 const csrf = computed(() => document.querySelector('meta[name=csrf-token]')?.content || '')
 const api = (path, opts = {}) => fetch(path, {
@@ -130,6 +139,7 @@ const api = (path, opts = {}) => fetch(path, {
     ...opts,
 })
 
+/* Charge les données de la balance de vérification pour la période sélectionnée */
 async function loadData() {
     loading.value = true; error.value = null
     try {
@@ -141,6 +151,7 @@ async function loadData() {
 }
 
 function refresh() { loadData() }
+/* Exporte la balance de vérification au format PDF */
 function exportPdf() {
     const params = new URLSearchParams({ date_from: dateFrom.value, date_to: dateTo.value })
     window.open(`/api/reports/financial-statements/trial-balance/pdf?${params}`, '_blank')

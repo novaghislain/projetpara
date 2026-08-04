@@ -11,6 +11,28 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Modèle ExerciceComptable (Exercice comptable).
+ *
+ * Définit une période comptable (généralement annuelle) avec une date de début
+ * et une date de fin. Un exercice peut être ouvert ou clôturé.
+ * Permet de clôturer l'exercice (validation des écritures, équilibrage)
+ * et de générer le bilan d'ouverture pour l'exercice suivant.
+ * Table associée : `gel_exercices`.
+ *
+ * @property int $id
+ * @property int $cabinet_id ID du cabinet
+ * @property int|null $client_id ID du client
+ * @property string $libelle Libellé de l'exercice (ex: Exercice 2026)
+ * @property \Carbon\Carbon $date_debut Date de début
+ * @property \Carbon\Carbon $date_fin Date de fin
+ * @property bool $cloture Si l'exercice est clôturé
+ * @property \Carbon\Carbon|null $date_cloture Date de clôture
+ *
+ * @property-read \App\Models\Cabinet $cabinet Cabinet associé
+ * @property-read \App\Models\Client|null $client Client associé
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Gel\Comptabilite\EcritureComptable[] $ecritures Écritures de l'exercice
+ */
 class ExerciceComptable extends Model
 {
     protected $table = 'gel_exercices';

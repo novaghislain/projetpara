@@ -1,9 +1,17 @@
+/*
+ * Composant : Settings.vue
+ * Description : Page des parametres du compte utilisateur dans le module GEL.
+ *              Permet de modifier la photo de profil et le mot de passe
+ *              via le composant UserProfileSettings. Affiche les
+ *              informations du compte (nom, email, role).
+ */
 <script setup>
 import { ref } from 'vue';
-import { authStore } from '../../stores/auth';
-import GelLayout from '../../Layouts/GelLayout.vue';
-import UserProfileSettings from '../../Components/UserProfileSettings.vue';
+import { authStore } from '../../stores/auth';       /* Store d'authentification pour recuperer l'utilisateur courant */
+import GelLayout from '../../Layouts/GelLayout.vue';  /* Layout principal du module GEL */
+import UserProfileSettings from '../../Components/UserProfileSettings.vue'; /* Composant : photo + mot de passe */
 
+/* Utilisateur connecte recupere depuis le store */
 const user = authStore.user;
 </script>
 
@@ -24,16 +32,17 @@ const user = authStore.user;
         </div>
 
         <div class="p-4">
-            <!-- Composant réutilisable : photo + mot de passe -->
+            <!-- Composant reutilisable : photo de profil + mot de passe -->
             <UserProfileSettings />
 
             <hr class="my-4">
 
-            <!-- Infos du compte -->
+            <!-- Informations du compte : nom, email, role -->
             <div class="row g-4">
                 <div class="col-lg-6">
                     <div class="bg-white rounded-lg shadow p-6 mb-4">
                         <div class="d-flex justify-content-between align-items-center mb-3">
+                            <!-- Section Profil : nom, email, role de l'utilisateur -->
                             <i class="bi-person-circle me-2" style="color:#FF7900;"></i>Profil
                         </div>
                         <div>

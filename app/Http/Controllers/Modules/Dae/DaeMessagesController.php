@@ -7,8 +7,23 @@ use App\Models\Dae\DaeMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur de gestion des messages du module DAE.
+ *
+ * Permet de gérer les messages, appels, notes et informations
+ * avec des fonctionnalités de filtrage, suivi et statistiques.
+ */
 class DaeMessagesController extends Controller
 {
+    /**
+     * Liste paginée des messages avec filtres.
+     *
+     * Retourne une vue ou une réponse JSON selon le type de requête.
+     * Les filtres disponibles : type, statut, urgence, client_id.
+     *
+     * @param Request $request La requête HTTP avec les paramètres de filtre
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
+     */
     public function index(Request $request)
     {
         if (!$request->expectsJson()) {
@@ -43,6 +58,15 @@ class DaeMessagesController extends Controller
         );
     }
 
+    /**
+     * Crée un nouveau message.
+     *
+     * Valide les données entrantes et enregistre le message avec
+     * le statut "recu" et l'utilisateur connecté comme créateur.
+     *
+     * @param Request $request La requête HTTP contenant les données du message
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -66,6 +90,14 @@ class DaeMessagesController extends Controller
         return response()->json($message->load('destinataire', 'createdBy'), 201);
     }
 
+    /**
+     * Affiche un message spécifique.
+     *
+     * Marque le message comme "lu" si le destinataire est l'utilisateur connecté.
+     *
+     * @param int $id L'identifiant du message
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function show($id)
     {
         $message = DaeMessage::with('destinataire', 'createdBy')->findOrFail($id);
@@ -78,6 +110,16 @@ class DaeMessagesController extends Controller
         return response()->json($message);
     }
 
+    /**
+     * Met à jour un message existant.
+     *
+     * Permet de modifier les champs du message et de changer son statut.
+     * Si le statut passe à "traite", la date de traitement est enregistrée.
+     *
+     * @param Request $request La requête HTTP avec les données de mise à jour
+     * @param int $id L'identifiant du message
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function update(Request $request, $id)
     {
         $message = DaeMessage::findOrFail($id);
@@ -103,6 +145,12 @@ class DaeMessagesController extends Controller
         return response()->json($message->load('destinataire', 'createdBy'));
     }
 
+    /**
+     * Supprime un message.
+     *
+     * @param int $id L'identifiant du message à supprimer
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function destroy($id)
     {
         $message = DaeMessage::findOrFail($id);
@@ -111,6 +159,12 @@ class DaeMessagesController extends Controller
         return response()->json(['message' => 'Message supprimé.']);
     }
 
+    /**
+     * Marque un message comme lu.
+     *
+     * @param int $id L'identifiant du message
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function marquerLu($id)
     {
         $message = DaeMessage::findOrFail($id);
@@ -119,6 +173,12 @@ class DaeMessagesController extends Controller
         return response()->json($message);
     }
 
+    /**
+     * Marque un message comme traité.
+     *
+     * @param int $id L'identifiant du message
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function marquerTraite($id)
     {
         $message = DaeMessage::findOrFail($id);
@@ -127,6 +187,12 @@ class DaeMessagesController extends Controller
         return response()->json($message);
     }
 
+    /**
+     * Archive un message.
+     *
+     * @param int $id L'identifiant du message
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function archiver($id)
     {
         $message = DaeMessage::findOrFail($id);
@@ -135,6 +201,13 @@ class DaeMessagesController extends Controller
         return response()->json($message);
     }
 
+    /**
+     * Retourne les statistiques des messages.
+     *
+     * Calcule le total, les non lus, les urgents et les appels en attente.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function stats()
     {
         $user = Auth::user();

@@ -8,10 +8,19 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use SimpleSoftwareIO\QrCode\Facade\QrCode;
 
+/**
+ * Contrôleur API pour la gestion du code client d'une entreprise.
+ *
+ * Retourne le code client, le QR code associé et la permission
+ * de regénération pour l'utilisateur connecté.
+ */
 class CompanyCodeController
 {
     /**
-     * Return the client code, QR data URI and regeneration permission for a given company.
+     * Retourne le code client, le QR code en Data URI et la permission de regénération.
+     *
+     * @param string $clientId L'identifiant de l'entreprise (client).
+     * @return JsonResponse
      */
     public function show(string $clientId): JsonResponse
     {

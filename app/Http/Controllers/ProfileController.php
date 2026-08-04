@@ -14,7 +14,16 @@ use Inertia\Response;
 class ProfileController extends Controller
 {
     /**
-     * Display the user's profile form.
+     * Contrôleur pour la gestion du profil utilisateur.
+     * Permet de modifier les informations personnelles et
+     * de supprimer le compte utilisateur.
+     */
+
+    /**
+     * Affiche le formulaire d'édition du profil utilisateur.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Inertia\Response
      */
     public function edit(Request $request): Response
     {
@@ -25,7 +34,11 @@ class ProfileController extends Controller
     }
 
     /**
-     * Update the user's profile information.
+     * Met à jour les informations du profil utilisateur.
+     * Réinitialise la vérification d'email si l'adresse change.
+     *
+     * @param \App\Http\Requests\ProfileUpdateRequest $request
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
@@ -41,7 +54,11 @@ class ProfileController extends Controller
     }
 
     /**
-     * Delete the user's account.
+     * Supprime le compte de l'utilisateur connecté après validation du mot de passe.
+     * Déconnecte l'utilisateur et invalide la session.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function destroy(Request $request): RedirectResponse
     {

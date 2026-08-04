@@ -18,5 +18,11 @@
     </GelLayout>
 </template>
 <script setup>
+/* ============================================
+ * Tresorerie.vue — Module de suivi de trésorerie
+ * Affiche les flux financiers et les opérations de caisse.
+ * ============================================ */
+
+/* Layout principal de l'interface GEL */
 import GelLayout from '../../../Layouts/GelLayout.vue';
 </script>

@@ -1,3 +1,4 @@
+@php $currentSection = 'etats-financiers'; @endphp
 @extends('layouts.gel-business')
 
 @section('title', 'États financiers - Mon Entreprise')

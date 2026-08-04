@@ -11,7 +11,7 @@
     --gel-primary-dark: #003d7a;
 
     /* ─── Neutrals ─── */
-    --gel-sidebar-bg: #F7F8F9;
+    --gel-sidebar-bg: #005BAC;
     --gel-sidebar-text: #2C3E50;
     --gel-sidebar-hover: #E8ECF0;
     --gel-sidebar-active: #005BAC;
@@ -97,18 +97,18 @@ body {
     align-items: center;
     gap: 10px;
     padding: 14px 16px;
-    border-bottom: 1px solid var(--gel-border);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
     min-height: 56px;
 }
 .gel-sidebar-brand .gel-logo {
     width: 32px;
     height: 32px;
-    background: var(--gel-primary);
+    background: #FFFFFF;
     border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: var(--gel-primary);
     font-weight: 800;
     font-size: 14px;
     flex-shrink: 0;
@@ -116,31 +116,31 @@ body {
 .gel-sidebar-brand span {
     font-weight: 700;
     font-size: 15px;
-    color: var(--gel-text-primary);
+    color: #FFFFFF;
 }
 .gel-sidebar-brand small {
     font-size: 11px;
-    color: var(--gel-text-muted);
+    color: rgba(255,255,255,0.7);
 }
 
 .gel-sidebar-nav {
     flex: 1;
     padding: 8px;
 }
-.gel-sidebar-section {
+.gel-sidebar-section, .gel-sidebar-heading {
     padding: 12px 12px 4px;
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: var(--gel-text-muted);
+    color: rgba(255,255,255,0.6);
 }
 .gel-sidebar-link {
     display: flex;
     align-items: center;
     gap: 10px;
     padding: 8px 12px;
-    color: var(--gel-text-primary);
+    color: rgba(255,255,255,0.9);
     text-decoration: none;
     border-radius: 6px;
     font-size: 13px;
@@ -149,22 +149,24 @@ body {
     cursor: pointer;
 }
 .gel-sidebar-link:hover {
-    background: var(--gel-sidebar-hover);
-    color: var(--gel-primary);
+    background: rgba(255,255,255,0.1);
+    color: #FFFFFF;
 }
 .gel-sidebar-link.active {
-    background: var(--gel-primary-light);
-    color: var(--gel-primary);
+    background: rgba(255,255,255,0.2);
+    color: #FFFFFF;
     font-weight: 600;
 }
 .gel-sidebar-link i {
     width: 18px;
     text-align: center;
     font-size: 16px;
-    color: var(--gel-text-secondary);
+    color: rgba(255,255,255,0.7);
     flex-shrink: 0;
 }
-.gel-sidebar-link.active i { color: var(--gel-primary); }
+.gel-sidebar-link:hover i, .gel-sidebar-link.active i { 
+    color: #FFFFFF; 
+}
 .gel-sidebar-link .gel-badge {
     margin-left: auto;
     font-size: 11px;
@@ -205,6 +207,9 @@ body {
 .gel-content {
     flex: 1;
     padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
 }
 
 /* ═══════════════════════════════════════════
@@ -1359,3 +1364,234 @@ body {
     .gel-main { margin-left: 0; }
     .gel-content { padding: 0; }
 }
+
+/* ═══════════════════════════════════════════
+   MODAL — open state
+   ═══════════════════════════════════════════ */
+.gel-modal-overlay.open { opacity: 1; visibility: visible; }
+
+/* ═══════════════════════════════════════════
+   SLIDE PANEL — open state
+   ═══════════════════════════════════════════ */
+.gel-panel.open { right: 0; }
+.gel-panel-overlay.open { opacity: 1; visibility: visible; }
+
+/* ═══════════════════════════════════════════
+   GEL BUSINESS — Sidebar heading (GENERAL, VENTES…)
+   ═══════════════════════════════════════════ */
+.gel-sidebar-heading {
+    padding: 14px 16px 5px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--gel-text-muted);
+}
+
+/* ═══════════════════════════════════════════
+   GEL BUSINESS — Detail rows (info-entreprise)
+   ═══════════════════════════════════════════ */
+.gel-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--gel-border-light);
+    font-size: 13px;
+}
+.gel-detail-row:last-child { border-bottom: none; }
+.gel-detail-label { color: var(--gel-text-secondary); }
+.gel-detail-value { font-weight: 600; color: var(--gel-text-primary); }
+
+/* ═══════════════════════════════════════════
+   GEL BUSINESS — Section card with header action
+   ═══════════════════════════════════════════ */
+.gel-section-card {
+    background: var(--gel-card-bg);
+    border: 1px solid var(--gel-border);
+    border-radius: var(--gel-radius-lg);
+    box-shadow: var(--gel-shadow-sm);
+    margin-bottom: 20px;
+}
+.gel-section-card .gel-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--gel-border);
+}
+.gel-section-card .gel-section-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--gel-text-primary);
+}
+.gel-section-card .gel-section-body {
+    padding: 20px;
+}
+
+/* ═══════════════════════════════════════════
+   GEL BUSINESS — Contact comptable card
+   ═══════════════════════════════════════════ */
+.gel-contact-comptable {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 32px 20px;
+    gap: 12px;
+}
+.gel-contact-comptable .gel-avatar-lg {
+    width: 56px;
+    height: 56px;
+    font-size: 20px;
+}
+.gel-contact-comptable h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+}
+.gel-contact-comptable p {
+    font-size: 13px;
+    color: var(--gel-text-secondary);
+    margin: 0;
+}
+
+/* ═══════════════════════════════════════════
+   GEL BUSINESS — Flash/Alert bar
+   ═══════════════════════════════════════════ */
+.gel-flash-bar {
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: var(--gel-radius-md);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.gel-flash-bar.success { background: var(--gel-success-bg); color: #065F46; border-left: 4px solid var(--gel-success); }
+.gel-flash-bar.error   { background: var(--gel-danger-bg);  color: #991B1B; border-left: 4px solid var(--gel-danger); }
+.gel-flash-bar.warning { background: var(--gel-warning-bg); color: #92400E; border-left: 4px solid var(--gel-warning); }
+.gel-flash-bar.info    { background: var(--gel-info-bg);    color: #1E40AF; border-left: 4px solid var(--gel-info); }
+
+/* ═══════════════════════════════════════════
+   GEL BUSINESS — Two-column layout helper
+   ═══════════════════════════════════════════ */
+.gel-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.gel-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.gel-grid-auto { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+
+@media (max-width: 768px) {
+    .gel-grid-2, .gel-grid-3 { grid-template-columns: 1fr; }
+}
+
+/* ═══════════════════════════════════════════
+   GEL BUSINESS — Sidebar active client banner
+   ═══════════════════════════════════════════ */
+.gel-active-client-banner {
+    background: linear-gradient(135deg, var(--gel-primary), var(--gel-primary-dark, #003d7a));
+    color: white;
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+.gel-active-client-banner a {
+    color: rgba(255,255,255,0.75);
+    margin-left: auto;
+    font-size: 11px;
+    text-decoration: underline;
+}
+
+/* ═══════════════════════════════════════════
+   HELPERS — spacing, text
+   ═══════════════════════════════════════════ */
+.p-4 { padding: 20px; }
+.p-3 { padding: 16px; }
+.mb-4 { margin-bottom: 24px; }
+.mb-3 { margin-bottom: 16px; }
+.mb-2 { margin-bottom: 8px; }
+.mt-2 { margin-top: 8px; }
+.text-muted { color: var(--gel-text-muted); }
+.text-success { color: var(--gel-success); }
+.text-danger  { color: var(--gel-danger); }
+.text-primary { color: var(--gel-primary); }
+.fw-bold { font-weight: 700; }
+.fw-semibold { font-weight: 600; }
+.small { font-size: 12px; }
+.monospace { font-family: 'SFMono-Regular', Consolas, monospace; }
+
+/* ═══════════════════════════════════════════
+   GEL BUSINESS — Workspace selector (Compta / Secrétariat / Gestion)
+   ═══════════════════════════════════════════ */
+.gel-workspace-selector {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+    text-align: center;
+}
+.gel-workspace-header {
+    max-width: 560px;
+}
+.gel-workspace-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    border-radius: var(--gel-radius-lg);
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.gel-workspace-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--gel-shadow-lg);
+    text-decoration: none;
+    color: inherit;
+}
+.gel-workspace-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin-bottom: 16px;
+}
+
+/* ─── Switch d'espace dans la sidebar sombre ─── */
+.gel-workspace-switch {
+    margin-top: 16px;
+    padding: 12px;
+    border-top: 1px solid rgba(255,255,255,0.12);
+}
+.gel-workspace-switch-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: var(--gel-radius-md);
+    background: rgba(255,255,255,0.12);
+    color: #FFFFFF;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.15s ease;
+}
+.gel-workspace-switch-link:hover {
+    background: rgba(255,255,255,0.22);
+    color: #FFFFFF;
+    text-decoration: none;
+}
+.gel-workspace-switch-link i {
+    font-size: 14px;
+    color: rgba(255,255,255,0.8);
+}
+

@@ -5,8 +5,22 @@ namespace App\Http\Controllers\Modules\Legal;
 use App\Models\Legal\LegalRegistre;
 use Illuminate\Http\Request;
 
+/**
+ * Contrôleur de gestion des registres légaux obligatoires.
+ *
+ * Gère les registres des assemblées, des décisions, des apports
+ * et autres registres requis par la réglementation SYSCOHADA et OHADA.
+ */
 class LegalRegistresController extends BaseLegalController
 {
+    /**
+     * Affiche la liste des registres légaux.
+     *
+     * Retourne les registres triés par type et année décroissante pour le client connecté.
+     *
+     * @param Request $request La requête HTTP entrante
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
+     */
     public function index(Request $request)
     {
         if (!$request->expectsJson()) {
@@ -18,6 +32,14 @@ class LegalRegistresController extends BaseLegalController
         );
     }
 
+    /**
+     * Affiche le contenu d'un registre légal spécifique.
+     *
+     * @param string $type Le type de registre (ex: assembly, decisions)
+     * @param int $annee L'année du registre
+     * @param Request $request La requête HTTP entrante
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
+     */
     public function show($type, $annee, Request $request)
     {
         if (!$request->expectsJson()) {
@@ -32,6 +54,17 @@ class LegalRegistresController extends BaseLegalController
         return response()->json($registre);
     }
 
+    /**
+     * Ajoute une entrée dans un registre légal.
+     *
+     * Crée le registre s'il n'existe pas encore, puis ajoute l'entrée
+     * avec son numéro séquentiel, son objet et ses détails.
+     *
+     * @param Request $request La requête HTTP contenant l'objet et les détails de l'entrée
+     * @param string $type Le type de registre
+     * @param int $annee L'année du registre
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function addEntry(Request $request, $type, $annee)
     {
         $clientId = $this->getClientId($request);
@@ -58,6 +91,14 @@ class LegalRegistresController extends BaseLegalController
         return response()->json(['success' => true, 'data' => $registre]);
     }
 
+    /**
+     * Exporte le contenu d'un registre légal.
+     *
+     * @param string $type Le type de registre
+     * @param int $annee L'année du registre
+     * @param Request $request La requête HTTP entrante
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function export($type, $annee, Request $request)
     {
         $clientId = $this->getClientId($request);

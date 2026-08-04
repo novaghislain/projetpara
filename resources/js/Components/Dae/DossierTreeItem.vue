@@ -55,24 +55,40 @@
 </template>
 
 <script>
+/*
+ * Composant : DossierTreeItem
+ * Description : Élément récursif d'arborescence de dossiers. Affiche un dossier,
+ *               son indicateur de couleur et ses enfants. Supporte le pliage/dépliage.
+ * Props :
+ *   dossier (Object, requis)  -- Données du dossier (id, nom, couleur, enfants, document_count)
+ *   actif   (Number, défaut null) -- ID du dossier actuellement sélectionné
+ *   niveau  (Number, défaut 0)    -- Niveau d'indentation dans l'arbre
+ * Événements :
+ *   select (dossier.id)  -- Émis lors du clic sur un dossier
+ *   edit   (dossier)     -- Émis lors du clic sur le bouton Modifier
+ *   delete (dossier)     -- Émis lors du clic sur le bouton Supprimer
+ */
 export default {
     name: 'DossierTreeItem',
 
     props: {
-        dossier: { type: Object, required: true },
-        actif: { type: Number, default: null },
-        niveau: { type: Number, default: 0 },
+        dossier: { type: Object, required: true },   // Données du dossier courant
+        actif: { type: Number, default: null },       // ID du dossier actif
+        niveau: { type: Number, default: 0 },         // Profondeur dans l'arbre
     },
 
     emits: ['select', 'edit', 'delete'],
 
     data() {
         return {
-            expand: true,
+            expand: true,  // true = dossier déplié, false = replié
         };
     },
 
     methods: {
+        /*
+         * toggleExpand — Bascule l'état plié/déplié du dossier courant.
+         */
         toggleExpand() {
             this.expand = !this.expand;
         },

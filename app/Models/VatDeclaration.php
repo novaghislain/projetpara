@@ -8,6 +8,20 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle VatDeclaration - Déclaration de TVA (système SYSCOHADA).
+ *
+ * Table associée : 'vat_declarations' (convention Laravel).
+ * Gère les déclarations périodiques (mensuelle/trimestrielle/annuelle)
+ * de TVA avec ventilation des montants collectés et déductibles,
+ * report de crédit antérieur, et écritures comptables associées.
+ * Relations :
+ * - client() : appartient à un client (Client).
+ * - lines() : a plusieurs lignes de TVA (VatDeclarationLine).
+ * - declarationInvoices() : a plusieurs factures associées (VatDeclarationInvoice).
+ * - journalEntry() : écriture de déclaration (JournalEntry).
+ * - paymentJournalEntry() : écriture de paiement (JournalEntry).
+ */
 class VatDeclaration extends Model
 {
     use HasFactory, SoftDeletes;

@@ -1,15 +1,24 @@
 <script setup>
+/* ============================================
+ * Composant : Gestion des Factures (ERP)
+ * Module    : Facturation / e-MECeF
+ * Rôle      : Lister, filtrer, créer et gérer
+ *            les factures avec intégration DGI
+ * ============================================ */
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../Layouts/GelLayout.vue';
 import { authStore } from '../../../stores/auth';
 
+/* États réactifs : factures, clients et indicateurs de chargement */
 const invoices = ref([]);
 const clients = ref([]);
 const loading = ref(true);
 const error = ref(null);
 const submitting = ref(false);
+/* Filtre de statut pour le tableau des factures */
 const statusFilter = ref('');
 
+/* Formulaire de création de facture */
 const showModal = ref(false);
 const form = ref({
     client_id: '', client_name: '', invoice_number: '', invoice_date: new Date().toISOString().substring(0, 10),
@@ -17,6 +26,7 @@ const form = ref({
     type: 'invoice', items: [{ designation: '', quantity: 1, unit_price: 0, total_price: 0 }],
 });
 
+/* Récupération des factures et clients depuis l'API */
 const fetchData = async () => {
     loading.value = true;
     error.value = null;
@@ -35,11 +45,13 @@ const fetchData = async () => {
     }
 };
 
+/* Filtrage des factures par statut */
 const filteredInvoices = () => {
     if (!statusFilter.value) return invoices.value;
     return invoices.value.filter(inv => inv.status === statusFilter.value);
 };
 
+/* Soumission du formulaire (création de facture) */
 const submitForm = async () => {
     submitting.value = true;
     try {
@@ -67,11 +79,13 @@ const submitForm = async () => {
     }
 };
 
+/* Classe CSS du badge selon le statut de la facture */
 const statusBadgeClass = (status) => {
     const map = { brouillon: 'bg-secondary', emise: 'bg-primary', envoyee: 'bg-info', payee: 'bg-success', impayee: 'bg-danger', annulee: 'bg-dark' };
     return map[status] || 'bg-secondary';
 };
 
+/* Émission e-MECeF vers la DGI */
 const emitEmecef = async (invoiceId) => {
     if (!confirm('Émettre cette facture auprès de la DGI (e-MECeF) ?')) return;
     try {
@@ -91,6 +105,7 @@ const emitEmecef = async (invoiceId) => {
     }
 };
 
+/* Annulation e-MECeF (action irreversible) */
 const cancelEmecef = async (invoiceId) => {
     if (!confirm('Annuler cette facture auprès de la DGI (e-MECeF) ? Cette action est irréversible.')) return;
     try {
@@ -110,6 +125,7 @@ const cancelEmecef = async (invoiceId) => {
     }
 };
 
+/* Verification du statut DGI */
 const verifyEmecef = async (invoiceId) => {
     try {
         const res = await fetch(`/emecef/verify/${invoiceId}`, {
@@ -127,11 +143,13 @@ const verifyEmecef = async (invoiceId) => {
     }
 };
 
+/* Initialisation : chargement des donnees au montage */
 onMounted(fetchData);
 </script>
 
 <template>
     <GelLayout page-title="Facturation">
+        <!-- Barre d'outils : filtre par statut et bouton d'ajout -->
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
             <select v-model="statusFilter" class="form-select form-select-sm" style="width:auto;">
                 <option value="">Tous statuts</option>
@@ -145,11 +163,14 @@ onMounted(fetchData);
             <button class="btn btn-primary btn-sm" @click="showModal = true"><i class="bi-plus-lg me-1"></i>Nouvelle facture</button>
         </div>
 
+        <!-- Indicateur de chargement -->
         <div v-if="loading" class="d-flex justify-content-center py-5">
             <div class="spinner-border text-primary"><span class="visually-hidden">Chargement...</span></div>
         </div>
+        <!-- Message d'erreur -->
         <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
 
+        <!-- Tableau des factures -->
         <div v-else class="bg-white rounded-lg shadow p-6">
             <div class="table-responsive">
                 <table class="table table-sm align-middle mb-0">

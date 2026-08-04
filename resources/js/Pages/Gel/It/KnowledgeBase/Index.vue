@@ -10,6 +10,13 @@
 </template>
 
 <script setup>
+/*
+ * Page : KnowledgeBase Index
+ * Role : Liste des articles de la base de connaissances avec filtres par catégorie
+ * Props :
+ *   articles   (Object) — Données paginées des articles
+ *   categories (Array)  — Liste des catégories pour le filtre
+ */
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 defineProps(['articles', 'categories'])
 </script>

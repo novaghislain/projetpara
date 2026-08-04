@@ -8,22 +8,42 @@ use App\Services\Banking\BankTransactionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur API pour la gestion des transactions bancaires.
+ *
+ * Permet de lister, créer, importer, afficher et supprimer
+ * des transactions bancaires avec filtrage avancé.
+ */
 class BankTransactionController extends Controller
 {
     private BankTransactionService $transactionService;
 
+    /**
+     * Constructeur avec injection du service de transactions bancaires.
+     *
+     * @param BankTransactionService $transactionService
+     */
     public function __construct(BankTransactionService $transactionService)
     {
         $this->transactionService = $transactionService;
     }
 
+    /**
+     * Récupère l'identifiant client depuis l'utilisateur authentifié.
+     *
+     * @return int
+     */
     protected function getClientId(): int
     {
         return (int) (Auth::user()->active_client_id ?? Auth::user()->client_id);
     }
 
     /**
-     * Liste des transactions
+     * Liste paginée des transactions bancaires avec filtres.
+     * Filtres disponibles : compte bancaire, période, catégorie, statut, non-rapproché.
+     *
+     * @param Request $request La requête HTTP avec les filtres.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function index(Request $request)
     {
@@ -64,7 +84,10 @@ class BankTransactionController extends Controller
     }
 
     /**
-     * Créer une transaction
+     * Crée une nouvelle transaction bancaire avec génération d'écriture comptable optionnelle.
+     *
+     * @param Request $request La requête HTTP avec les données validées.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
     {
@@ -100,7 +123,10 @@ class BankTransactionController extends Controller
     }
 
     /**
-     * Importer des transactions (relevé bancaire)
+     * Importe en masse des transactions à partir d'un relevé bancaire.
+     *
+     * @param Request $request La requête HTTP avec la liste des transactions à importer.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function import(Request $request)
     {
@@ -137,7 +163,10 @@ class BankTransactionController extends Controller
     }
 
     /**
-     * Afficher une transaction
+     * Affiche le détail d'une transaction bancaire avec ses relations.
+     *
+     * @param string $id L'identifiant de la transaction.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function show(string $id)
     {
@@ -150,7 +179,10 @@ class BankTransactionController extends Controller
     }
 
     /**
-     * Supprimer une transaction
+     * Supprime une transaction bancaire (uniquement si elle n'est pas rapprochée).
+     *
+     * @param string $id L'identifiant de la transaction.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy(string $id)
     {
@@ -158,6 +190,7 @@ class BankTransactionController extends Controller
             ->where('client_id', $this->getClientId())
             ->firstOrFail();
 
+        // Interdire la suppression d'une transaction déjà rapprochée
         if ($transaction->is_reconciled) {
             return response()->json([
                 'success' => false,

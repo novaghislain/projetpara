@@ -8,10 +8,24 @@ use App\Models\Dae\DaeOfficeSupplyRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur de gestion des fournitures de bureau du module DAE.
+ *
+ * Permet la gestion du stock de fournitures, les demandes d'approvisionnement,
+ * l'approbation et la livraison, ainsi que les statistiques associées.
+ */
 class DaeOfficeSuppliesController extends Controller
 {
     // ─── Fournitures (stock) ──────────────────────────────
 
+    /**
+     * Liste paginée des fournitures avec filtres.
+     *
+     * Filtres disponibles : catégorie, alerte stock, client_id.
+     *
+     * @param Request $request La requête HTTP avec les paramètres de filtre
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
+     */
     public function index(Request $request)
     {
         if (!$request->expectsJson()) {
@@ -41,6 +55,12 @@ class DaeOfficeSuppliesController extends Controller
         );
     }
 
+    /**
+     * Crée une nouvelle fourniture dans le stock.
+     *
+     * @param Request $request La requête HTTP avec les données de la fourniture
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -67,12 +87,25 @@ class DaeOfficeSuppliesController extends Controller
         return response()->json($supply->load('createdBy'), 201);
     }
 
+    /**
+     * Affiche une fourniture avec ses demandes associées.
+     *
+     * @param int $id L'identifiant de la fourniture
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function show($id)
     {
         $supply = DaeOfficeSupply::with('createdBy', 'requests.demandeur')->findOrFail($id);
         return response()->json($supply);
     }
 
+    /**
+     * Met à jour une fourniture existante.
+     *
+     * @param Request $request La requête HTTP avec les données de mise à jour
+     * @param int $id L'identifiant de la fourniture
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function update(Request $request, $id)
     {
         $supply = DaeOfficeSupply::findOrFail($id);
@@ -96,6 +129,12 @@ class DaeOfficeSuppliesController extends Controller
         return response()->json($supply->load('createdBy'));
     }
 
+    /**
+     * Supprime une fourniture.
+     *
+     * @param int $id L'identifiant de la fourniture à supprimer
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function destroy($id)
     {
         $supply = DaeOfficeSupply::findOrFail($id);
@@ -104,6 +143,13 @@ class DaeOfficeSuppliesController extends Controller
         return response()->json(['message' => 'Fourniture supprimée.']);
     }
 
+    /**
+     * Ajuste manuellement le stock d'une fourniture.
+     *
+     * @param Request $request La requête HTTP avec la nouvelle quantité et le motif
+     * @param int $id L'identifiant de la fourniture
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function ajusterStock(Request $request, $id)
     {
         $supply = DaeOfficeSupply::findOrFail($id);
@@ -123,6 +169,14 @@ class DaeOfficeSuppliesController extends Controller
 
     // ─── Demandes de fournitures ──────────────────────────
 
+    /**
+     * Liste paginée des demandes de fournitures avec filtres.
+     *
+     * Filtres disponibles : statut, supply_id.
+     *
+     * @param Request $request La requête HTTP avec les paramètres de filtre
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function requestsIndex(Request $request)
     {
         $user = Auth::user();
@@ -145,6 +199,12 @@ class DaeOfficeSuppliesController extends Controller
         );
     }
 
+    /**
+     * Crée une nouvelle demande de fourniture.
+     *
+     * @param Request $request La requête HTTP avec les données de la demande
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function requestsStore(Request $request)
     {
         $validated = $request->validate([
@@ -163,6 +223,15 @@ class DaeOfficeSuppliesController extends Controller
         return response()->json($requestModel->load('supply', 'demandeur'), 201);
     }
 
+    /**
+     * Approuve ou refuse une demande de fourniture.
+     *
+     * Si approuvée, ajuste le stock de la fourniture concernée.
+     *
+     * @param Request $request La requête HTTP avec le statut et la quantité approuvée
+     * @param int $id L'identifiant de la demande
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function requestsApprouver(Request $request, $id)
     {
         $requestModel = DaeOfficeSupplyRequest::findOrFail($id);
@@ -189,6 +258,12 @@ class DaeOfficeSuppliesController extends Controller
         return response()->json($requestModel->load('supply', 'demandeur', 'approuveur'));
     }
 
+    /**
+     * Marque une demande de fourniture comme livrée.
+     *
+     * @param int $id L'identifiant de la demande
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function requestsLivrer($id)
     {
         $requestModel = DaeOfficeSupplyRequest::findOrFail($id);
@@ -197,6 +272,11 @@ class DaeOfficeSuppliesController extends Controller
         return response()->json($requestModel->load('supply', 'demandeur', 'approuveur'));
     }
 
+    /**
+     * Retourne la liste des catégories de fournitures distinctes.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function categories()
     {
         $user = Auth::user();
@@ -214,6 +294,11 @@ class DaeOfficeSuppliesController extends Controller
         return response()->json($query->pluck('categorie'));
     }
 
+    /**
+     * Retourne les statistiques des fournitures et des demandes.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function stats()
     {
         $user = Auth::user();

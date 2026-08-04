@@ -6,6 +6,12 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur pour la gestion des événements et notifications en temps réel.
+ *
+ * Permet de vérifier les mises à jour de permissions côté serveur via
+ * un polling léger, et de notifier les utilisateurs des changements.
+ */
 class EventsController extends Controller
 {
     /**

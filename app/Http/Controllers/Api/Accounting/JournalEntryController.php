@@ -10,22 +10,39 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur API des écritures comptables.
+ *
+ * Gère le CRUD des écritures, leur validation (postage),
+ * annulation et suppression (brouillons uniquement).
+ */
 class JournalEntryController extends Controller
 {
     private JournalEntryService $entryService;
 
+    /**
+     * Constructeur avec injection du service d'écritures.
+     */
     public function __construct(JournalEntryService $entryService)
     {
         $this->entryService = $entryService;
     }
 
+    /**
+     * Récupère l'ID du client connecté.
+     *
+     * @return int
+     */
     protected function getClientId(): int
     {
         return (int) (Auth::user()->active_client_id ?? Auth::user()->client_id);
     }
 
     /**
-     * Liste des écritures comptables.
+     * Liste des écritures comptables avec filtres optionnels.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
@@ -62,7 +79,10 @@ class JournalEntryController extends Controller
     }
 
     /**
-     * Créer une écriture comptable.
+     * Créer une écriture comptable via le service dédié.
+     *
+     * @param  StoreJournalEntryRequest  $request
+     * @return JsonResponse
      */
     public function store(StoreJournalEntryRequest $request): JsonResponse
     {
@@ -83,7 +103,10 @@ class JournalEntryController extends Controller
     }
 
     /**
-     * Afficher une écriture.
+     * Afficher une écriture avec ses lignes et ses relations.
+     *
+     * @param  string  $id
+     * @return JsonResponse
      */
     public function show(string $id): JsonResponse
     {
@@ -105,7 +128,10 @@ class JournalEntryController extends Controller
     }
 
     /**
-     * Valider (poster) une écriture.
+     * Valider (poster) une écriture pour la verrouiller.
+     *
+     * @param  string  $id
+     * @return JsonResponse
      */
     public function post(string $id): JsonResponse
     {
@@ -126,7 +152,11 @@ class JournalEntryController extends Controller
     }
 
     /**
-     * Annuler une écriture.
+     * Annuler une écriture avec un motif (écriture de contre-passation).
+     *
+     * @param  string  $id
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function cancel(string $id, Request $request): JsonResponse
     {
@@ -147,7 +177,10 @@ class JournalEntryController extends Controller
     }
 
     /**
-     * Supprimer une écriture (brouillon uniquement).
+     * Supprimer une écriture (brouillon uniquement, pas les écritures postées).
+     *
+     * @param  string  $id
+     * @return JsonResponse
      */
     public function destroy(string $id): JsonResponse
     {

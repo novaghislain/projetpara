@@ -85,6 +85,11 @@
     </CompanyLayout>
 </template>
 
+/*
+ * Composant : CompanyDaeDocuments
+ * Role : Gestion documentaire et archivage dans le module DAE.
+ *        Affiche une liste filtrable par type et categorie avec telechargement.
+ */
 <script>
 import CompanyLayout from '../../Layouts/CompanyLayout.vue';
 import DaeDataTable from '../../Components/Dae/DaeDataTable.vue';
@@ -93,19 +98,19 @@ export default {
     components: { CompanyLayout, DaeDataTable },
     data() {
         return {
-            loading: true,
-            rows: [],
-            currentPage: 1,
-            totalPages: 1,
-            filterType: '',
-            filterCategorie: '',
-            stats: {
+            loading: true,                     /* Etat de chargement */
+            rows: [],                          /* Liste des documents */
+            currentPage: 1,                    /* Page courante */
+            totalPages: 1,                     /* Nombre total de pages */
+            filterType: '',                    /* Filtre par type de document */
+            filterCategorie: '',               /* Filtre par categorie */
+            stats: {                           /* Statistiques resume */
                 total: { label: 'Total', count: 0 },
                 final: { label: 'Finalisés', count: 0 },
                 brouillon: { label: 'Brouillons', count: 0 },
             },
-            toast: null,
-            columns: [
+            toast: null,                       /* Notification utilisateur */
+            columns: [                         /* Colonnes du tableau */
                 { key: 'reference', label: 'Réf.', width: '120px' },
                 { key: 'titre', label: 'Titre' },
                 { key: 'type_document', label: 'Type', width: '110px' },
@@ -114,7 +119,7 @@ export default {
                 { key: 'taille_fichier', label: 'Taille', width: '90px' },
                 { key: 'statut', label: 'Statut', width: '100px' },
             ],
-            actions: [
+            actions: [                         /* Actions par ligne */
                 { key: 'download', label: 'Télécharger', icon: 'bi-download' },
             ],
         };
@@ -123,6 +128,7 @@ export default {
         this.fetchData();
     },
     methods: {
+        /* Charge les documents depuis l'API avec filtres et pagination */
         async fetchData(page = 1) {
             this.loading = true;
             try {
@@ -145,11 +151,13 @@ export default {
                 this.loading = false;
             }
         },
+        /* Gere le clic sur une action (telechargement du document) */
         async handleAction({ action, row }) {
             if (action === 'download' && row.id) {
                 window.open(`/company/dae/documents/${row.id}/download`, '_blank');
             }
         },
+        /* Formate la taille d'un fichier en affichage lisible (o, Ko, Mo) */
         formatTaille(t) {
             if (!t) return '—';
             if (t < 1024) return t + ' o';

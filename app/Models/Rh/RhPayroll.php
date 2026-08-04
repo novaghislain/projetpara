@@ -5,6 +5,17 @@ namespace App\Models\Rh;
 use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle RhPayroll - Fiche de paie / bulletin de salaire.
+ *
+ * Table associée : 'rh_payrolls'.
+ * Gère les bulletins de salaire : salaire de base, primes, indemnités,
+ * cotisations, retenues, avance, net à payer, et statut de paiement.
+ * Relations :
+ * - employee() : appartient à un employé (RhEmployee).
+ * - valideur() : appartient à l'utilisateur (User) qui a validé la paie.
+ * - creator() : appartient à l'utilisateur (User) qui a créé la fiche.
+ */
 class RhPayroll extends RhBaseModel
 {
     use SoftDeletes;

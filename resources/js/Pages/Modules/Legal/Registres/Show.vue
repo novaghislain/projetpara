@@ -108,17 +108,26 @@
 </template>
 
 <script setup>
+/*
+ * Composant : Show.vue (Registres)
+ * Description : Affiche le détail d'un registre légal (assemblée, décisions, contrats...).
+ *               Liste les entrées, permet d'en ajouter et de clore le registre.
+ * Route       : /juridique/registres/{type}/{annee}
+ */
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 
+/* Données du registre courant, état du formulaire d'ajout et nouvelle entrée */
 const registre = ref(null);
 const showAddForm = ref(false);
 const newEntry = ref({ date: '', intitule: '', reference: '' });
 
+/* Extraction du type de registre et de l'année depuis l'URL */
 const parts = window.location.pathname.split('/').filter(Boolean);
 const registreType = parts[parts.length - 2] || 'registre_assemblee';
 const annee = parts[parts.length - 1] || new Date().getFullYear();
 
+/* Libellés d'affichage pour chaque type de registre */
 const typeLabels = {
     deliberations: 'Délibérations', decisions: 'Décisions', actions: 'Actions',
     contrats: 'Contrats', courriers: 'Courriers', comptes_annuels: 'Comptes annuels',
@@ -127,16 +136,19 @@ const typeLabels = {
 
 function typeLabel(type) { return typeLabels[type] || type; }
 
+/* Formate une date au format français */
 function formatDate(date) {
     if (!date) return '—';
     return new Date(date + 'T00:00:00').toLocaleDateString('fr-FR');
 }
 
+/* Charge le registre et ses entrées depuis l'API */
 async function load() {
     try { const res = await fetch(`/juridique/registres/${registreType}?annee=${annee}`); registre.value = await res.json(); }
     catch (e) { console.error(e); }
 }
 
+/* Ajoute une nouvelle entrée au registre */
 async function addEntry() {
     try {
         const csrf = document.querySelector('meta[name=csrf-token]')?.content;
@@ -149,6 +161,7 @@ async function addEntry() {
     } catch (e) { console.error(e); }
 }
 
+/* Clôture le registre de manière irréversible */
 async function cloreRegistre() {
     if (!confirm('Clore ce registre ? Cette action est irréversible.')) return;
     try {

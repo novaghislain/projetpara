@@ -10,6 +10,13 @@
 </template>
 
 <script setup>
+/*
+ * Page : KnowledgeBase Form
+ * Role : Formulaire de création et d'édition d'un article de la base de connaissances
+ * Props :
+ *   article    (Object|null) — Article existant (mode édition) ou null (mode création)
+ *   categories (Array)       — Liste des catégories disponibles
+ */
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 defineProps([])
 </script>

@@ -1,10 +1,15 @@
 <template>
+    <!-- ============================================================
+    Page de securite du compte GEL.
+    Gerer l'authentification a deux facteurs (2FA), les
+    sessions actives et l'historique des connexions.
+    ============================================================ -->
     <GelLayout page-title="Sécurité & 2FA">
         <div class="p-6">
             <h2 class="text-xl fw-bold mb-3">Sécurité du compte</h2>
 
             <div class="row g-3">
-                <!-- 2FA Section -->
+                <!-- Section : Authentification a Deux Facteurs (2FA) -->
                 <div class="col-md-6">
                     <div class="bg-white rounded-lg shadow p-4">
                         <h6 class="fw-bold mb-3">
@@ -30,17 +35,14 @@
                                 de votre compte. Vous aurez besoin d'une application comme
                                 <strong>Google Authenticator</strong> ou <strong>Authy</strong>.
                             </p>
-                            <form method="POST" action="/user/two-factor/enable">
-                                <input type="hidden" name="_token" :value="csrf" />
-                                <button class="btn btn-primary">
-                                    <i class="bi-qr-code me-1"></i> Activer 2FA
-                                </button>
-                            </form>
+                            <a href="/user/two-factor/enable" class="btn btn-primary">
+                                <i class="bi-qr-code me-1"></i> Activer 2FA
+                            </a>
                         </div>
                     </div>
                 </div>
 
-                <!-- Sessions actives -->
+                <!-- Section : sessions actives et revocation -->
                 <div class="col-md-6">
                     <div class="bg-white rounded-lg shadow p-4">
                         <h6 class="fw-bold mb-3">
@@ -129,17 +131,26 @@
 </template>
 
 <script setup>
+/* ============================================================
+ * Security / Index.vue
+ * Page de securite du compte : activation/desactivation 2FA,
+ * liste des sessions actives, revocation et historique
+ * des dernieres connexions.
+ * ============================================================ */
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../Layouts/GelLayout.vue';
 
+/* Indique si le 2FA est actif (prop fournie par le backend) */
 defineProps(['twoFactorEnabled'])
 
+/* Token CSRF pour les formulaires de securite */
 const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 const sessions = ref([])
 const history = ref([])
 const loadingSessions = ref(true)
 const loadingHistory = ref(true)
 
+/* Chargement des sessions actives et de l'historique au montage */
 onMounted(async () => {
     try {
         const res = await fetch('/user/sessions');

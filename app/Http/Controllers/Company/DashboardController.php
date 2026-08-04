@@ -10,8 +10,22 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur du tableau de bord Company.
+ *
+ * Gère les pages principales de l'interface entreprise :
+ * tableau de bord, services, profil entreprise, et les API
+ * de consultation/mise à jour des informations de l'entreprise.
+ */
 class DashboardController extends Controller
 {
+    /**
+     * Affiche le tableau de bord principal de l'entreprise (vue SPA).
+     *
+     * Vérifie que l'utilisateur a une entreprise associée.
+     *
+     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
+     */
     public function dashboard()
     {
         $user = Auth::user();
@@ -25,6 +39,11 @@ class DashboardController extends Controller
         ]);
     }
 
+    /**
+     * Affiche la page des services souscrits (vue SPA).
+     *
+     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
+     */
     public function services()
     {
         $user = Auth::user();
@@ -38,6 +57,11 @@ class DashboardController extends Controller
         ]);
     }
 
+    /**
+     * Affiche la page de profil entreprise (vue SPA).
+     *
+     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
+     */
     public function profile()
     {
         $user = Auth::user();
@@ -56,6 +80,12 @@ class DashboardController extends Controller
     /**
      * Vérifie que l'utilisateur authentifié a bien accès à ce client.
      */
+    /**
+     * Vérifie que l'utilisateur authentifié a bien accès à ce client.
+     *
+     * @param int $clientId Identifiant du client à vérifier
+     * @return void
+     */
     private function authorizeClientAccess($clientId): void
     {
         $user = Auth::user();
@@ -64,6 +94,12 @@ class DashboardController extends Controller
         }
     }
 
+    /**
+     * API: Retourne les informations de l'entreprise, licences et statistiques.
+     *
+     * @param int $clientId Identifiant du client
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function getCompanyInfo($clientId)
     {
         $this->authorizeClientAccess($clientId);
@@ -97,6 +133,13 @@ class DashboardController extends Controller
         ]);
     }
 
+    /**
+     * API: Met à jour les informations de l'entreprise.
+     *
+     * @param Request $request Requête HTTP (company_name, email, phone, address)
+     * @param int $clientId Identifiant du client
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function updateCompany(Request $request, $clientId)
     {
         $this->authorizeClientAccess($clientId);

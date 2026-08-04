@@ -5,6 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Modèle TransmissionInterne - Transmission interne d'un email reçu.
+ *
+ * Table associée : 'transmissions_internes'.
+ * Gère la transmission d'un email reçu vers un autre compte interne,
+ * avec note, priorité et suivi du traitement.
+ * Relations :
+ * - emailRecu() : appartient à un email reçu (EmailRecu).
+ * - transmisPar() : appartient au compte interne expéditeur (InternalAccount).
+ * - transmisA() : appartient au compte interne destinataire (InternalAccount).
+ */
 class TransmissionInterne extends Model
 {
     protected $table = 'transmissions_internes';

@@ -20,19 +20,32 @@
 </template>
 
 <script setup>
+/*
+ * Composant : GelTestimonialsSlider
+ * Role : Carrousel de témoignages avec défilement automatique (5s), navigation manuelle et indicateurs
+ * Props :
+ *   testimonials (Array, requis) — Tableau d'objets { text, name, role }
+ */
 import { ref } from 'vue'
 const props = defineProps({ testimonials: { type: Array, required: true } })
 const currentIndex = ref(0)
 let timer = null
+
+// Passe au témoignage suivant (boucle circulaire)
 const next = () => {
   currentIndex.value = (currentIndex.value + 1) % props.testimonials.length
 }
+// Reculer d'un témoignage (boucle circulaire)
 const prev = () => {
   currentIndex.value = (currentIndex.value - 1 + props.testimonials.length) % props.testimonials.length
 }
+// Aller directement à un témoignage par son index
 const goTo = i => { currentIndex.value = i }
+// Démarre le défilement automatique toutes les 5 secondes
 const start = () => { timer = setInterval(next, 5000) }
+// Pause le défilement automatique
 const pause = () => { clearInterval(timer) }
+// Reprend le défilement automatique
 const resume = () => { start() }
 start()
 </script>

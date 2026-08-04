@@ -5,8 +5,23 @@ namespace App\Http\Controllers\Modules\Dae;
 use App\Models\Dae\DaeTache;
 use Illuminate\Http\Request;
 
+/**
+ * Contrôleur de gestion des tâches du module DAE.
+ *
+ * Permet la gestion des tâches avec vue kanban, suivi de statut,
+ * assignation, priorité et filtres avancés.
+ */
 class DaeTachesController extends BaseDaeController
 {
+    /**
+     * Liste paginée des tâches avec filtres.
+     *
+     * Filtres disponibles : statut, priorité, assigned_to, recherche,
+     * urgentes (priorité haute/critique et en cours/à faire).
+     *
+     * @param Request $request La requête HTTP avec les paramètres de filtre
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
+     */
     public function index(Request $request)
     {
         $query = DaeTache::with(['client', 'assignedTo', 'sousTaches'])->orderBy('created_at', 'desc');
@@ -33,6 +48,12 @@ class DaeTachesController extends BaseDaeController
         return view('app', ['page' => 'dae-taches']);
     }
 
+    /**
+     * Crée une nouvelle tâche.
+     *
+     * @param Request $request La requête HTTP avec les données de la tâche
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -56,6 +77,15 @@ class DaeTachesController extends BaseDaeController
         return redirect()->route('dae.taches.index')->with('success', 'Tâche créée.');
     }
 
+    /**
+     * Met à jour une tâche existante.
+     *
+     * Si le statut passe à "terminee" ou "annulee", enregistre la date de complétion.
+     *
+     * @param Request $request La requête HTTP avec les données de mise à jour
+     * @param int $id L'identifiant de la tâche
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function update(Request $request, $id)
     {
         $tache = DaeTache::findOrFail($id);
@@ -80,6 +110,12 @@ class DaeTachesController extends BaseDaeController
         return redirect()->route('dae.taches.index')->with('success', 'Tâche mise à jour.');
     }
 
+    /**
+     * Supprime une tâche.
+     *
+     * @param int $id L'identifiant de la tâche à supprimer
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function destroy($id)
     {
         $tache = DaeTache::findOrFail($id);
@@ -89,6 +125,14 @@ class DaeTachesController extends BaseDaeController
         return redirect()->route('dae.taches.index')->with('success', 'Tâche supprimée.');
     }
 
+    /**
+     * Retourne les tâches organisées en colonnes Kanban.
+     *
+     * Les colonnes sont : À faire, En cours, En révision, Terminée, Annulée.
+     *
+     * @param Request $request La requête HTTP
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function kanban(Request $request)
     {
         $query = DaeTache::with(['client', 'assignedTo'])->where('client_id', $this->getClientId($request));
@@ -114,6 +158,16 @@ class DaeTachesController extends BaseDaeController
         return redirect()->route('dae.taches.index');
     }
 
+    /**
+     * Change le statut d'une tâche.
+     *
+     * Si le nouveau statut est "terminee" ou "annulee", enregistre
+     * la date de complétion. Si "en_cours", réinitialise la date.
+     *
+     * @param Request $request La requête HTTP avec le nouveau statut
+     * @param int $id L'identifiant de la tâche
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function changerStatut(Request $request, $id)
     {
         $request->validate(['statut' => 'required|in:a_faire,en_cours,en_revision,terminee,annulee']);
@@ -133,6 +187,13 @@ class DaeTachesController extends BaseDaeController
         return redirect()->back()->with('success', 'Statut mis à jour.');
     }
 
+    /**
+     * Assigne une tâche à un utilisateur.
+     *
+     * @param Request $request La requête HTTP avec l'identifiant de l'utilisateur
+     * @param int $id L'identifiant de la tâche
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function assigner(Request $request, $id)
     {
         $request->validate(['assigned_to' => 'required|exists:users,id']);

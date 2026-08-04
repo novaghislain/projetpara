@@ -10,8 +10,19 @@ use Illuminate\Support\Facades\Auth;
 
 class ClosingController extends BaseGelAccountingController
 {
+    /**
+     * Contrôleur de gestion des clôtures d'exercice comptable.
+     * Permet d'exécuter la clôture, la réouverture et les écritures
+     * d'inventaire pour les exercices fiscaux des clients.
+     */
+
     protected ClosingService $closingService;
 
+    /**
+     * Injection du service de clôture comptable.
+     *
+     * @param ClosingService $closingService Service de gestion des clôtures
+     */
     public function __construct(ClosingService $closingService)
     {
         $this->closingService = $closingService;
@@ -19,6 +30,9 @@ class ClosingController extends BaseGelAccountingController
 
     /**
      * Page des opérations de clôture.
+     *
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\View\View
      */
     public function index($clientId)
     {
@@ -29,7 +43,10 @@ class ClosingController extends BaseGelAccountingController
     }
 
     /**
-     * API: Liste des écritures de clôture.
+     * API : Liste des écritures de clôture.
+     *
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\Http\JsonResponse La liste des écritures de clôture
      */
     public function listAll($clientId)
     {
@@ -42,7 +59,11 @@ class ClosingController extends BaseGelAccountingController
     }
 
     /**
-     * API: Détail d'une écriture de clôture.
+     * API : Détail d'une écriture de clôture.
+     *
+     * @param int $clientId L'identifiant du client
+     * @param int $id L'identifiant de l'écriture
+     * @return \Illuminate\Http\JsonResponse L'écriture avec ses relations
      */
     public function show($clientId, $id)
     {
@@ -54,7 +75,10 @@ class ClosingController extends BaseGelAccountingController
     }
 
     /**
-     * API: Exécuter la clôture d'un exercice.
+     * API : Exécute la clôture d'un exercice fiscal.
+     *
+     * @param Request $request La requête HTTP avec l'identifiant de l'exercice
+     * @return \Illuminate\Http\JsonResponse Le résultat de la clôture
      */
     public function cloturer(Request $request)
     {
@@ -62,7 +86,7 @@ class ClosingController extends BaseGelAccountingController
             'fiscal_year_id' => 'required|exists:fiscal_years,id',
         ]);
 
-        // Vérifier que le client a accès à cet exercice
+        // Vérification que le client a accès à cet exercice
         if ($request->filled('client_id')) {
             $fiscalYear = FiscalYear::findOrFail($validated['fiscal_year_id']);
             if ((int) $fiscalYear->client_id !== (int) $request->input('client_id')) {
@@ -79,7 +103,10 @@ class ClosingController extends BaseGelAccountingController
     }
 
     /**
-     * API: Réouverture d'un exercice.
+     * API : Réouverture d'un exercice fiscal.
+     *
+     * @param Request $request La requête HTTP avec l'identifiant de l'exercice
+     * @return \Illuminate\Http\JsonResponse L'exercice rouvert
      */
     public function rouvrir(Request $request)
     {
@@ -87,7 +114,7 @@ class ClosingController extends BaseGelAccountingController
             'fiscal_year_id' => 'required|exists:fiscal_years,id',
         ]);
 
-        // Vérifier que le client a accès à cet exercice
+        // Vérification que le client a accès à cet exercice
         if ($request->filled('client_id')) {
             $fiscalYear = FiscalYear::findOrFail($validated['fiscal_year_id']);
             if ((int) $fiscalYear->client_id !== (int) $request->input('client_id')) {
@@ -107,7 +134,10 @@ class ClosingController extends BaseGelAccountingController
     }
 
     /**
-     * API: Écriture d'inventaire.
+     * API : Crée une écriture d'inventaire.
+     *
+     * @param Request $request La requête HTTP avec les lignes d'inventaire
+     * @return \Illuminate\Http\JsonResponse L'écriture d'inventaire créée
      */
     public function inventaire(Request $request)
     {
@@ -120,7 +150,7 @@ class ClosingController extends BaseGelAccountingController
             'entries.*.credit' => 'nullable|numeric|min:0',
         ]);
 
-        // Vérifier que le client a accès à cet exercice
+        // Vérification que le client a accès à cet exercice
         if ($request->filled('client_id')) {
             $fiscalYear = FiscalYear::findOrFail($validated['fiscal_year_id']);
             if ((int) $fiscalYear->client_id !== (int) $request->input('client_id')) {
@@ -141,7 +171,10 @@ class ClosingController extends BaseGelAccountingController
     }
 
     /**
-     * API: Statistiques de clôture.
+     * API : Statistiques de clôture par exercice fiscal.
+     *
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\Http\JsonResponse Les statistiques de clôture
      */
     public function stats($clientId)
     {
@@ -154,13 +187,13 @@ class ClosingController extends BaseGelAccountingController
             return [
                 'year' => $year->year,
                 'status' => $year->status,
-                'closing_entries' => $closingCount,
+                'closing_entries' => $closingCount,       // Nombre d'écritures de clôture
                 'date_start' => $year->date_start->format('Y-m-d'),
                 'date_end' => $year->date_end->format('Y-m-d'),
-                'check_balance' => $year->check_balance,
-                'check_tva' => $year->check_tva,
-                'check_cnss' => $year->check_cnss,
-                'check_reconciliation' => $year->check_reconciliation,
+                'check_balance' => $year->check_balance,       // Vérification de l'équilibre
+                'check_tva' => $year->check_tva,               // Vérification TVA
+                'check_cnss' => $year->check_cnss,             // Vérification CNSS
+                'check_reconciliation' => $year->check_reconciliation, // Vérification rapprochement
                 'closed_at' => $year->closed_at?->format('Y-m-d'),
             ];
         });

@@ -42,7 +42,7 @@ class DatabaseSeeder extends Seeder
             PoleSeeder::class,
             AdminSeeder::class,
             ServiceSeeder::class,
-            BusinessDomainSeeder::class,   // ← 12 domaines d'activité
+            BusinessDomainSeeder::class,
             SyscohadaChartSeeder::class,
             AccountingAccountSeeder::class,
             ErpCategorySeeder::class,
@@ -50,21 +50,8 @@ class DatabaseSeeder extends Seeder
             ErpWarehouseSeeder::class,
             ErpEmployeeSeeder::class,
             ErpBankAccountSeeder::class,
-            DemoCompanySeeder::class,
-            EdenStoreFolderSeeder::class,
-            CrescendoDemoSeeder::class,
-            DaeDemoSeeder::class,
-            LegalDemoSeeder::class,
-            RhDemoSeeder::class,
-            AccountingDemoSeeder::class,
-            DemoItTicketSeeder::class,
-            DemoTontineSeeder::class,
-            DemoRelanceSeeder::class,
-            DemoApprovalWorkflowSeeder::class,
-            DemoCostCenterSeeder::class,
-            PlanComptableSyscohadaSeeder::class, // ← Plan comptable SYSCOHADA OHADA
-            UsersSeeder::class, // ← Comptes utilisateurs complets
-            DomainDemoSeeder::class,       // ← 3 clients démo par domaine
+            PlanComptableSyscohadaSeeder::class,
+            UsersSeeder::class,
 
             // ─── GEL Cabinet ─────────────────────────────────────────
             \Database\Seeders\Gel\AccountTypesSeeder::class,

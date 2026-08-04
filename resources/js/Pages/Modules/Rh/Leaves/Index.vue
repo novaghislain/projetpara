@@ -1,13 +1,20 @@
+<!--
+  Composant : Leaves/Index.vue
+  Description : Gestion des demandes de congés avec workflow d'approbation/rejet,
+                filtres par statut et résumé statistique.
+-->
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 
+/* État réactif : demandes de congés, filtres, indicateurs */
 const leaves = ref([]);
 const loading = ref(true);
 const error = ref(null);
 const search = ref('');
 const statusFilter = ref('');
 
+/* Récupération des demandes de congés depuis l'API */
 const fetchLeaves = async () => {
     loading.value = true;
     error.value = null;
@@ -22,6 +29,7 @@ const fetchLeaves = async () => {
     }
 };
 
+/* Filtrage local : recherche et filtre par statut */
 const filteredLeaves = computed(() => {
     let list = leaves.value;
     if (search.value) {
@@ -37,6 +45,7 @@ const filteredLeaves = computed(() => {
     return list;
 });
 
+/* Classe CSS pour le badge de statut du congé */
 const statusBadgeClass = (status) => {
     const map = {
         en_attente: 'bg-warning text-dark',
@@ -47,6 +56,7 @@ const statusBadgeClass = (status) => {
     return map[status] || 'bg-secondary';
 };
 
+/* Approbation ou rejet d'une demande de congé */
 const updateStatus = async (id, newStatus) => {
     const actionLabel = newStatus === 'approuve' ? 'approuver' : 'rejeter';
     if (!confirm('Confirmer la ' + actionLabel + ' de cette demande ?')) return;
@@ -64,6 +74,7 @@ const updateStatus = async (id, newStatus) => {
     }
 };
 
+/* Suppression d'une demande de congé avec confirmation */
 const deleteLeave = async (id) => {
     if (!confirm('Confirmer la suppression de cette demande ?')) return;
     try {

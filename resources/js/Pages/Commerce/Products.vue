@@ -1,21 +1,32 @@
 <script setup>
+/* ═══════════════════════════════════════════════════════════
+   Products.vue - Gestion des produits commerciaux
+   Liste filtrable avec recherche, catégories, état du stock.
+   CRUD complet via modale (création / modification).
+   ═══════════════════════════════════════════════════════════ */
 import { ref, onMounted, watch } from 'vue'
 import GelLayout from '../../Layouts/GelLayout.vue'
 
-const state = ref('loading')
-const errorMsg = ref('')
-const products = ref([])
-const categories = ref([])
-const meta = ref(null)
-const search = ref('')
-const filterCategory = ref('')
-const filterStock = ref('')
-const showModal = ref(false)
-const isEditing = ref(false)
-const editingId = ref(null)
-const submitting = ref(false)
-const debounce = ref(null)
+/* ══════════════════════════════════════════
+   État réactif du composant
+   ══════════════════════════════════════════ */
+const state = ref('loading')          /* 'loading' | 'loaded' | 'error' */
+const errorMsg = ref('')              /* Message d'erreur éventuel */
+const products = ref([])              /* Liste des produits */
+const categories = ref([])            /* Liste des catégories (filtre + formulaire) */
+const meta = ref(null)                /* Métadonnées de pagination */
+const search = ref('')                /* Terme de recherche textuelle */
+const filterCategory = ref('')        /* Filtre par catégorie */
+const filterStock = ref('')           /* Filtre par état du stock */
+const showModal = ref(false)          /* Visibilité de la modale */
+const isEditing = ref(false)          /* Mode édition (true) ou création (false) */
+const editingId = ref(null)           /* ID du produit en cours d'édition */
+const submitting = ref(false)         /* État de soumission du formulaire */
+const debounce = ref(null)            /* Timer pour le debounce de la recherche */
 
+/* ══════════════════════════════════════════
+   Formulaire produit
+   ══════════════════════════════════════════ */
 const form = ref({
   name: '', category_id: '', barcode: '', sku: '', brand: '',
   price_ht: 0, price_ttc: 0, price_purchase: 0, tva_rate: 18,
@@ -23,6 +34,10 @@ const form = ref({
   description: '', location: '', is_active: true,
 })
 
+/* ══════════════════════════════════════════
+   Requêtes API
+   ══════════════════════════════════════════ */
+/* Charge la liste des produits avec les filtres actifs */
 const fetchProducts = async () => {
   const params = { per_page: 50 }
   if (search.value) params.search = search.value
@@ -39,6 +54,7 @@ const fetchProducts = async () => {
   }
 }
 
+/* Charge la liste des catégories pour les filtres et le formulaire */
 const fetchCategories = async () => {
   try {
     const res = await window.axios.get('/api/commerce/categories')
@@ -46,12 +62,18 @@ const fetchCategories = async () => {
   } catch (e) { /* */ }
 }
 
+/* ══════════════════════════════════════════
+   Gestion du formulaire (création / édition)
+   ══════════════════════════════════════════ */
+/* Réinitialise le formulaire à ses valeurs par défaut */
 const resetForm = () => {
   form.value = { name: '', category_id: '', barcode: '', sku: '', brand: '', price_ht: 0, price_ttc: 0, price_purchase: 0, tva_rate: 18, unit: 'piece', stock_qty: 0, stock_alert: 10, stock_critical: 0, description: '', location: '', is_active: true }
 }
 
+/* Ouvre la modale en mode création */
 const openCreate = () => { resetForm(); isEditing.value = false; editingId.value = null; showModal.value = true }
 
+/* Ouvre la modale en mode édition avec les données pré-remplies */
 const openEdit = async (id) => {
   try {
     const res = await window.axios.get('/api/commerce/products/' + id)
@@ -63,6 +85,7 @@ const openEdit = async (id) => {
   }
 }
 
+/* Soumet le formulaire (création ou mise à jour selon le mode) */
 const submit = async () => {
   submitting.value = true
   try {
@@ -78,6 +101,7 @@ const submit = async () => {
   }
 }
 
+/* Supprime un produit après confirmation */
 const deleteProduct = async (id) => {
   if (!confirm('Confirmer la suppression ?')) return
   try {
@@ -88,19 +112,31 @@ const deleteProduct = async (id) => {
   }
 }
 
+/* ══════════════════════════════════════════
+   Utilitaires
+   ══════════════════════════════════════════ */
+/* Renvoie la classe CSS en fonction du niveau de stock */
 const stockClass = (p) => {
-  if (p.stock_qty <= 0) return 'text-danger fw-bold'
-  if (p.stock_qty <= p.stock_critical) return 'text-danger'
-  if (p.stock_qty <= p.stock_alert) return 'text-warning'
-  return 'text-success'
+  if (p.stock_qty <= 0) return 'text-danger fw-bold'       /* Rupture */
+  if (p.stock_qty <= p.stock_critical) return 'text-danger'  /* Critique */
+  if (p.stock_qty <= p.stock_alert) return 'text-warning'   /* Alerte */
+  return 'text-success'                                      /* OK */
 }
 
+/* ══════════════════════════════════════════
+   Watchers
+   ══════════════════════════════════════════ */
+/* Recherche avec debounce (300ms) pour éviter les requêtes trop fréquentes */
 watch(search, () => {
   clearTimeout(debounce.value)
   debounce.value = setTimeout(fetchProducts, 300)
 })
+/* Recharge immédiatement au changement de filtre */
 watch([filterCategory, filterStock], fetchProducts)
 
+/* ══════════════════════════════════════════
+   Cycle de vie
+   ══════════════════════════════════════════ */
 onMounted(async () => {
   await Promise.all([fetchProducts(), fetchCategories()])
 })

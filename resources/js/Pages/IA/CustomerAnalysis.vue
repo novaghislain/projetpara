@@ -136,45 +136,59 @@
   </div>
 </template>
 
+/*
+ * Composant : CustomerAnalysis
+ * Role : Analyse IA complete d'un client : scoring lead, risque de perte
+ *        (churn), actions de relance recommandees et opportunites cross-sell.
+ *        Les donnees sont generees par l'agent Customer AI.
+ */
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 
+/* Proprietes : identifiant du client a analyser */
 const props = defineProps({
   clientId: { type: Number, required: true }
 })
 
+/* Donnees reactives */
 const loading = ref(true)
 const error = ref(null)
 const analysis = ref(null)
 const client = computed(() => analysis.value?.client)
 
+/* Couleur du score lead selon le seuil */
 const scoreClass = computed(() => {
   if (!analysis.value?.scoring?.score) return 'text-muted'
   const s = analysis.value.scoring.score
   return s >= 80 ? 'text-success' : s >= 50 ? 'text-warning' : 'text-danger'
 })
 
+/* Badge du niveau du lead */
 const levelBadge = computed(() => {
   const l = analysis.value?.scoring?.level
   return l === 'chaud' ? 'bg-success' : l === 'tiède' ? 'bg-warning text-dark' : 'bg-secondary'
 })
 
+/* Couleur du risque de perte */
 const churnColor = computed(() => {
   const l = analysis.value?.churn_risk?.risk_level
   return l === 'critique' ? 'text-danger' : l === 'élevé' ? 'text-warning' : 'text-success'
 })
 
+/* Badge du niveau de risque */
 const churnLevelBadge = computed(() => {
   const l = analysis.value?.churn_risk?.risk_level
   return l === 'critique' ? 'bg-danger' : l === 'élevé' ? 'bg-warning text-dark' : 'bg-success'
 })
 
+/* Couleur du texte de recommandation */
 const churnTextColor = computed(() => {
   const l = analysis.value?.churn_risk?.risk_level
   return l === 'critique' ? 'text-danger' : l === 'élevé' ? 'text-warning' : 'text-success'
 })
 
+/* Recupere l'analyse complete du client depuis l'API */
 async function fetchAnalysis() {
   loading.value = true
   error.value = null
@@ -188,6 +202,7 @@ async function fetchAnalysis() {
   }
 }
 
+/* Relance la requete d'analyse */
 function refreshAnalysis() {
   fetchAnalysis()
 }

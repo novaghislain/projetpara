@@ -9,6 +9,14 @@ const props = defineProps({
 
 const sidebarOpen = ref(true);
 const isMobile = ref(window.innerWidth < 768);
+const showNouveauPanel = ref(false);
+
+const toggleNouveauPanel = () => {
+    showNouveauPanel.value = !showNouveauPanel.value;
+};
+const closeNouveauPanel = () => {
+    showNouveauPanel.value = false;
+};
 
 const userInitial = computed(() =>
     authStore.user?.name?.charAt(0).toUpperCase() || 'U'
@@ -201,6 +209,15 @@ onUnmounted(() => window.removeEventListener('resize', handleResize));
             <!-- Sidebar -->
             <aside class="g-sidebar d-flex flex-column flex-shrink-0 justify-content-between"
                    :class="{ 'g-sidebar-closed': !sidebarOpen }">
+
+                <!-- Bouton + Nouveau -->
+                <div class="gs-nouveau-wrap">
+                    <button class="gs-nouveau-btn" @click="toggleNouveauPanel">
+                        <span class="gs-nouveau-plus">+</span>
+                        <span class="gs-nav-label">Nouveau</span>
+                    </button>
+                </div>
+
                 <div class="gs-nav">
                     <a v-for="link in sidebarLinks" :key="link.label"
                        :href="link.href"
@@ -274,11 +291,196 @@ onUnmounted(() => window.removeEventListener('resize', handleResize));
         <form id="logout-form" method="POST" action="/logout" style="display:none;">
             <input type="hidden" name="_token" id="logout-csrf-token">
         </form>
+
+        <!-- ═══ PANNEAU NOUVEAU ═══ -->
+        <Teleport to="body">
+            <div v-if="showNouveauPanel" class="gn-overlay" @click.self="closeNouveauPanel">
+                <div class="gn-panel">
+                    <div class="gn-panel-inner">
+
+                        <!-- Colonne Clients -->
+                        <div class="gn-col">
+                            <div class="gn-col-title">Clients</div>
+                            <a href="/gel-accountant/factures/create" class="gn-item">Facture</a>
+                            <a href="#" class="gn-item">Recevez le paiement</a>
+                            <a href="/gel-accountant/declaration" class="gn-item">Déclaration</a>
+                            <a href="/gel-accountant/estimation" class="gn-item">Estimation</a>
+                            <a href="/gel-accountant/sales-order" class="gn-item">Commande de vente</a>
+                            <a href="/gel-accountant/credit-note" class="gn-item">Note de crédit</a>
+                            <a href="/gel-accountant/sales-receipt" class="gn-item">Récépissé de vente</a>
+                            <a href="/gel-accountant/refund-receipt" class="gn-item">Remboursement de réception</a>
+                            <a href="/gel-accountant/delayed-credit" class="gn-item">Crédit retardé</a>
+                            <a href="/gel-accountant/delayed-charge" class="gn-item">Charge retardée</a>
+                            <a href="/gel-accountant/client/create" class="gn-item">Ajouter un client</a>
+                        </div>
+
+                        <!-- Colonne Fournisseurs -->
+                        <div class="gn-col">
+                            <div class="gn-col-title">Fournisseurs</div>
+                            <a href="/gel-accountant/expenses/create" class="gn-item">Dépenses</a>
+                            <a href="/gel-accountant/check/create" class="gn-item">Chèque</a>
+                            <a href="/gel-accountant/bills/create" class="gn-item">Bill</a>
+                            <a href="/gel-accountant/pay-bills" class="gn-item">Payer les factures</a>
+                            <a href="/gel-accountant/purchase-order/create" class="gn-item">Bon de commande</a>
+                            <a href="/gel-accountant/receive-item" class="gn-item">Réception de l'article</a>
+                            <a href="/gel-accountant/vendor-credit/create" class="gn-item">Crédit fournisseur</a>
+                            <a href="/gel-accountant/credit-card-credit" class="gn-item">Crédit de carte de crédit</a>
+                            <a href="/gel-accountant/vendors/create" class="gn-item">Ajouter un fournisseur</a>
+                        </div>
+
+                        <!-- Colonne Équipe -->
+                        <div class="gn-col">
+                            <div class="gn-col-title">Équipe</div>
+                            <a href="/gel-accountant/single-time-activity" class="gn-item">Activité à durée unique</a>
+                            <a href="/gel-accountant/weekly-timesheet" class="gn-item">Feuille de temps hebdomadaire</a>
+                            <a href="/gel-accountant/review-time" class="gn-item">Temps de révision</a>
+                        </div>
+
+                        <!-- Colonne Autre -->
+                        <div class="gn-col">
+                            <div class="gn-col-title">Autre</div>
+                            <a href="/gel-accountant/task/create" class="gn-item">Tâche</a>
+                            <a href="/gel-accountant/bank-deposit" class="gn-item">Dépôt bancaire</a>
+                            <a href="/gel-accountant/transfer" class="gn-item">Transfert</a>
+                            <a href="/gel-accountant/journal-entry" class="gn-item">Entrée de journal</a>
+                            <a href="/gel-accountant/inventory-adjustment" class="gn-item">Inventaire d'ajustement</a>
+                            <a href="/gel-accountant/pay-credit-card" class="gn-item">Payer la carte de crédit</a>
+                            <a href="/gel-accountant/add-product" class="gn-item">Ajouter un produit/service</a>
+                        </div>
+
+                    </div>
+                    <!-- Pied du panneau -->
+                    <div class="gn-panel-footer">
+                        <a href="#" class="gn-footer-link">▶ Tutoriels vidéo</a>
+                        <button class="gn-footer-close" @click="closeNouveauPanel">Afficher moins</button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </div>
 </template>
 
 <style scoped>
 /* ══ CPA LAYOUT — Sidebar verticale + Subnav ══ */
+
+/* ── Bouton Nouveau ──────────────────────────── */
+.gs-nouveau-wrap {
+    padding: 12px 10px 6px;
+    flex-shrink: 0;
+}
+.gs-nouveau-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 9px 14px;
+    border: 1.5px solid rgba(255,255,255,0.35);
+    border-radius: 20px;
+    background: transparent;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    overflow: hidden;
+}
+.gs-nouveau-btn:hover {
+    background: rgba(255,255,255,0.12);
+    border-color: rgba(255,255,255,0.6);
+}
+.gs-nouveau-plus {
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+/* ── Panneau Nouveau — Overlay ───────────────── */
+.gn-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.25);
+    z-index: 2000;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding-top: 52px;
+    padding-left: 200px;
+}
+.gn-panel {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    min-width: 860px;
+    max-width: 95vw;
+    overflow: hidden;
+    animation: gn-slide-in 0.15s ease;
+}
+@keyframes gn-slide-in {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.gn-panel-inner {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    padding: 28px 28px 16px;
+}
+.gn-col {
+    padding: 0 16px;
+    border-right: 1px solid #f0f0f0;
+}
+.gn-col:first-child { padding-left: 0; }
+.gn-col:last-child  { border-right: none; padding-right: 0; }
+.gn-col-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #f0f0f0;
+}
+.gn-item {
+    display: block;
+    font-size: 13.5px;
+    color: #2d3748;
+    text-decoration: none;
+    padding: 5px 0;
+    line-height: 1.5;
+    transition: color 0.12s;
+}
+.gn-item:hover {
+    color: #2196F3;
+    text-decoration: underline;
+}
+.gn-panel-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 28px 14px;
+    border-top: 1px solid #f0f0f0;
+    margin-top: 4px;
+}
+.gn-footer-link {
+    font-size: 12.5px;
+    color: #2196F3;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.gn-footer-link:hover { text-decoration: underline; }
+.gn-footer-close {
+    font-size: 12.5px;
+    color: #2196F3;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    padding: 0;
+}
+.gn-footer-close:hover { text-decoration: underline; }
 
 /* ── Top bar ─────────────────────────────── */
 .g-topbar {

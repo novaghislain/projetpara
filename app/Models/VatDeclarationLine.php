@@ -6,6 +6,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Modèle VatDeclarationLine - Ligne d'une déclaration de TVA.
+ *
+ * Table associée : 'vat_declaration_lines' (convention Laravel).
+ * Détail d'une déclaration par taux de TVA : base imposable, montant de TVA,
+ * et nombre de factures associées.
+ * Relations :
+ * - declaration() : appartient à une déclaration (VatDeclaration).
+ */
 class VatDeclarationLine extends Model
 {
     use HasFactory;

@@ -10,6 +10,17 @@
 </template>
 
 <script setup>
+/* ============================================================
+ * Composant : RelanceRules/Index
+ * Description : Page de liste des regles de relance.
+ *   Affiche l'ensemble des regles de relance configurees
+ *   avec leur statut et leur declencheur.
+ * ============================================================ */
+
 import GelLayout from '../../../Layouts/GelLayout.vue';
+
+/* Proprietes recues du controleur :
+ *   rules   - Liste des regles de relance
+ *   clients - Liste des clients pour le filtrage */
 defineProps(['rules', 'clients'])
 </script>

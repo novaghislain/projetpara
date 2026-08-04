@@ -1,12 +1,23 @@
 <script setup>
+/*
+ * Composant Fiches de Paie
+ * Affiche la liste des fiches de paie avec :
+ *   - Récapitulatif (nombre total, validées/payées, net total perçu)
+ *   - Détail par fiche : salaire de base, primes, retenues, net à payer
+ *   - Indicateur de statut (brouillon, validé, payé, annulé)
+ * Les montants sont formatés en FCFA.
+ */
+
 import { ref, computed, onMounted } from 'vue';
 import CompanyLayout from '../../../Layouts/CompanyLayout.vue';
 import { authStore } from '../../../stores/auth';
 
+/* État réactif : liste des fiches de paie, chargement et erreur */
 const payrolls = ref([]);
 const loading = ref(true);
 const error = ref(null);
 
+/* Récupération des fiches de paie depuis l'API */
 const fetchPayrolls = async () => {
     loading.value = true;
     error.value = null;
@@ -21,6 +32,7 @@ const fetchPayrolls = async () => {
     }
 };
 
+/* Correspondance statut -> classe Bootstrap pour le badge */
 const statusBadgeClass = (status) => {
     const map = {
         brouillon: 'bg-secondary',
@@ -31,15 +43,18 @@ const statusBadgeClass = (status) => {
     return map[status] || 'bg-secondary';
 };
 
+/* Formatage d'un montant en FCFA avec la locale française */
 const formatCurrency = (value) => {
     if (value === null || value === undefined || isNaN(value)) return '0';
     return Number(value).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' FCFA';
 };
 
+/* Calcul du total net à payer toutes fiches confondues */
 const totalNetAPayer = computed(() => {
     return payrolls.value.reduce((s, p) => s + (parseFloat(p.net_a_payer) || 0), 0);
 });
 
+/* Chargement initial au montage */
 onMounted(fetchPayrolls);
 </script>
 

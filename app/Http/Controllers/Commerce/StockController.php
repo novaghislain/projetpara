@@ -13,6 +13,19 @@ use Illuminate\Support\Facades\DB;
 
 class StockController extends Controller
 {
+    /**
+     * Contrôleur pour la gestion des stocks et des inventaires.
+     * Permet de consulter les mouvements de stock, l'état des stocks,
+     * et de réaliser des sessions d'inventaire avec validation.
+     */
+
+    /**
+     * Retourne la liste paginée des mouvements de stock avec filtres
+     * (produit, type, date).
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function movements(Request $request)
     {
         $clientId = Auth::user()->client_id ?? Auth::id();
@@ -30,6 +43,12 @@ class StockController extends Controller
         return response()->json($query->latest()->paginate($request->per_page ?? 50));
     }
 
+    /**
+     * Retourne l'état des stocks avec le statut de chaque produit
+     * (ok, alerte, critique, rupture).
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function stockStatus()
     {
         $clientId = Auth::user()->client_id ?? Auth::id();
@@ -62,11 +81,21 @@ class StockController extends Controller
 
     // ── Inventaire ──────────────────────────────────────────────
 
+    /**
+     * Affiche la page de gestion des inventaires.
+     *
+     * @return \Illuminate\View\View
+     */
     public function inventoryIndex()
     {
         return view('app', ['page' => 'commerce-inventory']);
     }
 
+    /**
+     * Retourne la liste paginée des sessions d'inventaire.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function inventorySessions()
     {
         $clientId = Auth::user()->client_id ?? Auth::id();
@@ -79,6 +108,13 @@ class StockController extends Controller
         return response()->json($sessions);
     }
 
+    /**
+     * Crée une nouvelle session d'inventaire et pré-remplit
+     * les lignes avec les quantités théoriques actuelles.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function startInventory(Request $request)
     {
         $clientId = Auth::user()->client_id ?? Auth::id();
@@ -115,6 +151,15 @@ class StockController extends Controller
         return response()->json($session->load(['lines.product']), 201);
     }
 
+    /**
+     * Met à jour la quantité réelle d'une ligne d'inventaire
+     * et calcule la différence.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param int $sessionId Identifiant de la session d'inventaire
+     * @param int $lineId Identifiant de la ligne d'inventaire
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function updateInventoryLine(Request $request, $sessionId, $lineId)
     {
         $line = InventoryLine::where('inventory_session_id', $sessionId)
@@ -134,6 +179,13 @@ class StockController extends Controller
         return response()->json($line);
     }
 
+    /**
+     * Valide une session d'inventaire : applique les ajustements de stock
+     * et enregistre les mouvements de correction pour chaque ligne modifiée.
+     *
+     * @param int $id Identifiant de la session d'inventaire
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function validateInventory($id)
     {
         $session = InventorySession::findOrFail($id);
@@ -176,6 +228,12 @@ class StockController extends Controller
         return response()->json(['message' => 'Inventaire validé', 'session' => $session->fresh()]);
     }
 
+    /**
+     * Annule une session d'inventaire sans appliquer les ajustements.
+     *
+     * @param int $id Identifiant de la session d'inventaire
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function cancelInventory($id)
     {
         $session = InventorySession::findOrFail($id);

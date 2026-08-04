@@ -8,6 +8,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 use App\Traits\Auditable;
 
+/**
+ * Modèle représentant un employé d'une entreprise cliente.
+ *
+ * Table associée : `company_employees` (via convention Laravel)
+ *
+ * Relations :
+ * - Un employé peut avoir plusieurs demandes de congé (CompanyLeaveRequest)
+ * - Un employé peut avoir plusieurs notes de frais (CompanyExpense)
+ */
 class CompanyEmployee extends Model
 {
     use HasFactory, SoftDeletes, Auditable;

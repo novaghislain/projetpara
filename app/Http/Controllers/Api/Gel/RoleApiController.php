@@ -10,8 +10,18 @@ use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\Validator;
 
+/**
+ * Contrôleur API pour la gestion des rôles et permissions.
+ *
+ * Permet de lister, créer et supprimer des rôles, gérer les permissions,
+ * lister les utilisateurs et assigner des rôles aux utilisateurs.
+ * Accessible uniquement aux administrateurs du portail GEL.
+ */
 class RoleApiController extends Controller
 {
+    /**
+     * Constructeur : applique les middlewares d'authentification et de locataire (tenant).
+     */
     public function __construct()
     {
         $this->middleware('auth:sanctum');
@@ -19,8 +29,11 @@ class RoleApiController extends Controller
     }
 
     /**
-     * GET /api/gel/admin/roles
-     * Liste tous les rôles disponibles dans le portail de l'utilisateur
+     * Liste tous les rôles disponibles dans le portail de l'utilisateur.
+     * Les super-admins voient tous les rôles ; les autres voient ceux de leur portail.
+     *
+     * @param Request $request La requête HTTP.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function index(Request $request)
     {
@@ -45,8 +58,10 @@ class RoleApiController extends Controller
     }
 
     /**
-     * GET /api/gel/admin/permissions
-     * Liste toutes les permissions disponibles
+     * Liste toutes les permissions disponibles dans le système.
+     *
+     * @param Request $request La requête HTTP.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function permissions(Request $request)
     {
@@ -55,8 +70,11 @@ class RoleApiController extends Controller
     }
 
     /**
-     * GET /api/gel/admin/roles/{role}/permissions
-     * Récupère les permissions d'un rôle spécifique
+     * Récupère les permissions associées à un rôle spécifique.
+     *
+     * @param Request $request La requête HTTP.
+     * @param Role $role Le rôle dont on veut les permissions.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function getRolePermissions(Request $request, Role $role)
     {
@@ -71,8 +89,12 @@ class RoleApiController extends Controller
     }
 
     /**
-     * PUT /api/gel/admin/roles/{role}/permissions
-     * Met à jour les permissions d'un rôle
+     * Met à jour les permissions d'un rôle existant.
+     * Empêche la modification du rôle super_admin par un non super-admin.
+     *
+     * @param Request $request La requête HTTP avec la liste des permissions.
+     * @param Role $role Le rôle à modifier.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function updatePermissions(Request $request, Role $role)
     {
@@ -121,8 +143,10 @@ class RoleApiController extends Controller
     }
 
     /**
-     * POST /api/gel/admin/roles
-     * Crée un nouveau rôle personnalisé
+     * Crée un nouveau rôle personnalisé avec ses permissions.
+     *
+     * @param Request $request La requête HTTP avec les données du rôle.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
     {
@@ -177,8 +201,11 @@ class RoleApiController extends Controller
     }
 
     /**
-     * DELETE /api/gel/admin/roles/{role}
-     * Supprime un rôle personnalisé (pas les rôles système)
+     * Supprime un rôle personnalisé (les rôles système sont protégés).
+     *
+     * @param Request $request La requête HTTP.
+     * @param Role $role Le rôle à supprimer.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy(Request $request, Role $role)
     {
@@ -188,7 +215,7 @@ class RoleApiController extends Controller
             return response()->json(['message' => 'Seul un Super Administrateur peut supprimer un rôle'], 403);
         }
 
-        // Empêcher la suppression des rôles système
+        // Empêcher la suppression des rôles système prédéfinis
         $systemRoles = ['super_admin', 'gestionnaire_cabinet', 'comptable_senior', 'chef_comptable', 'comptable_junior', 'auditeur'];
         if (in_array($role->name, $systemRoles)) {
             return response()->json(['message' => 'Ce rôle système ne peut pas être supprimé'], 422);
@@ -211,8 +238,10 @@ class RoleApiController extends Controller
     }
 
     /**
-     * GET /api/gel/admin/users
-     * Liste des utilisateurs avec leurs rôles Spatie
+     * Liste les utilisateurs avec leurs rôles Spatie assignés.
+     *
+     * @param Request $request La requête HTTP.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function users(Request $request)
     {
@@ -239,8 +268,12 @@ class RoleApiController extends Controller
     }
 
     /**
-     * PUT /api/gel/admin/users/{user}/roles
-     * Assigne des rôles à un utilisateur
+     * Assigne des rôles à un utilisateur cible.
+     * Vérifie l'appartenance au même cabinet pour les non super-admins.
+     *
+     * @param Request $request La requête HTTP avec la liste des rôles.
+     * @param User $targetUser L'utilisateur cible.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function assignRoles(Request $request, User $targetUser)
     {

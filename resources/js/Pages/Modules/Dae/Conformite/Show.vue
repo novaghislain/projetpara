@@ -117,8 +117,19 @@
 </template>
 
 <script>
+/*
+ * Composant : DaeConformiteShow
+ * Role : Page de detail d'un element de conformite du module DAE.
+ * Affiche les details, l'exigence reglementaire, les dates et le statut.
+ * Permet la verification rapide du statut via un selecteur.
+ * Props : aucune (l'ID est extrait de l'URL)
+ * Evenements : aucun
+ */
+
+// Importation du client HTTP pour les appels API
 import axios from 'axios';
 
+// Mapping des statuts de conformite avec leurs libelles et classes de badge
 const STATUT_MAP = {
     a_faire:       { label: 'À faire',       badge: 'bg-secondary' },
     en_cours:      { label: 'En cours',      badge: 'bg-primary' },
@@ -131,19 +142,20 @@ export default {
     name: 'DaeConformiteShow',
     data() {
         return {
-            loading: true,
-            item: null,
-            verifyStatut: 'a_faire',
-            verifyLoading: false,
+            loading: true,       // Indicateur de chargement en cours
+            item: null,          // Donnees de l'element de conformite
+            verifyStatut: 'a_faire', // Statut selectionne pour la verification rapide
+            verifyLoading: false,    // Indicateur d'envoi de la verification
         };
     },
     created() {
-        this.fetch();
+        this.fetch(); // Chargement initial des donnees
     },
     methods: {
+        /* Recupere les details de l'element de conformite depuis l'API */
         async fetch() {
             this.loading = true;
-            const id = window.location.pathname.split('/').pop();
+            const id = window.location.pathname.split('/').pop(); // Extrait l'ID depuis l'URL
             try {
                 const r = await axios.get(`/dae/conformite/${id}`);
                 this.item = r.data;
@@ -154,15 +166,21 @@ export default {
         async submitVerification() {
             this.verifyLoading = true;
             try {
+                /* Envoie la mise a jour du statut au serveur */
                 await axios.patch(`/dae/conformite/${this.item.id}/verifier`, { statut: this.verifyStatut });
                 await this.fetch();
             } catch (e) { alert('Erreur lors de la mise à jour du statut.'); }
             finally { this.verifyLoading = false; }
         },
+        /* Helpers d'affichage : retourne la classe CSS du badge selon le statut */
         statutBadge(s) { return STATUT_MAP[s]?.badge || 'bg-secondary'; },
+        /* Helpers d'affichage : retourne le libelle du statut */
         statutLabel(s) { return STATUT_MAP[s]?.label || s || '-'; },
+        /* Helpers d'affichage : convertit le type technique en libelle lisible */
         typeLabel(t) { const m = { reglementaire: 'Réglementaire', fiscal: 'Fiscal', social: 'Social', juridique: 'Juridique', qualite: 'Qualité' }; return m[t] || t || '-'; },
+        /* Verifie si la date d'expiration est passee */
         dateExpiree(d) { if (!d) return false; return new Date(d) < new Date(); },
+        /* Formate une date au format francais (jour mois annee) */
         formatDate(d) { if (!d) return '-'; try { return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }); } catch { return d; } },
     },
 };

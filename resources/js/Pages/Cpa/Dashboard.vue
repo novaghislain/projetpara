@@ -1,12 +1,58 @@
 <script setup>
+/*
+ * CpaDashboard.vue - Tableau de bord principal du portail CPA (Cabinet GEL).
+ *
+ * Role     : Hub central multi-profil pour tous les utilisateurs de la plateforme.
+ *            Chaque role voit une interface adaptee : vue administrateur,
+ *            client particulier, client entreprise ou comptable.
+ *            Les sections sont activees via le parametre URL ?section=... .
+ * Props    : Aucune (lecture depuis le store authStore).
+ * Emits    : Aucun (navigation interne via setSection).
+ * Store    : authStore (lecture du role et des infos utilisateur).
+ *
+ * Profils et sections :
+ *   Super Admin (role=super_admin) :
+ *     - dashboard : vue d'ensemble (statistiques, graphique d'activite, alertes globales)
+ *     - clients   : gestion des clients (filtre/recherche, activation, ajout modal)
+ *     - stats     : analyses (diagramme donut, progression des revenus)
+ *   Client (role=client) :
+ *     - dashboard    : resume des declarations, documents fournis, messages
+ *     - declarations : suivi des declarations fiscales (federales/provinciales)
+ *     - documents    : upload de fichiers et checklist documentaire
+ *     - messages     : messagerie interactive avec le comptable attitre
+ *   Entreprise (role=company_admin) :
+ *     - dashboard : KPI financiers (CA, charges, benefice), alertes, documents
+ *     - echeances : calendrier des declarations obligatoires
+ *   Comptable (role=comptable) :
+ *     - dashboard  : statistiques des dossiers, apercu des taches urgentes
+ *     - dossiers   : gestion des missions clients (statuts et progression)
+ *     - taches     : gestionnaire de taches (CRUD, priorites, echeances)
+ *     - calendrier : calendrier fiscal avec echeances imminentes
+ *     - messages   : messagerie bi-colonne avec tous les clients assignes
+ *
+ * Donnees : Statiques (simulation) a des fins de demonstration UX.
+ * Aucune requete API backend dans ce composant.
+ *
+ * Fonctionnalites interactives :
+ * - Toast notification pour les actions utilisateur
+ * - Upload de fichiers avec barre de progression animee
+ * - Chat en temps reel simule (reponse automatique du comptable apres 2s)
+ * - Gestion de taches (ajout, completion, suppression)
+ * - Mise a jour du statut des dossiers comptables
+ * - Resolution d'alertes pour l'entreprise
+ * - Synchronisation de la section courante avec l'URL (?section=...)
+ * - Navigation "popstate" (boutons precedent/suivant du navigateur)
+ */
+
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import CpaLayout from '../../Layouts/CpaLayout.vue';
 import { authStore } from '../../stores/auth';
 
-const loading = ref(true);
-const section = ref('dashboard');
+const loading = ref(true);      // Etat de chargement initial (simule 400ms)
+const section = ref('dashboard'); // Section active du tableau de bord
 
-// ── Détection du rôle ────────────────────────────────────────────
+// ── Detection du role ────────────────────────────────────────────
+// Chaque computed derive le role depuis le store d'authentification
 const role = computed(() => authStore.user?.role || 'client');
 const isSuperAdmin = computed(() => role.value === 'super_admin');
 const isClient = computed(() => role.value === 'client');
@@ -115,6 +161,11 @@ const newTaskText = ref('');
 const newTaskPriority = ref('moyenne');
 const newTaskDue = ref('');
 
+/*
+ * Helpers de formatage
+ * Fonctions utilitaires pour normaliser l'affichage des statuts,
+ * des priorités, des montants monétaires et des dates.
+ */
 // ── Helpers de formatage ──────────────────────────────────────────
 const statusClass = (s) => ({
     actif: 'cpa-badge-success', en_attente: 'cpa-badge-warning',
@@ -147,6 +198,13 @@ const formatDateStr = (dateStr) => {
         return dateStr;
     }
 };
+
+/*
+ * Actions Interactives
+ * Fonctions métier pour chaque profil : gestion des clients (admin),
+ * upload de documents et messagerie (client), résolution d'alertes
+ * (entreprise), et suivi des dossiers/tâches/messages (comptable).
+ */
 
 // ── Actions Interactives ─────────────────────────────────────────
 
@@ -184,6 +242,8 @@ const addClient = () => {
     showToast('Nouveau client ajouté au cabinet !');
 };
 
+// Client - simulation d'upload (animation progressive de la barre de progression)
+
 // Client - simulation d'upload
 const triggerFileUpload = () => {
     document.getElementById('cpa-file-input').click();
@@ -213,7 +273,7 @@ const handleFileUpload = (e) => {
     }, 120);
 };
 
-// Client - Messagerie interactive
+// Client - Messagerie interactive (simule une réponse automatique du comptable après 2s)
 const sendClientMessage = () => {
     if (!newMessageText.value.trim()) return;
     
@@ -256,7 +316,7 @@ const resolveAlert = (a) => {
     showToast('Alerte résolue avec succès !');
 };
 
-// Comptable - mise à jour statut dossier
+// Comptable - mise à jour statut dossier (en_cours, en_attente, termine) avec ajustement du pourcentage
 const updateDossierStatus = (d, newStatus) => {
     d.status = newStatus;
     d.progress = newStatus === 'termine' ? 100 : newStatus === 'en_cours' ? 60 : 15;
@@ -290,6 +350,11 @@ const deleteTask = (id) => {
     showToast('Tâche supprimée', 'warning');
 };
 
+/*
+ * Comptable - messagerie bi-colonne
+ * Affiche la liste des conversations à gauche et le fil actif à droite.
+ * `activeChatClient` détermine quel chat est visible dans `currentComptableChat`.
+ */
 // Comptable - messagerie bi-colonne
 const currentComptableChat = computed(() => {
     return comptableChats.value[activeChatClient.value] || [];
@@ -330,6 +395,11 @@ const sendComptableMessage = () => {
 };
 
 // ── Synchronisation URL Section ───────────────────────────────────
+/**
+ * setSection - Change la section active et synchronise l'URL (?section=...).
+ * Utilise pushState pour ne pas recharger la page et pour permettre
+ * la navigation via les boutons precedent/suivant du navigateur.
+ */
 const setSection = (s) => {
     section.value = s;
     const url = new URL(window.location.href);
@@ -341,6 +411,10 @@ const setSection = (s) => {
     window.history.pushState({}, '', url.toString());
 };
 
+/**
+ * checkUrlSection - Lit le parametre ?section=... dans l'URL et
+ * met a jour la section active. Utilise au montage et sur popstate.
+ */
 const checkUrlSection = () => {
     const params = new URLSearchParams(window.location.search);
     const sec = params.get('section');
@@ -353,14 +427,14 @@ const checkUrlSection = () => {
 
 onMounted(async () => {
     checkUrlSection();
-    window.addEventListener('popstate', checkUrlSection);
-    // Simuler un chargement progressif
+    window.addEventListener('popstate', checkUrlSection); // Navigation navigateur
+    // Simuler un chargement progressif pour l'aspect UX
     await new Promise(r => setTimeout(r, 400));
     loading.value = false;
 });
 
 onUnmounted(() => {
-    window.removeEventListener('popstate', checkUrlSection);
+    window.removeEventListener('popstate', checkUrlSection); // Nettoyage
 });
 </script>
 
@@ -1220,9 +1294,22 @@ onUnmounted(() => {
             <template v-else-if="isComptable">
                 <!-- D1. Vue d'ensemble (Dashboard) -->
                 <div v-if="section === 'dashboard'">
-                    <div class="cpa-page-header">
-                        <h1 class="cpa-page-title">Tableau de bord Comptable</h1>
-                        <p class="cpa-page-subtitle">Suivi et avancement de vos dossiers clients assignés</p>
+                    <div class="cpa-page-header d-flex flex-wrap align-items-center justify-content-between gap-3">
+                        <div>
+                            <h1 class="cpa-page-title">Tableau de bord Comptable</h1>
+                            <p class="cpa-page-subtitle">Suivi et avancement de vos dossiers clients assignés</p>
+                        </div>
+                        <div class="dropdown">
+                            <button class="cpa-btn cpa-btn-primary dropdown-toggle" type="button" id="nouveauDropdownCpta" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi-plus-lg me-1"></i>Nouveau
+                            </button>
+                            <ul class="dropdown-menu shadow-sm border-0" aria-labelledby="nouveauDropdownCpta">
+                                <li><a class="dropdown-item py-2" href="#" @click.prevent="showNewClientModal = true"><i class="bi-person-plus me-2 text-muted"></i>Nouveau client</a></li>
+                                <li><a class="dropdown-item py-2" href="/company/comptabilite/ecritures/create"><i class="bi-pencil-square me-2 text-muted"></i>Nouvelle écriture</a></li>
+                                <li><a class="dropdown-item py-2" href="/company/comptabilite/factures/create"><i class="bi-receipt me-2 text-muted"></i>Nouvelle facture</a></li>
+                                <li><a class="dropdown-item py-2" href="#" @click.prevent="setSection('dossiers')"><i class="bi-folder-plus me-2 text-muted"></i>Nouveau dossier</a></li>
+                            </ul>
+                        </div>
                     </div>
 
                     <!-- Stats -->

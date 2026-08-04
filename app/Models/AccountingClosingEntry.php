@@ -6,6 +6,35 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle représentant une écriture de clôture comptable.
+ *
+ * Les écritures de clôture sont générées en fin d'exercice fiscal pour
+ * solder les comptes de gestion et calculer le résultat. Elles sont liées
+ * à un client, un exercice fiscal et un journal comptable.
+ * Le champ `entries` stocke les écritures au format JSON.
+ *
+ * @property int $id
+ * @property int|null $client_id Identifiant du client (entreprise)
+ * @property int|null $fiscal_year_id Identifiant de l'exercice fiscal
+ * @property string $reference Référence de l'écriture de clôture
+ * @property string $type Type de clôture (resultat, bilan, etc.)
+ * @property string|null $description Description de l'opération
+ * @property array $entries Écritures comptables (stockées en JSON)
+ * @property string $status Statut (brouillon, valide, comptabilise)
+ * @property int|null $journal_id Identifiant du journal comptable
+ * @property int|null $created_by Identifiant de l'utilisateur créateur
+ * @property int|null $validated_by Identifiant du validateur
+ * @property string|null $validated_at Date de validation
+ *
+ * @property-read Client|null $client Client (entreprise) associé
+ * @property-read FiscalYear|null $fiscalYear Exercice fiscal associé
+ * @property-read AccountingJournal|null $journal Journal comptable associé
+ * @property-read User|null $createdBy Utilisateur créateur
+ * @property-read User|null $validatedBy Utilisateur validateur
+ *
+ * @table accounting_closing_entries
+ */
 class AccountingClosingEntry extends Model
 {
     use SoftDeletes;

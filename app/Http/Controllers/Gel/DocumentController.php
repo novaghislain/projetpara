@@ -9,10 +9,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Contrôleur de gestion des documents clients.
+ * Gère l'upload, le téléchargement, la liste et la suppression
+ * des documents associés aux clients du cabinet.
+ */
 class DocumentController extends Controller
 {
     /**
-     * Page des documents pour un client.
+     * Affiche la page de gestion des documents pour un client donné.
+     *
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\View\View
      */
     public function index($clientId)
     {
@@ -23,7 +31,12 @@ class DocumentController extends Controller
     }
 
     /**
-     * Uploader un document.
+     * Upload d'un nouveau document.
+     * Stocke le fichier sur le disque local et crée l'enregistrement en base.
+     * Limité à 50 Mo maximum.
+     *
+     * @param Request $request La requête HTTP avec le fichier et les métadonnées
+     * @return \Illuminate\Http\JsonResponse
      */
     public function upload(Request $request)
     {
@@ -40,7 +53,7 @@ class DocumentController extends Controller
         $mimeType = $file->getMimeType();
         $extension = $file->getClientOriginalExtension();
 
-        // Chemin de stockage : clients/{clientId}/
+        // Chemin de stockage : documents/{clientId}/
         $path = $file->store('documents/' . $validated['client_id'], 'local');
 
         $document = Document::create([
@@ -60,7 +73,11 @@ class DocumentController extends Controller
     }
 
     /**
-     * Télécharger un document.
+     * Télécharge un document depuis le stockage local.
+     * Vérifie l'existence du fichier avant de proposer le téléchargement.
+     *
+     * @param int $id L'identifiant du document
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse|\Illuminate\Http\JsonResponse
      */
     public function download($id)
     {
@@ -74,13 +91,16 @@ class DocumentController extends Controller
     }
 
     /**
-     * Supprimer un document.
+     * Supprime un document (enregistrement et fichier physique).
+     *
+     * @param int $id L'identifiant du document à supprimer
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy($id)
     {
         $document = Document::findOrFail($id);
 
-        // Supprimer le fichier physique
+        // Supprimer le fichier physique du disque
         if (Storage::disk('local')->exists($document->file_path)) {
             Storage::disk('local')->delete($document->file_path);
         }
@@ -93,7 +113,11 @@ class DocumentController extends Controller
     // ─── API ────────────────────────────────────────────────────
 
     /**
-     * API: Liste des documents pour un client.
+     * API: Liste des documents d'un client, avec les relations dossier et uploader.
+     * Triée du plus récent au plus ancien.
+     *
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\Http\JsonResponse
      */
     public function listAll($clientId)
     {

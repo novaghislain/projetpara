@@ -10,6 +10,17 @@
 </template>
 
 <script setup>
+/* ============================================================
+ * Composant : CostCenters/Index
+ * Description : Page de liste des centres de cout.
+ *   Affiche la liste complete des centres de cout avec
+ *   les donnees clients associees. (En cours de construction)
+ * ============================================================ */
+
 import GelLayout from '../../../Layouts/GelLayout.vue';
+
+/* Proprietes recues du controleur :
+ *   centers  - Liste des centres de cout
+ *   clients  - Liste des clients pour le filtrage */
 defineProps(['centers', 'clients'])
 </script>

@@ -48,6 +48,7 @@ export default defineConfig({
         laravel({
             input: [
                 'resources/js/app.js',
+                'resources/js/echo.js',
                 'resources/css/app.css',
             ],
             refresh: true,

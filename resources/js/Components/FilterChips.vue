@@ -1,9 +1,15 @@
 <script setup>
+/*
+ * FilterChips -- Barre de filtres actifs affichés sous forme de chips.
+ * Chaque chip représente un filtre appliqué et peut être retiré
+ * individuellement. Un bouton "Tout effacer" est proposé dès qu'il
+ * y a plusieurs filtres.
+ */
 defineProps({
-    filters: { type: Array, default: () => [] }
+    filters: { type: Array, default: () => [] }    /* Tableau de filtres : [{ key, label, value }] */
 });
 
-const emit = defineEmits(['remove', 'clearAll']);
+const emit = defineEmits(['remove', 'clearAll']);  /* remove : retirer un filtre ; clearAll : tout effacer */
 </script>
 
 <template>

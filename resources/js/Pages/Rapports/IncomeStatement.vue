@@ -1,3 +1,9 @@
+<!--
+ * Composant : Compte de résultat
+ * Description : Affiche le compte de résultat (produits et charges) sur une période donnée.
+ *              Présente les totaux, le résultat net et la marge nette avec le détail des comptes.
+ * Utilisation : Page /rapports/compte-de-resultat
+-->
 <template>
     <div class="container-fluid py-3">
         <div class="d-flex align-items-center gap-2 mb-3">
@@ -124,18 +130,20 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 
-const data = ref(null)
+const data = ref(null)            /* Données du compte de résultat */
 const loading = ref(true)
 const error = ref(null)
-const dateFrom = ref(new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0])
-const dateTo = ref(new Date().toISOString().split('T')[0])
+const dateFrom = ref(new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0])  /* Début d'année */
+const dateTo = ref(new Date().toISOString().split('T')[0])                                   /* Aujourd'hui */
 
+/* Calcule la marge nette en pourcentage */
 const netMargin = computed(() => {
     const total = data.value?.total_revenue || data.value?.totalProduits || 1
     const net = data.value?.net_income || data.value?.resultatNet || 0
     return total ? (net / total) * 100 : 0
 })
 
+/* Formate un nombre en francs CFA */
 const fmt = (v) => new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(v || 0) + ' F'
 const csrf = computed(() => document.querySelector('meta[name=csrf-token]')?.content || '')
 const api = (path, opts = {}) => fetch(path, {
@@ -143,6 +151,7 @@ const api = (path, opts = {}) => fetch(path, {
     ...opts,
 })
 
+/* Charge les données du compte de résultat pour la période sélectionnée */
 async function loadData() {
     loading.value = true; error.value = null
     try {
@@ -153,6 +162,7 @@ async function loadData() {
     } catch (e) { error.value = e.message } finally { loading.value = false }
 }
 
+/* Exporte le compte de résultat au format PDF */
 function exportPdf() {
     const params = new URLSearchParams({ date_from: dateFrom.value, date_to: dateTo.value })
     window.open(`/api/reports/financial-statements/income-statement/pdf?${params}`, '_blank')

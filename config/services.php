@@ -127,4 +127,14 @@ return [
         'model' => env('AI_MODEL', 'gemini-1.5-pro'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Anthropic Claude AI
+    |--------------------------------------------------------------------------
+    */
+    'anthropic' => [
+        'api_key' => env('ANTHROPIC_API_KEY', ''),
+        'model'   => env('ANTHROPIC_MODEL', 'claude-sonnet-4-20250514'),
+    ],
+
 ];

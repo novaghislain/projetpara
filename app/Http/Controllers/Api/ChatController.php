@@ -7,10 +7,20 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
+/**
+ * Contrôleur API pour le chat avec l'assistant virtuel GEL.
+ *
+ * Gère l'envoi de messages, la récupération de l'historique,
+ * l'affichage des conversations et les suggestions de questions.
+ */
 class ChatController extends BaseApiController
 {
     /**
-     * Envoyer un message et obtenir une réponse (simulée ou IA).
+     * Envoie un message et retourne la réponse de l'assistant.
+     * Crée une nouvelle conversation si aucun ID n'est fourni.
+     *
+     * @param Request $request La requête HTTP contenant le message et l'ID de conversation optionnel.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function message(Request $request)
     {
@@ -27,10 +37,10 @@ class ChatController extends BaseApiController
         $message = $request->input('message');
         $conversationId = $request->input('conversation_id');
 
-        // Créer ou récupérer la conversation
+        // Créer ou récupérer la conversation existante
         if ($conversationId) {
             $conversation = ChatConversation::findOrFail($conversationId);
-            // Vérifier que l'utilisateur est bien le propriétaire
+            // Vérifier que l'utilisateur est bien le propriétaire de la conversation
             if ($conversation->user_id !== $user->id) {
                 return $this->sendError('Non autorisé', [], 403);
             }
@@ -69,7 +79,10 @@ class ChatController extends BaseApiController
     }
 
     /**
-     * Récupérer l'historique des conversations de l'utilisateur.
+     * Récupère l'historique paginé des conversations de l'utilisateur.
+     *
+     * @param Request $request La requête HTTP.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function history(Request $request)
     {
@@ -82,7 +95,10 @@ class ChatController extends BaseApiController
     }
 
     /**
-     * Récupérer une conversation spécifique.
+     * Affiche une conversation spécifique avec ses messages.
+     *
+     * @param int $id L'identifiant de la conversation.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function show($id)
     {
@@ -93,7 +109,10 @@ class ChatController extends BaseApiController
     }
 
     /**
-     * Supprimer une conversation.
+     * Supprime une conversation de l'utilisateur.
+     *
+     * @param int $id L'identifiant de la conversation.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy($id)
     {
@@ -105,7 +124,9 @@ class ChatController extends BaseApiController
     }
 
     /**
-     * Obtenir des suggestions de questions.
+     * Retourne une liste de suggestions de questions pour l'assistant.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function suggestions()
     {
@@ -122,12 +143,18 @@ class ChatController extends BaseApiController
     }
 
     /**
-     * Générer une réponse simulée (remplacer par appel IA plus tard).
+     * Génère une réponse simulée basée sur des mots-clés.
+     * À terme, cette méthode sera remplacée par un appel à un service d'IA.
+     *
+     * @param string $message Le message de l'utilisateur.
+     * @param ChatConversation $conversation La conversation en cours (pour le contexte).
+     * @return string La réponse générée.
      */
     private function generateResponse(string $message, ChatConversation $conversation): string
     {
         $m = mb_strtolower(trim($message));
 
+        // Salutations
         if (preg_match('/\bbonjour\b|\bsalut\b|\bbonsoir\b/', $m)) {
             return 'Bonjour ! 👋 Je suis **GEL Assistant**, votre assistant intelligent. Je peux vous renseigner sur nos modules, vous guider dans la plateforme, ou répondre à vos questions. Comment puis-je vous aider aujourd\'hui ?';
         }

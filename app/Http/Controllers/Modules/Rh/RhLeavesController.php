@@ -7,8 +7,23 @@ use App\Models\Rh\RhEmployee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur de gestion des demandes de congés RH.
+ *
+ * Permet de créer, consulter, approuver/rejeter et supprimer
+ * les demandes de congés et absences des employés.
+ */
 class RhLeavesController extends BaseRhController
 {
+    /**
+     * Affiche la liste des demandes de congés ou la vue associée.
+     *
+     * Si la requête attend du JSON, retourne les demandes paginées
+     * avec filtrage optionnel par statut et type de congé.
+     *
+     * @param Request $request La requête HTTP avec les filtres (statut, type)
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View Liste paginée des congés ou vue
+     */
     public function index(Request $request)
     {
         if ($request->expectsJson()) {
@@ -26,6 +41,12 @@ class RhLeavesController extends BaseRhController
         return view('app', ['page' => 'rh-leaves']);
     }
 
+    /**
+     * Crée une nouvelle demande de congé.
+     *
+     * @param Request $request La requête HTTP contenant les données de la demande
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse Demande créée ou redirection
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -46,6 +67,13 @@ class RhLeavesController extends BaseRhController
         return redirect()->route('rh.leaves.index')->with('success', 'Demande de congé créée.');
     }
 
+    /**
+     * Approuve, rejette ou annule une demande de congé.
+     *
+     * @param Request $request La requête HTTP contenant le statut et les notes
+     * @param mixed $id L'identifiant de la demande de congé
+     * @return \Illuminate\Http\JsonResponse La demande mise à jour
+     */
     public function approuver(Request $request, $id)
     {
         $employeeIds = RhEmployee::byClient($this->getClientId($request))->pluck('id');
@@ -63,6 +91,13 @@ class RhLeavesController extends BaseRhController
         return response()->json($leave->load('employee'));
     }
 
+    /**
+     * Supprime une demande de congé.
+     *
+     * @param Request $request La requête HTTP
+     * @param mixed $id L'identifiant de la demande à supprimer
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse Message de confirmation ou redirection
+     */
     public function destroy(Request $request, $id)
     {
         $employeeIds = RhEmployee::byClient($this->getClientId($request))->pluck('id');

@@ -104,15 +104,23 @@
     </div>
 </template>
 
+/*
+ * Composant : CreateEntry
+ * Role : Formulaire de creation d'une ecriture comptable en partie double.
+ *        Permet de selectionner un journal, une date, des lignes debit/credit
+ *        et d'enregistrer comme brouillon ou de valider directement.
+ */
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 
+/* Donnees des listes de reference */
 const journals = ref([])
 const accounts = ref([])
 const submitting = ref(false)
 const error = ref('')
 const success = ref('')
 
+/* Donnees du formulaire reactif */
 const form = reactive({
     journal_id: '',
     entry_date: new Date().toISOString().split('T')[0],
@@ -125,20 +133,25 @@ const form = reactive({
     ],
 })
 
+/* Proprietes calculees pour l'equilibre debit/credit */
 const formTotalDebit = computed(() => form.lines.reduce((s, l) => s + (parseFloat(l.debit) || 0), 0))
 const formTotalCredit = computed(() => form.lines.reduce((s, l) => s + (parseFloat(l.credit) || 0), 0))
 const isBalanced = computed(() => Math.abs(formTotalDebit.value - formTotalCredit.value) < 0.01 && formTotalDebit.value > 0)
 
+/* Formate un montant en francs CFA */
 const fmt = (v) => new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(v || 0) + ' F'
 
+/* Recupere le token CSRF */
 const csrf = computed(() => document.querySelector('meta[name=csrf-token]')?.content || '')
 
+/* Helper pour les appels API avec en-tetes communs */
 const api = (path, opts = {}) =>
     fetch(path, {
         headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf.value, ...opts.headers },
         ...opts,
     })
 
+/* Au montage, charge les journaux et le plan comptable */
 onMounted(async () => {
     try {
         const [jr, ar] = await Promise.all([
@@ -150,9 +163,13 @@ onMounted(async () => {
     } catch (e) { error.value = 'Erreur chargement données' }
 })
 
+/* Ajoute une ligne vide supplementaire */
 function addLine() { form.lines.push({ account_id: '', label: '', debit: 0, credit: 0 }) }
+
+/* Supprime une ligne (minimum 2 lignes requises) */
 function removeLine(i) { if (form.lines.length > 2) form.lines.splice(i, 1) }
 
+/* Sauvegarde l'ecriture (brouillon ou validee) */
 async function saveEntry(status) {
     submitting.value = true; error.value = ''; success.value = ''
     try {

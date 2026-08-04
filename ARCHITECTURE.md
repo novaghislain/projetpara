@@ -47,27 +47,45 @@
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-## 2. Architecture Multi-Portail (4 portails)
+## 2. Architecture Multi-Portail (6 portails)
 
 ### 2.1 Portail GEL Cabinet (Super Admin) — Dark Premium
 - **URL :** `/dashboard`
 - **Layout :** `GelLayout.vue` — Dark Premium : sidebar `#0B1120` gradient + topbar vitrée
 - **Rôle :** `super_admin`, `director`
 - **Périmètre :** Gestion cabinet, clients, comptabilité, ERP, RH, IT, tontines, signatures, etc.
+- **Technologie :** SPA Vue 3 (Root.vue)
 
-### 2.2 Portail Entreprise (Client)
+### 2.2 Portail Entreprise (Client) — Blade
+- **URL :** `/gel-business/dashboard`
+- **Layout :** `resources/views/layouts/gel-business.blade.php` — sidebar verticale claire
+- **Rôles :** `company_admin`, `company_manager`, `company_employee`
+- **Périmètre :** Ventes, dépenses, banque, comptabilité entreprise
+- **Technologie :** Blade + CSS dans `public/css/gel-app.css`
+- **Vues :** `resources/views/gel-business/`
+
+### 2.3 Portail Comptable (Expert-comptable) — Blade
+- **URL :** `/gel-accountant/dashboard`
+- **Layout :** `resources/views/layouts/gel-accountant.blade.php` — sidebar verticale
+- **Rôles :** `comptable`, `super_admin`
+- **Périmètre :** Clients, écritures, balance, grand-livre, journaux, états financiers, immobilisations
+- **Technologie :** Blade + CSS inline dans le layout
+- **Vues :** `resources/views/gel-accountant/`
+
+### 2.4 Portail Entreprise (Client) — SPA
 - **URL :** `/company/dashboard`
 - **Layout :** `CompanyLayout.vue` — sidebar verticale entreprise
 - **Rôles :** `company_admin`, `company_manager`, `company_employee`
 - **Périmètre :** Données propres à l'entreprise, GED, RH, facturation
+- **Technologie :** SPA Vue 3
 
-### 2.3 Portail CPA (Client Particulier & Comptable)
+### 2.5 Portail CPA (Client Particulier & Comptable)
 - **URL :** `/cpa-dashboard`
 - **Layout :** `CpaLayout.vue`
 - **Rôles :** `client`, `comptable`, `super_admin`
 - **Périmètre :** Déclarations, dossiers, messagerie
 
-### 2.4 Portail Public (Catalogue E-commerce)
+### 2.6 Portail Public (Catalogue E-commerce)
 - **URL :** `/nos-services`
 - **Layout :** Aucun (Bootstrap direct) — pages standalone
 - **Accès :** Sans authentification
@@ -463,6 +481,7 @@ app/
 │   │   │       ├── LegalDossiersController
 │   │   │       └── LegalRegistresController
 │   │   ├── Company/             → Portail entreprise (Users, Events, Caisse, DAE...)
+│   │   │   ├── Compta/          → ⚠️ OBSOLÈTE (Inertia, aucune route active)
 │   │   ├── Public/              → Catalogue e-commerce, Commande, Panier
 │   │   ├── Commerce/            → Dashboard commerce/POS
 │   │   ├── Api/                 → Profile, Password...
@@ -542,7 +561,11 @@ resources/
 │       └── company.css         → Classes isup-* (portail entreprise)
 
 routes/
-├── web.php                     → Routes principales (~1300+ lignes)
+├── web.php                     → Routes principales (~630 lignes, importe les fichiers ci-dessous)
+├── gel.php                     → GEL Cabinet SPA (routes extraites de web.php en Phase 1)
+├── gel-business.php            → Portail Entreprise (Blade)
+├── gel-accountant.php          → Portail Comptable (Blade)
+├── gel-comptabilite.php        → API Comptabilité pour SPA cabinet
 ├── auth.php                    → Login, Register, 2FA, Password
 ├── console.php                 → Commandes artisan (relances, IT alerts)
 └── debug.php                   → Routes de debug

@@ -4,6 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Modèle Role - Rôle utilisateur (système legacy).
+ *
+ * Table associée : 'roles' (convention Laravel).
+ * Définit les rôles avec un niveau hiérarchique, un slug unique,
+ * et un indicateur système/personnalisé.
+ * Relations :
+ * - permissions() : appartient à plusieurs permissions (Permission, pivot 'role_permission').
+ * - users() : a plusieurs utilisateurs (User).
+ */
 class Role extends Model
 {
     protected $fillable = [

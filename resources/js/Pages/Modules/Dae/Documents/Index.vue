@@ -412,11 +412,21 @@
 </template>
 
 <script>
+/*
+ * Composant : DaeDocumentsIndex
+ * Role : Page principale de gestion documentaire du module DAE.
+ * Affiche l'arborescence des dossiers (sidebar), la liste des documents avec filtres,
+ * et permet les operations : upload, creation/modification de dossiers, versions,
+ * deplacement et suppression. Inclut plusieurs modales (dossier, upload, version, deplacer).
+ * Props : aucune
+ * Evenements : row-click, action, page-change (via DaeDataTable)
+ */
 import axios from 'axios';
 import { Modal } from 'bootstrap';
 import DaeDataTable from '../../../../Components/Dae/DaeDataTable.vue';
 import DossierTreeItem from '../../../../Components/Dae/DossierTreeItem.vue';
 
+// Mapping des statuts de document avec leurs libelles et classes de badge
 const STATUT_MAP = {
     brouillon: { label: 'Brouillon', badge: 'bg-secondary' },
     final:     { label: 'Final',     badge: 'bg-success' },
@@ -424,6 +434,7 @@ const STATUT_MAP = {
     supprime:  { label: 'Supprimé',  badge: 'bg-danger' },
 };
 
+// Palette de couleurs disponibles pour les dossiers
 const COULEURS = ['#0d6efd', '#198754', '#dc3545', '#fd7e14', '#ffc107', '#6f42c1', '#d63384', '#6c757d'];
 
 export default {

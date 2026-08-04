@@ -151,21 +151,36 @@
 </template>
 
 <script setup>
+/*
+ * CashFlow.vue - Tableau des flux de trésorerie
+ *
+ * Affiche le tableau des flux de trésorerie (méthode indirecte)
+ * avec les trois catégories : exploitation, investissement et
+ * financement. Présente la trésorerie de début et de fin de période
+ * ainsi que la variation nette. Permet le filtrage par période
+ * et l'export PDF.
+ */
 import { ref, computed, onMounted } from 'vue'
 
+// Données du rapport et états de chargement
 const data = ref(null)
 const loading = ref(true)
 const error = ref(null)
+// Filtres de période (par défaut : année en cours)
 const dateFrom = ref(new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0])
 const dateTo = ref(new Date().toISOString().split('T')[0])
 
+// Formateur monétaire en francs CFA
 const fmt = (v) => new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(v || 0) + ' F'
+// Jeton CSRF pour les requêtes sécurisées
 const csrf = computed(() => document.querySelector('meta[name=csrf-token]')?.content || '')
+// Fonction utilitaire d'appel API
 const api = (path, opts = {}) => fetch(path, {
     headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf.value, ...opts.headers },
     ...opts,
 })
 
+// Chargement des données du flux de trésorerie depuis l'API
 async function loadData() {
     loading.value = true; error.value = null
     try {
@@ -176,10 +191,12 @@ async function loadData() {
     } catch (e) { error.value = e.message } finally { loading.value = false }
 }
 
+// Export PDF du rapport (ouverture dans un nouvel onglet)
 function exportPdf() {
     const params = new URLSearchParams({ date_from: dateFrom.value, date_to: dateTo.value })
     window.open(`/api/reports/financial-statements/cash-flow/pdf?${params}`, '_blank')
 }
 
+// Chargement automatique au montage du composant
 onMounted(loadData)
 </script>

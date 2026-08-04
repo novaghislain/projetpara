@@ -11,7 +11,16 @@ use Illuminate\Http\Request;
 class PublicCatalogueController extends Controller
 {
     /**
-     * Affiche le catalogue complet des services par catégories
+     * Contrôleur pour l'affichage public du catalogue de services.
+     * Permet de consulter les catégories et les services actifs
+     * sans nécessiter d'authentification.
+     */
+
+    /**
+     * Affiche le catalogue complet des services par catégories.
+     * Seules les catégories et services actifs sont retournés.
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
@@ -29,7 +38,11 @@ class PublicCatalogueController extends Controller
     }
 
     /**
-     * Affiche les détails d'un service spécifique
+     * Affiche les détails d'un service spécifique dans une catégorie donnée.
+     *
+     * @param int $category_id Identifiant de la catégorie
+     * @param int $service_id Identifiant du service
+     * @return \Illuminate\View\View
      */
     public function show($category_id, $service_id)
     {

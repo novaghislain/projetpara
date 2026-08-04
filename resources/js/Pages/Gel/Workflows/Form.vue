@@ -31,16 +31,29 @@
     </GelLayout>
 </template>
 <script setup>
+/* ═══════════════════════════════════════════════════════
+   Workflows / Form — Création et modification d'un
+   workflow d'approbation avec ses étapes.
+   ═══════════════════════════════════════════════════════ */
+
 import { reactive } from 'vue'
 import GelLayout from '../../../Layouts/GelLayout.vue'
+
+/* ─── Props — workflow existant (édition) ou null (création) ─── */
 const props = defineProps({ workflow: { type: Object, default: null }, clients: { type: Array, default: () => [] } })
+
+/* ─── Formulaire réactif ─── */
 const form = reactive({
     name: props.workflow?.name || '', client_id: props.workflow?.client_id || '', trigger_model: props.workflow?.trigger_model || '',
     trigger_condition: props.workflow?.trigger_condition ? JSON.stringify(props.workflow.trigger_condition) : '',
     is_active: props.workflow?.is_active ?? 1, steps: props.workflow?.steps || [{ step_number: 1, approver_role: '', action: 'approve' }]
 })
+
+/* ─── Gestion dynamique des étapes ─── */
 const addStep = () => { form.steps.push({ step_number: form.steps.length + 1, approver_role: '', action: 'approve' }) }
 const removeStep = (i) => { form.steps.splice(i, 1) }
+
+/* ─── Soumission — création ou mise à jour ─── */
 const submit = () => {
     const data = { ...form, trigger_condition: form.trigger_condition ? JSON.parse(form.trigger_condition) : null, steps: form.steps }
     const isEdit = !!props.workflow; const url = isEdit ? `/approval-workflows/${props.workflow.id}` : '/approval-workflows'

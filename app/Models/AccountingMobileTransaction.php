@@ -4,6 +4,36 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle représentant une transaction de mobile money.
+ *
+ * Gère les transactions via les services de paiement mobile (Orange Money,
+ * MTN Mobile Money, Wave, etc.). Permet le suivi des transferts,
+ * des frais et des soldes avant/après transaction.
+ *
+ * @property int $id
+ * @property int|null $client_id Identifiant du client (entreprise)
+ * @property string $reference_transaction Référence de la transaction
+ * @property string $operateur Opérateur (Orange Money, MTN, Wave, etc.)
+ * @property string $type Type (envoi, reception, depot, retrait)
+ * @property string $numero_expediteur Numéro de l'expéditeur
+ * @property string $numero_destinataire Numéro du destinataire
+ * @property string|null $nom_expediteur Nom de l'expéditeur
+ * @property string|null $nom_destinataire Nom du destinataire
+ * @property float $montant Montant de la transaction
+ * @property float $frais Frais de transaction
+ * @property float $montant_net Montant net après frais
+ * @property float $solde_avant Solde avant transaction
+ * @property float $solde_apres Solde après transaction
+ * @property string|null $date_transaction Date et heure de la transaction
+ * @property string $statut Statut (reussie, echouee, en_attente)
+ * @property string|null $motif Motif de la transaction
+ * @property int|null $created_by Identifiant de l'utilisateur créateur
+ *
+ * @property-read Client|null $client Client (entreprise) associé
+ *
+ * @table accounting_mobile_transactions
+ */
 class AccountingMobileTransaction extends Model
 {
     use SoftDeletes;

@@ -7,10 +7,20 @@ use App\Models\Gel\Comptabilite\Journal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur des journaux comptables.
+ * Gère les journaux (Achats, Ventes, Banque, Caisse, OD, etc.)
+ * avec leurs écritures associées. Permet la création des journaux
+ * standards SYSCOHADA et la gestion complète du cycle de vie.
+ */
 class JournalController extends Controller
 {
     /**
-     * Liste des journaux du cabinet.
+     * Liste des journaux du cabinet avec le nombre d'écritures
+     * et les totaux débiteurs/créditeurs des écritures validées.
+     *
+     * @param Request $request La requête HTTP
+     * @return \Illuminate\View\View|\Illuminate\Http\JsonResponse
      */
     public function index(Request $request)
     {
@@ -38,7 +48,10 @@ class JournalController extends Controller
     }
 
     /**
-     * Vue de création d'un journal.
+     * Affiche le formulaire de création d'un journal.
+     * Liste les codes disponibles parmi les standards SYSCOHADA.
+     *
+     * @return \Illuminate\View\View
      */
     public function create()
     {
@@ -46,6 +59,7 @@ class JournalController extends Controller
             ->pluck('code')
             ->toArray();
 
+        // Codes standards SYSCOHADA disponibles
         $codesDisponibles = [
             'AC' => 'Achats',
             'VE' => 'Ventes',
@@ -57,6 +71,7 @@ class JournalController extends Controller
             'IM' => 'Immobilisations',
         ];
 
+        // Retirer les codes déjà existants des choix disponibles
         foreach ($codesExistants as $code) {
             unset($codesDisponibles[$code]);
         }
@@ -66,6 +81,10 @@ class JournalController extends Controller
 
     /**
      * Enregistre un nouveau journal.
+     * Vérifie l'unicité du code au sein du cabinet.
+     *
+     * @param Request $request La requête HTTP avec les données du journal
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
     public function store(Request $request)
     {
@@ -101,7 +120,11 @@ class JournalController extends Controller
     }
 
     /**
-     * Détail d'un journal avec ses écritures.
+     * Affiche le détail d'un journal avec ses écritures paginées.
+     *
+     * @param Request $request La requête HTTP
+     * @param int $id L'identifiant du journal
+     * @return \Illuminate\View\View|\Illuminate\Http\JsonResponse
      */
     public function show(Request $request, $id)
     {
@@ -127,7 +150,10 @@ class JournalController extends Controller
     }
 
     /**
-     * Vue d'édition.
+     * Affiche le formulaire d'édition d'un journal.
+     *
+     * @param int $id L'identifiant du journal
+     * @return \Illuminate\View\View
      */
     public function edit($id)
     {
@@ -138,7 +164,11 @@ class JournalController extends Controller
     }
 
     /**
-     * Met à jour un journal.
+     * Met à jour un journal (libellé, type, statut actif).
+     *
+     * @param Request $request La requête HTTP avec les données mises à jour
+     * @param int $id L'identifiant du journal
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
     public function update(Request $request, $id)
     {
@@ -163,6 +193,9 @@ class JournalController extends Controller
 
     /**
      * Supprime un journal (uniquement s'il n'a pas d'écritures).
+     *
+     * @param int $id L'identifiant du journal à supprimer
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
     public function destroy($id)
     {
@@ -187,7 +220,11 @@ class JournalController extends Controller
     }
 
     /**
-     * Génère les 8 journaux standards SYSCOHADA.
+     * Génère les 8 journaux standards SYSCOHADA pour un cabinet.
+     * Ne crée les journaux que si aucun n'existe encore.
+     *
+     * @param Request $request La requête HTTP
+     * @return \Illuminate\Http\JsonResponse
      */
     public function createDefaults(Request $request)
     {

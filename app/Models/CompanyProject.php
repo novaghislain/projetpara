@@ -6,6 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * Modèle représentant un projet d'entreprise cliente.
+ *
+ * Table associée : `company_projects` (via convention Laravel)
+ *
+ * Relations :
+ * - Un projet peut avoir plusieurs tâches (CompanyProjectTask)
+ * - Un projet est créé par un utilisateur (User)
+ */
 class CompanyProject extends Model
 {
     use HasFactory, SoftDeletes;

@@ -44,40 +44,53 @@
 </template>
 
 <script setup>
+/*
+ * Composant : Index.vue (Contentieux)
+ * Description : Liste des litiges avec filtres par statut (tous, en cours, clos).
+ *               Affiche la référence, le titre, le type, le tribunal et la prochaine audience.
+ * Route       : /juridique/contentieux
+ */
 import { ref, computed, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 import ContratStatusBadge from '../../../../Components/Legal/ContratStatusBadge.vue';
 
+/* Liste des litiges, filtre actif et message d'erreur */
 const litiges = ref([]);
 const filtre = ref('tous');
 const error = ref(null);
 
+/* Compteurs pour chaque catégorie de filtre */
 const counts = computed(() => ({
     tous: litiges.value.length,
     en_cours: litiges.value.filter(l => ['assignation','instruction','plaidoirie','en_attente'].includes(l.statut)).length,
     clos: litiges.value.filter(l => ['gagné','perdu','transigé','classé'].includes(l.statut)).length,
 }));
 
+/* Définition des filtres de statut avec leurs libellés et compteurs */
 const statutsFiltres = computed(() => [
     { key: 'tous', label: 'Tous', count: counts.value.tous },
     { key: 'en_cours', label: 'En cours', count: counts.value.en_cours },
     { key: 'clos', label: 'Clos', count: counts.value.clos },
 ]);
 
+/* Liste filtrée selon le statut sélectionné */
 const filteredList = computed(() => {
     if (filtre.value === 'tous') return litiges.value;
     if (filtre.value === 'en_cours') return litiges.value.filter(l => ['assignation','instruction','plaidoirie','en_attente'].includes(l.statut));
     return litiges.value.filter(l => ['gagné','perdu','transigé','classé'].includes(l.statut));
 });
 
+/* Formate une date ISO au format français */
 function formatDate(date) {
     if (!date) return '—';
     return new Date(date + 'T00:00:00').toLocaleDateString('fr-FR');
 }
+/* Formate un montant en devise XOF */
 function formatCurrency(val) {
     return Number(val).toLocaleString('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0 });
 }
 
+/* Charge les litiges depuis l'API */
 async function load() {
     error.value = null;
     try {

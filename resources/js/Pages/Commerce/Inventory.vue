@@ -1,24 +1,41 @@
 <script setup>
+/* ═══════════════════════════════════════════════════════════
+   Inventory.vue - Gestion des inventaires et suivi des stocks
+   Sessions d'inventaire avec comptage, validation et mise à jour.
+   Visualisation de l'état des stocks (OK, alerte, critique, rupture).
+   ═══════════════════════════════════════════════════════════ */
 import { ref, computed, onMounted } from 'vue'
 import GelLayout from '../../Layouts/GelLayout.vue'
 
-const state = ref('loading')
-const sessions = ref([])
-const currentSession = ref(null)
-const products = ref([])
-const lines = ref([])
-const showNewModal = ref(false)
-const submitting = ref(false)
-const newSessionName = ref('')
-const selectedSessionId = ref('')
+/* ══════════════════════════════════════════
+   État réactif du composant
+   ══════════════════════════════════════════ */
+const state = ref('loading')              /* 'loading' | 'loaded' | 'error' */
+const sessions = ref([])                  /* Liste des sessions d'inventaire */
+const currentSession = ref(null)          /* Session d'inventaire sélectionnée */
+const products = ref([])                  /* Catalogue produits */
+const lines = ref([])                     /* Lignes de comptage de la session courante */
+const showNewModal = ref(false)           /* Visibilité de la modale de création */
+const submitting = ref(false)             /* État de soumission */
+const newSessionName = ref('')            /* Nom de la nouvelle session */
+const selectedSessionId = ref('')         /* ID de la session sélectionnée */
 
-/* Stock status */
-const stockStatus = ref([])
-const filterStockType = ref('')
+/* ══════════════════════════════════════════
+   État des stocks (vue consolidée)
+   ══════════════════════════════════════════ */
+const stockStatus = ref([])               /* Statut de chaque produit */
+const filterStockType = ref('')           /* Filtre par statut (ok, alerte, critique, rupture) */
 
+/* ══════════════════════════════════════════
+   Utilitaires de formatage
+   ══════════════════════════════════════════ */
 const fmtCurr = (n) => Number(n || 0).toLocaleString('fr-FR') + ' F'
 const fmt = (n) => Number(n || 0).toLocaleString('fr-FR')
 
+/* ══════════════════════════════════════════
+   Requêtes API
+   ══════════════════════════════════════════ */
+/* Charge les sessions d'inventaire */
 const fetchSessions = async () => {
   try {
     const r = await window.axios.get('/api/commerce/inventory/sessions')
@@ -26,6 +43,7 @@ const fetchSessions = async () => {
   } catch (e) { /* */ }
 }
 
+/* Charge l'état des stocks de tous les produits */
 const fetchStockStatus = async () => {
   try {
     const r = await window.axios.get('/api/commerce/stock/status')
@@ -33,6 +51,7 @@ const fetchStockStatus = async () => {
   } catch (e) { /* */ }
 }
 
+/* Charge le catalogue produits */
 const fetchProducts = async () => {
   try {
     const r = await window.axios.get('/api/commerce/products', { params: { per_page: 500 } })
@@ -40,6 +59,10 @@ const fetchProducts = async () => {
   } catch (e) { /* */ }
 }
 
+/* ══════════════════════════════════════════
+   Gestion des sessions d'inventaire
+   ══════════════════════════════════════════ */
+/* Crée et démarre une nouvelle session d'inventaire */
 const startSession = async () => {
   submitting.value = true
   try {
@@ -52,6 +75,7 @@ const startSession = async () => {
   } finally { submitting.value = false }
 }
 
+/* Ouvre une session existante et charge ses lignes de comptage */
 const openSession = async (session) => {
   selectedSessionId.value = session.id
   currentSession.value = session
@@ -63,12 +87,14 @@ const openSession = async (session) => {
   }
 }
 
+/* Ferme la vue détaillée de la session courante */
 const closeSessionView = () => {
   currentSession.value = null
   lines.value = []
   selectedSessionId.value = ''
 }
 
+/* Met à jour une ligne de comptage (quantité réelle, etc.) */
 const updateLine = async (line, field) => {
   try {
     await window.axios.put('/api/commerce/inventory/lines/' + line.id, { [field]: line[field] })
@@ -77,6 +103,7 @@ const updateLine = async (line, field) => {
   }
 }
 
+/* Valide la session d'inventaire (met à jour les stocks réels) */
 const validateSession = async () => {
   if (!confirm('Valider cet inventaire ? Les stocks seront mis à jour.')) return
   try {
@@ -90,11 +117,18 @@ const validateSession = async () => {
   }
 }
 
+/* ══════════════════════════════════════════
+   Propriétés calculées
+   ══════════════════════════════════════════ */
+/* État des stocks filtré par type (ok, alerte, critique, rupture) */
 const filteredStatus = computed(() => {
   if (!filterStockType.value) return stockStatus.value
   return stockStatus.value.filter(s => s.status === filterStockType.value)
 })
 
+/* ══════════════════════════════════════════
+   Cycle de vie
+   ══════════════════════════════════════════ */
 onMounted(async () => {
   await Promise.all([fetchSessions(), fetchStockStatus(), fetchProducts()])
   state.value = 'loaded'

@@ -1,10 +1,20 @@
+<!--
+ * Relances.vue - Relances Intelligentes (IA)
+ * Module d'automatisation des relances clients avec scoring et personnalisation
+ * Statut : phase de développement initiale
+-->
 <script setup>
 import GelLayout from '../../../Layouts/GelLayout.vue';
 </script>
 
+<!--
+ * Gabarit du module de relances intelligentes
+ * Cartes descriptives des trois fonctionnalités prévues
+-->
 <template>
     <GelLayout pageTitle="Relances Intelligentes IA">
         <div class="ai-module-page">
+            <!-- Section d'en-tête : icône, titre, sous-titre -->
             <div class="ai-module-hero" style="--accent: #F59E0B">
                 <div class="ai-module-hero-icon"><i class="bi-send-check"></i></div>
                 <div>
@@ -13,6 +23,7 @@ import GelLayout from '../../../Layouts/GelLayout.vue';
                 </div>
             </div>
 
+            <!-- Grille des fonctionnalités : chaque carte présente un module IA -->
             <div class="ai-module-cards">
                 <div class="ai-feature-card">
                     <div class="ai-feature-icon" style="background: rgba(245,158,11,0.1); color: #F59E0B"><i class="bi-speedometer2"></i></div>
@@ -38,6 +49,7 @@ import GelLayout from '../../../Layouts/GelLayout.vue';
 </template>
 
 <style scoped>
+/* ===== Styles du module Relances Intelligentes IA ===== */
 .ai-module-page { max-width: 1100px; }
 .ai-module-hero {
     display: flex; align-items: center; gap: 18px;

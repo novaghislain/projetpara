@@ -1,8 +1,16 @@
 <script setup>
+/*
+ * Composant : Gestion des Stocks ERP
+ * Role : Suivi des stocks, mouvements (entrees/sorties) et gestion des entrepots.
+ *        Trois onglets : etat des stocks, historique des mouvements, liste des entrepots.
+ * Props : aucune (donnees chargees via API)
+ * Events : aucun (actions locales avec appels API)
+ */
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../Layouts/GelLayout.vue';
 import { authStore } from '../../../stores/auth';
 
+/* Données principales : stock, mouvements, entrepôts */
 const stockData = ref([]);
 const movements = ref([]);
 const warehouses = ref([]);
@@ -11,20 +19,22 @@ const error = ref(null);
 const activeTab = ref('stock');
 const submitting = ref(false);
 
-// Movement modal
+/* Modal de mouvement de stock */
 const showMovementModal = ref(false);
 const movementForm = ref({ item_id: '', warehouse_id: '', type: 'entry', quantity: 1, description: '' });
 
-// Warehouse modal
+/* Modal d'ajout d'entrepôt */
 const showWarehouseModal = ref(false);
 const warehouseForm = ref({ name: '', location: '', description: '' });
 
+/* Onglets de l'interface */
 const tabs = [
     { key: 'stock',      label: 'Stock',      icon: 'bi-boxes' },
     { key: 'movements',  label: 'Mouvements',  icon: 'bi-arrow-left-right' },
     { key: 'warehouses', label: 'Entrepôts',   icon: 'bi-building' },
 ];
 
+/* Charge les données (stock, mouvements, entrepôts) depuis l'API */
 const fetchData = async () => {
     loading.value = true;
     error.value = null;
@@ -44,6 +54,7 @@ const fetchData = async () => {
     }
 };
 
+/* Soumet un nouveau mouvement (entrée/sortie) via l'API */
 const submitMovement = async () => {
     submitting.value = true;
     try {
@@ -64,6 +75,7 @@ const submitMovement = async () => {
     }
 };
 
+/* Soumet un nouvel entrepôt via l'API */
 const submitWarehouse = async () => {
     submitting.value = true;
     try {
@@ -84,6 +96,7 @@ const submitWarehouse = async () => {
     }
 };
 
+/* Au montage, charge les données initiales */
 onMounted(fetchData);
 </script>
 

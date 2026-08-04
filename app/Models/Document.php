@@ -5,6 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle représentant un document (fichier) stocké dans l'application.
+ *
+ * Table associée : `documents` (via convention Laravel)
+ *
+ * Relations :
+ * - Un document appartient à un client (Client)
+ * - Un document peut être dans un dossier (ClientFolder)
+ * - Un document est téléversé par un utilisateur (User)
+ * - Un document peut avoir plusieurs versions (DocumentVersion)
+ * - Un document peut avoir plusieurs logs d'audit (DocumentAuditLog)
+ */
 class Document extends Model
 {
     use SoftDeletes;
@@ -22,6 +34,9 @@ class Document extends Model
         'description',
         'tags',
         'version',
+        'is_favorite',
+        'privacy_level',
+        'share_token',
         'uploaded_by',
         'is_archived',
     ];
@@ -32,6 +47,7 @@ class Document extends Model
             'file_size' => 'integer',
             'version' => 'integer',
             'is_archived' => 'boolean',
+            'is_favorite' => 'boolean',
             'tags' => 'array',
         ];
     }

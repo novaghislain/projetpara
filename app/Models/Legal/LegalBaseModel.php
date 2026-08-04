@@ -4,6 +4,16 @@ namespace App\Models\Legal;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Modèle abstrait LegalBaseModel (Modèle de base du module juridique).
+ *
+ * Classe de base dont héritent tous les modèles du module juridique.
+ * Fournit un scope `byClient` qui filtre automatiquement les données
+ * par client, sauf pour les super administrateurs qui voient tout.
+ *
+ * @property int $id
+ * @property int $client_id ID du client (clé de filtrage)
+ */
 abstract class LegalBaseModel extends Model
 {
     /**

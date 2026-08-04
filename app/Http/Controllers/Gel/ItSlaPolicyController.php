@@ -11,22 +11,50 @@ use Illuminate\View\View;
 
 class ItSlaPolicyController extends Controller
 {
+    /**
+     * Contrôleur de gestion des politiques SLA (Service Level Agreement).
+     * Permet de définir les niveaux de service pour les tickets IT :
+     * délais de première réponse et de résolution par priorité.
+     */
+
+    /**
+     * Liste paginée des politiques SLA.
+     *
+     * @return View
+     */
     public function index(): View
     {
         $policies = ItSlaPolicy::latest()->paginate(20);
         return view('app', ['page' => 'gel-it-sla-policies', 'props' => compact('policies')]);
     }
 
+    /**
+     * Affiche le formulaire de création d'une politique SLA.
+     *
+     * @return View
+     */
     public function create(): View
     {
         return view('app', ['page' => 'gel-it-sla-policies-form']);
     }
 
+    /**
+     * Affiche le détail d'une politique SLA.
+     *
+     * @param ItSlaPolicy $policy La politique à afficher (injection de modèle)
+     * @return View
+     */
     public function show(ItSlaPolicy $policy): View
     {
         return view('app', ['page' => 'gel-it-sla-policies-show', 'props' => compact('policy')]);
     }
 
+    /**
+     * Enregistre une nouvelle politique SLA.
+     *
+     * @param Request $request La requête HTTP avec les données de la politique
+     * @return RedirectResponse Redirection vers la liste
+     */
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -37,6 +65,7 @@ class ItSlaPolicyController extends Controller
             'is_default' => 'boolean',
         ]);
 
+        // Si cette politique est définie comme par défaut, on retire le flag des autres
         if ($validated['is_default'] ?? false) {
             ItSlaPolicy::where('is_default', true)->update(['is_default' => false]);
         }
@@ -47,6 +76,13 @@ class ItSlaPolicyController extends Controller
         return redirect()->route('gel.it-sla-policies.index')->with('success', 'Politique SLA créée.');
     }
 
+    /**
+     * Met à jour une politique SLA existante.
+     *
+     * @param Request $request La requête HTTP avec les données mises à jour
+     * @param ItSlaPolicy $policy La politique à modifier (injection de modèle)
+     * @return RedirectResponse Redirection vers la liste
+     */
     public function update(Request $request, ItSlaPolicy $policy): RedirectResponse
     {
         $validated = $request->validate([
@@ -57,6 +93,7 @@ class ItSlaPolicyController extends Controller
             'is_default' => 'boolean',
         ]);
 
+        // Gestion du flag par défaut (un seul SLA peut être marqué par défaut)
         if ($validated['is_default'] ?? false) {
             ItSlaPolicy::where('is_default', true)->where('id', '!=', $policy->id)->update(['is_default' => false]);
         }
@@ -68,6 +105,12 @@ class ItSlaPolicyController extends Controller
         return redirect()->route('gel.it-sla-policies.index')->with('success', 'Politique SLA mise à jour.');
     }
 
+    /**
+     * Supprime une politique SLA.
+     *
+     * @param ItSlaPolicy $policy La politique à supprimer (injection de modèle)
+     * @return RedirectResponse Redirection vers la liste
+     */
     public function destroy(ItSlaPolicy $policy): RedirectResponse
     {
         $old = $policy->getAttributes();

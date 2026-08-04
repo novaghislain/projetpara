@@ -10,9 +10,21 @@ use Illuminate\Http\Request;
 
 class PdfExportController extends BaseGelAccountingController
 {
+    /**
+     * Contrôleur d'export PDF des documents comptables.
+     * Génère des fichiers PDF pour la balance, le bilan, le compte
+     * de résultat, le grand livre, le SIG et les déclarations fiscales.
+     */
+
     protected BalanceCalculationService $balanceService;
     protected FinancialStatementService $financialService;
 
+    /**
+     * Injection des services de calcul comptable et financier.
+     *
+     * @param BalanceCalculationService $balanceService Service de calcul de balance
+     * @param FinancialStatementService $financialService Service d'états financiers
+     */
     public function __construct(
         BalanceCalculationService $balanceService,
         FinancialStatementService $financialService,
@@ -23,6 +35,10 @@ class PdfExportController extends BaseGelAccountingController
 
     /**
      * Export PDF de la balance générale.
+     *
+     * @param Request $request La requête HTTP (fiscal_year_id, client_name)
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\Http\Response Le fichier PDF téléchargeable
      */
     public function balance(Request $request, $clientId)
     {
@@ -45,7 +61,11 @@ class PdfExportController extends BaseGelAccountingController
     }
 
     /**
-     * Export PDF du Bilan comptable.
+     * Export PDF du Bilan comptable (Actif / Passif).
+     *
+     * @param Request $request La requête HTTP (fiscal_year_id, client_name)
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\Http\Response Le fichier PDF téléchargeable
      */
     public function bilan(Request $request, $clientId)
     {
@@ -67,6 +87,10 @@ class PdfExportController extends BaseGelAccountingController
 
     /**
      * Export PDF du Compte de Résultat.
+     *
+     * @param Request $request La requête HTTP (fiscal_year_id, client_name)
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\Http\Response Le fichier PDF téléchargeable
      */
     public function resultat(Request $request, $clientId)
     {
@@ -88,6 +112,10 @@ class PdfExportController extends BaseGelAccountingController
 
     /**
      * Export PDF du Grand Livre.
+     *
+     * @param Request $request La requête HTTP (fiscal_year_id, account_id, account_code, client_name)
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\Http\Response Le fichier PDF téléchargeable
      */
     public function grandLivre(Request $request, $clientId)
     {
@@ -111,6 +139,10 @@ class PdfExportController extends BaseGelAccountingController
 
     /**
      * Export PDF du SIG (Soldes Intermédiaires de Gestion).
+     *
+     * @param Request $request La requête HTTP (fiscal_year_id, client_name)
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\Http\Response Le fichier PDF téléchargeable
      */
     public function sig(Request $request, $clientId)
     {
@@ -132,6 +164,10 @@ class PdfExportController extends BaseGelAccountingController
 
     /**
      * Export PDF de la déclaration fiscale.
+     *
+     * @param Request $request La requête HTTP (declaration_id, client_name)
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\Http\Response Le fichier PDF téléchargeable
      */
     public function declaration(Request $request, $clientId)
     {

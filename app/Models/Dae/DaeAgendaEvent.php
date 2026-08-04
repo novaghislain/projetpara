@@ -5,6 +5,14 @@ namespace App\Models\Dae;
 use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle représentant un événement d'agenda dans le module DAE.
+ *
+ * Table associée : `dae_agenda_events`
+ *
+ * Un événement peut être une réunion, un rendez-vous, un rappel, etc.
+ * Il peut être ponctuel ou récurrent, avec des participants et des rappels.
+ */
 class DaeAgendaEvent extends DaeBaseModel
 {
     use SoftDeletes;
@@ -16,12 +24,15 @@ class DaeAgendaEvent extends DaeBaseModel
         'start_at', 'end_at', 'all_day', 'location', 'couleur',
         'statut', 'rappel', 'participants', 'recurrence',
         'recurrence_end', 'created_by',
+        // Phase 2: Visio & Invitations
+        'visio_type', 'visio_link', 'invitation_sent', 'guest_email', 'guest_name',
     ];
 
     protected function casts(): array
     {
         return [
             'all_day' => 'boolean',
+            'invitation_sent' => 'boolean',
             'start_at' => 'datetime',
             'end_at' => 'datetime',
             'rappel' => 'array',

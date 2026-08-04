@@ -247,10 +247,23 @@
 </template>
 
 <script>
-import axios from 'axios';
-import DaeDataTable from '../../../../Components/Dae/DaeDataTable.vue';
-import { Modal } from 'bootstrap';
+/*
+ * Composant : DaeEmailsIndex
+ * Role : Page principale de gestion des emails du module DAE.
+ * Affiche la liste des emails avec filtres par dossier (reception, envoyes, brouillons, archive, corbeille).
+ * Permet la consultation, l'archivage, le classement, la reponse et la suppression des emails.
+ * Inclut une modale de detail et une modale de reponse.
+ * Props : aucune
+ * Evenements : row-click, action, page-change (via DaeDataTable)
+ */
+import axios from 'axios'; /* Client HTTP pour les appels API REST */
+import DaeDataTable from '../../../../Components/Dae/DaeDataTable.vue'; /* Tableau de donnees generique DAE */
+import { Modal } from 'bootstrap'; /* Gestionnaire de modales Bootstrap */
 
+/* ─── Mapping des statuts ────────────────────────────────────────
+ * Associe chaque statut d'email a son libelle affichable et a sa
+ * classe de badge Bootstrap pour le rendu couleur.
+ */
 const STATUT_MAP = {
     brouillon: { label: 'Brouillon', badge: 'bg-secondary' },
     envoye:    { label: 'Envoye',    badge: 'bg-primary' },
@@ -259,6 +272,10 @@ const STATUT_MAP = {
     archive:   { label: 'Archive',   badge: 'bg-dark' },
 };
 
+/* ─── Dossiers de la sidebar ─────────────────────────────────────
+ * Liste des dossiers filtrants affiches dans le panneau lateral
+ * gauche. Chaque dossier possede une cle, un libelle et une icone.
+ */
 const DOSSIERS = [
     { key: 'reception', label: 'Reception',  icon: 'bi-inbox' },
     { key: 'envoyes',   label: 'Envoyes',    icon: 'bi-send' },
@@ -336,6 +353,7 @@ export default {
     },
 
     created() {
+        // Chargement initial des emails et des statistiques
         this.fetchEmails();
         this.fetchStats();
     },

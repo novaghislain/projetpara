@@ -63,10 +63,21 @@
     </GelLayout>
 </template>
 <script setup>
+/*
+ * Composant : Form.vue (Contentieux)
+ * Description : Formulaire de création d'un nouveau litige / contentieux.
+ *               Saisie du titre, type, nature, partie adverse, tribunal, avocat,
+ *               montant du litige, date de saisine et prochaine audience.
+ * Route       : /juridique/contentieux/create
+ */
 import { ref } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
+
+/* État de sauvegarde et données du formulaire */
 const saving = ref(false);
 const form = ref({ titre:'', type:'civil', nature:'demandeur', partie_adverse:'', tribunal:'', avocat:'', montant_litige:null, date_saisine:'', prochaine_audience:'' });
+
+/* Enregistre le litige via POST puis redirige vers la liste */
 async function save() {
     saving.value = true;
     try {

@@ -13,10 +13,20 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Contrôleur du Grand Livre, de la Balance et des États Financiers.
+ * Permet de consulter le détail des mouvements par compte, la balance générale,
+ * et de générer le bilan et le compte de résultat (états financiers SYSCOHADA).
+ */
 class GrandLivreController extends Controller
 {
     /**
-     * Formulaire du Grand Livre avec filtres.
+     * Affiche le Grand Livre avec filtres.
+     * Permet de visualiser les lignes d'écriture d'un compte sur une période,
+     * avec calcul du solde initial, des totaux et du solde final.
+     *
+     * @param Request $request La requête HTTP avec les filtres (compte_id, date_debut, date_fin, client_id, journal_id, exercice_id)
+     * @return \Illuminate\View\View|\Illuminate\Http\JsonResponse
      */
     public function index(Request $request)
     {
@@ -27,7 +37,7 @@ class GrandLivreController extends Controller
         $exercices = ExerciceComptable::byCabinet($cabinetId)->orderBy('date_debut', 'desc')->get();
         $clients = Client::whereHas('gelEcritures', fn($q) => $q->where('cabinet_id', $cabinetId))->get(['id', 'company_name']);
 
-        // Paramètres
+        // Paramètres de filtrage
         $compteId = $request->input('compte_id');
         $dateDebut = $request->input('date_debut');
         $dateFin = $request->input('date_fin');
@@ -45,6 +55,7 @@ class GrandLivreController extends Controller
         if ($compteId) {
             $compte = CompteComptable::byCabinet($cabinetId)->findOrFail($compteId);
 
+            // Requête des lignes d'écriture pour le compte sélectionné
             $query = LigneEcriture::where('compte_id', $compteId)
                 ->whereHas('ecriture', function ($q) use ($cabinetId, $dateDebut, $dateFin, $clientId, $journalId, $exerciceId) {
                     $q->byCabinet($cabinetId);
@@ -67,7 +78,7 @@ class GrandLivreController extends Controller
             $totalDebit = $lignes->where('sens', 'debit')->sum('montant');
             $totalCredit = $lignes->where('sens', 'credit')->sum('montant');
 
-            // Solde initial = total débit - total crédit
+            // Calcul du solde initial avant la période
             $soldeInitial = 0;
             if ($dateDebut) {
                 $soldeAvant = LigneEcriture::where('compte_id', $compteId)
@@ -101,7 +112,11 @@ class GrandLivreController extends Controller
     }
 
     /**
-     * Export CSV du Grand Livre.
+     * Export CSV du Grand Livre pour un compte.
+     * Génère un fichier avec le détail des mouvements et le solde courant.
+     *
+     * @param Request $request La requête HTTP avec les filtres
+     * @return \Illuminate\Http\Response|\Illuminate\Http\JsonResponse
      */
     public function export(Request $request)
     {
@@ -171,7 +186,12 @@ class GrandLivreController extends Controller
     }
 
     /**
-     * Balance générale.
+     * Balance générale des comptes.
+     * Calcule les totaux débiteurs et créditeurs de chaque compte,
+     * ainsi que les soldes débiteurs et créditeurs.
+     *
+     * @param Request $request La requête HTTP avec les filtres
+     * @return \Illuminate\View\View|\Illuminate\Http\JsonResponse
      */
     public function balance(Request $request)
     {
@@ -184,6 +204,7 @@ class GrandLivreController extends Controller
         $comptes = CompteComptable::byCabinet($cabinetId)->actif()->orderBy('code')->get();
         $resultats = [];
 
+        // Calculer les totaux pour chaque compte
         foreach ($comptes as $compte) {
             $query = LigneEcriture::where('compte_id', $compte->id)
                 ->whereHas('ecriture', function ($q) use ($cabinetId, $dateDebut, $dateFin, $clientId, $exerciceId) {
@@ -227,7 +248,13 @@ class GrandLivreController extends Controller
     }
 
     /**
-     * États financiers : Bilan, Résultat, SIG.
+     * États financiers : Bilan et Compte de résultat SYSCOHADA.
+     * Construit le bilan (Actif classes 2,3,5 / Passif classes 1,4)
+     * et le compte de résultat (Charges classe 6 / Produits classe 7)
+     * à partir des soldes des comptes validés.
+     *
+     * @param Request $request La requête HTTP avec les filtres (exercice_id, client_id)
+     * @return \Illuminate\View\View|\Illuminate\Http\JsonResponse
      */
     public function etatsFinanciers(Request $request)
     {
@@ -235,12 +262,13 @@ class GrandLivreController extends Controller
         $exerciceId = $request->input('exercice_id');
         $clientId = $request->input('client_id');
 
+        // Si aucun exercice sélectionné, prendre l'exercice en cours
         if (!$exerciceId) {
             $exercice = ExerciceComptable::byCabinet($cabinetId)->encours()->first();
             $exerciceId = $exercice?->id;
         }
 
-        // Récupérer les soldes par compte
+        // Récupérer les soldes par compte (débit et crédit)
         $soldes = LigneEcriture::select(
                 'compte_id',
                 DB::raw('SUM(CASE WHEN sens = "debit" THEN montant ELSE 0 END) as total_debit'),
@@ -257,15 +285,16 @@ class GrandLivreController extends Controller
 
         $comptes = CompteComptable::byCabinet($cabinetId)->get()->keyBy('id');
 
-        // Bilan
+        // Construction du Bilan
         $bilan = [
             'actif' => ['sections' => [], 'total' => 0],
             'passif' => ['sections' => [], 'total' => 0],
         ];
 
         $classesActif = ['2', '3', '5']; // Immobilisations, Stocks, Trésorerie
-        $classesPassif = ['1', '4']; // Capitaux, Tiers (fournisseurs, dettes)
+        $classesPassif = ['1', '4']; // Capitaux propres, Tiers (fournisseurs, dettes)
 
+        // Regrouper les comptes d'actif par classe
         foreach ($classesActif as $classe) {
             $comptesClasse = $comptes->where('classe', $classe);
             $totalClasse = 0;
@@ -292,6 +321,7 @@ class GrandLivreController extends Controller
             $bilan['actif']['total'] += $totalClasse;
         }
 
+        // Regrouper les comptes de passif par classe
         foreach ($classesPassif as $classe) {
             $comptesClasse = $comptes->where('classe', $classe);
             $totalClasse = 0;
@@ -318,7 +348,7 @@ class GrandLivreController extends Controller
             $bilan['passif']['total'] += $totalClasse;
         }
 
-        // Compte de résultat
+        // Compte de résultat : Charges (classe 6) et Produits (classe 7)
         $charges = CompteComptable::byCabinet($cabinetId)->where('classe', '6')->get();
         $produits = CompteComptable::byCabinet($cabinetId)->where('classe', '7')->get();
 

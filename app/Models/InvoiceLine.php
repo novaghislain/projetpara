@@ -6,6 +6,37 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Modèle InvoiceLine (Ligne de facture).
+ *
+ * Représente une ligne individuelle sur une facture.
+ * Contient le produit/service, les quantités, les prix unitaires,
+ * les remises, la TVA et les comptes comptables associés.
+ *
+ * @property int $id
+ * @property int $client_id ID du client
+ * @property int $invoice_id ID de la facture parente
+ * @property int $line_number Numéro de ligne
+ * @property string $description Description de la ligne
+ * @property string|null $product_code Code produit
+ * @property float $quantity Quantité
+ * @property string|null $unit Unité (pièce, heure, jour, etc.)
+ * @property float $unit_price Prix unitaire HT
+ * @property float $discount Remise ligne
+ * @property float|null $discount_percent Pourcentage de remise
+ * @property float $net_unit_price Prix unitaire net
+ * @property float $subtotal Sous-total HT
+ * @property string|null $vat_code Code TVA
+ * @property float $vat_rate Taux de TVA (%)
+ * @property float $vat_amount Montant TVA
+ * @property float $total Total TTC ligne
+ * @property int|null $account_id ID du compte comptable de vente
+ * @property int|null $vat_account_id ID du compte comptable de TVA
+ *
+ * @property-read \App\Models\Invoice $invoice Facture parente
+ * @property-read \App\Models\AccountingAccount|null $account Compte comptable de vente
+ * @property-read \App\Models\AccountingAccount|null $vatAccount Compte comptable de TVA
+ */
 class InvoiceLine extends Model
 {
     use HasFactory;

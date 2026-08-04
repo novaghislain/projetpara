@@ -1,7 +1,18 @@
 <script setup>
+/*
+ * Composant : DaeCourriersShow
+ * Role : Page de detail d'un courrier dans le module DAE.
+ * Affiche les informations completes, la chronologie des statuts, les participants,
+ * les fichiers joints et permet les actions : traiter, archiver, dupliquer.
+ * Utilise le mode Composition API (script setup).
+ * Props : aucune (l'ID est extrait de l'URL)
+ * Evenements : aucun
+ */
 import { ref, computed, onMounted } from 'vue';
 
+// Definition des etapes de statut pour la chronologie (timeline)
 const statusSteps = ['brouillon', 'envoye', 'recu', 'traite', 'archive'];
+// Libelles des statuts pour l'affichage
 const statusLabels = {
     brouillon: 'Brouillon',
     envoye: 'Envoye',
@@ -23,14 +34,17 @@ const processing = ref(false);
 const toast = ref({ show: false, message: '', type: 'success' });
 let toastTimer = null;
 
+// Recuperation du token CSRF depuis la balise meta pour les requetes fetch
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
+// Affiche une notification toast avec message et type (success/danger)
 function showToast(message, type = 'success') {
     clearTimeout(toastTimer);
     toast.value = { show: true, message, type };
     toastTimer = setTimeout(() => { toast.value.show = false; }, 4000);
 }
 
+// Retourne la couleur Bootstrap correspondant au statut
 function getStatusColor(status) {
     const map = {
         brouillon: 'secondary',
@@ -42,6 +56,7 @@ function getStatusColor(status) {
     return map[status] || 'secondary';
 }
 
+// Retourne l'icone Bootstrap correspondant au statut
 function getStatusIcon(status) {
     const map = {
         brouillon: 'bi-pencil-square',
@@ -57,6 +72,7 @@ function statusIndex(step) {
     return statusSteps.indexOf(step);
 }
 
+// Charge les donnees du courrier depuis l'API
 async function fetchCourrier() {
     loading.value = true;
     error.value = null;
@@ -73,6 +89,7 @@ async function fetchCourrier() {
     }
 }
 
+// Marque le courrier comme traite (changement de statut)
 async function traiter() {
     if (!confirm('Confirmer le traitement de ce courrier ?')) return;
     processing.value = true;
@@ -98,6 +115,7 @@ async function traiter() {
     }
 }
 
+// Archive le courrier (changement de statut vers archive)
 async function archiver() {
     if (!confirm('Confirmer l\'archivage de ce courrier ?')) return;
     processing.value = true;
@@ -123,6 +141,7 @@ async function archiver() {
     }
 }
 
+// Duplique le courrier et redirige vers la copie
 async function dupliquer() {
     processing.value = true;
     try {
@@ -150,6 +169,7 @@ async function dupliquer() {
     }
 }
 
+// Recupere la date associee a chaque etape de la chronologie
 function getDateForStatus(step) {
     if (!courrier.value) return null;
     const map = {

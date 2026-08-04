@@ -10,6 +10,16 @@
 </template>
 
 <script setup>
+/* ============================================================
+ * Composant : DocumentSignatures/Index
+ * Description : Page de liste des signatures electroniques.
+ *   Affiche l'ensemble des signatures et leur statut.
+ *   (En cours de construction)
+ * ============================================================ */
+
 import GelLayout from '../../../Layouts/GelLayout.vue';
+
+/* Propriete recue du controleur :
+ *   signatures - Liste des signatures electroniques */
 defineProps(['signatures'])
 </script>

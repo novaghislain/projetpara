@@ -17,5 +17,11 @@
     </GelLayout>
 </template>
 <script setup>
+/* ============================================
+ * Fiscalite.vue — Module de gestion fiscale
+ * Centralise la gestion de la fiscalité et des obligations fiscales.
+ * ============================================ */
+
+/* Layout principal de l'interface GEL */
 import GelLayout from '../../../Layouts/GelLayout.vue';
 </script>

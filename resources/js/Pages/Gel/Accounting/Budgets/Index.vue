@@ -1,13 +1,22 @@
 <script setup>
+/*
+ * Composant : Budgets/Index.vue
+ * Description : Gestion des budgets previsionnels par client.
+ *              Permet de creer, valider et supprimer des budgets (depense, recette, tresorerie, investissement).
+ *              Affiche le taux de realisation avec une barre de progression.
+ *              Utilise le layout GelLayout et le selecteur de client comptable.
+ */
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 import { authStore } from '../../../../stores/auth';
 import AccountingClientSelector from '../../../../Components/Gel/AccountingClientSelector.vue';
 
+// Proprietes : identifiant client (optionnel)
 const props = defineProps({
     clientId: { type: [Number, String], default: null }
 });
 
+// Etat reactif : liste des budgets, chargement, erreur, modal, formulaire
 const budgets = ref([]);
 const loading = ref(true);
 const error = ref(null);
@@ -15,15 +24,19 @@ const showModal = ref(false);
 const editing = ref(null);
 const form = ref({ name: '', type: 'depense', fiscal_year_id: '', montant_prevu: 0, notes: '' });
 const fiscalYears = ref([]);
+// ID client actif : depuis les props ou le store d'authentification
 const activeClientId = ref(props.clientId || authStore.user?.active_client_id || authStore.user?.client_id || null);
 
+// Recupere le token CSRF depuis la balise meta du document
 const withCsrf = () => document.querySelector('meta[name=csrf-token]')?.content;
 
+// Mis a jour de l'ID client via le selecteur et rechargement des donnees
 const onClientSelected = (cid) => {
     activeClientId.value = cid;
     fetchData();
 };
 
+// Chargement des budgets et des exercice fiscaux depuis l'API
 const fetchData = async () => {
     loading.value = true;
     error.value = null;
@@ -44,12 +57,15 @@ const fetchData = async () => {
     finally { loading.value = false; }
 };
 
+// Ouvre la modal de creation d'un nouveau budget
 const openCreate = () => {
     editing.value = null;
+    // Initialise le formulaire avec le premier exercice fiscal disponible
     form.value = { name: '', type: 'depense', fiscal_year_id: fiscalYears.value[0]?.id || '', montant_prevu: 0, notes: '' };
     showModal.value = true;
 };
 
+// Sauvegarde un nouveau budget via l'API
 const save = async () => {
     const cid = activeClientId.value;
     if (!cid) { alert('Aucun client sélectionné.'); return; }
@@ -61,6 +77,7 @@ const save = async () => {
     if (res.ok) { showModal.value = false; await fetchData(); }
 };
 
+// Validation d'un budget (passe son statut de "brouillon" a "actif")
 const validate = async (id) => {
     const cid = activeClientId.value;
     if (!cid) return;
@@ -71,6 +88,7 @@ const validate = async (id) => {
     await fetchData();
 };
 
+// Suppression d'un budget apres confirmation
 const remove = async (id) => {
     if (!confirm('Supprimer ce budget ?')) return;
     const cid = activeClientId.value;
@@ -82,9 +100,12 @@ const remove = async (id) => {
     await fetchData();
 };
 
+// Couleur de badge selon le type de budget
 const typeColor = (t) => ({ recette: 'success', depense: 'danger', tresorerie: 'info', investissement: 'warning' }[t] || 'secondary');
+// Couleur de badge selon le statut du budget
 const statusColor = (s) => ({ brouillon: 'secondary', actif: 'success', verrouille: 'danger', archive: 'dark' }[s] || 'secondary');
 
+// Chargement initial au montage du composant
 onMounted(fetchData);
 </script>
 

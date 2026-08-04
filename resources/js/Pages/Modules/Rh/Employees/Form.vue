@@ -1,14 +1,22 @@
+<!--
+  Composant : Employees/Form.vue
+  Description : Formulaire de création et modification d'un employé.
+                Utilisé en création (employeeId = null) ou en édition (employeeId fourni).
+-->
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 import { authStore } from '../../../../stores/auth';
 
+/* Propriété : identifiant de l'employé en mode édition, null en mode création */
 const props = defineProps({
     employeeId: { type: [Number, String], default: null }
 });
 
+/* Mode édition si un employeeId est fourni */
 const isEdit = computed(() => !!props.employeeId);
 
+/* Données du formulaire */
 const form = ref({
     matricule: '',
     civilite: '',
@@ -32,6 +40,7 @@ const submitting = ref(false);
 const error = ref(null);
 const successMsg = ref('');
 
+/* Chargement des données existantes en mode édition */
 const fetchEmployee = async () => {
     if (!props.employeeId) { loading.value = false; return; }
     loading.value = true;
@@ -63,6 +72,7 @@ const fetchEmployee = async () => {
     }
 };
 
+/* Soumission du formulaire : POST en création, PUT en édition */
 const submitForm = async () => {
     submitting.value = true;
     error.value = null;

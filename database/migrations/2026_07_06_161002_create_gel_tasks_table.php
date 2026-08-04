@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('gel_tasks', function (Blueprint $table) {
             $table->id();
             $table->foreignId('cabinet_id')->constrained('gel_cabinets')->cascadeOnDelete();
-            $table->foreignId('client_id')->nullable()->constrained('gel_clients')->nullOnDelete();
+            $table->foreignId('client_id')->nullable()->constrained('clients')->nullOnDelete();
             $table->foreignId('assigned_to')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->string('titre', 255);

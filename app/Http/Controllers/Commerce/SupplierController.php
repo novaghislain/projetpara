@@ -9,11 +9,27 @@ use Illuminate\Support\Facades\Auth;
 
 class SupplierController extends Controller
 {
+    /**
+     * Contrôleur pour la gestion des fournisseurs.
+     * Permet de créer, modifier, consulter et supprimer des fournisseurs
+     * associés aux produits de l'entreprise.
+     */
+
+    /**
+     * Affiche la page de gestion des fournisseurs.
+     *
+     * @return \Illuminate\View\View
+     */
     public function index()
     {
         return view('app', ['page' => 'commerce-suppliers']);
     }
 
+    /**
+     * Retourne la liste de tous les fournisseurs avec le nombre de produits associés.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function listAll()
     {
         $user = Auth::user();
@@ -26,6 +42,12 @@ class SupplierController extends Controller
         return response()->json($query->latest()->get());
     }
 
+    /**
+     * Crée un nouveau fournisseur.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -44,12 +66,25 @@ class SupplierController extends Controller
         return response()->json($supplier, 201);
     }
 
+    /**
+     * Affiche les détails d'un fournisseur avec ses produits associés.
+     *
+     * @param int $id Identifiant du fournisseur
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function show($id)
     {
         $supplier = Supplier::with('products')->findOrFail($id);
         return response()->json($supplier);
     }
 
+    /**
+     * Met à jour un fournisseur existant.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param int $id Identifiant du fournisseur
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function update(Request $request, $id)
     {
         $supplier = Supplier::findOrFail($id);
@@ -68,6 +103,12 @@ class SupplierController extends Controller
         return response()->json($supplier);
     }
 
+    /**
+     * Supprime un fournisseur.
+     *
+     * @param int $id Identifiant du fournisseur
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function destroy($id)
     {
         $supplier = Supplier::findOrFail($id);

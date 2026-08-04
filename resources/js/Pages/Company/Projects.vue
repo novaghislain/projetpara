@@ -1,4 +1,14 @@
 ﻿<script setup>
+/*
+ * Projects.vue — Gestion des projets et taches
+ *
+ * Module de gestion de projets : liste des projets avec suivi
+ * de progression, barre de progression, priorite. Gestion des
+ * taches liees aux projets avec changement de statut en ligne,
+ * filtrage par projet et recherche. Tableau de bord statistique
+ * avec repartition par statut et priorite.
+ */
+
 import { ref, computed, onMounted } from 'vue';
 import CompanyLayout from '../../Layouts/CompanyLayout.vue';
 import { authStore } from '../../stores/auth';

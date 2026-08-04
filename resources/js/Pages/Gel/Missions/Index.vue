@@ -1,35 +1,50 @@
 <script setup>
+/* ============================================================
+ * Missions — Index
+ * Liste des missions, tâches et projets du cabinet.
+ * Permet de filtrer, créer, modifier, supprimer et suivre
+ * la progression des missions.
+ * ============================================================ */
 import { ref, onMounted, nextTick } from 'vue';
 import GelLayout from '../../../Layouts/GelLayout.vue';
 import { authStore } from '../../../stores/auth';
 
-const missions = ref([]);
-const clients = ref([]);
-const poles = ref([]);
-const users = ref([]);
-const loading = ref(true);
-const error = ref(null);
+/* --- État réactif principal --- */
+const missions = ref([]);      /* Liste des missions chargées depuis l'API */
+const clients = ref([]);       /* Liste des clients pour le formulaire */
+const poles = ref([]);         /* Liste des pôles pour le filtre et le formulaire */
+const users = ref([]);         /* Liste des utilisateurs pour l'assignation */
+const loading = ref(true);     /* Indicateur de chargement en cours */
+const error = ref(null);       /* Message d'erreur éventuel */
 
-const filterStatus = ref('');
-const filterPriority = ref('');
-const filterPole = ref('');
+/* --- Filtres de la liste --- */
+const filterStatus = ref('');     /* Filtre par statut */
+const filterPriority = ref('');   /* Filtre par priorité */
+const filterPole = ref('');       /* Filtre par pôle */
 
-const showModal = ref(false);
-const isEditing = ref(false);
-const editingId = ref(null);
-const submitting = ref(false);
-const modalEl = ref(null);
-const modalInstance = ref(null);
+/* --- État de la modale de création/édition --- */
+const showModal = ref(false);     /* Visibilité de la modale */
+const isEditing = ref(false);     /* true = édition, false = création */
+const editingId = ref(null);      /* ID de la mission en cours d'édition */
+const submitting = ref(false);    /* true pendant la soumission du formulaire */
+const modalEl = ref(null);        /* Référence à l'élément DOM de la modale */
+const modalInstance = ref(null);  /* Instance Bootstrap de la modale */
 
+/* --- Formulaire de création/édition --- */
 const form = ref({
     title: '', description: '', type: 'mission', status: 'en_attente', priority: 'moyenne',
     client_id: '', pole_id: '', assigned_to: '', start_date: '', end_date: '', budget: '', progress: 0,
 });
 
+/* --- Options pour les listes déroulantes --- */
 const statusOptions = ['en_attente', 'en_cours', 'terminee', 'annulee'];
 const priorityOptions = ['basse', 'moyenne', 'haute', 'critique'];
 const typeOptions = ['mission', 'tache', 'projet'];
 
+/*
+ * fetchMissions — Charge la liste des missions depuis l'API
+ * en appliquant les filtres actifs (statut, priorité, pôle).
+ */
 const fetchMissions = async () => {
     loading.value = true;
     error.value = null;
@@ -55,18 +70,29 @@ onMounted(() => {
     fetchUsers();
 });
 
+/*
+ * fetchPoles — Charge la liste des pôles pour le filtre et le formulaire.
+ */
 const fetchPoles = async () => {
     try {
         const res = await window.axios.get('api/poles');
         poles.value = Array.isArray(res.data) ? res.data : (res.data?.data || []);
     } catch (e) { console.error(e) }
 }
+
+/*
+ * fetchClients — Charge la liste des clients pour le formulaire.
+ */
 const fetchClients = async () => {
     try {
         const res = await window.axios.get('api/clients');
         clients.value = Array.isArray(res.data) ? res.data : (res.data?.data || []);
     } catch (e) { console.error(e) }
 }
+
+/*
+ * fetchUsers — Charge la liste des utilisateurs pour l'assignation.
+ */
 const fetchUsers = async () => {
     try {
         const res = await window.axios.get('api/users');
@@ -74,6 +100,9 @@ const fetchUsers = async () => {
     } catch (e) { console.error(e) }
 };
 
+/*
+ * resetForm — Réinitialise le formulaire à ses valeurs par défaut.
+ */
 const resetForm = () => {
     form.value = {
         title: '', description: '', type: 'mission', status: 'en_attente', priority: 'moyenne',
@@ -81,6 +110,10 @@ const resetForm = () => {
     };
 };
 
+/*
+ * openCreateModal — Ouvre la modale en mode création.
+ * Réinitialise le formulaire et affiche l'instance Bootstrap.
+ */
 const openCreateModal = () => {
     resetForm();
     isEditing.value = false;
@@ -94,6 +127,10 @@ const openCreateModal = () => {
     });
 };
 
+/*
+ * openEditModal — Ouvre la modale en mode édition.
+ * Charge les données de la mission depuis l'API et pré-remplit le formulaire.
+ */
 const openEditModal = async (id) => {
     try {
         const res = await window.axios.get('api/missions/' + id);
@@ -126,11 +163,18 @@ const openEditModal = async (id) => {
     }
 };
 
+/*
+ * closeModal — Ferme la modale Bootstrap.
+ */
 const closeModal = () => {
     modalInstance.value?.hide();
     showModal.value = false;
 };
 
+/*
+ * submitForm — Envoie les données du formulaire en création ou édition.
+ * Utilise la méthode HTTP appropriée (POST ou PUT) selon le mode.
+ */
 const submitForm = async () => {
     submitting.value = true;
     try {
@@ -139,7 +183,7 @@ const submitForm = async () => {
         const payload = { ...form.value, budget: form.value.budget ? Number(form.value.budget) : null };
 
         await window.axios[method](url, payload);
-        
+
         closeModal();
         await fetchMissions();
     } catch (e) {
@@ -149,6 +193,9 @@ const submitForm = async () => {
     }
 };
 
+/*
+ * deleteMission — Supprime une mission après confirmation utilisateur.
+ */
 const deleteMission = async (id) => {
     if (!confirm('Confirmer la suppression ?')) return;
     try {
@@ -159,6 +206,9 @@ const deleteMission = async (id) => {
     }
 };
 
+/*
+ * updateProgress — Met à jour le pourcentage de progression d'une mission.
+ */
 const updateProgress = async (id, progress) => {
     try {
         await window.axios.patch('missions/' + id + '/progress', { progress });
@@ -168,6 +218,7 @@ const updateProgress = async (id, progress) => {
     }
 };
 
+/* Second appel onMounted pour recharger les données au montage (complète le premier). */
 onMounted(async () => {
     await Promise.all([fetchMissions()]);
 });

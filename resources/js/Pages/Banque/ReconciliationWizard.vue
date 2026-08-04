@@ -149,9 +149,21 @@
 </template>
 
 <script setup>
+/*
+ * ReconciliationWizard.vue - Assistant de rapprochement bancaire
+ *
+ * Permet de rapprocher les écritures comptables avec le relevé bancaire.
+ * L'utilisateur sélectionne un compte bancaire, une date d'arrêté
+ * et le solde bancaire, puis coche manuellement les transactions
+ * comptables et bancaires qui correspondent. L'assistant propose
+ * une suggestion automatique et finalise le rapprochement lorsque
+ * la différence est nulle.
+ */
 import { ref, reactive, computed, onMounted } from 'vue'
 
+// Liste des comptes bancaires disponibles
 const accounts = ref([])
+// Transactions chargées (comptables et bancaires mêlées)
 const transactions = ref([])
 const loading = ref(true)
 const error = ref(null)
@@ -160,23 +172,36 @@ const selectedAccount = ref('')
 const asOfDate = ref(new Date().toISOString().split('T')[0])
 const bankBalance = ref(0)
 
+// Transactions filtrées : côté comptable (source != 'bank')
 const bookTransactions = computed(() => transactions.value.filter(tx => tx.source !== 'bank'))
+// Transactions filtrées : côté relevé bancaire (source === 'bank')
 const bankTransactions = computed(() => transactions.value.filter(tx => tx.source === 'bank'))
+// Solde total des transactions comptables
 const bookBalance = computed(() => bookTransactions.value.reduce((s, t) => s + parseFloat(t.amount || 0), 0))
+// Nombre de transactions comptables sélectionnées
 const bookSelectedCount = computed(() => bookTransactions.value.filter(t => t.selected).length)
+// Nombre de transactions bancaires sélectionnées
 const bankSelectedCount = computed(() => bankTransactions.value.filter(t => t.selected).length)
+// Nombre total de transactions matchées (automatiquement ou manuellement)
 const matchedCount = computed(() => transactions.value.filter(t => t.matched).length)
+// Solde des transactions comptables sélectionnées ou matchées
 const bookBalanceLab = computed(() => bookTransactions.value.filter(t => t.selected || t.matched).reduce((s, t) => s + parseFloat(t.amount || 0), 0))
+// Solde des transactions bancaires sélectionnées ou matchées
 const bankBalanceLab = computed(() => bankTransactions.value.filter(t => t.selected || t.matched).reduce((s, t) => s + parseFloat(t.amount || 0), 0))
+// Vérification d'équilibre entre les deux côtés (tolérance 0.01)
 const isBalancedRecon = computed(() => Math.abs(bookBalanceLab.value - bankBalanceLab.value) < 0.01)
 
+// Formateur monétaire en francs CFA
 const fmt = (v) => new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(v || 0) + ' F'
+// Jeton CSRF pour les requêtes sécurisées
 const csrf = computed(() => document.querySelector('meta[name=csrf-token]')?.content || '')
+// Fonction utilitaire d'appel API avec en-têtes JSON par défaut
 const api = (path, opts = {}) => fetch(path, {
     headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf.value, ...opts.headers },
     ...opts,
 })
 
+// Chargement de la liste des comptes bancaires pour le sélecteur
 async function loadAccounts() {
     try {
         const r = await api('/api/banking/accounts')
@@ -184,6 +209,7 @@ async function loadAccounts() {
     } catch (e) { console.warn(e) }
 }
 
+// Chargement des transactions non rapprochées pour le compte et la date sélectionnés
 async function loadData() {
     if (!selectedAccount.value) return
     loading.value = true; error.value = null
@@ -209,6 +235,7 @@ async function loadData() {
     } catch (e) { error.value = e.message } finally { loading.value = false }
 }
 
+// Sélection/déselection de toutes les transactions d'un côté (comptable ou bancaire)
 function selectAll(source, checked) {
     transactions.value.forEach(tx => {
         if ((source === 'book' && tx.source !== 'bank') || (source === 'bank' && tx.source === 'bank')) {
@@ -217,15 +244,17 @@ function selectAll(source, checked) {
     })
 }
 
+// Bascule de sélection d'une transaction individuelle
 function toggleSelect(source, id) {
     const tx = transactions.value.find(t => t.id === id)
     if (tx && !tx.matched) tx.selected = !tx.selected
 }
 
+// Suggestion automatique d'appariement via l'API (algorithme de matching)
 async function autoSuggest() {
     if (!selectedAccount.value) return
     try {
-        // Create a temporary reconciliation first, then auto-suggest
+        // Création temporaire du rapprochement pour obtenir un ID
         const create = await api('/api/banking/reconciliations', {
             method: 'POST',
             body: JSON.stringify({
@@ -237,10 +266,12 @@ async function autoSuggest() {
         if (create.ok) {
             const created = await create.json()
             const id = created.data?.id || created.id
+            // Appel à l'algorithme de suggestion automatique
             const suggest = await api(`/api/banking/reconciliations/${id}/auto-suggest`, { method: 'POST' })
             if (suggest.ok) {
                 const result = await suggest.json()
                 const matchedIds = result.data?.matched_ids || result.matched_ids || []
+                // Marquage des transactions suggérées comme matchées
                 transactions.value.forEach(tx => {
                     if (matchedIds.includes(tx.id)) tx.matched = true
                 })
@@ -249,6 +280,7 @@ async function autoSuggest() {
     } catch (e) { console.warn(e) }
 }
 
+// Finalisation du rapprochement : enregistrement et clôture
 async function completeReconciliation() {
     if (!isBalancedRecon.value || !selectedAccount.value) return
     saving.value = true
@@ -268,7 +300,7 @@ async function completeReconciliation() {
         if (r.ok) {
             const created = await r.json()
             const recId = created.data?.id || created.id
-            // Complete the reconciliation
+            // Marque le rapprochement comme terminé
             await api(`/api/banking/reconciliations/${recId}/complete`, { method: 'POST' })
             alert('Rapprochement finalisé avec succès !')
             window.location.href = '/comptabilite/banque'
@@ -276,11 +308,13 @@ async function completeReconciliation() {
     } catch (e) { error.value = e.message } finally { saving.value = false }
 }
 
+// Formatage d'une date au format français JJ/MM/AAAA
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR') : '—'
 
+// Initialisation : chargement des comptes et du compte pré-sélectionné depuis l'URL
 onMounted(() => {
     loadAccounts()
-    // Check URL params for pre-selected account
+    // Lecture du paramètre 'account' dans l'URL pour pré-sélection
     const params = new URLSearchParams(window.location.search)
     if (params.get('account')) selectedAccount.value = params.get('account')
     if (selectedAccount.value) loadData()

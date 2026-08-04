@@ -26,14 +26,27 @@ class EnsureNotClient
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (Auth::check() && Auth::user()->role === 'client') {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'message' => 'Accès réservé. Votre espace est sur /mes-commandes.'
-                ], 403);
+        if (Auth::check()) {
+            $user = Auth::user();
+
+            if ($user->role === 'client') {
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'message' => 'Accès réservé. Votre espace est sur /mes-commandes.'
+                    ], 403);
+                }
+                // Redirige le client vers son espace personnel
+                return redirect()->route('client.orders.index');
             }
-            // Redirige le client vers son espace personnel
-            return redirect()->route('client.orders.index');
+
+            if ($user->isSecretaire() && !$request->routeIs('gel-secretary.*')) {
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'message' => 'Accès réservé. Votre espace est le secrétariat.'
+                    ], 403);
+                }
+                return redirect()->route('gel-secretary.dashboard');
+            }
         }
 
         return $next($request);

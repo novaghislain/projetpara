@@ -11,7 +11,15 @@ use Illuminate\Http\Request;
 class AdminCatalogueController extends Controller
 {
     /**
-     * Gestion du catalogue (catégories + services + modèles)
+     * Contrôleur pour la gestion administrative du catalogue.
+     * Permet de gérer les catégories et les services du catalogue
+     * (création, modification, suppression).
+     */
+
+    /**
+     * Affiche la liste complète des catégories avec leurs services.
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
@@ -31,6 +39,12 @@ class AdminCatalogueController extends Controller
 
     // ── Catégories ──────────────────────────────────────────────────────────
 
+    /**
+     * Crée une nouvelle catégorie dans le catalogue.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function storeCategory(Request $request)
     {
         $request->validate([
@@ -46,6 +60,13 @@ class AdminCatalogueController extends Controller
         return redirect()->back()->with('success', 'Catégorie créée.');
     }
 
+    /**
+     * Met à jour une catégorie existante.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param int $id Identifiant de la catégorie
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function updateCategory(Request $request, $id)
     {
         $request->validate([
@@ -59,6 +80,12 @@ class AdminCatalogueController extends Controller
         return redirect()->back()->with('success', 'Catégorie mise à jour.');
     }
 
+    /**
+     * Supprime une catégorie du catalogue.
+     *
+     * @param int $id Identifiant de la catégorie
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function destroyCategory($id)
     {
         CatalogueCategory::findOrFail($id)->delete();
@@ -67,6 +94,12 @@ class AdminCatalogueController extends Controller
 
     // ── Services ────────────────────────────────────────────────────────────
 
+    /**
+     * Crée un nouveau service dans une catégorie.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -91,6 +124,13 @@ class AdminCatalogueController extends Controller
         return redirect()->back()->with('success', 'Service créé.');
     }
 
+    /**
+     * Met à jour un service existant.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param int $id Identifiant du service
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -105,6 +145,12 @@ class AdminCatalogueController extends Controller
         return redirect()->back()->with('success', 'Service mis à jour.');
     }
 
+    /**
+     * Supprime un service du catalogue.
+     *
+     * @param int $id Identifiant du service
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function destroy($id)
     {
         CatalogueService::findOrFail($id)->delete();

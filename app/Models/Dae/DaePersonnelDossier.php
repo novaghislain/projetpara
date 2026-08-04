@@ -5,6 +5,14 @@ namespace App\Models\Dae;
 use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle représentant un dossier du personnel dans le module DAE.
+ *
+ * Table associée : `dae_personnel_dossiers`
+ *
+ * Gère les informations RH des employés : contrat, salaire,
+ * compétences, documents et coordonnées d'urgence.
+ */
 class DaePersonnelDossier extends DaeBaseModel
 {
     use SoftDeletes;

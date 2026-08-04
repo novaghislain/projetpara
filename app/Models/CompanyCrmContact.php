@@ -7,6 +7,16 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Modèle représentant un contact CRM d'une entreprise cliente.
+ *
+ * Table associée : `company_crm_contacts` (via convention Laravel)
+ *
+ * Relations :
+ * - Un contact peut avoir plusieurs affaires (CompanyCrmDeal)
+ * - Un contact peut avoir plusieurs interactions (CompanyCrmInteraction)
+ * - Un contact est créé par un utilisateur (User)
+ */
 class CompanyCrmContact extends Model
 {
     use SoftDeletes;

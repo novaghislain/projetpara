@@ -1,18 +1,27 @@
 <script setup>
+/**
+ * Show.vue — Page détaillée d'un service du catalogue public
+ * Rôle : Affiche les informations complètes d'un service (description, inclus,
+ *        documents requis) et permet de l'ajouter au panier.
+ * Props : category (objet catégorie parente), service (objet service à afficher)
+ * Dépendances : authStore pour l'état d'authentification
+ */
 import { ref, onMounted, onUnmounted } from 'vue';
 import { authStore } from '../../../stores/auth';
 
+/* Props reçues du backend : catégorie et service à afficher */
 const props = defineProps({
     category: { type: Object, required: true },
     service: { type: Object, required: true }
 });
 
+/* États réactifs : chargement, animation, panier, jeton CSRF */
 const processing = ref(false);
 const animated = ref(false);
 const cartCount = ref(0);
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
-// ── IntersectionObserver for scroll animations ──
+/* Observateur d'intersection pour les animations au défilement */
 let observer = null;
 const initObserver = () => {
     observer = new IntersectionObserver((entries) => {
@@ -26,9 +35,10 @@ const initObserver = () => {
     document.querySelectorAll('.anim-show').forEach(el => observer.observe(el));
 };
 
-// ── Ajouter au panier ──
+/* État local : indicateur d'ajout au panier réussi */
 const cartAdded = ref(false);
 
+/* Ajoute le service courant au panier via l'API /api/cart/add */
 const addToCart = async () => {
     processing.value = true;
     try {
@@ -55,16 +65,18 @@ const addToCart = async () => {
     }
 };
 
+/* Montage du composant : déclenche les animations et charge le panier */
 onMounted(() => {
     setTimeout(() => { animated.value = true; }, 80);
     requestAnimationFrame(() => initObserver());
-    // Charger le nombre d'articles du panier
+    /* Charger le nombre d'articles du panier */
     fetch('/api/cart')
         .then(r => r.json())
         .then(data => { cartCount.value = data.count || 0; })
         .catch(() => {});
 });
 
+/* Démontage : nettoie l'observateur d'intersection */
 onUnmounted(() => {
     if (observer) observer.disconnect();
 });

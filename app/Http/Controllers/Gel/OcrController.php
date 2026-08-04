@@ -16,14 +16,27 @@ use Illuminate\View\View;
  */
 class OcrController extends Controller
 {
+    /**
+     * Contrôleur d'analyse OCR (Reconnaissance Optique de Caractères) de documents.
+     * Permet de soumettre des documents à l'analyse OCR, de consulter
+     * les résultats et de gérer l'historique des scans.
+     */
+
     public function __construct(
         private OcrService $ocrService
     ) {}
 
+    /**
+     * Liste paginée des analyses OCR avec filtres.
+     *
+     * @param Request $request La requête HTTP avec les filtres (client, statut)
+     * @return View
+     */
     public function index(Request $request): View
     {
         $query = DocumentScan::with('client')->latest();
 
+        // Filtres optionnels
         if ($request->filled('client_id')) {
             $query->where('client_id', $request->client_id);
         }
@@ -40,12 +53,23 @@ class OcrController extends Controller
         ]);
     }
 
+    /**
+     * Affiche le formulaire de soumission d'un document pour analyse OCR.
+     *
+     * @return View
+     */
     public function create(): View
     {
         $clients = Client::where('status', 'actif')->orderBy('company_name')->get(['id', 'company_name']);
         return view('app', ['page' => 'gel-ocr-form', 'props' => compact('clients')]);
     }
 
+    /**
+     * Soumet un document pour analyse OCR et sauvegarde les résultats.
+     *
+     * @param Request $request La requête HTTP avec le fichier et les métadonnées
+     * @return RedirectResponse Redirection vers le résultat du scan
+     */
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -54,9 +78,11 @@ class OcrController extends Controller
             'document_id' => 'nullable|exists:documents,id',
         ]);
 
+        // Stockage du fichier dans le répertoire dédié au client
         $file = $request->file('document');
         $path = $file->store('ocr/' . $validated['client_id'], 'public');
 
+        // Analyse OCR via le service dédié
         $scan = $this->ocrService->analyzeAndSave(
             $path,
             $file->getMimeType(),
@@ -65,6 +91,7 @@ class OcrController extends Controller
             ['filename' => $file->getClientOriginalName()]
         );
 
+        // Traçage de l'action dans l'audit
         AuditTrailService::log($scan, 'created', null, [
             'client_id' => $validated['client_id'],
             'filename' => $file->getClientOriginalName(),
@@ -74,12 +101,24 @@ class OcrController extends Controller
             ->with('success', 'Document analysé avec succès.');
     }
 
+    /**
+     * Affiche le résultat d'une analyse OCR.
+     *
+     * @param DocumentScan $scan Le scan à afficher (injection de modèle)
+     * @return View
+     */
     public function show(DocumentScan $scan): View
     {
         $scan->load('client', 'document');
         return view('app', ['page' => 'gel-ocr-show', 'props' => compact('scan')]);
     }
 
+    /**
+     * Supprime un scan OCR.
+     *
+     * @param DocumentScan $scan Le scan à supprimer (injection de modèle)
+     * @return RedirectResponse Redirection vers la liste
+     */
     public function destroy(DocumentScan $scan): RedirectResponse
     {
         $scan->delete();

@@ -11,8 +11,19 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur API des journaux comptables.
+ *
+ * Gère les opérations CRUD sur les journaux et la création
+ * des 8 journaux par défaut selon le plan SYSCOHADA.
+ */
 class JournalController extends Controller
 {
+    /**
+     * Récupère l'ID du client connecté.
+     *
+     * @return int
+     */
     protected function getClientId(): int
     {
         return (int) (Auth::user()->active_client_id ?? Auth::user()->client_id);
@@ -20,6 +31,9 @@ class JournalController extends Controller
 
     /**
      * Liste des journaux du client connecté.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
@@ -39,6 +53,9 @@ class JournalController extends Controller
 
     /**
      * Créer un journal.
+     *
+     * @param  StoreJournalRequest  $request
+     * @return JsonResponse
      */
     public function store(StoreJournalRequest $request): JsonResponse
     {
@@ -58,6 +75,9 @@ class JournalController extends Controller
 
     /**
      * Afficher un journal avec ses dernières écritures.
+     *
+     * @param  string  $id
+     * @return JsonResponse
      */
     public function show(string $id): JsonResponse
     {
@@ -78,6 +98,10 @@ class JournalController extends Controller
 
     /**
      * Modifier un journal.
+     *
+     * @param  StoreJournalRequest  $request
+     * @param  string  $id
+     * @return JsonResponse
      */
     public function update(StoreJournalRequest $request, string $id): JsonResponse
     {
@@ -96,6 +120,9 @@ class JournalController extends Controller
 
     /**
      * Créer les 8 journaux par défaut SYSCOHADA pour un exercice.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function createDefaults(Request $request): JsonResponse
     {

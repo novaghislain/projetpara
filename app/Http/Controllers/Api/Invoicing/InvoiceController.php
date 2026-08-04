@@ -10,22 +10,39 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur API pour la gestion des factures (ventes, achats, avoirs).
+ *
+ * Gère le CRUD des factures, leur validation avec génération d'écriture
+ * comptable, l'enregistrement des paiements et l'annulation.
+ */
 class InvoiceController extends Controller
 {
     private InvoiceService $invoiceService;
 
+    /**
+     * Constructeur avec injection du service de facturation.
+     */
     public function __construct(InvoiceService $invoiceService)
     {
         $this->invoiceService = $invoiceService;
     }
 
+    /**
+     * Récupère l'ID du client connecté.
+     *
+     * @return int
+     */
     protected function getClientId(): int
     {
         return (int) (Auth::user()->active_client_id ?? Auth::user()->client_id);
     }
 
     /**
-     * Liste paginée des factures.
+     * Liste paginée des factures avec filtres (type, statut, partenaire, période, recherche).
+     *
+     * @param Request $request La requête HTTP avec les filtres.
+     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
@@ -70,7 +87,10 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Détail d'une facture.
+     * Détail d'une facture avec ses relations (lignes, partenaire, paiements, écriture).
+     *
+     * @param  string  $id
+     * @return JsonResponse
      */
     public function show(string $id): JsonResponse
     {
@@ -85,7 +105,10 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Crée une facture.
+     * Crée une facture (vente, achat, avoir) via le service d'invoicing.
+     *
+     * @param  StoreInvoiceRequest  $request
+     * @return JsonResponse
      */
     public function store(StoreInvoiceRequest $request): JsonResponse
     {
@@ -98,7 +121,10 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Valide une facture (brouillon → envoyé) et génère l'écriture comptable.
+     * Valide une facture (passe de brouillon à envoyé) et génère l'écriture comptable.
+     *
+     * @param  string  $id
+     * @return JsonResponse
      */
     public function validate(string $id): JsonResponse
     {
@@ -111,7 +137,11 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Enregistre un paiement sur une facture.
+     * Enregistre un paiement sur une facture avec validation des champs.
+     *
+     * @param  Request  $request
+     * @param  string  $id
+     * @return JsonResponse
      */
     public function pay(Request $request, string $id): JsonResponse
     {
@@ -133,7 +163,11 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Annule une facture.
+     * Annule une facture avec motif optionnel.
+     *
+     * @param  Request  $request
+     * @param  string  $id
+     * @return JsonResponse
      */
     public function cancel(Request $request, string $id): JsonResponse
     {

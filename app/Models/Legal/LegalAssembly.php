@@ -4,6 +4,32 @@ namespace App\Models\Legal;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * Modèle LegalAssembly (Assemblée générale).
+ *
+ * Gère l'organisation et le suivi des assemblées générales (AGO, AGE)
+ * avec la gestion des convocations, du quorum, des résolutions,
+ * et des participants. Suit le statut et le procès-verbal.
+ * Table associée : `legal_assemblies`.
+ *
+ * @property int $id
+ * @property int $client_id ID du client
+ * @property string $type Type d'assemblée (AGO, AGE)
+ * @property int $annee Année de l'assemblée
+ * @property \Carbon\Carbon|null $date_convocation Date de convocation
+ * @property \Carbon\Carbon|null $date_tenue Date de tenue
+ * @property string|null $lieu Lieu de l'assemblée
+ * @property float|null $quorum_requis Quorum requis (%)
+ * @property float|null $quorum_atteint Quorum atteint (%)
+ * @property array|null $ordre_du_jour Ordre du jour (JSON)
+ * @property array|null $resolutions Résolutions adoptées (JSON)
+ * @property array|null $participants Liste des participants (JSON)
+ * @property string $statut Statut (planifiée, tenue, reportée, annulée)
+ * @property string|null $pv_path Chemin du procès-verbal
+ * @property bool $pv_approuve PV approuvé
+ * @property bool $convocation_envoyée Convocation envoyée
+ * @property int $created_by ID du créateur
+ */
 class LegalAssembly extends LegalBaseModel
 {
     use HasFactory;

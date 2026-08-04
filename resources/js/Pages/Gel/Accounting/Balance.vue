@@ -1,4 +1,12 @@
 <script setup>
+/*
+ * Balance.vue - Balance comptable (GEL)
+ *
+ * Affiche la balance des comptes d'un client à une date donnée.
+ * La balance présente pour chaque compte son total débit et crédit
+ * avec les totaux généraux en pied de tableau.
+ * Fondamentale pour vérifier l'équilibre de la comptabilité.
+ */
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../Layouts/GelLayout.vue';
 import { authStore } from '../../../stores/auth';
@@ -11,6 +19,7 @@ const data = ref(null);
 const loading = ref(true);
 const error = ref(null);
 
+// Chargement des données de balance depuis l'API
 const fetchBalance = async () => {
     loading.value = true;
     error.value = null;
@@ -27,7 +36,9 @@ const fetchBalance = async () => {
     }
 };
 
+// Calcul du total des débits pour les lignes fournies
 const totalDebit = (items) => items?.reduce((s, i) => s + parseFloat(i.debit || 0), 0) || 0;
+// Calcul du total des crédits pour les lignes fournies
 const totalCredit = (items) => items?.reduce((s, i) => s + parseFloat(i.credit || 0), 0) || 0;
 
 onMounted(fetchBalance);

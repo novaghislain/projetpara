@@ -78,6 +78,13 @@
 </template>
 
 <script>
+/*
+ * CompanyDaeCourriers.vue – Gestion des courriers (DAE)
+ *
+ * Liste paginée des courriers entrants, sortants et internes avec filtrage par statut.
+ * Affiche les statistiques (total, non traités, urgents) et permet de marquer un courrier
+ * comme traité via une action rapide. Les données sont chargées depuis /company/dae/courriers.
+ */
 import CompanyLayout from '../../Layouts/CompanyLayout.vue';
 import DaeDataTable from '../../Components/Dae/DaeDataTable.vue';
 
@@ -85,17 +92,18 @@ export default {
     components: { CompanyLayout, DaeDataTable },
     data() {
         return {
-            loading: true,
-            rows: [],
-            currentPage: 1,
-            totalPages: 1,
-            filterStatut: '',
+            loading: true,      // Indicateur de chargement
+            rows: [],            // Lignes de données pour le tableau
+            currentPage: 1,      // Page courante de la pagination
+            totalPages: 1,       // Nombre total de pages
+            filterStatut: '',    // Filtre par statut (brouillon, envoye, recu, traite, archive)
             stats: {
                 total: { label: 'Total', count: 0 },
                 recu: { label: 'Non traités', count: 0 },
                 urgent: { label: 'Urgents', count: 0 },
             },
             toast: null,
+            /* Définition des colonnes affichées dans le DaeDataTable */
             columns: [
                 { key: 'reference', label: 'Réf.', width: '120px' },
                 { key: 'objet', label: 'Objet' },
@@ -104,6 +112,7 @@ export default {
                 { key: 'statut', label: 'Statut', width: '110px' },
                 { key: 'urgence', label: 'Urgence', width: '100px' },
             ],
+            /* Actions disponibles sur chaque ligne du tableau */
             actions: [
                 { key: 'view', label: 'Voir le détail', icon: 'bi-eye' },
                 { key: 'traiter', label: 'Marquer traité', icon: 'bi-check2' },
@@ -111,9 +120,10 @@ export default {
         };
     },
     mounted() {
-        this.fetchData();
+        this.fetchData();  // Chargement initial dès le montage du composant
     },
     methods: {
+        /* Charge les courriers paginés depuis l'API, avec le filtre statut si appliqué */
         async fetchData(page = 1) {
             this.loading = true;
             try {

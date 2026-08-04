@@ -5,6 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Modèle représentant une signature électronique sur un document.
+ *
+ * Table associée : `document_signatures` (via convention Laravel)
+ *
+ * Stocke les données de signature, le hash du document et les
+ * informations du signataire.
+ *
+ * Relations :
+ * - Une signature appartient à un document (Document)
+ */
 class DocumentSignature extends Model
 {
     protected $fillable = [

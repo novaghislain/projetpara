@@ -1,32 +1,44 @@
 ﻿<script setup>
+/*
+ * Crm.vue – Module CRM (Customer Relationship Management)
+ *
+ * Composant principal de gestion de la relation client au sein d'une entreprise.
+ * Permet de gérer les contacts (clients, prospects, fournisseurs, partenaires),
+ * les affaires (pipeline kanban) et les interactions (appels, emails, réunions).
+ * Les données sont chargées depuis l'API /api/company/crm/.
+ */
 import { ref, computed, onMounted } from 'vue';
 import CompanyLayout from '../../Layouts/CompanyLayout.vue';
 import { authStore } from '../../stores/auth';
 
-const activeTab = ref('dashboard');
+const activeTab = ref('dashboard');           // Onglet actif (dashboard | contacts | deals | interactions)
 const setTab = (tab) => { activeTab.value = tab; };
 
-const stats = ref(null);
-const contacts = ref([]);
-const deals = ref([]);
-const interactions = ref([]);
-const loading = ref(false);
-const error = ref(null);
-const successMsg = ref('');
+// États de données
+const stats = ref(null);                       // Statistiques globales du CRM
+const contacts = ref([]);                      // Liste des contacts
+const deals = ref([]);                         // Liste des affaires
+const interactions = ref([]);                  // Liste des interactions
+const loading = ref(false);                    // Indicateur de chargement initial
+const error = ref(null);                       // Message d'erreur
+const successMsg = ref('');                    // Message de succès temporaire
 
-const showContactModal = ref(false);
-const showDealModal = ref(false);
-const showInteractionModal = ref(false);
-const editingContact = ref(null);
-const editingDeal = ref(null);
-const isSubmitting = ref(false);
+// Contrôle des modales
+const showContactModal = ref(false);           // Visibilité de la modale contact
+const showDealModal = ref(false);              // Visibilité de la modale affaire
+const showInteractionModal = ref(false);       // Visibilité de la modale interaction
+const editingContact = ref(null);              // Contact en cours d'édition (null = création)
+const editingDeal = ref(null);                 // Affaire en cours d'édition
+const isSubmitting = ref(false);               // Indicateur de soumission en cours
 
+// Formulaires
 const contactForm = ref({ first_name: '', last_name: '', email: '', phone: '', company: '', position: '', category: 'prospect', notes: '', tags: [] });
 const dealForm = ref({ contact_id: '', title: '', description: '', amount: null, stage: 'prospection', status: 'open', probability: 50, expected_close_date: '', notes: '' });
 const interactionForm = ref({ contact_id: '', deal_id: '', type: 'call', subject: '', description: '', scheduled_at: '', outcome: '' });
-const tagInput = ref('');
-const searchQuery = ref('');
+const tagInput = ref('');                       // Champ de saisie pour ajouter un tag
+const searchQuery = ref('');                    // Texte de recherche pour filtrer contacts/affaires
 
+// Propriétés calculées pour le filtrage par recherche
 const filteredContacts = computed(() => {
     if (!searchQuery.value) return contacts.value;
     const q = searchQuery.value.toLowerCase();
@@ -38,9 +50,11 @@ const filteredDeals = computed(() => {
     return deals.value.filter(d => d.title.toLowerCase().includes(q) || (d.contact_name||'').toLowerCase().includes(q) || d.stage.toLowerCase().includes(q) || d.status.toLowerCase().includes(q));
 });
 
+// Fonctions utilitaires de formatage
 const formatCurrency = (v) => (v===null||v===undefined||isNaN(v))?'0,00':Number(v).toLocaleString('fr-FR',{minimumFractionDigits:2});
 const formatDate = (d) => d?new Date(d).toLocaleDateString('fr-FR'):'';
 
+// Mappings de libellés et styles
 const categoryLabel = (c) => ({client:'Client',partner:'Partenaire',prospect:'Prospect',lead:'Lead',supplier:'Fournisseur'}[c]||c);
 const stageLabel = (s) => ({prospection:'Prospection',qualification:'Qualification',proposition:'Proposition',negociation:'Négociation',finalise:'Finalisé'}[s]||s);
 const statusLabel = (s) => ({open:'Ouverte',won:'Gagnée',lost:'Perdue',abandoned:'Abandonnée'}[s]||s);
@@ -48,34 +62,42 @@ const typeLabel = (t) => ({call:'Appel',email:'Email',meeting:'Réunion',note:'N
 const typeIcon = (t) => ({call:'bi-telephone',email:'bi-envelope',meeting:'bi-people',note:'bi-sticky',other:'bi-three-dots'}[t]||'bi-three-dots');
 const categoryBadge = (c) => ({client:'isup-status-green',partner:'isup-status-cyan',prospect:'isup-status-orange',lead:'isup-status-blue',supplier:'isup-status-grey'}[c]||'isup-status-grey');
 
+// Gestion des tags
 function addTag() { const t=tagInput.value.trim(); if(t&&!contactForm.value.tags.includes(t))contactForm.value.tags.push(t); tagInput.value=''; }
 function removeTag(i) { contactForm.value.tags.splice(i,1); }
 
+// En-têtes HTTP avec token CSRF
 const csrf = document.querySelector('meta[name=csrf-token]')?.content;
 const h = () => ({'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':csrf});
 
+// --- Fonctions API ---
 async function fetchStats() { try{const r=await fetch('/api/company/crm/stats');if(r.ok)stats.value=await r.json()}catch(e){console.error(e)} }
 async function fetchContacts() { try{const r=await fetch('/api/company/crm/contacts');if(r.ok)contacts.value=await r.json()}catch(e){console.error(e)} }
 async function fetchDeals() { try{const r=await fetch('/api/company/crm/deals');if(r.ok)deals.value=await r.json()}catch(e){console.error(e)} }
 async function fetchInteractions() { try{const r=await fetch('/api/company/crm/interactions');if(r.ok)interactions.value=await r.json()}catch(e){console.error(e)} }
 
+// --- CRUD Contacts ---
 function openCreateContact() { editingContact.value=null;contactForm.value={first_name:'',last_name:'',email:'',phone:'',company:'',position:'',category:'prospect',notes:'',tags:[]};tagInput.value='';showContactModal.value=true; }
 function openEditContact(c) { editingContact.value=c.id;contactForm.value={first_name:c.first_name,last_name:c.last_name,email:c.email,phone:c.phone||'',company:c.company||'',position:c.position||'',category:c.category,notes:c.notes||'',tags:c.tags||[]};showContactModal.value=true; }
 async function saveContact() { isSubmitting.value=true;error.value=null; try{const u=editingContact.value?`/api/company/crm/contacts/${editingContact.value}`:'/api/company/crm/contacts';const m=editingContact.value?'PUT':'POST';const r=await fetch(u,{method:m,headers:h(),body:JSON.stringify(contactForm.value)});if(!r.ok){const d=await r.json();throw new Error(d.message||Object.values(d.errors||{}).flat().join(', '))}successMsg.value='Contact enregistré';showContactModal.value=false;await fetchContacts();await fetchStats();setTimeout(()=>successMsg.value='',3000)}catch(e){error.value=e.message}finally{isSubmitting.value=false} }
 async function deleteContact(id) { if(!confirm('Supprimer ce contact ?'))return; try{const r=await fetch(`/api/company/crm/contacts/${id}`,{method:'DELETE',headers:h()});if(!r.ok)throw new Error('Erreur');successMsg.value='Contact supprimé';await fetchContacts();await fetchStats();setTimeout(()=>successMsg.value='',3000)}catch(e){alert(e.message)} }
 
+// --- CRUD Affaires ---
 function openCreateDeal() { editingDeal.value=null;dealForm.value={contact_id:'',title:'',description:'',amount:null,stage:'prospection',status:'open',probability:50,expected_close_date:'',notes:''};showDealModal.value=true; }
 function openEditDeal(d) { editingDeal.value=d.id;dealForm.value={contact_id:d.contact_id||'',title:d.title,description:d.description||'',amount:d.amount,stage:d.stage,status:d.status,probability:d.probability,expected_close_date:d.expected_close_date||'',notes:d.notes||''};showDealModal.value=true; }
 async function saveDeal() { isSubmitting.value=true;error.value=null; try{const u=editingDeal.value?`/api/company/crm/deals/${editingDeal.value}`:'/api/company/crm/deals';const m=editingDeal.value?'PUT':'POST';const r=await fetch(u,{method:m,headers:h(),body:JSON.stringify(dealForm.value)});if(!r.ok){const d=await r.json();throw new Error(d.message||Object.values(d.errors||{}).flat().join(', '))}successMsg.value='Affaire enregistrée';showDealModal.value=false;await fetchDeals();await fetchStats();setTimeout(()=>successMsg.value='',3000)}catch(e){error.value=e.message}finally{isSubmitting.value=false} }
 async function deleteDeal(id) { if(!confirm('Supprimer cette affaire ?'))return; try{const r=await fetch(`/api/company/crm/deals/${id}`,{method:'DELETE',headers:h()});if(!r.ok)throw new Error('Erreur');successMsg.value='Affaire supprimée';await fetchDeals();await fetchStats();setTimeout(()=>successMsg.value='',3000)}catch(e){alert(e.message)} }
 
+// --- CRUD Interactions ---
 function openCreateInteraction() { interactionForm.value={contact_id:'',deal_id:'',type:'call',subject:'',description:'',scheduled_at:'',outcome:''};showInteractionModal.value=true; }
 async function saveInteraction() { isSubmitting.value=true;error.value=null; try{const r=await fetch('/api/company/crm/interactions',{method:'POST',headers:h(),body:JSON.stringify(interactionForm.value)});if(!r.ok){const d=await r.json();throw new Error(d.message||Object.values(d.errors||{}).flat().join(', '))}successMsg.value='Interaction enregistrée';showInteractionModal.value=false;await fetchInteractions();await fetchStats();setTimeout(()=>successMsg.value='',3000)}catch(e){error.value=e.message}finally{isSubmitting.value=false} }
 
+// Pipeline Kanban : étapes et calculs par colonne
 const pipelineStages = ['prospection','qualification','proposition','negociation','finalise'];
 const dealsByStage = computed(() => { const m={};pipelineStages.forEach(s=>{m[s]=[]});filteredDeals.value.forEach(d=>{if(m[d.stage])m[d.stage].push(d)});return m; });
 const stageTotal = (stage) => (dealsByStage.value[stage]||[]).reduce((s,d)=>s+Number(d.amount||0),0);
 
+// Chargement initial de toutes les données
 onMounted(async () => { loading.value = true; await Promise.all([fetchStats(),fetchContacts(),fetchDeals(),fetchInteractions()]); loading.value = false; });
 </script>
 

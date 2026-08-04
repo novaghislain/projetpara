@@ -5,8 +5,22 @@ namespace App\Http\Controllers\Modules\Dae;
 use App\Models\Dae\DaeAgendaEvent;
 use Illuminate\Http\Request;
 
+/**
+ * Contrôleur de gestion de l'agenda du module DAE.
+ *
+ * Permet la gestion des événements d'agenda (rendez-vous, réunions, appels,
+ * échéances) avec des vues calendrier, confirmation, annulation et report.
+ */
 class DaeAgendaController extends BaseDaeController
 {
+    /**
+     * Liste des événements avec filtres.
+     *
+     * Filtres disponibles : type, statut, période (debut, fin), vue (jour, semaine, mois).
+     *
+     * @param Request $request La requête HTTP avec les paramètres de filtre
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
+     */
     public function index(Request $request)
     {
         $query = DaeAgendaEvent::with('client')->orderBy('start_at');
@@ -36,6 +50,12 @@ class DaeAgendaController extends BaseDaeController
         return view('app', ['page' => 'dae-agenda']);
     }
 
+    /**
+     * Crée un nouvel événement d'agenda.
+     *
+     * @param Request $request La requête HTTP avec les données de l'événement
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -63,6 +83,13 @@ class DaeAgendaController extends BaseDaeController
         return redirect()->route('dae.agenda.index')->with('success', 'Événement créé.');
     }
 
+    /**
+     * Met à jour un événement d'agenda existant.
+     *
+     * @param Request $request La requête HTTP avec les données de mise à jour
+     * @param int $id L'identifiant de l'événement
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function update(Request $request, $id)
     {
         $event = DaeAgendaEvent::findOrFail($id);
@@ -89,6 +116,12 @@ class DaeAgendaController extends BaseDaeController
         return redirect()->route('dae.agenda.index')->with('success', 'Événement mis à jour.');
     }
 
+    /**
+     * Supprime un événement d'agenda.
+     *
+     * @param int $id L'identifiant de l'événement à supprimer
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function destroy($id)
     {
         $event = DaeAgendaEvent::findOrFail($id);
@@ -98,6 +131,15 @@ class DaeAgendaController extends BaseDaeController
         return redirect()->route('dae.agenda.index')->with('success', 'Événement supprimé.');
     }
 
+    /**
+     * Retourne les événements formatés pour l'affichage calendrier.
+     *
+     * Les événements sont transformés avec les propriétés attendues
+     * par FullCalendar (id, title, start, end, backgroundColor, etc.).
+     *
+     * @param Request $request La requête HTTP avec les dates de début et fin
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function calendarView(Request $request)
     {
         $request->validate([
@@ -131,6 +173,13 @@ class DaeAgendaController extends BaseDaeController
         return response()->json($events);
     }
 
+    /**
+     * Confirme un événement d'agenda.
+     *
+     * @param Request $request La requête HTTP
+     * @param int $id L'identifiant de l'événement
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function confirmer(Request $request, $id)
     {
         $event = DaeAgendaEvent::findOrFail($id);
@@ -139,6 +188,13 @@ class DaeAgendaController extends BaseDaeController
         return redirect()->back()->with('success', 'Événement confirmé.');
     }
 
+    /**
+     * Annule un événement d'agenda.
+     *
+     * @param Request $request La requête HTTP
+     * @param int $id L'identifiant de l'événement
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function annuler(Request $request, $id)
     {
         $event = DaeAgendaEvent::findOrFail($id);
@@ -147,6 +203,13 @@ class DaeAgendaController extends BaseDaeController
         return redirect()->back()->with('success', 'Événement annulé.');
     }
 
+    /**
+     * Reporte un événement d'agenda à une nouvelle date.
+     *
+     * @param Request $request La requête HTTP avec les nouvelles dates
+     * @param int $id L'identifiant de l'événement
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function reporter(Request $request, $id)
     {
         $request->validate([

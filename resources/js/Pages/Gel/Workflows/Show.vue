@@ -29,6 +29,13 @@
     </GelLayout>
 </template>
 <script setup>
+/* ═══════════════════════════════════════════════════════
+   Workflows / Show — Détail d'un workflow d'approbation
+   avec ses étapes et informations générales.
+   ═══════════════════════════════════════════════════════ */
+
 import GelLayout from '../../../Layouts/GelLayout.vue'
+
+/* ─── Props — workflow complet avec étapes ─── */
 defineProps({ workflow: { type: Object, required: true } })
 </script>

@@ -1,13 +1,20 @@
+<!--
+  Composant : Expenses/Index.vue
+  Description : Gestion des notes de frais RH (employés, catégories, montants)
+                avec workflow d'approbation/rejet et suivi des statuts.
+-->
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 
+/* État réactif : notes de frais, filtres, indicateurs */
 const expenses = ref([]);
 const loading = ref(true);
 const error = ref(null);
 const search = ref('');
 const statusFilter = ref('');
 
+/* Récupération des notes de frais depuis l'API */
 const fetchExpenses = async () => {
     loading.value = true;
     error.value = null;
@@ -22,6 +29,7 @@ const fetchExpenses = async () => {
     }
 };
 
+/* Filtrage local : recherche et filtre par statut */
 const filteredExpenses = computed(() => {
     let list = expenses.value;
     if (search.value) {
@@ -37,6 +45,7 @@ const filteredExpenses = computed(() => {
     return list;
 });
 
+/* Classe CSS pour le badge de statut de la note de frais */
 const statusBadgeClass = (status) => {
     const map = {
         en_attente: 'bg-warning text-dark',
@@ -47,6 +56,7 @@ const statusBadgeClass = (status) => {
     return map[status] || 'bg-secondary';
 };
 
+/* Mise à jour du statut : approbation ou rejet d'une note de frais */
 const updateStatus = async (id, newStatus) => {
     const actionLabel = newStatus === 'approuve' ? 'approuver' : 'rejeter';
     if (!confirm('Confirmer la ' + actionLabel + ' de cette note de frais ?')) return;
@@ -64,6 +74,7 @@ const updateStatus = async (id, newStatus) => {
     }
 };
 
+/* Suppression d'une note de frais avec confirmation */
 const deleteExpense = async (id) => {
     if (!confirm('Confirmer la suppression de cette note de frais ?')) return;
     try {
@@ -79,6 +90,7 @@ const deleteExpense = async (id) => {
     }
 };
 
+/* Formatage monétaire en FCFA (locale fr-FR) */
 const formatCurrency = (value) => {
     if (value === null || value === undefined || isNaN(value)) return '0';
     return Number(value).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' FCFA';

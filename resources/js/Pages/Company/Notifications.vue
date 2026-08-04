@@ -1,4 +1,13 @@
 ﻿<script setup>
+/*
+ * Notifications.vue — Centre de notifications de l'entreprise
+ *
+ * Affiche la liste paginee des notifications avec filtrage par
+ * type (info, succes, avertissement, erreur) et par statut
+ * (lues / non lues). Permet de marquer une notification comme
+ * lue, de tout marquer comme lu, et de supprimer une notification.
+ */
+
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import CompanyLayout from '../../Layouts/CompanyLayout.vue';
 

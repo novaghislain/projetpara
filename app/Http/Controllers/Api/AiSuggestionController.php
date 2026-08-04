@@ -7,10 +7,19 @@ use App\Models\AiLearningLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur API des suggestions IA.
+ *
+ * Gère l'affichage, l'approbation, le rejet des suggestions générées
+ * par les agents IA, ainsi que le journal d'apprentissage associé.
+ */
 class AiSuggestionController extends BaseApiController
 {
     /**
      * Liste des suggestions IA pour l'entreprise connectée.
+     *
+     * @param  Request  $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function index(Request $request)
     {
@@ -37,7 +46,10 @@ class AiSuggestionController extends BaseApiController
     }
 
     /**
-     * Détail d'une suggestion.
+     * Détail d'une suggestion (la marque comme lue).
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\JsonResponse
      */
     public function show(int $id)
     {
@@ -55,7 +67,11 @@ class AiSuggestionController extends BaseApiController
     }
 
     /**
-     * Approuver une suggestion.
+     * Approuver une suggestion en attente et journaliser l'apprentissage.
+     *
+     * @param  Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\JsonResponse
      */
     public function approve(Request $request, int $id)
     {
@@ -82,7 +98,11 @@ class AiSuggestionController extends BaseApiController
     }
 
     /**
-     * Rejeter une suggestion.
+     * Rejeter une suggestion en attente et journaliser l'apprentissage.
+     *
+     * @param  Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\JsonResponse
      */
     public function reject(Request $request, int $id)
     {
@@ -113,7 +133,10 @@ class AiSuggestionController extends BaseApiController
     }
 
     /**
-     * Marquer comme lue.
+     * Marquer une suggestion comme lue.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\JsonResponse
      */
     public function markRead(int $id)
     {
@@ -125,7 +148,9 @@ class AiSuggestionController extends BaseApiController
     }
 
     /**
-     * Marquer toutes les suggestions non lues comme lues.
+     * Marquer toutes les suggestions non lues comme lues pour l'entreprise.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function markAllRead()
     {
@@ -136,7 +161,9 @@ class AiSuggestionController extends BaseApiController
     }
 
     /**
-     * Compter les suggestions non lues.
+     * Compter les suggestions non lues pour l'entreprise connectée.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function unreadCount()
     {
@@ -148,6 +175,9 @@ class AiSuggestionController extends BaseApiController
 
     /**
      * Supprimer une suggestion.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy(int $id)
     {
@@ -159,7 +189,10 @@ class AiSuggestionController extends BaseApiController
     }
 
     /**
-     * Journal d'apprentissage (lecture seule).
+     * Journal d'apprentissage (lecture seule) des actions IA.
+     *
+     * @param  Request  $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function learningLog(Request $request)
     {

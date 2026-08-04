@@ -10,6 +10,17 @@
 </template>
 
 <script setup>
+/* ============================================================
+ * Composant : CostCenters/Form
+ * Description : Formulaire de creation / modification
+ *   d'un centre de cout. Permet de choisir un client
+ *   et un centre parent. (En cours de construction)
+ * ============================================================ */
+
 import GelLayout from '../../../Layouts/GelLayout.vue';
+
+/* Proprietes recues du controleur :
+ *   clients  - Liste des clients pour l'association
+ *   parents  - Liste des centres parents disponibles */
 defineProps(['clients', 'parents'])
 </script>

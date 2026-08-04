@@ -19,7 +19,10 @@ class TwoFactorController extends Controller
     ) {}
 
     /**
-     * Afficher le QR code et les codes de secours pour activer le 2FA.
+     * Affiche le QR code et les codes de secours pour activer le 2FA.
+     * Si le 2FA est déjà activé, redirige vers la page de sécurité.
+     *
+     * @return \Illuminate\View\View
      */
     public function show(): View
     {
@@ -54,7 +57,11 @@ class TwoFactorController extends Controller
     }
 
     /**
-     * Confirmer l'activation du 2FA en validant un code TOTP.
+     * Confirme l'activation du 2FA en validant un code TOTP.
+     * Sauvegarde le secret, les codes de secours hachés et la date de confirmation.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
      */
     public function confirm(Request $request): RedirectResponse|JsonResponse
     {
@@ -95,7 +102,10 @@ class TwoFactorController extends Controller
     }
 
     /**
-     * Désactiver le 2FA.
+     * Désactive le 2FA pour l'utilisateur connecté.
+     * Supprime le secret, les codes de secours et la date de confirmation.
+     *
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function disable(): RedirectResponse
     {

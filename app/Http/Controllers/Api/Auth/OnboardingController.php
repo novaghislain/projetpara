@@ -8,11 +8,20 @@ use App\Models\JournalEntry;
 use App\Models\BankAccount;
 use Illuminate\Http\Request;
 
+/**
+ * Contrôleur API d'onboarding des nouveaux locataires.
+ *
+ * Vérifie l'état d'avancement de la configuration initiale
+ * (plan comptable, journaux, écritures, banque) et suggère
+ * les premières actions à réaliser.
+ */
 class OnboardingController extends Controller
 {
     /**
-     * Vérifie si le tenant a besoin d'être initialisé
-     * (première connexion)
+     * Vérifie si le tenant (entreprise) est initialisé (première connexion).
+     *
+     * @param  Request  $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function checkStatus(Request $request)
     {
@@ -50,7 +59,10 @@ class OnboardingController extends Controller
     }
 
     /**
-     * Guide l'utilisateur vers la première action
+     * Guide l'utilisateur vers sa première action (écriture de capital, compte banque).
+     *
+     * @param  Request  $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function getQuickStart(Request $request)
     {
@@ -111,6 +123,12 @@ class OnboardingController extends Controller
         ]);
     }
 
+    /**
+     * Retourne la première étape non complétée du parcours d'onboarding.
+     *
+     * @param  array  $steps  Tableau associatif des étapes (nom => complétée ou non)
+     * @return string|null
+     */
     private function getNextStep(array $steps): ?string
     {
         foreach ($steps as $step => $completed) {

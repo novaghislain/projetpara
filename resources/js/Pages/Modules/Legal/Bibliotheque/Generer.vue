@@ -57,9 +57,17 @@
 </template>
 
 <script setup>
+/*
+ * Composant : Generer.vue (Bibliotheque)
+ * Description : Génération d'un acte juridique à partir d'un modèle sélectionné.
+ *               L'utilisateur choisit un modèle, remplit les variables dynamiques
+ *               et obtient un aperçu du document généré.
+ * Route       : /juridique/bibliotheque/generer
+ */
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 
+/* Modèles disponibles, modèle sélectionné, valeurs des variables et contenu généré */
 const modeles = ref([]);
 const selected = ref(null);
 const selectedModele = ref(null);
@@ -67,6 +75,7 @@ const formValues = ref({});
 const generatedContent = ref(null);
 const generating = ref(false);
 
+/* Sélectionne un modèle et initialise les champs de variables */
 function selectModele(m) {
     selected.value = m.id;
     selectedModele.value = m;
@@ -77,6 +86,7 @@ function selectModele(m) {
     }
 }
 
+/* Envoie les variables au serveur et récupère le contenu généré */
 async function generer() {
     generating.value = true;
     try {
@@ -91,6 +101,7 @@ async function generer() {
     generating.value = false;
 }
 
+/* Charge la liste des modèles au montage du composant */
 async function load() {
     try { const res = await fetch('/juridique/bibliotheque'); modeles.value = await res.json(); }
     catch (e) { console.error(e); }

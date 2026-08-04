@@ -11,7 +11,16 @@ use Illuminate\Support\Facades\DB;
 class JournalController extends BaseGelAccountingController
 {
     /**
-     * Page formulaire de création d'écriture.
+     * Contrôleur de gestion des écritures comptables (journal).
+     * Permet de créer des écritures avec validation d'équilibre
+     * débit/crédit, de les valider, et de les supprimer.
+     */
+
+    /**
+     * Page formulaire de création d'écriture comptable.
+     *
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\View\View
      */
     public function create($clientId)
     {
@@ -24,7 +33,10 @@ class JournalController extends BaseGelAccountingController
     // ─── API ────────────────────────────────────────────────────
 
     /**
-     * API: Liste des journaux pour un client.
+     * API : Liste des journaux pour un client.
+     *
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\Http\JsonResponse La liste des journaux
      */
     public function listAll($clientId)
     {
@@ -37,7 +49,11 @@ class JournalController extends BaseGelAccountingController
     }
 
     /**
-     * API: Détail d'un journal.
+     * API : Détail d'un journal avec ses lignes.
+     *
+     * @param int $clientId L'identifiant du client
+     * @param int $id L'identifiant du journal
+     * @return \Illuminate\Http\JsonResponse Le journal avec ses lignes
      */
     public function getJournal($clientId, $id)
     {
@@ -49,7 +65,10 @@ class JournalController extends BaseGelAccountingController
     }
 
     /**
-     * API: Créer une écriture comptable.
+     * API : Crée une écriture comptable avec validation débit/crédit.
+     *
+     * @param Request $request La requête HTTP avec les données de l'écriture
+     * @return \Illuminate\Http\JsonResponse Le journal créé
      */
     public function store(Request $request)
     {
@@ -66,7 +85,7 @@ class JournalController extends BaseGelAccountingController
             'lines.*.credit' => 'nullable|numeric|min:0',
         ]);
 
-        // Valider l'équilibre débit/crédit
+        // Validation de l'équilibre : total débits = total crédits
         $totalDebit = collect($validated['lines'])->sum('debit');
         $totalCredit = collect($validated['lines'])->sum('credit');
 
@@ -76,6 +95,7 @@ class JournalController extends BaseGelAccountingController
             ], 422);
         }
 
+        // Création du journal et de ses lignes dans une transaction
         $journal = DB::transaction(function () use ($validated, $clientId) {
             $journal = AccountingJournal::create([
                 'client_id' => $clientId,
@@ -104,22 +124,27 @@ class JournalController extends BaseGelAccountingController
     }
 
     /**
-     * API: Valider (poster) une écriture comptable.
+     * API : Valide (poste) une écriture comptable.
+     *
+     * @param Request $request La requête HTTP (avec client_id optionnel)
+     * @param int $id L'identifiant du journal
+     * @return \Illuminate\Http\JsonResponse Message de confirmation
      */
     public function post(Request $request, $id)
     {
         $journal = AccountingJournal::findOrFail($id);
 
-        // Vérifier que le client_id correspond si fourni dans la requête
+        // Vérification que le client_id correspond si fourni
         if ($request->filled('client_id') && (int) $journal->client_id !== (int) $request->input('client_id')) {
             abort(403, 'Accès non autorisé à cette écriture.');
         }
 
+        // Une écriture déjà postée ne peut pas l'être à nouveau
         if ($journal->status === 'posted') {
             return response()->json(['message' => 'Cette écriture est déjà validée'], 409);
         }
 
-        // Vérifier l'équilibre
+        // Vérification finale de l'équilibre avant validation
         if (!$journal->is_balanced) {
             return response()->json(['message' => 'L\'écriture n\'est pas équilibrée'], 422);
         }
@@ -130,17 +155,22 @@ class JournalController extends BaseGelAccountingController
     }
 
     /**
-     * API: Supprimer une écriture comptable.
+     * API : Supprime une écriture comptable (brouillon seulement).
+     *
+     * @param Request $request La requête HTTP (avec client_id optionnel)
+     * @param int $id L'identifiant du journal
+     * @return \Illuminate\Http\JsonResponse Message de confirmation
      */
     public function destroy(Request $request, $id)
     {
         $journal = AccountingJournal::findOrFail($id);
 
-        // Vérifier que le client_id correspond si fourni dans la requête
+        // Vérification que le client_id correspond si fourni
         if ($request->filled('client_id') && (int) $journal->client_id !== (int) $request->input('client_id')) {
             abort(403, 'Accès non autorisé à cette écriture.');
         }
 
+        // Une écriture validée ne peut pas être supprimée
         if ($journal->status === 'posted') {
             return response()->json(['message' => 'Impossible de supprimer une écriture validée'], 409);
         }

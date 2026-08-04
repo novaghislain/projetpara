@@ -1,12 +1,22 @@
 <script setup>
+/*
+ * Composant Formations
+ * Affiche la liste des formations avec :
+ *   - Récapitulatif des statuts (planifiées, en cours, terminées)
+ *   - Tableau détaillé : titre, organisme, dates, statut
+ * Les données sont chargées depuis l'API RH (format paginé possible).
+ */
+
 import { ref, computed, onMounted } from 'vue';
 import CompanyLayout from '../../../Layouts/CompanyLayout.vue';
 import { authStore } from '../../../stores/auth';
 
+/* État réactif : liste des formations, chargement et erreur */
 const trainings = ref([]);
 const loading = ref(true);
 const error = ref(null);
 
+/* Récupération des formations depuis l'API (gère la pagination data.data) */
 const fetchTrainings = async () => {
     loading.value = true;
     error.value = null;
@@ -22,6 +32,7 @@ const fetchTrainings = async () => {
     }
 };
 
+/* Correspondance statut -> classe Bootstrap pour le badge */
 const statusBadgeClass = (status) => {
     const map = {
         planifie: 'bg-info',
@@ -32,6 +43,7 @@ const statusBadgeClass = (status) => {
     return map[status] || 'bg-secondary';
 };
 
+/* Chargement initial au montage */
 onMounted(fetchTrainings);
 </script>
 

@@ -86,18 +86,30 @@
 </template>
 
 <script setup>
+/*
+ * Composant : LegalAssembleesShow
+ * Role : Page de detail d'une assemblee generale.
+ * Affiche les informations (type, date, lieu, quorum), l'ordre du jour,
+ * les resolutions et les actions disponibles (convocation, PV).
+ * Props : aucune (l'ID est extrait de l'URL)
+ */
+
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 import ContratStatusBadge from '../../../../Components/Legal/ContratStatusBadge.vue';
 
+// Donnees de l'assemblee chargee
 const ag = ref(null);
+// ID extrait de l'URL courante
 const agId = window.location.pathname.split('/').pop();
 
+/* Formate une date au format francais court */
 function formatDate(date) {
     if (!date) return '—';
     return new Date(date + 'T00:00:00').toLocaleDateString('fr-FR');
 }
 
+/* Charge les details de l'assemblee depuis l'API */
 async function loadAG() {
     try {
         const res = await fetch(`/juridique/assemblees/${agId}`);
@@ -105,6 +117,7 @@ async function loadAG() {
     } catch (e) { console.error(e); }
 }
 
+/* Declenche la generation de la convocation */
 async function genererConvocation() {
     try {
         const res = await fetch(`/juridique/assemblees/${agId}/convocation`, { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content } });
@@ -112,6 +125,7 @@ async function genererConvocation() {
     } catch (e) { console.error(e); }
 }
 
+/* Declenche la generation du proces-verbal */
 async function genererPV() {
     try {
         const res = await fetch(`/juridique/assemblees/${agId}/pv`, { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content } });
@@ -119,6 +133,7 @@ async function genererPV() {
     } catch (e) { console.error(e); }
 }
 
+/* Approuve le proces-verbal */
 async function approuverPV() {
     try {
         const res = await fetch(`/juridique/assemblees/${agId}/approuver-pv`, { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content } });

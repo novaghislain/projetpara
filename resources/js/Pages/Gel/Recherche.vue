@@ -17,5 +17,11 @@
     </GelLayout>
 </template>
 <script setup>
-import GelLayout from '../../Layouts/GelLayout.vue';
+/*
+ * Composant : Recherche.vue
+ * Description : Page de recherche globale dans l'ensemble du cabinet GEL.
+ *              Fonctionnalite de recherche transversale (clients, missions, etc.).
+ *              Actuellement en cours de deploiement.
+ */
+import GelLayout from '../../Layouts/GelLayout.vue';  // Layout principal du module GEL
 </script>

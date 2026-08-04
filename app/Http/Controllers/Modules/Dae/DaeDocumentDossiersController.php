@@ -5,6 +5,12 @@ namespace App\Http\Controllers\Modules\Dae;
 use App\Models\Dae\DaeDocumentDossier;
 use Illuminate\Http\Request;
 
+/**
+ * Contrôleur de gestion des dossiers de documents du module DAE.
+ *
+ * Permet la gestion hiérarchique des dossiers (arborescence) avec
+ * création, modification, suppression et organisation des documents.
+ */
 class DaeDocumentDossiersController extends BaseDaeController
 {
     /**

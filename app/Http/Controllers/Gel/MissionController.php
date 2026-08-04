@@ -13,7 +13,15 @@ use Illuminate\Support\Facades\Auth;
 class MissionController extends Controller
 {
     /**
+     * Contrôleur de gestion des missions.
+     * Permet de créer, modifier, suivre et lister les missions
+     * avec affectation des collaborateurs et suivi de progression.
+     */
+
+    /**
      * Page liste des missions.
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
@@ -21,7 +29,9 @@ class MissionController extends Controller
     }
 
     /**
-     * Page formulaire de création.
+     * Page formulaire de création d'une mission.
+     *
+     * @return \Illuminate\View\View
      */
     public function create()
     {
@@ -29,7 +39,10 @@ class MissionController extends Controller
     }
 
     /**
-     * Créer une mission.
+     * Crée une nouvelle mission avec ses collaborateurs.
+     *
+     * @param Request $request La requête HTTP avec les données de la mission
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
     public function store(Request $request)
     {
@@ -49,12 +62,13 @@ class MissionController extends Controller
             'collaborators.*' => 'exists:users,id',
         ]);
 
+        // Valeurs par défaut
         $validated['status'] = $validated['status'] ?? 'a_faire';
         $validated['created_by'] = Auth::id();
 
         $mission = Mission::create($validated);
 
-        // Ajouter les collaborateurs
+        // Ajout des collaborateurs à la mission
         if (!empty($validated['collaborators'])) {
             $collaboratorsData = [];
             foreach ($validated['collaborators'] as $userId) {
@@ -73,6 +87,9 @@ class MissionController extends Controller
 
     /**
      * Page détail d'une mission.
+     *
+     * @param int $id L'identifiant de la mission
+     * @return \Illuminate\View\View
      */
     public function show($id)
     {
@@ -83,7 +100,10 @@ class MissionController extends Controller
     }
 
     /**
-     * Page formulaire d'édition.
+     * Page formulaire d'édition d'une mission.
+     *
+     * @param int $id L'identifiant de la mission
+     * @return \Illuminate\View\View
      */
     public function edit($id)
     {
@@ -94,7 +114,11 @@ class MissionController extends Controller
     }
 
     /**
-     * Mettre à jour une mission.
+     * Met à jour une mission et synchronise ses collaborateurs.
+     *
+     * @param Request $request La requête HTTP avec les données mises à jour
+     * @param int $id L'identifiant de la mission
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
     public function update(Request $request, $id)
     {
@@ -118,7 +142,7 @@ class MissionController extends Controller
 
         $mission->update($validated);
 
-        // Synchroniser les collaborateurs
+        // Synchronisation de la liste des collaborateurs
         if (isset($validated['collaborators'])) {
             $collaboratorsData = [];
             foreach ($validated['collaborators'] as $userId) {
@@ -136,12 +160,15 @@ class MissionController extends Controller
     }
 
     /**
-     * Supprimer une mission.
+     * Supprime une mission.
+     *
+     * @param int $id L'identifiant de la mission
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
     public function destroy($id)
     {
-        $client = Mission::findOrFail($id);
-        $client->delete();
+        $mission = Mission::findOrFail($id);
+        $mission->delete();
 
         if (request()->wantsJson()) {
             return response()->json(['message' => 'Mission supprimée avec succès']);
@@ -152,7 +179,12 @@ class MissionController extends Controller
     }
 
     /**
-     * Mettre à jour uniquement la progression.
+     * Met à jour uniquement la progression (pourcentage) d'une mission.
+     * Passe automatiquement le statut à "terminee" si progression atteint 100%.
+     *
+     * @param Request $request La requête HTTP avec le nouveau pourcentage
+     * @param int $id L'identifiant de la mission
+     * @return \Illuminate\Http\JsonResponse La mission mise à jour
      */
     public function updateProgress(Request $request, $id)
     {
@@ -168,7 +200,7 @@ class MissionController extends Controller
             $data['status'] = $validated['status'];
         }
 
-        // Si progression à 100%, passer automatiquement à "terminee"
+        // Passage automatique à "terminee" si la progression atteint 100%
         if ($validated['progress'] >= 100 && !isset($validated['status'])) {
             $data['status'] = 'terminee';
         }
@@ -181,7 +213,9 @@ class MissionController extends Controller
     // ─── API ────────────────────────────────────────────────────
 
     /**
-     * API: Liste de toutes les missions.
+     * API : Liste toutes les missions avec filtrage par rôle.
+     *
+     * @return \Illuminate\Http\JsonResponse La liste des missions
      */
     public function listAll()
     {
@@ -193,6 +227,8 @@ class MissionController extends Controller
             'createdBy:id,name',
         ]);
 
+        // Filtrage selon le rôle : les utilisateurs non-admin voient
+        // uniquement les missions de leur pôle ou qui les concernent
         if (!in_array($user->role, ['super_admin', 'director'])) {
             $query->where(function ($q) use ($user) {
                 $q->where('pole_id', $user->pole_id)
@@ -205,7 +241,10 @@ class MissionController extends Controller
     }
 
     /**
-     * API: Détail d'une mission.
+     * API : Détail d'une mission avec toutes ses relations.
+     *
+     * @param int $id L'identifiant de la mission
+     * @return \Illuminate\Http\JsonResponse La mission avec ses relations
      */
     public function getMission($id)
     {

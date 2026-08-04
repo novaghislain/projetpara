@@ -7,6 +7,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle Sale - Vente / transaction commerciale.
+ *
+ * Table associée : 'sales' (convention Laravel).
+ * Gère les ventes en caisse avec référence, clients, totaux HT/TTC,
+ * remises, statut, et intégration e-MECeF (facturation électronique OHADA).
+ * Relations :
+ * - client() : appartient à un client (Client).
+ * - posSession() : appartient à une session de caisse (PosSession).
+ * - businessUser() : appartient à un utilisateur métier (BusinessUser).
+ * - items() : a plusieurs lignes de vente (SaleItem).
+ * - payments() : a plusieurs paiements (Payment).
+ */
 class Sale extends Model
 {
     use SoftDeletes;

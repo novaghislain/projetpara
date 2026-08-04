@@ -9,8 +9,19 @@ use Illuminate\Http\Request;
 
 class TaxDeclarationController extends BaseGelAccountingController
 {
+    /**
+     * Contrôleur de gestion des déclarations fiscales comptables.
+     * Permet de calculer et générer les déclarations de TVA, IS,
+     * ITS, CNSS et VPS avec les règles de calcul SYSCOHADA.
+     */
+
     protected TaxCalculationService $taxService;
 
+    /**
+     * Injection du service de calcul fiscal.
+     *
+     * @param TaxCalculationService $taxService Service de calcul des taxes
+     */
     public function __construct(TaxCalculationService $taxService)
     {
         $this->taxService = $taxService;
@@ -18,6 +29,9 @@ class TaxDeclarationController extends BaseGelAccountingController
 
     /**
      * Page liste des déclarations fiscales.
+     *
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\View\View
      */
     public function index($clientId)
     {
@@ -28,7 +42,10 @@ class TaxDeclarationController extends BaseGelAccountingController
     }
 
     /**
-     * API: Liste des déclarations.
+     * API : Liste des déclarations fiscales pour un client.
+     *
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\Http\JsonResponse La liste des déclarations
      */
     public function listAll($clientId)
     {
@@ -42,7 +59,11 @@ class TaxDeclarationController extends BaseGelAccountingController
     }
 
     /**
-     * API: Détail d'une déclaration.
+     * API : Détail d'une déclaration fiscale.
+     *
+     * @param int $clientId L'identifiant du client
+     * @param int $id L'identifiant de la déclaration
+     * @return \Illuminate\Http\JsonResponse La déclaration avec ses relations
      */
     public function show($clientId, $id)
     {
@@ -54,7 +75,10 @@ class TaxDeclarationController extends BaseGelAccountingController
     }
 
     /**
-     * API: Calculer et générer une déclaration de TVA.
+     * API : Calcule et génère une déclaration de TVA.
+     *
+     * @param Request $request La requête HTTP (fiscal_year_id, month)
+     * @return \Illuminate\Http\JsonResponse La déclaration TVA créée
      */
     public function calculerTva(Request $request)
     {
@@ -65,6 +89,7 @@ class TaxDeclarationController extends BaseGelAccountingController
         ]);
 
         $fiscalYear = FiscalYear::findOrFail($validated['fiscal_year_id']);
+        // Calcul de la TVA via le service dédié
         $result = $this->taxService->calculerTva(
             $clientId,
             $validated['fiscal_year_id'],
@@ -78,7 +103,7 @@ class TaxDeclarationController extends BaseGelAccountingController
             now()->setYear($fiscalYear->year)->setMonth($validated['month'])->lastOfMonth()
         );
 
-        // Générer la déclaration
+        // Génération de la déclaration avec les résultats du calcul
         $declaration = $this->taxService->genererDeclaration(
             $clientId,
             $validated['fiscal_year_id'],
@@ -104,7 +129,10 @@ class TaxDeclarationController extends BaseGelAccountingController
     }
 
     /**
-     * API: Calculer l'IS annuel.
+     * API : Calcule et génère la déclaration d'IS annuel.
+     *
+     * @param Request $request La requête HTTP (fiscal_year_id)
+     * @return \Illuminate\Http\JsonResponse La déclaration IS créée
      */
     public function calculerIs(Request $request)
     {
@@ -141,7 +169,10 @@ class TaxDeclarationController extends BaseGelAccountingController
     }
 
     /**
-     * API: Calculer ITS.
+     * API : Calcule et génère la déclaration d'ITS.
+     *
+     * @param Request $request La requête HTTP (fiscal_year_id, salaire_brut_annuel)
+     * @return \Illuminate\Http\JsonResponse La déclaration ITS créée
      */
     public function calculerIts(Request $request)
     {
@@ -176,7 +207,10 @@ class TaxDeclarationController extends BaseGelAccountingController
     }
 
     /**
-     * API: Calculer CNSS.
+     * API : Calcule et génère la déclaration CNSS.
+     *
+     * @param Request $request La requête HTTP (fiscal_year_id, salaire_brut_mensuel)
+     * @return \Illuminate\Http\JsonResponse La déclaration CNSS créée
      */
     public function calculerCnss(Request $request)
     {
@@ -211,7 +245,10 @@ class TaxDeclarationController extends BaseGelAccountingController
     }
 
     /**
-     * API: Calculer VPS.
+     * API : Calcule et génère la déclaration VPS.
+     *
+     * @param Request $request La requête HTTP (fiscal_year_id, masse_salariale)
+     * @return \Illuminate\Http\JsonResponse La déclaration VPS créée
      */
     public function calculerVps(Request $request)
     {
@@ -245,7 +282,12 @@ class TaxDeclarationController extends BaseGelAccountingController
     }
 
     /**
-     * API: Mettre à jour le statut d'une déclaration.
+     * API : Met à jour le statut d'une déclaration fiscale.
+     *
+     * @param Request $request La requête HTTP (status, date_depot)
+     * @param int $clientId L'identifiant du client
+     * @param int $id L'identifiant de la déclaration
+     * @return \Illuminate\Http\JsonResponse La déclaration mise à jour
      */
     public function updateStatus(Request $request, $clientId, $id)
     {
@@ -258,9 +300,11 @@ class TaxDeclarationController extends BaseGelAccountingController
             ->findOrFail($id);
 
         $updateData = ['status' => $validated['status']];
+        // Enregistrement de la date de dépôt si applicable
         if ($validated['status'] === 'depose' && isset($validated['date_depot'])) {
             $updateData['date_depot'] = $validated['date_depot'];
         }
+        // Passage en statut payé : mise à jour du montant payé et solde à zéro
         if ($validated['status'] === 'paye') {
             $updateData['montant_paye'] = $declaration->montant_dut;
             $updateData['solde'] = 0;
@@ -272,13 +316,18 @@ class TaxDeclarationController extends BaseGelAccountingController
     }
 
     /**
-     * API: Supprimer une déclaration (brouillon seulement).
+     * API : Supprime une déclaration fiscale (brouillon seulement).
+     *
+     * @param int $clientId L'identifiant du client
+     * @param int $id L'identifiant de la déclaration
+     * @return \Illuminate\Http\JsonResponse Message de confirmation
      */
     public function destroy($clientId, $id)
     {
         $declaration = AccountingTaxDeclaration::where('client_id', $clientId)
             ->findOrFail($id);
 
+        // Seules les déclarations en brouillon peuvent être supprimées
         if ($declaration->status !== 'brouillon') {
             return response()->json(['message' => 'Seules les déclarations en brouillon peuvent être supprimées'], 409);
         }

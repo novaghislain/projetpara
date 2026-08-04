@@ -6,6 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Modèle Tontine - Tontine d'épargne / association tournante.
+ *
+ * Table associée : 'tontines' (convention Laravel).
+ * Gère les tontines : nom, type, montant de cotisation, périodicité,
+ * date de démarrage, et statut (active/terminée).
+ * Relations :
+ * - client() : appartient à un client (Client).
+ * - membres() : a plusieurs membres (TontineMembre).
+ * - cotisations() : a plusieurs cotisations (TontineCotisation).
+ */
 class Tontine extends Model
 {
     protected $fillable = [

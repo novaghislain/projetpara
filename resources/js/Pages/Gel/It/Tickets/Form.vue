@@ -1,4 +1,14 @@
 <script setup>
+/*
+ * Page : Ticket Form
+ * Role : Formulaire de création et d'édition d'un ticket IT support
+ *        En création : titre, description, type, priorité, client, assignation
+ *        En édition   : seulement priorité, assignation (via endpoint dédié)
+ * Props :
+ *   ticket     (Object|null) — Ticket existant (mode édition) ou null (mode création)
+ *   clients    (Array)       — Liste des clients pour le select
+ *   technicians (Array)      — Liste des techniciens pour le select
+ */
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 
@@ -8,12 +18,12 @@ const props = defineProps({
     technicians: { type: Array, default: () => [] },
 });
 
-const submitting = ref(false);
-const saved = ref(false);
-const error = ref(null);
+const submitting = ref(false); // Indique si le formulaire est en cours d'envoi
+const saved = ref(false);      // Passe à true après un enregistrement réussi
+const error = ref(null);       // Message d'erreur à afficher (null = aucune erreur)
 
-const typeOptions = ['incident', 'request', 'change', 'problem'];
-const priorityOptions = ['low', 'medium', 'high', 'critical'];
+const typeOptions = ['incident', 'request', 'change', 'problem'];     // Types de tickets disponibles
+const priorityOptions = ['low', 'medium', 'high', 'critical'];       // Niveaux de priorité disponibles
 
 const form = ref({
     title: '',
@@ -24,14 +34,16 @@ const form = ref({
     assigned_to: '',
 });
 
+// Détermine si on est en mode édition ou création
 const isEdit = !!props.ticket;
 
+// Initialise le formulaire avec les données du ticket existant (mode édition)
 const initForm = () => {
     if (props.ticket) {
         form.value = {
             title: props.ticket.title || '',
             description: props.ticket.description || '',
-            type: props.ticket.type || 'incident',
+            type: props.ticket.type || 'issue',
             priority: props.ticket.priority || 'medium',
             client_id: props.ticket.client_id || '',
             assigned_to: props.ticket.assigned_to || '',
@@ -39,6 +51,7 @@ const initForm = () => {
     }
 };
 
+// Soumet le formulaire via fetch (POST création / PUT édition)
 const submitForm = async () => {
     submitting.value = true;
     saved.value = false;
@@ -50,7 +63,7 @@ const submitForm = async () => {
 
         let payload;
         if (isEdit) {
-            // Update endpoint only accepts status, priority, assigned_to, resolution
+            // En édition, seuls statut, priorité, assignation et résolution sont modifiables
             payload = {
                 status: props.ticket.status || 'open',
                 priority: form.value.priority,
@@ -78,7 +91,7 @@ const submitForm = async () => {
         });
 
         if (res.status === 302) {
-            // Redirect response — follow it
+            // Réponse de redirection — on suit la redirection
             window.location.href = '/it/tickets';
             return;
         }
@@ -104,6 +117,7 @@ const submitForm = async () => {
     }
 };
 
+// Retourne à la page précédente dans l'historique du navigateur
 const goBack = () => {
     window.history.back();
 };

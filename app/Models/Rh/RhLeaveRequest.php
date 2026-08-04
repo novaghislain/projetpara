@@ -5,6 +5,16 @@ namespace App\Models\Rh;
 use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle RhLeaveRequest - Demande de congé d'un employé.
+ *
+ * Table associée : 'rh_leave_requests'.
+ * Enregistre les demandes de congé : type (payé/maladie/etc.),
+ * dates, durée, motif, statut et approbation.
+ * Relations :
+ * - employee() : appartient à un employé (RhEmployee).
+ * - approbateur() : appartient à l'utilisateur (User) qui a approuvé la demande.
+ */
 class RhLeaveRequest extends RhBaseModel
 {
     use SoftDeletes;

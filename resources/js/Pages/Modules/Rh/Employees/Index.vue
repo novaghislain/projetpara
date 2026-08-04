@@ -1,9 +1,15 @@
+<!--
+  Composant : Employees/Index.vue
+  Description : Liste des employés RH avec filtres, recherche, statistiques et actions CRUD.
+  Utilise : GelLayout, RhStatCard
+-->
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 import RhStatCard from '../../../../Components/Rh/RhStatCard.vue';
 import { authStore } from '../../../../stores/auth';
 
+/* État réactif : données brutes, chargement, erreur, filtres */
 const employees = ref([]);
 const loading = ref(true);
 const error = ref(null);
@@ -11,6 +17,7 @@ const search = ref('');
 const statusFilter = ref('');
 const selectedIds = ref([]);
 
+/* Récupération des employés depuis l'API */
 const fetchEmployees = async () => {
     loading.value = true;
     error.value = null;
@@ -25,6 +32,7 @@ const fetchEmployees = async () => {
     }
 };
 
+/* Filtrage local : recherche textuelle + filtre par statut */
 const filteredEmployees = computed(() => {
     let list = employees.value;
     if (search.value) {
@@ -43,6 +51,7 @@ const filteredEmployees = computed(() => {
     return list;
 });
 
+/* Statistiques globales calculées depuis la liste */
 const stats = computed(() => ({
     total: employees.value.length,
     actifs: employees.value.filter(e => e.status === 'actif').length,
@@ -50,6 +59,7 @@ const stats = computed(() => ({
     stagiaires: employees.value.filter(e => e.type_contrat === 'STAGE').length,
 }));
 
+/* Classe CSS pour le badge de statut */
 const statusBadgeClass = (status) => {
     const map = {
         actif: 'bg-success',
@@ -60,6 +70,7 @@ const statusBadgeClass = (status) => {
     return map[status] || 'bg-secondary';
 };
 
+/* Suppression d'un employé avec confirmation */
 const deleteEmployee = async (id) => {
     if (!confirm('Confirmer la suppression de cet employé ?')) return;
     try {

@@ -1,7 +1,14 @@
 <script setup>
+/* ============================================================
+ * Articles / Show.vue
+ * Page de detail d'un article avec contenu HTML, meta-donnees
+ * (auteur, date, temps de lecture), tags et sidebar
+ * (extrait, slug, categorie).
+ * ============================================================ */
 import { ref, onMounted } from 'vue';
 import GelLayout from '../../../Layouts/GelLayout.vue';
 
+/* Identifiant de l'article recu en prop */
 const props = defineProps({
     articleId: { type: [Number, String], required: true }
 });
@@ -10,6 +17,7 @@ const article = ref(null);
 const loading = ref(true);
 const error = ref(null);
 
+/* Chargement de l'article depuis l'API */
 const fetchArticle = async () => {
     loading.value = true;
     error.value = null;
@@ -24,6 +32,7 @@ const fetchArticle = async () => {
     }
 };
 
+/* Formatage de date en francais (jour, mois, annee) */
 const formatDate = (dateStr) => {
     if (!dateStr) return '';
     const d = new Date(dateStr);
@@ -32,9 +41,11 @@ const formatDate = (dateStr) => {
     });
 };
 
+/* Labels et couleurs pour les statuts de publication */
 const statusLabels = { published: 'Publie', draft: 'Brouillon', archived: 'Archive' };
 const statusColors = { published: 'bg-success', draft: 'bg-warning text-dark', archived: 'bg-secondary' };
 
+/* Palette de couleurs pour les badges de categories */
 const categoryColors = [
     '#1a237e', '#004d40', '#3e2723', '#4a148c',
     '#b71c1c', '#01579b', '#33691e', '#e65100', '#4e342e'
@@ -46,8 +57,15 @@ onMounted(fetchArticle);
 </script>
 
 <template>
+    <!-- ============================================================
+    Page de detail d'un article.
+    Affiche le contenu HTML, les meta-donnees (auteur, date,
+    temps de lecture), les tags et une sidebar avec resume,
+    slug et categorie.
+    ============================================================ -->
     <GelLayout :page-title="article?.title || 'Article'">
-        <!-- Loading -->
+        <!-- Indicateur de chargement -->
+
         <div v-if="loading" class="d-flex justify-content-center py-5">
             <div class="spinner-border text-primary">
                 <span class="visually-hidden">Chargement...</span>
@@ -168,6 +186,11 @@ onMounted(fetchArticle);
 </template>
 
 <style scoped>
+/* ============================================================
+ * Styles du contenu HTML de l'article (typo, blocs, media).
+ * ============================================================ */
+
+/* Titres : h1 a h4 */
 .article-content :deep(h1),
 .article-content :deep(h2),
 .article-content :deep(h3),
@@ -178,12 +201,14 @@ onMounted(fetchArticle);
     color: #1a1a2e;
 }
 
+/* Paragraphes */
 .article-content :deep(p) {
     margin-bottom: 1rem;
     line-height: 1.8;
     color: #333;
 }
 
+/* Listes non-ordonnees et ordonnees */
 .article-content :deep(ul),
 .article-content :deep(ol) {
     margin-bottom: 1rem;
@@ -195,6 +220,7 @@ onMounted(fetchArticle);
     line-height: 1.7;
 }
 
+/* Citations en bloc */
 .article-content :deep(blockquote) {
     border-left: 4px solid #FF7900;
     padding: 0.75rem 1rem;
@@ -205,6 +231,7 @@ onMounted(fetchArticle);
     font-style: italic;
 }
 
+/* Images */
 .article-content :deep(img) {
     max-width: 100%;
     height: auto;
@@ -226,6 +253,7 @@ onMounted(fetchArticle);
     opacity: 0.25;
 }
 
+/* Tableaux */
 .article-content :deep(table) {
     width: 100%;
     border-collapse: collapse;
@@ -244,6 +272,7 @@ onMounted(fetchArticle);
     font-weight: 600;
 }
 
+/* Blocs de code preformate */
 .article-content :deep(pre) {
     background: #1e1e2e;
     color: #cdd6f4;
@@ -255,6 +284,7 @@ onMounted(fetchArticle);
     margin: 1rem 0;
 }
 
+/* Code inline */
 .article-content :deep(code) {
     font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
     font-size: 0.875em;
@@ -264,6 +294,7 @@ onMounted(fetchArticle);
     color: #d63384;
 }
 
+/* Code dans un bloc pre : herite du fond sombre */
 .article-content :deep(pre code) {
     background: transparent;
     padding: 0;

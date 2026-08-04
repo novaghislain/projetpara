@@ -11,13 +11,36 @@ use App\Models\Rh\RhPayroll;
 use App\Models\Rh\RhTraining;
 use Illuminate\Http\Request;
 
+/**
+ * Contrôleur du tableau de bord RH.
+ *
+ * Fournit la vue du tableau de bord ainsi que les statistiques
+ * agrégées pour les ressources humaines (employés, contrats,
+ * congés, frais, paies, formations, alertes).
+ */
 class RhDashboardController extends BaseRhController
 {
+    /**
+     * Affiche la vue du tableau de bord RH.
+     *
+     * @return \Illuminate\View\View La vue du tableau de bord RH
+     */
     public function index()
     {
         return view('app', ['page' => 'rh-dashboard']);
     }
 
+    /**
+     * Retourne les statistiques agrégées pour le tableau de bord RH.
+     *
+     * Calcule et retourne les indicateurs clés : nombre d'employés,
+     * contrats actifs, congés en attente, notes de frais en attente,
+     * fiches de paie en brouillon, formations planifiées, alertes actives,
+     * ainsi que les listes récentes des employés, congés, frais et alertes.
+     *
+     * @param Request $request La requête HTTP
+     * @return \Illuminate\Http\JsonResponse Les statistiques du tableau de bord
+     */
     public function stats(Request $request)
     {
         $clientId = $this->getClientId($request);

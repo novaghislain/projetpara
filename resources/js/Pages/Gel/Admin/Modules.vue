@@ -17,5 +17,10 @@
     </GelLayout>
 </template>
 <script setup>
+/* ============================================================
+ * Modules — Gestion des modules et fonctionnalités du cabinet
+ * Page d'administration des modules disponibles. Affiche un
+ * placeholder en attendant le déploiement complet.
+ * ============================================================ */
 import GelLayout from '../../../Layouts/GelLayout.vue';
 </script>

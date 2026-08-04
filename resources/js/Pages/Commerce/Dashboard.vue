@@ -1,25 +1,41 @@
 <script setup>
+/* ═══════════════════════════════════════════════════════════
+   Dashboard.vue - Tableau de bord du module Commerce/POS
+   Affiche les indicateurs clés : CA, ventes, stocks,
+   top produits, graphique journalier et actions rapides.
+   ═══════════════════════════════════════════════════════════ */
 import { ref, onMounted } from 'vue'
 import GelLayout from '../../Layouts/GelLayout.vue'
 import { authStore } from '../../stores/auth'
 
 /* ══════════════════════════════════════════
-   State
+   État réactif du composant
    ══════════════════════════════════════════ */
-const state = ref('loading')
-const errorMsg = ref('')
-const data = ref(null)
+const state = ref('loading')       /* 'loading' | 'loaded' | 'error' */
+const errorMsg = ref('')           /* Message d'erreur éventuel */
+const data = ref(null)             /* Données du dashboard renvoyées par l'API */
 
+/* ══════════════════════════════════════════
+   Utilitaires de formatage
+   ══════════════════════════════════════════ */
+/* Formate un nombre en chaîne localisée (ex: 1 234) */
 const fmtNum = (n) => Number(n || 0).toLocaleString('fr-FR')
+/* Formate un montant en devise XOF (ex: 1 234 F) */
 const fmtCurr = (n) => Number(n || 0).toLocaleString('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0, maximumFractionDigits: 0 })
 
+/* Calcule la hauteur relative d'une barre pour le graphique journalier */
 const barHeight = (val, allVals) => {
   const max = Math.max(...(allVals || []).map((r) => r.total || r.amount || 0), 1)
   return Math.max(4, Math.round((val / max) * 120)) + 'px'
 }
 
+/* Étiquettes des modes de paiement pour l'affichage */
 const paymentLabels = { especes: 'Espèces', momo: 'MTN MoMo', moov: 'Moov Money', carte: 'Carte', autre: 'Autre' }
 
+/* ══════════════════════════════════════════
+   Récupération des données
+   ══════════════════════════════════════════ */
+/* Charge les statistiques du dashboard via l'API */
 const fetchStats = async () => {
   state.value = 'loading'
   try {
@@ -32,6 +48,7 @@ const fetchStats = async () => {
   }
 }
 
+/* Charge les données au montage du composant */
 onMounted(fetchStats)
 </script>
 

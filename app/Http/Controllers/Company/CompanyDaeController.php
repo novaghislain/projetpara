@@ -13,13 +13,36 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Contrôleur DAE (Document, Archivage, Electronique) pour l'interface Company.
+ *
+ * Gère les fonctionnalités de gestion électronique de documents :
+ * courriers, documents, contrats, tâches, avec statistiques et
+ * indicateurs pour le tableau de bord DAE.
+ *
+ * Toutes les données sont filtrées par client_id.
+ */
 class CompanyDaeController extends BaseCompanyController
 {
+    /**
+     * Affiche le tableau de bord DAE (vue SPA).
+     *
+     * @return \Illuminate\View\View
+     */
     public function index()
     {
         return view('company', ['page' => 'company-dae-dashboard', 'clientId' => $this->getClientId()]);
     }
 
+    /**
+     * API: Statistiques globales du module DAE.
+     *
+     * Compte les courriers, documents, contrats, tâches et événements.
+     * Retourne également l'activité récente (logs des 10 dernières actions).
+     *
+     * @param Request $request Requête HTTP
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function stats(Request $request)
     {
         $clientId = $this->getClientId();
@@ -60,6 +83,14 @@ class CompanyDaeController extends BaseCompanyController
 
     // ─── Courriers ──────────────────────────────────────
 
+    /**
+     * API: Liste des courriers (avec pagination et filtre par statut).
+     *
+     * Retourne la vue SPA si la requête n'attend pas du JSON.
+     *
+     * @param Request $request Requête HTTP (statut optionnel)
+     * @return \Illuminate\View\View|\Illuminate\Http\JsonResponse
+     */
     public function courriers(Request $request)
     {
         $clientId = $this->getClientId();
@@ -73,6 +104,12 @@ class CompanyDaeController extends BaseCompanyController
         return response()->json($query->paginate(20));
     }
 
+    /**
+     * API: Affiche un courrier avec ses relations.
+     *
+     * @param int $id Identifiant du courrier
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function courrierShow($id)
     {
         $clientId = $this->getClientId();
@@ -80,6 +117,12 @@ class CompanyDaeController extends BaseCompanyController
         return response()->json($courrier);
     }
 
+    /**
+     * API: Crée un nouveau courrier.
+     *
+     * @param Request $request Requête HTTP (référence, expediteur, destinataire, type, mode, objet, contenu, urgence)
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function courrierStore(Request $request)
     {
         $clientId = $this->getClientId();
@@ -106,6 +149,13 @@ class CompanyDaeController extends BaseCompanyController
         return response()->json($courrier, 201);
     }
 
+    /**
+     * API: Marque un courrier comme traité.
+     *
+     * @param Request $request Requête HTTP
+     * @param int $id Identifiant du courrier
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function courrierTraiter(Request $request, $id)
     {
         $clientId = $this->getClientId();
@@ -117,6 +167,12 @@ class CompanyDaeController extends BaseCompanyController
 
     // ─── Documents ──────────────────────────────────────
 
+    /**
+     * API: Liste des documents (avec pagination et filtres).
+     *
+     * @param Request $request Requête HTTP (type_document, categorie optionnels)
+     * @return \Illuminate\View\View|\Illuminate\Http\JsonResponse
+     */
     public function documents(Request $request)
     {
         $clientId = $this->getClientId();
@@ -132,6 +188,12 @@ class CompanyDaeController extends BaseCompanyController
         return response()->json($query->paginate(20));
     }
 
+    /**
+     * API: Affiche un document.
+     *
+     * @param int $id Identifiant du document
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function documentShow($id)
     {
         $clientId = $this->getClientId();
@@ -139,6 +201,14 @@ class CompanyDaeController extends BaseCompanyController
         return response()->json($doc);
     }
 
+    /**
+     * API: Téléverse un nouveau document.
+     *
+     * Stocke le fichier sur le disque public, enregistre les métadonnées.
+     *
+     * @param Request $request Requête HTTP (titre, type_document, categorie, description, fichier)
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function documentUpload(Request $request)
     {
         $clientId = $this->getClientId();
@@ -165,6 +235,12 @@ class CompanyDaeController extends BaseCompanyController
         return response()->json($doc, 201);
     }
 
+    /**
+     * API: Télécharge un document depuis le stockage public.
+     *
+     * @param int $id Identifiant du document
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
+     */
     public function documentDownload($id)
     {
         $clientId = $this->getClientId();
@@ -175,6 +251,12 @@ class CompanyDaeController extends BaseCompanyController
 
     // ─── Contrats ───────────────────────────────────────
 
+    /**
+     * API: Liste des contrats (avec pagination et filtre par statut).
+     *
+     * @param Request $request Requête HTTP (statut optionnel)
+     * @return \Illuminate\View\View|\Illuminate\Http\JsonResponse
+     */
     public function contrats(Request $request)
     {
         $clientId = $this->getClientId();
@@ -189,6 +271,12 @@ class CompanyDaeController extends BaseCompanyController
         return response()->json($query->paginate(20));
     }
 
+    /**
+     * API: Affiche un contrat.
+     *
+     * @param int $id Identifiant du contrat
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function contratShow($id)
     {
         $clientId = $this->getClientId();
@@ -198,6 +286,12 @@ class CompanyDaeController extends BaseCompanyController
 
     // ─── Tâches ─────────────────────────────────────────
 
+    /**
+     * API: Liste des tâches (avec pagination et filtres).
+     *
+     * @param Request $request Requête HTTP (statut, priorite optionnels)
+     * @return \Illuminate\View\View|\Illuminate\Http\JsonResponse
+     */
     public function taches(Request $request)
     {
         $clientId = $this->getClientId();
@@ -213,6 +307,12 @@ class CompanyDaeController extends BaseCompanyController
         return response()->json($query->paginate(20));
     }
 
+    /**
+     * API: Crée une nouvelle tâche.
+     *
+     * @param Request $request Requête HTTP (titre, description, priorite, echeance)
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function tacheStore(Request $request)
     {
         $clientId = $this->getClientId();
@@ -234,6 +334,13 @@ class CompanyDaeController extends BaseCompanyController
         return response()->json($tache, 201);
     }
 
+    /**
+     * API: Met à jour le statut d'une tâche.
+     *
+     * @param Request $request Requête HTTP (statut)
+     * @param int $id Identifiant de la tâche
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function tacheStatut(Request $request, $id)
     {
         $clientId = $this->getClientId();

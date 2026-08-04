@@ -92,18 +92,32 @@
 </template>
 
 <script setup>
+/*
+ * EntryDetail.vue - Détail d'une écriture comptable
+ *
+ * Affiche les informations détaillées d'une écriture comptable :
+ * référence, date, journal, statut, libellé et lignes d'écriture
+ * (compte, libellé, débit, crédit). Permet de valider une écriture
+ * en statut "brouillon" ou de l'imprimer.
+ */
 import { ref, computed, onMounted } from 'vue'
 
+// Propriété : identifiant de l'écriture à afficher (depuis l'URL)
 const props = defineProps({ entryId: [String, Number] })
 
+// État réactif : données de l'écriture, chargement, erreur
 const entry = ref(null)
 const loading = ref(true)
 const error = ref('')
 
+// Formateur monétaire en francs CFA (sans décimales)
 const fmt = (v) => new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(v || 0) + ' F'
+// Jeton CSRF pour les requêtes sécurisées
 const csrf = computed(() => document.querySelector('meta[name=csrf-token]')?.content || '')
+// Fonction utilitaire d'appel API avec en-têtes par défaut
 const api = (path, opts = {}) => fetch(path, { headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf.value, ...opts.headers }, ...opts })
 
+// Chargement des données de l'écriture depuis l'API
 async function loadEntry() {
     loading.value = true
     try {
@@ -113,6 +127,7 @@ async function loadEntry() {
     } catch (e) { error.value = e.message } finally { loading.value = false }
 }
 
+// Validation de l'écriture (passage du statut à "posté")
 async function postEntry() {
     if (!confirm('Valider cette écriture ?')) return
     try {
@@ -122,11 +137,16 @@ async function postEntry() {
     } catch (e) { error.value = e.message }
 }
 
+// Impression de la page via le navigateur
 function printEntry() { window.print() }
 
+// Formatage d'une date au format français JJ/MM/AAAA
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR') : '—'
+// Libellé lisible du statut de l'écriture
 const statusLabel = (s) => ({ posted: 'Validée', draft: 'Brouillon', cancelled: 'Annulée' })[s] || s
+// Classe CSS du badge selon le statut de l'écriture
 const statusBadge = (s) => ({ posted: 'badge bg-success', draft: 'badge bg-warning text-dark', cancelled: 'badge bg-secondary' })[s] || 'badge bg-secondary'
 
+// Chargement automatique au montage du composant
 onMounted(loadEntry)
 </script>

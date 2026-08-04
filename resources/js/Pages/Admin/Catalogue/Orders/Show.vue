@@ -1,27 +1,38 @@
 <script setup>
+/**
+ * Composant de détail d'une commande (vue administration).
+ * Affiche les informations complètes de la commande : résumé client, formulaire,
+ * documents, messagerie, pilotage (statut / assignation), notes commerciales
+ * et historique des changements de statut.
+ */
 import { ref, reactive } from 'vue';
 import GelLayout from '../../../../Layouts/GelLayout.vue';
 
+/* ── Propriétés reçues du serveur ────────────────────────────────────────── */
 const props = defineProps({
-    order: { type: Object, required: true },
-    team: { type: Array, required: true },
-    statuts: { type: Array, required: true },
+    order:   { type: Object, required: true },  // Commande complète avec relations
+    team:    { type: Array,  required: true },  // Membres de l'équipe pour assignation
+    statuts: { type: Array,  required: true },  // Statuts possibles pour le sélecteur
 });
 
+/* ── Jeton CSRF pour les requêtes fetch ───────────────────────────────────── */
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
-// État local réactif
-const contenu = ref('');
-const responsable_id = ref(props.order.responsable_id || '');
-const statut = ref(props.order.statut);
-const montant = ref(props.order.montant_estime_fcfa || '');
-const delai = ref(props.order.delai_estime || '');
-const notes = ref(props.order.notes_internes || '');
-const msgProcessing = ref(false);
-const statusProcessing = ref(false);
-const assignProcessing = ref(false);
-const detailsProcessing = ref(false);
+/* ── État réactif local pour les formulaires ──────────────────────────────── */
+const contenu = ref('');                           // Contenu du message à envoyer
+const responsable_id = ref(props.order.responsable_id || ''); // Responsable sélectionné
+const statut = ref(props.order.statut);            // Statut en cours de modification
+const montant = ref(props.order.montant_estime_fcfa || ''); // Montant estimé
+const delai = ref(props.order.delai_estime || '');           // Délai estimé
+const notes = ref(props.order.notes_internes || '');         // Notes internes
 
+/* ── Indicateurs de chargement pour chaque action ─────────────────────────── */
+const msgProcessing      = ref(false);  // Envoi de message en cours
+const statusProcessing   = ref(false);  // Changement de statut en cours
+const assignProcessing   = ref(false);  // Assignation en cours
+const detailsProcessing  = ref(false);  // Mise à jour des détails en cours
+
+/** Envoie un message au client via l'API */
 async function sendMessage() {
     if (!contenu.value.trim()) return;
     msgProcessing.value = true;
@@ -35,6 +46,7 @@ async function sendMessage() {
     } catch (e) { console.error(e); msgProcessing.value = false; }
 }
 
+/** Met à jour le statut de la commande via l'API */
 async function updateStatus() {
     statusProcessing.value = true;
     try {
@@ -47,6 +59,7 @@ async function updateStatus() {
     } catch (e) { console.error(e); statusProcessing.value = false; }
 }
 
+/** Change rapidement le statut (finaliser / annuler) avec confirmation et commentaire */
 async function quickChangeStatus(newStatus, comment = '') {
     if (!confirm(`Confirmer le passage au statut: ${newStatus} ?`)) return;
     statusProcessing.value = true;
@@ -60,6 +73,7 @@ async function quickChangeStatus(newStatus, comment = '') {
     } catch (e) { console.error(e); statusProcessing.value = false; }
 }
 
+/** Assigne un responsable à la commande */
 async function updateAssignation() {
     assignProcessing.value = true;
     try {
@@ -72,6 +86,7 @@ async function updateAssignation() {
     } catch (e) { console.error(e); assignProcessing.value = false; }
 }
 
+/** Met à jour les détails commerciaux (montant, délai, notes internes) */
 async function updateDetails() {
     detailsProcessing.value = true;
     try {
@@ -84,6 +99,7 @@ async function updateDetails() {
     } catch (e) { console.error(e); detailsProcessing.value = false; }
 }
 
+/** Retourne la classe CSS du badge de statut selon la valeur */
 const getStatusBadge = (s) => {
     const colors = {
         'Nouvelle Demande': 'bg-primary text-white',
@@ -94,26 +110,30 @@ const getStatusBadge = (s) => {
     };
     return colors[s] || 'bg-secondary text-white';
 };
+
+/* ── Upload de document ──────────────────────────────────────────────────── */
 const docUpload = reactive({
-    type: '',
-    titre: '',
-    file: null
+    type: '',       // Type de document (facture, resultat, autre)
+    titre: '',      // Titre optionnel
+    file: null      // Fichier sélectionné
 });
 const docProcessing = ref(false);
 
+/** Sauvegarde le fichier sélectionné dans l'état réactif */
 const onFileChange = (e) => {
     docUpload.file = e.target.files[0];
 };
 
+/** Envoie le fichier via l'API avec FormData */
 async function uploadDocument() {
     if (!docUpload.file) return;
     docProcessing.value = true;
-    
+
     const formData = new FormData();
     formData.append('fichier', docUpload.file);
     formData.append('type', docUpload.type);
     formData.append('titre', docUpload.titre);
-    
+
     try {
         await fetch(`/admin/catalogue/orders/${props.order.id}/documents`, {
             method: 'POST',

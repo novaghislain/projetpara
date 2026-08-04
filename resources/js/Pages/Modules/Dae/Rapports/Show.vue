@@ -94,8 +94,19 @@
 </template>
 
 <script>
+/*
+ * Composant : DaeRapportsShow
+ * Role : Page de detail d'un rapport du module DAE.
+ * Affiche les informations du rapport (description, type, client, periode, metriques).
+ * Permet le telechargement du fichier genere.
+ * Props : aucune (l'ID est extrait de l'URL)
+ * Evenements : aucun
+ */
+
+// Importation du client HTTP pour les appels API
 import axios from 'axios';
 
+// Mapping des statuts de rapport avec leurs libelles et classes de badge
 const STATUT_MAP = {
     brouillon: { label: 'Brouillon', badge: 'bg-secondary' },
     genere:    { label: 'Généré',    badge: 'bg-primary' },
@@ -106,13 +117,17 @@ const STATUT_MAP = {
 export default {
     name: 'DaeRapportsShow',
     data() {
-        return { loading: true, item: null };
+        return {
+            loading: true, // Indicateur de chargement
+            item: null,    // Donnees du rapport
+        };
     },
     created() { this.fetch(); },
     methods: {
+        /* Recupere les details du rapport depuis l'API */
         async fetch() {
             this.loading = true;
-            const id = window.location.pathname.split('/').pop();
+            const id = window.location.pathname.split('/').pop(); // Extrait l'ID depuis l'URL
             try {
                 const r = await axios.get(`/dae/rapports/${id}`);
                 this.item = r.data;
@@ -120,8 +135,11 @@ export default {
             finally { this.loading = false; }
         },
         typeLabel(t) { const m = { activite: 'Activité', financier: 'Financier', rh: 'Ressources humaines', conformite: 'Conformité', mission: 'Mission' }; return m[t] || t || '-'; },
+        /* Retourne la classe CSS du badge selon le statut */
         statutBadge(s) { return STATUT_MAP[s]?.badge || 'bg-secondary'; },
+        /* Retourne le libelle du statut */
         statutLabel(s) { return STATUT_MAP[s]?.label || s || '-'; },
+        /* Formate une date au format francais (jour mois annee) */
         formatDate(d) { if (!d) return '-'; try { return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }); } catch { return d; } },
     },
 };

@@ -7,6 +7,16 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Modèle représentant une facture client (achat ou vente).
+ *
+ * Table associée : `company_invoices` (via convention Laravel)
+ *
+ * Relations :
+ * - Une facture peut avoir plusieurs lignes (CompanyInvoiceItem)
+ * - Une facture peut avoir plusieurs paiements (CompanyPayment)
+ * - Une facture est créée par un utilisateur (User)
+ */
 class CompanyInvoice extends Model
 {
     use SoftDeletes;

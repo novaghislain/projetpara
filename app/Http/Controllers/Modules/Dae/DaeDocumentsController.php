@@ -6,8 +6,22 @@ use App\Models\Dae\DaeDocument;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Contrôleur de gestion des documents du module DAE.
+ *
+ * Permet la gestion des documents avec téléchargement, versioning,
+ * déplacement dans les dossiers, alertes d'expiration et recherche.
+ */
 class DaeDocumentsController extends BaseDaeController
 {
+    /**
+     * Liste paginée des documents avec filtres.
+     *
+     * Filtres disponibles : type_document, categorie, dossier_id, statut, recherche.
+     *
+     * @param Request $request La requête HTTP avec les paramètres de filtre
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
+     */
     public function index(Request $request)
     {
         $query = DaeDocument::with('client', 'dossier')->orderBy('created_at', 'desc');
@@ -30,6 +44,12 @@ class DaeDocumentsController extends BaseDaeController
         return view('app', ['page' => 'dae-documents']);
     }
 
+    /**
+     * Crée un nouveau document avec téléchargement du fichier.
+     *
+     * @param Request $request La requête HTTP avec les données du document
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -60,6 +80,12 @@ class DaeDocumentsController extends BaseDaeController
         return redirect()->route('dae.documents.index')->with('success', 'Document ajouté.');
     }
 
+    /**
+     * Affiche un document spécifique.
+     *
+     * @param int $id L'identifiant du document
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
+     */
     public function show($id)
     {
         $document = DaeDocument::with('client', 'dossier')->findOrFail($id);
@@ -67,6 +93,13 @@ class DaeDocumentsController extends BaseDaeController
         return view('app', ['page' => 'dae-documents-show']);
     }
 
+    /**
+     * Met à jour les métadonnées d'un document.
+     *
+     * @param Request $request La requête HTTP avec les données de mise à jour
+     * @param int $id L'identifiant du document
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function update(Request $request, $id)
     {
         $document = DaeDocument::findOrFail($id);
@@ -87,6 +120,12 @@ class DaeDocumentsController extends BaseDaeController
         return redirect()->route('dae.documents.index')->with('success', 'Document mis à jour.');
     }
 
+    /**
+     * Supprime un document (passage en statut "supprime").
+     *
+     * @param int $id L'identifiant du document à supprimer
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function destroy($id)
     {
         $document = DaeDocument::findOrFail($id);
@@ -96,6 +135,12 @@ class DaeDocumentsController extends BaseDaeController
         return redirect()->route('dae.documents.index')->with('success', 'Document supprimé.');
     }
 
+    /**
+     * Télécharge un fichier document vers le stockage.
+     *
+     * @param Request $request La requête HTTP contenant le fichier
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function upload(Request $request)
     {
         $request->validate([
@@ -111,6 +156,12 @@ class DaeDocumentsController extends BaseDaeController
         ]);
     }
 
+    /**
+     * Télécharge le fichier d'un document.
+     *
+     * @param int $id L'identifiant du document
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse
+     */
     public function download($id)
     {
         $document = DaeDocument::findOrFail($id);
@@ -118,6 +169,13 @@ class DaeDocumentsController extends BaseDaeController
         return Storage::disk('public')->download($document->fichier);
     }
 
+    /**
+     * Met à jour l'alerte d'expiration d'un document.
+     *
+     * @param Request $request La requête HTTP avec l'état de l'alerte et la date
+     * @param int $id L'identifiant du document
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function renouvelerAlerte(Request $request, $id)
     {
         $document = DaeDocument::findOrFail($id);
@@ -130,6 +188,15 @@ class DaeDocumentsController extends BaseDaeController
         return redirect()->back()->with('success', 'Alerte mise à jour.');
     }
 
+    /**
+     * Ajoute une nouvelle version d'un document.
+     *
+     * Remplace le fichier existant et incrémente le numéro de version.
+     *
+     * @param Request $request La requête HTTP contenant le nouveau fichier
+     * @param int $id L'identifiant du document
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function versioning(Request $request, $id)
     {
         $document = DaeDocument::findOrFail($id);
@@ -149,6 +216,13 @@ class DaeDocumentsController extends BaseDaeController
         return redirect()->back()->with('success', 'Nouvelle version enregistrée.');
     }
 
+    /**
+     * Déplace un document vers un autre dossier.
+     *
+     * @param Request $request La requête HTTP avec l'identifiant du dossier cible
+     * @param int $id L'identifiant du document
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function deplacer(Request $request, $id)
     {
         $document = DaeDocument::findOrFail($id);

@@ -1,4 +1,12 @@
 ﻿<script setup>
+/*
+ * AiAssistant.vue – Assistant IA Eden Cabinet
+ *
+ * Interface de chat avec l'assistant IA dédié à la gestion d'entreprise.
+ * Permet aux utilisateurs de poser des questions sur la comptabilité,
+ * la facturation, le juridique, les RH et le CRM. Les messages sont
+ * envoyés à l'API /api/company/ai/chat qui retourne les réponses générées.
+ */
 import { ref, computed, onMounted, nextTick } from 'vue';
 import CompanyLayout from '../../Layouts/CompanyLayout.vue';
 
@@ -6,25 +14,29 @@ const props = defineProps({
     pageTitle: { type: String, default: 'Assistant Eden Cabinet' }
 });
 
-const messages = ref([]);
-const newMessage = ref('');
-const isTyping = ref(false);
-const chatContainer = ref(null);
-const error = ref(null);
+const messages = ref([]);          // Historique des messages (user + assistant)
+const newMessage = ref('');         // Texte saisi dans la zone de message
+const isTyping = ref(false);        // Indique si l'assistant est en train de répondre
+const chatContainer = ref(null);    // Référence au conteneur de chat pour le défilement
+const error = ref(null);            // Message d'erreur éventuel
 
+// Message de bienvenue affiché au démarrage
 const welcomeMessage = {
     role: 'assistant',
     content: 'Bonjour ! Je suis **Eden Cabinet**, votre assistant IA dédié à la gestion d\'entreprise.\n\nJe peux vous aider avec :\n\n• **Comptabilité** : plan comptable, journaux, rapports\n• **Facturation** : devis, paiements, relances\n• **Juridique** : contrats, termes courants\n• **RH** : gestion du personnel\n• **CRM** : suivi clients et prospects\n\nComment puis-je vous assister aujourd\'hui ?',
     timestamp: new Date().toISOString(),
 };
 
+// Token CSRF et en-têtes pour les appels API
 const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
 const apiHeaders = { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' };
 
+// Envoie un message à l'assistant IA
 async function sendMessage() {
     const text = newMessage.value.trim();
     if (!text || isTyping.value) return;
 
+    // Ajoute le message utilisateur à l'historique
     messages.value.push({
         role: 'user',
         content: text,
@@ -47,6 +59,7 @@ async function sendMessage() {
 
         const data = await res.json();
 
+        // Ajoute la réponse de l'assistant à l'historique
         messages.value.push({
             role: 'assistant',
             content: data.response,
@@ -61,6 +74,7 @@ async function sendMessage() {
     }
 }
 
+// Défile vers le bas du conteneur de chat
 function scrollToBottom() {
     nextTick(() => {
         if (chatContainer.value) {
@@ -69,6 +83,7 @@ function scrollToBottom() {
     });
 }
 
+// Formate un timestamp relatif (ex: "Il y a 5 min")
 function formatTime(isoString) {
     if (!isoString) return '';
     const date = new Date(isoString);
@@ -89,6 +104,7 @@ function formatTime(isoString) {
     });
 }
 
+// Convertit le texte Markdown simple en HTML (gras, sauts de ligne)
 function formatMessage(text) {
     if (!text) return '';
     return text
@@ -96,6 +112,7 @@ function formatMessage(text) {
         .replace(/\n/g, '<br>');
 }
 
+// Gère la touche Entrée pour envoyer le message (Shift+Entrée = nouvelle ligne)
 function handleKeydown(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -103,6 +120,7 @@ function handleKeydown(e) {
     }
 }
 
+// Au montage, affiche le message de bienvenue
 onMounted(() => {
     messages.value.push(welcomeMessage);
 });

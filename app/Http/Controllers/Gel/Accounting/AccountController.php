@@ -8,7 +8,16 @@ use Illuminate\Http\Request;
 class AccountController extends BaseGelAccountingController
 {
     /**
-     * API: Liste des comptes comptables pour un client.
+     * Contrôleur de gestion des comptes comptables.
+     * Permet de lister, créer, modifier et supprimer les comptes
+     * du plan comptable SYSCOHADA d'un client.
+     */
+
+    /**
+     * API : Liste des comptes comptables pour un client, triés par code.
+     *
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\Http\JsonResponse La liste des comptes
      */
     public function listAll($clientId)
     {
@@ -21,7 +30,10 @@ class AccountController extends BaseGelAccountingController
     }
 
     /**
-     * API: Créer un compte comptable.
+     * API : Crée un nouveau compte comptable avec vérification d'unicité du code.
+     *
+     * @param Request $request La requête HTTP avec les données du compte
+     * @return \Illuminate\Http\JsonResponse Le compte créé
      */
     public function store(Request $request)
     {
@@ -33,7 +45,7 @@ class AccountController extends BaseGelAccountingController
             'is_active' => 'boolean',
         ]);
 
-        // Vérifier unicité du code pour ce client
+        // Vérification d'unicité du code comptable pour ce client
         $exists = AccountingAccount::where('client_id', $clientId)
             ->where('code', $validated['code'])
             ->exists();
@@ -48,7 +60,11 @@ class AccountController extends BaseGelAccountingController
     }
 
     /**
-     * API: Mettre à jour un compte comptable.
+     * API : Met à jour un compte comptable avec vérification d'unicité.
+     *
+     * @param Request $request La requête HTTP avec les données mises à jour
+     * @param int $id L'identifiant du compte
+     * @return \Illuminate\Http\JsonResponse Le compte mis à jour
      */
     public function update(Request $request, $id)
     {
@@ -61,7 +77,7 @@ class AccountController extends BaseGelAccountingController
             'is_active' => 'boolean',
         ]);
 
-        // Vérifier unicité (sauf pour ce compte)
+        // Vérification d'unicité du code (sauf pour ce compte)
         $exists = AccountingAccount::where('client_id', $account->client_id)
             ->where('code', $validated['code'])
             ->where('id', '!=', $id)
@@ -77,13 +93,16 @@ class AccountController extends BaseGelAccountingController
     }
 
     /**
-     * API: Supprimer un compte comptable.
+     * API : Supprime un compte comptable (empêché si des écritures existent).
+     *
+     * @param int $id L'identifiant du compte
+     * @return \Illuminate\Http\JsonResponse Message de confirmation
      */
     public function destroy($id)
     {
         $account = AccountingAccount::findOrFail($id);
 
-        // Empêcher suppression si des écritures existent
+        // Empêche la suppression si des écritures comptables sont liées
         if ($account->journalLines()->exists()) {
             return response()->json([
                 'message' => 'Impossible de supprimer ce compte car des écritures y sont liées'

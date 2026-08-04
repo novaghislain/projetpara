@@ -10,6 +10,17 @@
 </template>
 
 <script setup>
+/* ============================================================
+ * Composant : ApprovalWorkflows/Index
+ * Description : Page de liste des workflows d'approbation.
+ *   Affiche l'ensemble des workflows configures avec
+ *   leurs etapes et leur statut.
+ * ============================================================ */
+
 import GelLayout from '../../../Layouts/GelLayout.vue';
+
+/* Proprietes recues du controleur :
+ *   workflows - Liste des workflows d'approbation
+ *   clients   - Liste des clients pour le filtrage */
 defineProps(['workflows', 'clients'])
 </script>

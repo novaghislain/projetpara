@@ -7,10 +7,16 @@ use App\Models\Gel\Comptabilite\CompteComptable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur du plan comptable SYSCOHADA.
+ * Gère les comptes comptables (classes 1 à 8), leur hiérarchie,
+ * et les opérations de recherche, filtrage et désactivation.
+ */
 class PlanComptableController extends Controller
 {
     /**
      * Liste paginée des comptes avec recherche et filtre par classe.
+     * Supporte la recherche par code ou intitulé et le filtrage par classe.
      */
     public function index(Request $request)
     {
@@ -47,7 +53,10 @@ class PlanComptableController extends Controller
     }
 
     /**
-     * Vue de création.
+     * Affiche le formulaire de création d'un compte comptable.
+     * Liste les comptes parents disponibles pour établir la hiérarchie.
+     *
+     * @return \Illuminate\View\View
      */
     public function create()
     {
@@ -63,6 +72,10 @@ class PlanComptableController extends Controller
 
     /**
      * Enregistre un nouveau compte comptable.
+     * Vérifie l'unicité du code et définit le solde débiteur par défaut selon la classe.
+     *
+     * @param Request $request La requête HTTP avec les données du compte
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
     public function store(Request $request)
     {
@@ -104,7 +117,10 @@ class PlanComptableController extends Controller
     }
 
     /**
-     * Affiche le détail d'un compte.
+     * Affiche le détail d'un compte avec son solde et ses relations.
+     *
+     * @param int $id L'identifiant du compte
+     * @return \Illuminate\View\View|\Illuminate\Http\JsonResponse
      */
     public function show($id)
     {
@@ -114,7 +130,7 @@ class PlanComptableController extends Controller
             ->withCount('enfants')
             ->findOrFail($id);
 
-        // Solde du compte
+        // Calcul du solde du compte (débit - crédit)
         $totalDebit = $compte->lignesEcriture->where('sens', 'debit')->sum('montant');
         $totalCredit = $compte->lignesEcriture->where('sens', 'credit')->sum('montant');
         $solde = $totalDebit - $totalCredit;
@@ -132,7 +148,11 @@ class PlanComptableController extends Controller
     }
 
     /**
-     * Vue d'édition.
+     * Affiche le formulaire d'édition d'un compte comptable.
+     * Exclut le compte lui-même de la liste des parents possibles.
+     *
+     * @param int $id L'identifiant du compte
+     * @return \Illuminate\View\View
      */
     public function edit($id)
     {
@@ -151,6 +171,11 @@ class PlanComptableController extends Controller
 
     /**
      * Met à jour un compte comptable.
+     * Vérifie l'unicité du code en excluant le compte modifié.
+     *
+     * @param Request $request La requête HTTP avec les données mises à jour
+     * @param int $id L'identifiant du compte
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
     public function update(Request $request, $id)
     {
@@ -187,13 +212,17 @@ class PlanComptableController extends Controller
 
     /**
      * Désactive un compte comptable (pas de suppression physique).
+     * Si le compte a des écritures, la désactivation est forcée plutôt que la suppression.
+     *
+     * @param int $id L'identifiant du compte
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
     public function destroy($id)
     {
         $cabinetId = Auth::user()->cabinet_id;
         $compte = CompteComptable::byCabinet($cabinetId)->findOrFail($id);
 
-        // Vérifier que le compte n'a pas d'écritures
+        // Vérifier que le compte n'a pas d'écritures avant suppression
         if ($compte->lignesEcriture()->exists()) {
             if (request()->wantsJson()) {
                 return response()->json([
@@ -203,7 +232,7 @@ class PlanComptableController extends Controller
             return back()->withErrors(['message' => 'Ce compte contient des écritures. Désactivez-le plutôt.']);
         }
 
-        // Désactiver au lieu de supprimer
+        // Désactiver au lieu de supprimer physiquement
         $compte->update(['actif' => false]);
 
         if (request()->wantsJson()) {
@@ -215,7 +244,11 @@ class PlanComptableController extends Controller
     }
 
     /**
-     * Retourne les comptes par classe (pour sélecteurs).
+     * Retourne les comptes d'une classe donnée (pour les sélecteurs).
+     *
+     * @param Request $request La requête HTTP
+     * @param string $classe Le numéro de classe (1 à 8)
+     * @return \Illuminate\Http\JsonResponse
      */
     public function byClasse(Request $request, string $classe)
     {
@@ -230,7 +263,11 @@ class PlanComptableController extends Controller
     }
 
     /**
-     * Arbre hiérarchique des comptes pour select2.
+     * Arbre hiérarchique des comptes pour le composant Select2.
+     * Organise les comptes par classe (1 à 8).
+     *
+     * @param Request $request La requête HTTP
+     * @return \Illuminate\Http\JsonResponse
      */
     public function tree(Request $request)
     {
@@ -259,7 +296,11 @@ class PlanComptableController extends Controller
     }
 
     /**
-     * Recherche rapide de comptes (pour autocomplétion).
+     * Recherche rapide de comptes pour l'autocomplétion.
+     * Limite à 20 résultats, filtrés par code ou intitulé.
+     *
+     * @param Request $request La requête HTTP avec le paramètre 'q'
+     * @return \Illuminate\Http\JsonResponse
      */
     public function search(Request $request)
     {
@@ -280,7 +321,11 @@ class PlanComptableController extends Controller
     }
 
     /**
-     * Définit la valeur par défaut de solde_debiteur selon la classe.
+     * Définit la valeur par défaut de solde_debiteur selon la classe SYSCOHADA.
+     * Classes 2 (Immobilisations), 3 (Stocks), 5 (Trésorerie), 6 (Charges) = true.
+     *
+     * @param string $classe Le numéro de classe comptable
+     * @return bool
      */
     private function defaultSoldeDebiteur(string $classe): bool
     {

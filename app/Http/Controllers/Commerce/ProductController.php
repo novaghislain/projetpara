@@ -12,11 +12,29 @@ use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
+    /**
+     * Contrôleur pour la gestion des produits.
+     * Permet de créer, modifier, consulter, supprimer des produits,
+     * gérer les stocks, importer/exporter via CSV et associer des fournisseurs.
+     */
+
+    /**
+     * Affiche la page de gestion des produits.
+     *
+     * @return \Illuminate\View\View
+     */
     public function index()
     {
         return view('app', ['page' => 'commerce-products']);
     }
 
+    /**
+     * Retourne la liste paginée des produits avec filtres
+     * (recherche, catégorie, statut, alertes stock).
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function listAll(Request $request)
     {
         $user = Auth::user();
@@ -52,6 +70,13 @@ class ProductController extends Controller
         return response()->json($query->latest()->paginate($request->per_page ?? 50));
     }
 
+    /**
+     * Crée un nouveau produit avec ses fournisseurs associés
+     * et enregistre le mouvement de stock initial si nécessaire.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -118,6 +143,13 @@ class ProductController extends Controller
         return response()->json($product->load(['category', 'suppliers']), 201);
     }
 
+    /**
+     * Affiche les détails d'un produit avec ses relations
+     * (catégorie, images, variantes, fournisseurs, mouvements de stock).
+     *
+     * @param int $id Identifiant du produit
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function show($id)
     {
         $product = Product::with([
@@ -128,6 +160,13 @@ class ProductController extends Controller
         return response()->json($product);
     }
 
+    /**
+     * Met à jour un produit existant.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param int $id Identifiant du produit
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function update(Request $request, $id)
     {
         $product = Product::findOrFail($id);
@@ -156,6 +195,12 @@ class ProductController extends Controller
         return response()->json($product->load(['category', 'suppliers']));
     }
 
+    /**
+     * Supprime un produit.
+     *
+     * @param int $id Identifiant du produit
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function destroy($id)
     {
         $product = Product::findOrFail($id);
@@ -163,6 +208,14 @@ class ProductController extends Controller
         return response()->json(['message' => 'Produit supprimé']);
     }
 
+    /**
+     * Ajuste manuellement la quantité en stock d'un produit
+     * (entrée, sortie ou correction) et enregistre le mouvement.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param int $id Identifiant du produit
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function adjustStock(Request $request, $id)
     {
         $product = Product::findOrFail($id);
@@ -199,6 +252,11 @@ class ProductController extends Controller
         ]);
     }
 
+    /**
+     * Génère et télécharge un template CSV pour l'importation de produits.
+     *
+     * @return \Illuminate\Http\Response
+     */
     public function importTemplate()
     {
         // Retourne un template CSV exemple
@@ -212,6 +270,13 @@ class ProductController extends Controller
         ]);
     }
 
+    /**
+     * Importe des produits depuis un fichier CSV.
+     * Crée automatiquement les catégories manquantes.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function import(Request $request)
     {
         $request->validate([
@@ -285,6 +350,11 @@ class ProductController extends Controller
         ]);
     }
 
+    /**
+     * Exporte tous les produits au format CSV.
+     *
+     * @return \Illuminate\Http\Response
+     */
     public function export()
     {
         $user = Auth::user();

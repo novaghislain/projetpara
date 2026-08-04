@@ -198,10 +198,23 @@
 </style>
 
 <script setup>
+/*
+ * Composant ComptaSaaS - Inscription
+ * Page d'inscription permettant de créer un nouvel espace comptable
+ * avec les informations de l'entreprise et du compte administrateur.
+ * Gère :
+ *   - Saisie des données entreprise (nom, slug, email, téléphone, pays, adresse)
+ *   - Saisie des données administrateur (nom, email, mot de passe)
+ *   - Auto-génération du slug à partir du nom de l'entreprise
+ *   - Soumission via axios et stockage du token JWT
+ *   - Affichage des erreurs de validation (422) et des messages de succès
+ */
+
 import { ref, watch } from 'vue';
 import axios from 'axios';
 import AuthNavbar from '../../Components/AuthNavbar.vue';
 
+/* État réactif du formulaire avec toutes les données d'inscription */
 const form = ref({
   company_name: '',
   company_slug: '',
@@ -216,12 +229,13 @@ const form = ref({
   accept_terms: false,
 });
 
+/* État réactif : erreurs de validation, chargement, message d'erreur et succès */
 const errors = ref({});
 const loading = ref(false);
 const errorMessage = ref('');
 const success = ref(null);
 
-// Auto-générer le slug à partir du nom
+/* Surveillance du nom pour générer automatiquement le slug URL */
 watch(() => form.value.company_name, (name) => {
   if (!name) return;
   form.value.company_slug = name
@@ -230,6 +244,7 @@ watch(() => form.value.company_name, (name) => {
     .replace(/^-|-$/g, '');
 });
 
+/* Fonction d'inscription : envoie les données à l'API et stocke le token JWT */
 async function register() {
   loading.value = true;
   errorMessage.value = '';
@@ -239,16 +254,18 @@ async function register() {
     const response = await axios.post('/api/register', form.value);
     const data = response.data.data;
 
-    // Stocker le token
+    /* Stockage du token d'accès dans localStorage pour les requêtes ultérieures */
     localStorage.setItem('token', data.access_token);
     axios.defaults.headers.common['Authorization'] = `Bearer ${data.access_token}`;
 
+    /* Passage en mode succès avec les informations du tenant créé */
     success.value = {
       company_name: data.tenant.name,
       dashboard_url: '/company/dashboard',
     };
 
   } catch (e) {
+    /* Gestion des erreurs de validation (422) et des erreurs serveur */
     if (e.response?.status === 422) {
       errors.value = e.response.data.errors || {};
       const firstErrors = Object.values(errors.value).flat();

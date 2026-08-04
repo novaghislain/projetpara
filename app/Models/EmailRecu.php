@@ -5,6 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Modèle représentant un email reçu (importé depuis un compte IMAP).
+ *
+ * Table associée : `emails_recus`
+ *
+ * Stocke les emails entrants avec leur contenu HTML et texte,
+ * et les pièces jointes. Peut être transmis en interne.
+ *
+ * Relations :
+ * - Un email reçu peut avoir plusieurs transmissions internes (TransmissionInterne)
+ */
 class EmailRecu extends Model
 {
     protected $table = 'emails_recus';

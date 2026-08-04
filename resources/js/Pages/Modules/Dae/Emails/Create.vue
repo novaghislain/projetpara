@@ -1,3 +1,10 @@
+<!--
+ * Composant : Création d'email DAE
+ * Description : Formulaire de composition d'un nouvel email dans le module DAE (courriers).
+ *              Permet de sélectionner un client, définir l'objet, le message,
+ *              les adresses expéditeur/destinataire/CC et le dossier de classement.
+ * Utilisation : Page /dae/emails/create
+-->
 <template>
     <GelLayout>
         <div class="dae-emails-create">
@@ -83,20 +90,20 @@ export default {
     components: { GelLayout },
     data() {
         return {
-            clients: [],
+            clients: [],                          /* Liste des clients chargée depuis l'API */
             form: { client_id: '', from_address: '', to_addresses: '', cc_addresses: '', objet: '', corps_texte: '', dossier: '' },
         };
     },
     mounted() {
-        console.log('DaeEmailsCreate mounted');
+        /* Chargement de la liste des clients au montage */
         axios.get('/api/clients').then(r => {
             this.clients = Array.isArray(r.data) ? r.data : (r.data.data || []);
-            console.log('Clients loaded:', this.clients.length);
         }).catch(e => {
-            console.error('Clients error:', e);
+            console.error('Erreur chargement clients:', e);
         });
     },
     methods: {
+        /* Envoie l'email via l'API puis redirige vers la liste */
         handleSubmit() {
             axios.post('/dae/emails', {
                 client_id: this.form.client_id,

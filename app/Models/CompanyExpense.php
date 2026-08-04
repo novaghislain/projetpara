@@ -5,6 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * Modèle représentant une note de frais d'un employé.
+ *
+ * Table associée : `company_expenses` (via convention Laravel)
+ *
+ * Relations :
+ * - Une note de frais appartient à un employé (CompanyEmployee)
+ * - Une note de frais peut être approuvée/rejetée par un utilisateur (User)
+ */
 class CompanyExpense extends Model
 {
     use HasFactory;

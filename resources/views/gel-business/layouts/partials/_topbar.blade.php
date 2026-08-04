@@ -15,9 +15,23 @@ $client = $user?->client ?? null;
             <i class="fas fa-search"></i>
             <input type="text" placeholder="Rechercher…" id="gelSearchInput">
         </div>
-        <button class="gel-topbar-icon" title="Contacter mon comptable" onclick="showToast('Contactez votre comptable par email','info')">
-            <i class="fas fa-headset"></i>
-        </button>
+        @php
+            try {
+                $client = $user?->client ?? $user?->activeClient;
+                $cabinet = $client?->cabinet;
+                $unreadBizMsgCount = \App\Models\Gel\GelMessage::where('cabinet_id', $cabinet?->id)
+                    ->where('client_id', $client?->id)
+                    ->whereIn('sender_type', ['accountant', 'secretary'])
+                    ->where('est_lu', false)
+                    ->count();
+            } catch(\Exception $e) { $unreadBizMsgCount = 0; }
+        @endphp
+        <a href="{{ route('gel-business.messagerie') }}" class="gel-topbar-icon" title="Messagerie avec votre comptable" style="position:relative; text-decoration: none; color: inherit;">
+            <i class="fas fa-comments"></i>
+            @if($unreadBizMsgCount > 0)
+            <span style="position:absolute; top:-4px; right:-4px; background:var(--gel-danger); color:#fff; border-radius:50%; width:17px; height:17px; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; line-height:1;">{{ $unreadBizMsgCount > 9 ? '9+' : $unreadBizMsgCount }}</span>
+            @endif
+        </a>
         <button class="gel-topbar-icon" title="Notifications"><i class="fas fa-bell"></i></button>
         <div class="gel-dropdown">
             <div class="gel-topbar-user" onclick="toggleDropdown('userMenuBiz')">
@@ -25,8 +39,10 @@ $client = $user?->client ?? null;
                 <i class="fas fa-chevron-down" style="font-size:10px;color:var(--gel-text-muted);"></i>
             </div>
             <div class="gel-dropdown-menu" id="userMenuBiz">
+                @if(!$user->isAccountant())
                 <a href="{{ route('gel-business.profile') }}" class="gel-dropdown-item"><i class="fas fa-building"></i> Mon entreprise</a>
                 <div class="gel-dropdown-divider"></div>
+                @endif
                 <a href="{{ route('logout') }}" class="gel-dropdown-item" onclick="event.preventDefault();document.getElementById('logout-form3').submit();">
                     <i class="fas fa-sign-out-alt"></i> Déconnexion
                 </a>

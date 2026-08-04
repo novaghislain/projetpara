@@ -37,10 +37,15 @@
 </template>
 
 <script setup>
+/*
+ * PartiesTable -- Tableau des parties (intervenants) d'un acte juridique.
+ * Affiche la liste des participants (nom, rôle, email, téléphone)
+ * avec possibilité d'ajout / suppression en mode édition.
+ */
 defineProps({
-    parties: { type: Array, default: () => [] },
-    editable: { type: Boolean, default: false },
+    parties: { type: Array, default: () => [] },   /* Liste des intervenants */
+    editable: { type: Boolean, default: false },     /* Activer les boutons d'ajout / suppression */
 });
 
-defineEmits(['add', 'remove']);
+defineEmits(['add', 'remove']);  /* add : ajouter une partie ; remove : supprimer une partie */
 </script>

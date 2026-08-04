@@ -1,3 +1,10 @@
+<!--
+ * Composant : Détail d'un procès-verbal de réunion
+ * Description : Affiche le contenu complet d'un PV : objet, participants, ordre du jour,
+ *              discussions, décisions, prochaine réunion. Permet la modification,
+ *              la finalisation et l'approbation du PV.
+ * Utilisation : Page /dae/pv-reunions/{id}
+-->
 <template>
     <GelLayout>
         <div class="dae-courriers-index">
@@ -163,23 +170,27 @@
 import { ref, computed, onMounted } from 'vue'
 import GelLayout from '../../../../Layouts/GelLayout.vue'
 
+/* Extrait l'ID du PV depuis l'URL */
 const minuteId = computed(() => {
     const match = window.location.pathname.match(/\/dae\/pv-reunions\/(\d+)/)
     return match ? match[1] : null
 })
 const loading = ref(false)
-const minute = ref(null)
+const minute = ref(null)           /* Données du PV chargées depuis l'API */
 
+/* Formate une date au format français long */
 function formatDate(d) {
     if (!d) return ''
     return new Date(d).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })
 }
+/* Classe Bootstrap et libellé pour le statut du PV */
 function statutBadge(s) {
     return { projet: 'bg-warning text-dark', final: 'bg-info', approuve: 'bg-success' }[s] || 'bg-secondary'
 }
 function statutLabel(s) {
     return { projet: 'Projet', final: 'Final', approuve: 'Approuvé' }[s] || s
 }
+/* Classe Bootstrap et libellé pour le statut d'une décision */
 function decisionBadge(s) {
     return { a_faire: 'bg-warning text-dark', en_cours: 'bg-info', terminee: 'bg-success' }[s] || 'bg-secondary'
 }
@@ -187,6 +198,7 @@ function decisionLabel(s) {
     return { a_faire: 'À faire', en_cours: 'En cours', terminee: 'Terminée' }[s] || s
 }
 
+/* Charge le PV depuis l'API */
 async function fetchMinute() {
     loading.value = true
     try {
@@ -196,6 +208,7 @@ async function fetchMinute() {
     finally { loading.value = false }
 }
 
+/* Passe le PV en statut "Final" */
 async function finaliser() {
     try {
         const res = await window.axios.patch(`/dae/pv-reunions/${minute.value.id}/finaliser`)
@@ -204,6 +217,7 @@ async function finaliser() {
     } catch (err) { console.error(err) }
 }
 
+/* Passe le PV en statut "Approuvé" */
 async function approuver() {
     try {
         const res = await window.axios.patch(`/dae/pv-reunions/${minute.value.id}/approuver`)

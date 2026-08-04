@@ -20,7 +20,7 @@
 
 {{-- Filtres --}}
 <div class="gel-card" id="filtersPanel" style="margin-bottom:16px;{{ request()->anyFilled(['client_id','journal_id','date_from','date_to','statut']) ? '' : 'display:none;' }}">
-    <div class="gel-card-body">
+    <div class="gel-card-body p-4 mb-4">
         <form method="GET" action="{{ route('gel-accountant.comptabilite.ecritures') }}" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
             <div class="gel-filter-group">
                 <label>Client</label>
@@ -67,8 +67,8 @@
 </div>
 
 {{-- Tableau --}}
-<div class="gel-card">
-    <div class="gel-card-body" style="padding:0;">
+<div class="gel-card p-4 mb-4">
+    <div class="gel-card-body p-4 mb-4">
         @if($ecritures->count() > 0)
             <table class="gel-table">
                 <thead>

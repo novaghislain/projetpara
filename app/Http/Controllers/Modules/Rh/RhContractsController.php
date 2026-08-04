@@ -7,8 +7,23 @@ use App\Models\Rh\RhEmployee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur de gestion des contrats RH.
+ *
+ * Permet de gérer le cycle de vie des contrats des employés :
+ * création, modification, suppression et changement de statut.
+ */
 class RhContractsController extends BaseRhController
 {
+    /**
+     * Affiche la liste des contrats ou la vue associée.
+     *
+     * Si la requête attend du JSON, retourne les contrats paginés
+     * avec filtrage optionnel par statut et recherche textuelle.
+     *
+     * @param Request $request La requête HTTP avec les filtres (statut, search)
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View Liste paginée des contrats ou vue
+     */
     public function index(Request $request)
     {
         if ($request->expectsJson()) {
@@ -30,6 +45,12 @@ class RhContractsController extends BaseRhController
         return view('app', ['page' => 'rh-contracts']);
     }
 
+    /**
+     * Crée un nouveau contrat.
+     *
+     * @param Request $request La requête HTTP contenant les données du contrat
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse Contrat créé ou redirection
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -59,6 +80,13 @@ class RhContractsController extends BaseRhController
         return redirect()->route('rh.contracts.index')->with('success', 'Contrat créé.');
     }
 
+    /**
+     * Met à jour un contrat existant.
+     *
+     * @param Request $request La requête HTTP contenant les données à mettre à jour
+     * @param mixed $id L'identifiant du contrat
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse Contrat mis à jour ou redirection
+     */
     public function update(Request $request, $id)
     {
         $employeeIds = RhEmployee::byClient($this->getClientId($request))->pluck('id');
@@ -84,6 +112,13 @@ class RhContractsController extends BaseRhController
         return redirect()->route('rh.contracts.index')->with('success', 'Contrat mis à jour.');
     }
 
+    /**
+     * Supprime un contrat.
+     *
+     * @param Request $request La requête HTTP
+     * @param mixed $id L'identifiant du contrat à supprimer
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse Message de confirmation ou redirection
+     */
     public function destroy(Request $request, $id)
     {
         $employeeIds = RhEmployee::byClient($this->getClientId($request))->pluck('id');
@@ -96,6 +131,13 @@ class RhContractsController extends BaseRhController
         return redirect()->route('rh.contracts.index')->with('success', 'Contrat supprimé.');
     }
 
+    /**
+     * Modifie le statut d'un contrat.
+     *
+     * @param Request $request La requête HTTP contenant le nouveau statut
+     * @param mixed $id L'identifiant du contrat
+     * @return \Illuminate\Http\JsonResponse Le contrat mis à jour
+     */
     public function changerStatut(Request $request, $id)
     {
         $employeeIds = RhEmployee::byClient($this->getClientId($request))->pluck('id');

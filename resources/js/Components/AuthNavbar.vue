@@ -115,13 +115,19 @@
 </template>
 
 <script setup>
+/*
+ * AuthNavbar -- Barre de navigation publique du site GEL (Gestion Multi-Pôles).
+ * Affiche le logo, les liens de navigation (Modules, Services, À propos,
+ * Ressources, Tarifs, Contact) avec menus déroulants, un bouton
+ * Connexion / Inscription et un menu mobile responsive.
+ */
 import { ref } from 'vue';
 
 const props = defineProps({
-  isRegisterPage: { type: Boolean, default: false },
+  isRegisterPage: { type: Boolean, default: false },  /* Affiche "Se connecter" si vrai, "S'inscrire" sinon */
 });
 
-const mobileOpen = ref(false);
+const mobileOpen = ref(false);  /* Contrôle l'ouverture du menu mobile */
 </script>
 
 <style scoped>

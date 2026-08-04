@@ -6,6 +6,14 @@
 </template>
 
 <script setup>
+/*
+ * Composant : GelCounter
+ * Role : Affiche un compteur animé qui se déclenche lors du défilement (intersection observer)
+ * Props :
+ *   target   (Number, requis)       — Valeur cible du compteur
+ *   suffix   (String, défaut '')    — Texte suffixe (ex: +, %, €)
+ *   duration (Number, défaut 2000)  — Durée de l'animation en ms
+ */
 import { ref, onMounted } from 'vue'
 import { useCountUp } from '@/composables/useCountUp'
 import { useIntersectionObserver } from '@vueuse/core'
@@ -19,6 +27,7 @@ const props = defineProps({
 const counterEl = ref(null)
 const { count, start } = useCountUp(props.target, props.duration)
 
+// Déclenche l'animation lorsque l'élément devient visible (50% visible)
 useIntersectionObserver(
   counterEl,
   ([{ isIntersecting }]) => {

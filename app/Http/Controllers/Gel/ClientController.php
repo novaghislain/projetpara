@@ -10,10 +10,17 @@ use App\Models\Pole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Contrôleur de gestion des clients (entreprises) pour le portail GEL.
+ * Opérations CRUD complètes avec création de contacts imbriqués,
+ * gestion des pôles, services, domaines d'activité, modules et configuration e-MECeF.
+ */
 class ClientController extends Controller
 {
     /**
-     * Page liste des clients.
+     * Affiche la page de liste des clients.
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
@@ -21,7 +28,9 @@ class ClientController extends Controller
     }
 
     /**
-     * Page formulaire de création.
+     * Affiche le formulaire de création d'un nouveau client.
+     *
+     * @return \Illuminate\View\View
      */
     public function create()
     {
@@ -29,7 +38,11 @@ class ClientController extends Controller
     }
 
     /**
-     * Créer un client.
+     * Crée un nouveau client avec ses pôles, services et contacts associés.
+     * Résout le domaine d'activité à partir du code fourni.
+     *
+     * @param Request $request La requête HTTP avec les données du client
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
     public function store(Request $request)
     {
@@ -65,7 +78,7 @@ class ClientController extends Controller
         $validated['status'] = $validated['status'] ?? 'actif';
         $validated['created_by'] = Auth::id();
 
-        // Résoudre domain_id à partir du domain_code
+        // Résoudre le domaine d'activité à partir du code fourni
         if (!empty($validated['domain_code'])) {
             $domain = \App\Models\BusinessDomain::where('code', $validated['domain_code'])->first();
             if ($domain) {
@@ -77,7 +90,7 @@ class ClientController extends Controller
 
         $client = Client::create($validated);
 
-        // Associer les pôles
+        // Associer les pôles au client via la table pivot
         if (!empty($validated['pole_ids'])) {
             $polesData = [];
             foreach ($validated['pole_ids'] as $poleId) {
@@ -86,7 +99,7 @@ class ClientController extends Controller
             $client->poles()->attach($polesData);
         }
 
-        // Associer les services
+        // Associer les services au client via la table pivot
         if (!empty($validated['service_ids'])) {
             $serviceData = [];
             foreach ($validated['service_ids'] as $serviceId) {
@@ -98,7 +111,7 @@ class ClientController extends Controller
             $client->services()->attach($serviceData);
         }
 
-        // Ajouter les contacts
+        // Ajouter les contacts associés au client
         if (!empty($validated['contacts'])) {
             foreach ($validated['contacts'] as $contactData) {
                 $client->contacts()->create($contactData);
@@ -114,7 +127,10 @@ class ClientController extends Controller
     }
 
     /**
-     * Page détail d'un client.
+     * Affiche la page de détail d'un client.
+     *
+     * @param int $id L'identifiant du client
+     * @return \Illuminate\View\View
      */
     public function show($id)
     {
@@ -125,7 +141,10 @@ class ClientController extends Controller
     }
 
     /**
-     * Page formulaire d'édition.
+     * Affiche le formulaire d'édition d'un client.
+     *
+     * @param int $id L'identifiant du client
+     * @return \Illuminate\View\View
      */
     public function edit($id)
     {
@@ -136,7 +155,12 @@ class ClientController extends Controller
     }
 
     /**
-     * Mettre à jour un client.
+     * Met à jour un client existant avec ses pôles, services et domaine d'activité.
+     * Si domain_code est fourni, résout l'ID du domaine ; si absent, efface la référence.
+     *
+     * @param Request $request La requête HTTP avec les données mises à jour
+     * @param int $id L'identifiant du client
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
     public function update(Request $request, $id)
     {
@@ -165,7 +189,7 @@ class ClientController extends Controller
             'domain_code' => 'nullable|string|max:50|exists:business_domains,code',
         ]);
 
-        // Résoudre domain_id à partir du domain_code
+        // Résoudre le domaine d'activité à partir du code
         if (!empty($validated['domain_code'])) {
             $domain = \App\Models\BusinessDomain::where('code', $validated['domain_code'])->first();
             if ($domain) {
@@ -174,6 +198,7 @@ class ClientController extends Controller
                 $validated['domain_confirmed_at'] = now();
             }
         } elseif (array_key_exists('domain_code', $validated)) {
+            // Si domain_code est explicitement null, effacer la référence au domaine
             $validated['domain_id'] = null;
             $validated['domain_confirmed'] = false;
             $validated['domain_confirmed_at'] = null;
@@ -181,7 +206,7 @@ class ClientController extends Controller
 
         $client->update($validated);
 
-        // Synchroniser les pôles
+        // Synchroniser les pôles (remplace les associations existantes)
         if (isset($validated['pole_ids'])) {
             $polesData = [];
             foreach ($validated['pole_ids'] as $poleId) {
@@ -190,7 +215,7 @@ class ClientController extends Controller
             $client->poles()->sync($polesData);
         }
 
-        // Synchroniser les services
+        // Synchroniser les services (remplace les associations existantes)
         if (isset($validated['service_ids'])) {
             $serviceData = [];
             foreach ($validated['service_ids'] as $serviceId) {
@@ -211,7 +236,10 @@ class ClientController extends Controller
     }
 
     /**
-     * Supprimer un client.
+     * Supprime un client définitivement.
+     *
+     * @param int $id L'identifiant du client
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
     public function destroy($id)
     {
@@ -228,6 +256,14 @@ class ClientController extends Controller
 
     // ─── Contacts imbriqués ─────────────────────────────────────
 
+    /**
+     * Ajoute un contact à un client.
+     * Si le contact est marqué comme principal, retire ce statut aux autres contacts.
+     *
+     * @param Request $request La requête HTTP avec les données du contact
+     * @param int $clientId L'identifiant du client
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function storeContact(Request $request, $clientId)
     {
         $client = Client::findOrFail($clientId);
@@ -242,7 +278,7 @@ class ClientController extends Controller
 
         $validated['client_id'] = $client->id;
 
-        // Si c'est le contact principal, retirer le statut aux autres
+        // Si c'est le contact principal, retirer le statut aux autres contacts du client
         if (!empty($validated['is_primary'])) {
             $client->contacts()->update(['is_primary' => false]);
         }
@@ -252,6 +288,13 @@ class ClientController extends Controller
         return response()->json($contact, 201);
     }
 
+    /**
+     * Met à jour un contact existant.
+     *
+     * @param Request $request La requête HTTP avec les données mises à jour
+     * @param int $id L'identifiant du contact
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function updateContact(Request $request, $id)
     {
         $contact = ClientContact::findOrFail($id);
@@ -264,6 +307,7 @@ class ClientController extends Controller
             'is_primary' => 'boolean',
         ]);
 
+        // Si marqué comme principal, retirer le statut aux autres contacts du même client
         if (!empty($validated['is_primary'])) {
             ClientContact::where('client_id', $contact->client_id)
                 ->where('id', '!=', $contact->id)
@@ -275,6 +319,12 @@ class ClientController extends Controller
         return response()->json($contact);
     }
 
+    /**
+     * Supprime un contact.
+     *
+     * @param int $id L'identifiant du contact
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function destroyContact($id)
     {
         $contact = ClientContact::findOrFail($id);
@@ -286,7 +336,11 @@ class ClientController extends Controller
     // ─── API ────────────────────────────────────────────────────
 
     /**
-     * API: Liste de tous les clients (pour DataTable).
+     * API : Liste de tous les clients (pour DataTable).
+     * Applique un filtre par pôle selon le rôle de l'utilisateur connecté.
+     * Les super_admin, director et comptable voient tous les clients.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function listAll()
     {
@@ -297,8 +351,7 @@ class ClientController extends Controller
             'missions' => fn($q) => $q->whereNotIn('status', ['terminee', 'annulee']),
         ]);
 
-        // Filtre par rôle
-        // super_admin, director et comptable voient tous les clients
+        // Filtre par rôle : seuls les rôles autorisés voient tous les clients
         if (!in_array($user->role, ['super_admin', 'director', 'comptable'])) {
             $query->whereHas('poles', fn($q) => $q->where('pole_id', $user->pole_id));
         }
@@ -307,7 +360,10 @@ class ClientController extends Controller
     }
 
     /**
-     * API: Détail d'un client.
+     * API : Détail complet d'un client avec ses relations.
+     *
+     * @param int $id L'identifiant du client
+     * @return \Illuminate\Http\JsonResponse
      */
     public function getClient($id)
     {
@@ -324,7 +380,12 @@ class ClientController extends Controller
     }
 
     /**
-     * API: Activer/désactiver un module pour un client (super admin).
+     * API : Active ou désactive un module pour un client (réservé super admin).
+     * Gère une liste de modules désactivés stockée dans disabled_modules.
+     *
+     * @param Request $request La requête HTTP avec module et enabled
+     * @param int $id L'identifiant du client
+     * @return \Illuminate\Http\JsonResponse
      */
     public function updateModules(Request $request, $id)
     {
@@ -338,10 +399,10 @@ class ClientController extends Controller
         $disabled = $client->disabled_modules ?? [];
 
         if ($validated['enabled']) {
-            // Réactiver → retirer de la liste
+            // Réactiver le module : le retirer de la liste des désactivés
             $disabled = array_values(array_filter($disabled, fn($m) => $m !== $validated['module']));
         } else {
-            // Désactiver → ajouter à la liste
+            // Désactiver le module : l'ajouter à la liste des désactivés s'il n'y est pas déjà
             if (!in_array($validated['module'], $disabled)) {
                 $disabled[] = $validated['module'];
             }
@@ -357,7 +418,11 @@ class ClientController extends Controller
     }
 
     /**
-     * API: Mettre à jour les identifiants e-MECeF d'un client.
+     * API : Met à jour les identifiants e-MECeF d'un client.
+     *
+     * @param Request $request La requête HTTP avec emecef_nim et emecef_is_active
+     * @param int $id L'identifiant du client
+     * @return \Illuminate\Http\JsonResponse
      */
     public function updateEmecef(Request $request, $id)
     {

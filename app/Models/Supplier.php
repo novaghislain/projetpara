@@ -7,6 +7,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Modèle Supplier - Fournisseur.
+ *
+ * Table associée : 'suppliers' (convention Laravel).
+ * Fiche fournisseur avec coordonnées, délais de livraison et statut.
+ * Relations :
+ * - client() : appartient à un client (Client).
+ * - products() : appartient à plusieurs produits (Product, pivot 'product_supplier').
+ */
 class Supplier extends Model
 {
     use SoftDeletes;

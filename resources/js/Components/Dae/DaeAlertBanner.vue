@@ -26,18 +26,36 @@
 </template>
 
 <script setup>
+/*
+ * Composant : DaeAlertBanner
+ * Description : Bannière d'alertes contextuelles. Affiche une liste d'alertes
+ *               (warning, danger, info, success) que l'utilisateur peut
+ *               fermer individuellement.
+ * Props :
+ *   alerts (Array, défaut []) -- Liste d'alertes ({ type, message })
+ */
 import { ref } from 'vue'
 
 const props = defineProps({
     alerts: { type: Array, default: () => [] },
 })
 
+/*
+ * localAlerts — Copie réactive locale des alertes props.
+ *                Permet de les supprimer sans muter la prop parente.
+ */
 const localAlerts = ref([...props.alerts])
 
+/*
+ * typeIcon — Associe une icône Bootstrap à chaque type d'alerte.
+ */
 function typeIcon(type) {
     return { warning: 'bi-exclamation-triangle', danger: 'bi-x-circle', info: 'bi-info-circle', success: 'bi-check-circle' }[type] || 'bi-bell'
 }
 
+/*
+ * dismiss — Supprime l'alerte à l'index donné du tableau local.
+ */
 function dismiss(index) {
     localAlerts.value.splice(index, 1)
 }
