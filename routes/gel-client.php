@@ -42,8 +42,11 @@ Route::middleware(['auth:portal'])->group(function () {
     Route::get('/{slug}/messages', [\App\Http\Controllers\GelClient\MessageController::class, 'index'])->name('portal.messages');
     Route::post('/{slug}/messages', [\App\Http\Controllers\GelClient\MessageController::class, 'store'])->name('portal.messages.store');
 
-    // Tickets
+    // Tickets Support Métier
     Route::get('/{slug}/tickets/create', [\App\Http\Controllers\GelClient\TicketController::class, 'create'])->name('portal.tickets.create');
     Route::post('/{slug}/tickets', [\App\Http\Controllers\GelClient\TicketController::class, 'store'])->name('portal.tickets.store');
+
+    // Support Technique Informatique (GEL SABINET)
+    Route::post('/{slug}/it-support', [\App\Http\Controllers\GelClient\ItSupportController::class, 'store'])->name('portal.it-support.store');
 
 });

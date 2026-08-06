@@ -40,6 +40,10 @@ return Application::configure(basePath: dirname(__DIR__))
             // Routage du Portail Super Administrateur (Niveau 2)
             \Illuminate\Support\Facades\Route::middleware('web')
                 ->group(base_path('routes/gel-super-admin.php'));
+                
+            // Routage du Portail Informatique GEL SABINET (Modèle 3)
+            \Illuminate\Support\Facades\Route::middleware('web')
+                ->group(base_path('routes/gel-informaticien.php'));
         },
     )
     ->withSchedule(function (Schedule $schedule): void {

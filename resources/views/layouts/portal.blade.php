@@ -245,6 +245,7 @@
                 <a href="{{ route('portal.invoices', ['slug' => $slug]) }}" class="portal-nav-link">Factures</a>
                 <a href="#" class="portal-nav-link">Documents</a>
                 <a href="{{ route('portal.messages', ['slug' => $slug]) }}" class="portal-nav-link">Messagerie</a>
+                <a href="#" onclick="document.getElementById('itSupportModal').showModal()" class="portal-nav-link text-danger" style="font-weight: 600;"><i class="fas fa-life-ring"></i> Support Technique</a>
             </nav>
             
             <div class="portal-user-menu">
@@ -266,6 +267,31 @@
         <main class="portal-main">
             @yield('content')
         </main>
+        
+        <!-- Modal Support Technique -->
+        <dialog id="itSupportModal" style="padding: 24px; border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); max-width: 500px; width: 100%; margin: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="font-size: 18px; font-weight: 600; margin: 0;">Support Technique GEL SABINET</h3>
+                <button onclick="document.getElementById('itSupportModal').close()" style="background: none; border: none; cursor: pointer; font-size: 18px; color: #666;"><i class="fas fa-times"></i></button>
+            </div>
+            <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Veuillez décrire le problème technique rencontré. Notre équipe informatique prendra en charge votre demande.</p>
+            
+            <form action="{{ route('portal.it-support.store', ['slug' => $slug]) }}" method="POST">
+                @csrf
+                <div class="portal-form-group">
+                    <label class="portal-label">Sujet / Problème</label>
+                    <input type="text" name="subject" class="portal-input" required placeholder="Ex: Impossible de télécharger une facture">
+                </div>
+                <div class="portal-form-group">
+                    <label class="portal-label">Description détaillée</label>
+                    <textarea name="message" class="portal-input" rows="4" required placeholder="Décrivez les étapes pour reproduire le problème..."></textarea>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+                    <button type="button" class="portal-btn portal-btn-secondary" onclick="document.getElementById('itSupportModal').close()">Annuler</button>
+                    <button type="submit" class="portal-btn portal-btn-primary"><i class="fas fa-paper-plane"></i> Envoyer le ticket</button>
+                </div>
+            </form>
+        </dialog>
     @endif
 </body>
 </html>
