@@ -6,7 +6,7 @@
     /* KANBAN CSS */
     .kanban-board {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(4, 1fr);
         gap: 24px;
         align-items: start;
         margin-top: 16px;
@@ -129,18 +129,18 @@
         </div>
     </div>
 
-    <!-- COLONNE : À VALIDER -->
-    <div class="kanban-col" style="background: #FDF4FF; border-color: #FAE8FF;" data-status="a_valider">
+    <!-- COLONNE : EN ATTENTE -->
+    <div class="kanban-col" style="background: #FDF4FF; border-color: #FAE8FF;" data-status="en_attente">
         <div class="kanban-col-header">
             <div style="display:flex;align-items:center;gap:8px;">
                 <div style="width:10px;height:10px;border-radius:50%;background:#D946EF;"></div>
-                À VALIDER
+                EN ATTENTE
             </div>
-            <span class="kanban-badge" style="background:#FAE8FF; color:#C026D3;">{{ $tasksToValidate->count() }}</span>
+            <span class="kanban-badge" style="background:#FAE8FF; color:#C026D3;">{{ $tasksPending->count() }}</span>
         </div>
         
         <div class="kanban-list">
-            @foreach($tasksToValidate as $task)
+            @foreach($tasksPending as $task)
                 @include('gel-secretary.tasks.partials.kanban-card', ['task' => $task, 'col' => 'to_validate'])
             @endforeach
         </div>

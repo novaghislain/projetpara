@@ -24,140 +24,62 @@ let stopPermissionPolling = null;
 
 // ── Navigation principale ──
 const navItems = [
-    { name: 'Accueil',        icon: 'bi-house',          route: '/company/dashboard',    key: 'company-dashboard' },
-    { name: 'Commandes',      icon: 'bi-cart-check',     route: '/mes-commandes',        key: 'mes-commandes' },
-    { name: 'Finance',        icon: 'bi-cash-stack',     route: '/company/invoices',     key: 'company-invoices',  module: 'facturation' },
-    { name: 'Caisse',         icon: 'bi-cash-coin',      route: '/company/caisse',       key: 'company-caisse',    module: 'caisse' },
-    { name: 'Comptabilite',   icon: 'bi-calculator',     route: '/company/accounting',   key: 'company-accounting', module: 'comptabilite' },
-    { name: 'CRM',            icon: 'bi-people',         route: '/company/crm',          key: 'company-crm',       module: 'crm' },
-    { name: 'GED',            icon: 'bi-folder',          route: '/company/ged',          key: 'company-ged',       module: 'document' },
-    { name: 'Secretariat',    icon: 'bi-file-text',      route: '/company/dae',          key: 'company-dae',       module: 'dae' },
-    { name: 'Juridique',      icon: 'bi-briefcase',      route: '/company/legal',        key: 'company-legal',     module: 'juridique' },
-    { name: 'Projets',        icon: 'bi-kanban',         route: '/company/projects',     key: 'company-projects',  module: 'projets' },
-    { name: 'RH',             icon: 'bi-people',         route: '/company/rh',           key: 'company-rh',        module: 'rh' },
-    { name: 'e-MECeF',        icon: 'bi-shield-check',   route: '/company/emecef',       key: 'company-emecef' },
-    { name: 'Administration', icon: 'bi-gear',           route: '/company/profile',      key: 'company-profile' },
+    { name: 'Vue d\'ensemble',    icon: 'bi-speedometer2', route: '/company/dashboard', key: 'company-dashboard' },
+    { name: 'Mon entreprise',     icon: 'bi-building',       route: '/company/profile',   key: 'company-profile' },
+    { name: 'Équipe',             icon: 'bi-people',         route: '/company/users',     key: 'company-users' },
+    { name: 'Rôles & Accès',      icon: 'bi-shield-lock',    route: '/company/roles',     key: 'company-roles' },
+    { name: 'Demandes B2C',       icon: 'bi-inbox',          route: '/company/client-requests', key: 'company-requests' },
+    { name: 'Abonnement',         icon: 'bi-credit-card',    route: '/company/subscription', key: 'company-subscription' },
+    { name: 'Sécurité',           icon: 'bi-shield-check',   route: '/company/security',  key: 'company-security' },
+    { name: 'Historique',         icon: 'bi-clock-history',  route: '/company/audit',     key: 'company-audit' },
 ];
 
-const filteredNavItems = computed(() =>
-    navItems.filter(t => !t.module || authStore.hasModule(t.module))
-);
-
-/* ── Module requirements for sidebar items ── */
-const sidebarModuleMap = {
-    '/company/ged':        'document',
-    '/company/caisse':     'caisse',
-    '/company/invoices':   'facturation',
-    '/company/rh':         'rh',
-    '/company/accounting': 'comptabilite',
-    '/company/legal':      'juridique',
-    '/company/projects':   'projets',
-    '/company/crm':        'crm',
-    '/company/dae':        'dae',
-};
-
-function hasSidebarAccess(href) {
-    const mod = sidebarModuleMap[href];
-    return !mod || authStore.hasModule(mod);
-}
+const filteredNavItems = computed(() => navItems);
 
 // ── Sous-fonctionnalites contextuelles ──
 const sidebarBySection = {
     'company-dashboard': [
         { group: '', items: [
-            { label: 'Comptabilite',      href: '/company/accounting',   icon: 'bi-calculator' },
-            { label: 'Mes commandes',     href: '/mes-commandes',       icon: 'bi-cart-check' },
-            { label: 'Notifications',     href: '/company/notifications', icon: 'bi-bell' },
-            { label: 'Services actifs',   href: '/company/services',   icon: 'bi-grid-3x3-gap' },
-            { label: 'Mon Profil',        href: '/company/profile',     icon: 'bi-person-circle' },
-        ]},
-    ],
-    'mes-commandes': [
-        { group: '', items: [
-            { label: 'Mes commandes',     href: '/mes-commandes',       icon: 'bi-cart-check' },
-            { label: 'Catalogue GEL',     href: '/nos-services',       icon: 'bi-shop' },
-        ]},
-    ],
-    'company-caisse': [
-        { group: '', items: [
-            { label: 'Caisse',            href: '/company/caisse',         icon: 'bi-cash-stack' },
-        ]},
-    ],
-    'company-crm': [
-        { group: '', items: [
-            { label: 'CRM',               href: '/company/crm',            icon: 'bi-people' },
-        ]},
-    ],
-    'company-invoices': [
-        { group: '', items: [
-            { label: 'Facturation',       href: '/company/invoices',   icon: 'bi-receipt' },
-            { label: 'Caisse',            href: '/company/caisse',     icon: 'bi-cash-stack' },
-        ]},
-    ],
-    'company-accounting': [
-        { group: 'Comptabilite', items: [
-            { label: 'Tableau de bord',   href: '/company/accounting',              icon: 'bi-speedometer2' },
-            { label: 'Plan comptable',    href: '/company/comptabilite/comptes',     icon: 'bi-journal' },
-            { label: 'Journaux',          href: '/company/comptabilite/journaux',    icon: 'bi-journal-text' },
-            { label: 'Ecritures',        href: '/company/comptabilite/ecritures',    icon: 'bi-pencil-square' },
-            { label: 'Balance',           href: '/company/comptabilite/balance',     icon: 'bi-bar-chart' },
-            { label: 'Grand Livre',       href: '/company/comptabilite/grand-livre', icon: 'bi-book' },
-        ]},
-        { group: 'Gestion', items: [
-            { label: 'Factures',          href: '/company/comptabilite/factures',        icon: 'bi-receipt' },
-            { label: 'Banque',            href: '/company/comptabilite/banque',           icon: 'bi-bank' },
-            { label: 'TVA',               href: '/company/comptabilite/tva/taux',         icon: 'bi-percent' },
-        ]},
-        { group: 'Rapports', items: [
-            { label: 'Bilan',             href: '/company/comptabilite/rapports/bilan',           icon: 'bi-file-earmark-bar-graph' },
-            { label: 'Resultat',          href: '/company/comptabilite/rapports/resultat',        icon: 'bi-graph-up' },
-            { label: 'TFT (Tresorerie)',  href: '/company/comptabilite/rapports/tft',             icon: 'bi-cash-coin' },
-            { label: 'Balance agee',      href: '/company/comptabilite/rapports/aging-clients',   icon: 'bi-clock-history' },
-        ]},
-    ],
-    'company-ged': [
-        { group: '', items: [
-            { label: 'Documents (GED)',   href: '/company/ged',        icon: 'bi-folder2-open' },
+            { label: 'Vue d\'ensemble',   href: '/company/dashboard',       icon: 'bi-speedometer2' },
+            { label: 'Notifications',     href: '/company/notifications',   icon: 'bi-bell' },
         ]},
     ],
     'company-profile': [
         { group: '', items: [
-            { label: 'Mon Profil',        href: '/company/profile',        icon: 'bi-person-circle' },
-            { label: 'Notifications',     href: '/company/notifications',  icon: 'bi-bell' },
-            { label: 'Utilisateurs',      href: '/company/users',          icon: 'bi-people-fill' },
+            { label: 'Identité et Profil',href: '/company/profile',         icon: 'bi-building' },
         ]},
     ],
-    'company-dae': [
+    'company-users': [
         { group: '', items: [
-            { label: 'Tableau de bord',   href: '/company/dae',            icon: 'bi-speedometer2' },
-            { label: 'Courriers',         href: '/company/dae/courriers',  icon: 'bi-envelope' },
-            { label: 'Documents',         href: '/company/dae/documents',  icon: 'bi-folder' },
-            { label: 'Contrats',          href: '/company/dae/contrats',   icon: 'bi-file-text' },
-            { label: 'Taches',            href: '/company/dae/taches',     icon: 'bi-list-task' },
+            { label: 'Utilisateurs',      href: '/company/users',           icon: 'bi-people' },
+            { label: 'Invitations',       href: '/company/invitations',     icon: 'bi-envelope' },
         ]},
     ],
-    'company-rh': [
+    'company-roles': [
         { group: '', items: [
-            { label: 'Tableau de bord',   href: '/company/rh',              icon: 'bi-speedometer2' },
-            { label: 'Employes',          href: '/company/rh/employees',    icon: 'bi-people' },
-            { label: 'Congs',            href: '/company/rh/leaves',       icon: 'bi-calendar-check' },
-            { label: 'Notes de frais',    href: '/company/rh/expenses',     icon: 'bi-cash-stack' },
-            { label: 'Paie',              href: '/company/rh/payrolls',     icon: 'bi-calculator' },
-            { label: 'Formations',        href: '/company/rh/trainings',    icon: 'bi-book' },
+            { label: 'Permissions',       href: '/company/roles',           icon: 'bi-shield-lock' },
         ]},
     ],
-    'company-legal': [
+    'company-requests': [
         { group: '', items: [
-            { label: 'Tableau de bord',   href: '/company/legal',            icon: 'bi-speedometer2' },
-            { label: 'Contrats',          href: '/company/legal/contracts',  icon: 'bi-file-text' },
-            { label: 'Contentieux',       href: '/company/legal/cases',      icon: 'bi-exclamation-triangle' },
+            { label: 'Demandes Clients',  href: '/company/client-requests', icon: 'bi-inbox' },
         ]},
     ],
-    'company-projects': [
+    'company-subscription': [
         { group: '', items: [
-            { label: 'Tableau de bord',   href: '/company/projects',         icon: 'bi-speedometer2' },
-            { label: 'Projets',           href: '/company/projects',         icon: 'bi-kanban' },
-            { label: 'Taches',            href: '/company/projects/tasks',   icon: 'bi-list-check' },
+            { label: 'Abonnement en cours',href: '/company/subscription',   icon: 'bi-credit-card' },
+            { label: 'Factures GEL',      href: '/company/subscription/invoices', icon: 'bi-receipt' },
+        ]},
+    ],
+    'company-security': [
+        { group: '', items: [
+            { label: 'Sécurité & 2FA',    href: '/company/security',        icon: 'bi-shield-check' },
+            { label: 'Sessions Actives',  href: '/company/security/sessions', icon: 'bi-laptop' },
+        ]},
+    ],
+    'company-audit': [
+        { group: '', items: [
+            { label: 'Historique', href: '/company/audit',         icon: 'bi-clock-history' },
         ]},
     ],
 };
@@ -166,17 +88,9 @@ const sidebarLinks = computed(() => {
     const raw = sidebarBySection[pageKey.value] || sidebarBySection['company-dashboard'];
     return raw.map(group => ({
         ...group,
-        items: group.items.filter(item => hasSidebarAccess(item.href))
+        items: group.items
     })).filter(group => group.items.length > 0);
 });
-
-/**
- * Construit dynamiquement la sidebar comptabilite selon les modules
- * actifs pour le domaine d'activite du client.
- */
-function buildAccountingSidebar() {
-    return []; // Deplace dans les onglets de la page Comptabilite
-}
 
 const flatLinks = computed(() =>
     sidebarLinks.value.flatMap(g => g.items)
@@ -190,56 +104,34 @@ const currentPath = computed(() => {
 const isSubnavActive = (href) => {
     const path = currentPath.value;
     
-    // Empêcher les racines de correspondre à tout
-    if (href === '/company/accounting' && path !== '/company/accounting') return false;
-    if (href === '/company/dae' && path !== '/company/dae') return false;
-    if (href === '/company/rh' && path !== '/company/rh') return false;
-    if (href === '/company/legal' && path !== '/company/legal') return false;
-    if (href === '/company/projects' && path !== '/company/projects') return false;
-    
     if (path === href) return true;
     if (path.startsWith(href + '/')) return true;
     return false;
 };
 
 const sectionTitles = {
-    'company-dashboard': 'Accueil',
-    'mes-commandes': 'Commandes',
-    'company-invoices': 'Finance',
-    'company-caisse': 'Caisse',
-    'company-accounting': 'Comptabilite',
-    'company-crm': 'CRM',
-    'company-ged': 'GED',
-    'company-dae': 'Secretariat DAE',
-    'company-legal': 'Juridique',
-    'company-projects': 'Projets',
-    'company-rh': 'Ressources Humaines',
-    'company-emecef': 'e-MECeF (DGI)',
-    'company-profile': 'Administration',
+    'company-dashboard': 'Vue d\'ensemble',
+    'company-profile': 'Mon entreprise',
+    'company-users': 'Équipe',
+    'company-roles': 'Rôles & Accès',
+    'company-requests': 'Demandes B2C',
+    'company-subscription': 'Abonnement',
+    'company-security': 'Sécurité',
+    'company-audit': 'Historique',
 };
 
 const pageKey = computed(() => {
     const path = window.location.pathname;
-    if (path.startsWith('/company/dashboard') || path === '/company') return 'company-dashboard';
-    if (path.startsWith('/company/services')) return 'company-dashboard';
-    if (path.startsWith('/company/users')) return 'company-profile';
+    if (path.startsWith('/company/dashboard')) return 'company-dashboard';
+    if (path.startsWith('/company/notifications')) return 'company-dashboard';
     if (path.startsWith('/company/profile')) return 'company-profile';
-    if (path.startsWith('/company/caisse')) return 'company-caisse';
-    if (path.startsWith('/company/accounting')) return 'company-accounting';
-    if (path.startsWith('/company/comptabilite')) return 'company-accounting';
-    if (path.startsWith('/company/compta')) return 'company-accounting';
-    if (path.startsWith('/company/invoices')) return 'company-invoices';
-    if (path.startsWith('/company/crm')) return 'company-crm';
-    if (path.startsWith('/company/rh')) return 'company-rh';
-    if (path.startsWith('/company/legal')) return 'company-legal';
-    if (path.startsWith('/company/projects')) return 'company-projects';
-    if (path.startsWith('/company/notifications')) return 'company-profile';
-    if (path.startsWith('/company/ged')) return 'company-ged';
-    if (path.startsWith('/company/dae')) return 'company-dae';
-    if (path.startsWith('/company/emecef')) return 'company-emecef';
-    if (path.startsWith('/mes-commandes')) return 'mes-commandes';
-    if (path.startsWith('/nos-services')) return 'mes-commandes';
-    if (path.startsWith('/company/ai')) return 'company-dashboard';
+    if (path.startsWith('/company/users')) return 'company-users';
+    if (path.startsWith('/company/invitations')) return 'company-users';
+    if (path.startsWith('/company/roles')) return 'company-roles';
+    if (path.startsWith('/company/client-requests')) return 'company-requests';
+    if (path.startsWith('/company/subscription')) return 'company-subscription';
+    if (path.startsWith('/company/security')) return 'company-security';
+    if (path.startsWith('/company/audit')) return 'company-audit';
     return 'company-dashboard';
 });
 
@@ -273,31 +165,12 @@ const logout = async () => {
     }
 };
 
-// Carte page -> module requis
-const pageModuleMap = {
-    'company-caisse': 'caisse',
-    'company-ged': 'document',
-    'company-accounting': 'comptabilite',
-    'company-invoices': 'facturation',
-    'company-rh': 'rh',
-    'company-legal': 'juridique',
-    'company-projects': 'projets',
-    'company-crm': 'crm',
-    'company-dae': 'dae',
-};
-
 onMounted(async () => {
     const clientId = window.__CLIENT_ID__;
     if (!clientId) { loading.value = false; return; }
 
     if (!authStore.modules.length && authStore.isAuthenticated) {
         await authStore.refreshPermissions();
-    }
-
-    const requiredModule = pageModuleMap[pageKey.value];
-    if (requiredModule && !authStore.hasModule(requiredModule)) {
-        window.location.href = '/company/dashboard';
-        return;
     }
 
     try {
@@ -528,22 +401,22 @@ onUnmounted(() => {
 
 <style scoped>
 /* == PORTAL CLIENT LAYOUT --- Sidebar verticale + Subnav == */
-/* 🎨 Theme violet #7C3AED — identité distincte du portail client */
+/* 🎨 Theme Dark Premium #F59E0B / #0F172A — identité distincte du portail administrateur */
 
 /* -- Top bar simplifiee ------------------------ */
 .g-topbar {
-    background: #2D1B69;
+    background: #0F172A;
     height: 52px;
     flex-shrink: 0;
-    border-bottom: 2px solid #7C3AED;
-    box-shadow: 0 2px 6px rgba(45,27,105,0.15);
+    border-bottom: 2px solid #F59E0B;
+    box-shadow: 0 2px 6px rgba(15,23,42,0.15);
     position: sticky;
     top: 0;
     z-index: 1030;
 }
 .g-logo-icon {
     width: 30px; height: 30px;
-    background: #7C3AED; color: #fff;
+    background: #F59E0B; color: #fff;
     border-radius: 4px;
     display: flex; align-items: center; justify-content: center;
     font-size: 14px; flex-shrink: 0;
@@ -580,8 +453,8 @@ onUnmounted(() => {
 .g-role-badge {
     font-size: 9px; font-weight: 800; letter-spacing: 0.06em;
     text-transform: uppercase;
-    background: rgba(124,58,237,0.15);
-    color: #7C3AED;
+    background: rgba(245,158,11,0.15);
+    color: #F59E0B;
     padding: 3px 8px; border-radius: 3px;
 }
 .g-user-btn {
@@ -593,7 +466,7 @@ onUnmounted(() => {
 .g-user-btn:hover { background: rgba(255,255,255,0.18); }
 .g-avatar {
     width: 28px; height: 28px;
-    background: #fff; color: #2D1B69;
+    background: #fff; color: #0F172A;
     font-weight: 800; font-size: 11px;
     border-radius: 4px;
     display: flex; align-items: center; justify-content: center;
@@ -603,22 +476,22 @@ onUnmounted(() => {
 .g-dropdown { border-radius: 4px !important; min-width: 210px; margin-top: 6px; border: 1px solid #dce3ee !important; box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important; }
 .g-dd-user { background: #f8fbff; }
 .g-dd-item { font-size: 13px; padding: 9px 16px; color: #333; }
-.g-dd-item:hover { background: #F3EEFF !important; color: #7C3AED !important; }
+.g-dd-item:hover { background: #FEF3C7 !important; color: #F59E0B !important; }
 .g-dd-danger { color: #e53935 !important; }
 .g-dd-danger:hover { background: #fdecea !important; color: #e53935 !important; }
 .g-notif-all {
     display: block; text-align: center; padding: 7px;
-    background: #F3EEFF; color: #7C3AED; border-radius: 4px;
+    background: #FEF3C7; color: #F59E0B; border-radius: 4px;
     font-size: 12px; font-weight: 600; text-decoration: none;
 }
-.g-notif-all:hover { background: #E4D9FF; color: #6D28D9; }
+.g-notif-all:hover { background: #FDE68A; color: #D97706; }
 
 /* -- Sidebar ------------------------------------- */
 .g-body { position: relative; }
 .g-sidebar {
     width: 240px;
-    background: #1F1147;
-    border-right: 1px solid #2D1B69;
+    background: #1E293B;
+    border-right: 1px solid #0F172A;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
@@ -659,8 +532,8 @@ onUnmounted(() => {
 }
 .gs-nav-active {
     color: #fff !important;
-    background: rgba(124,58,237,0.2);
-    border-left-color: #7C3AED;
+    background: rgba(245,158,11,0.2);
+    border-left-color: #F59E0B;
 }
 .gs-nav-icon {
     font-size: 16px;
@@ -668,7 +541,7 @@ onUnmounted(() => {
     text-align: center;
     flex-shrink: 0;
 }
-.gs-nav-active .gs-nav-icon { color: #7C3AED; }
+.gs-nav-active .gs-nav-icon { color: #F59E0B; }
 .gs-nav-label { line-height: 1; }
 
 /* -- Bas de sidebar --- Compte --------------- */
@@ -703,7 +576,7 @@ onUnmounted(() => {
     font-family: 'Outfit', sans-serif;
     font-size: 16px;
     font-weight: 700;
-    color: #2D1B69;
+    color: #0F172A;
     white-space: nowrap;
     margin-right: 8px;
 }
@@ -737,28 +610,28 @@ onUnmounted(() => {
     white-space: nowrap;
 }
 .gs-subnav-link:hover {
-    color: #7C3AED;
-    background: #F3EEFF;
-    border-color: #DDD6FE;
+    color: #F59E0B;
+    background: #FEF3C7;
+    border-color: #FDE68A;
 }
 .gs-subnav-link i {
     font-size: 12px;
     color: #999;
 }
-.gs-subnav-link:hover i { color: #7C3AED; }
+.gs-subnav-link:hover i { color: #F59E0B; }
 
 .gs-subnav-active {
     color: #fff !important;
-    background: #7C3AED !important;
-    border-color: #7C3AED !important;
-    box-shadow: 0 2px 4px rgba(124,58,237,0.3);
+    background: #F59E0B !important;
+    border-color: #F59E0B !important;
+    box-shadow: 0 2px 4px rgba(245,158,11,0.3);
 }
 .gs-subnav-active i {
     color: #fff !important;
 }
 
 /* -- Main -------------------------------------- */
-.g-main { background: #F5F0FF; min-width: 0; }
+.g-main { background: #f5f7fa; min-width: 0; }
 
 /* -- Mobile overlay ---------------------------- */
 .g-overlay {
@@ -771,23 +644,23 @@ onUnmounted(() => {
 /* -- Deep overrides ------------------------ */
 :deep(.btn) { border-radius: 4px !important; font-size: 13px; }
 :deep(.btn-primary) {
-    background: #7C3AED !important; border-color: #7C3AED !important;
+    background: #F59E0B !important; border-color: #F59E0B !important;
     color: #fff !important; font-weight: 700 !important;
 }
-:deep(.btn-primary:hover) { background: #6D28D9 !important; border-color: #6D28D9 !important; }
-:deep(.btn-outline-primary) { color: #7C3AED !important; border-color: #7C3AED !important; }
-:deep(.btn-outline-primary:hover) { background: #7C3AED !important; color: #fff !important; }
+:deep(.btn-primary:hover) { background: #D97706 !important; border-color: #D97706 !important; }
+:deep(.btn-outline-primary) { color: #F59E0B !important; border-color: #F59E0B !important; }
+:deep(.btn-outline-primary:hover) { background: #F59E0B !important; color: #fff !important; }
 :deep(.btn-outline-secondary) { color: #888 !important; border-color: #ddd !important; }
 :deep(.btn-outline-secondary:hover) { background: #f5f5f5 !important; color: #555 !important; }
-:deep(.card) { border-radius: 6px !important; border: 1px solid #dce3ee; box-shadow: 0 1px 4px rgba(45,27,105,0.06); }
+:deep(.card) { border-radius: 6px !important; border: 1px solid #dce3ee; box-shadow: 0 1px 4px rgba(15,23,42,0.06); }
 :deep(.card-header) {
-    background: linear-gradient(90deg, #2D1B69, #4C1D95);
+    background: linear-gradient(90deg, #0F172A, #1E293B);
     border-bottom: none; font-size: 13px; font-weight: 700;
     padding: 10px 16px; border-radius: 6px 6px 0 0 !important; color: #fff;
 }
 :deep(.table) { font-size: 13px; }
 :deep(.table thead th) {
-    background: #EEF3F9; color: #2D1B69; font-weight: 700;
+    background: #EEF3F9; color: #0F172A; font-weight: 700;
     font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
     border-color: #dce3ee; padding: 10px 12px;
 }
@@ -798,12 +671,12 @@ onUnmounted(() => {
     border-radius: 4px !important; font-size: 13px; border: 1px solid #dce3ee;
 }
 :deep(.form-control:focus), :deep(.form-select:focus) {
-    border-color: #7C3AED; box-shadow: 0 0 0 2px rgba(124,58,237,0.15);
+    border-color: #F59E0B; box-shadow: 0 0 0 2px rgba(245,158,11,0.15);
 }
-:deep(.text-primary) { color: #7C3AED !important; }
-:deep(.bg-primary) { background: #7C3AED !important; }
-:deep(.border-primary) { border-color: #7C3AED !important; }
-:deep(.progress-bar) { background: #7C3AED; }
+:deep(.text-primary) { color: #F59E0B !important; }
+:deep(.bg-primary) { background: #F59E0B !important; }
+:deep(.border-primary) { border-color: #F59E0B !important; }
+:deep(.progress-bar) { background: #F59E0B; }
 
 /* == RESPONSIVE == */
 @media (max-width: 991.98px) {

@@ -80,25 +80,80 @@
     background: #ef4444; color: white;
     box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
   }
+  
+  /* Context Menu */
+  .context-menu {
+    display: none;
+    position: absolute;
+    z-index: 10000;
+    width: 200px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    padding: 8px 0;
+    border: 1px solid #e2e8f0;
+  }
+  .context-menu-item {
+    padding: 10px 16px;
+    font-size: 13px;
+    color: #334155;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.2s;
+  }
+  .context-menu-item:hover {
+    background-color: #f1f5f9;
+    color: var(--sec-primary);
+  }
+  .context-menu-item.danger:hover {
+    background-color: #fef2f2;
+    color: #ef4444;
+  }
 </style>
 
-<div class="sec-page-header" style="margin-bottom:24px;">
-  <div>
-    <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--sec-text-muted); margin-bottom:6px;">
-        <a href="{{ route('gel-secretary.documents.index') }}" style="color:var(--sec-primary); font-weight:600; text-decoration:none;"><i class="fas fa-layer-group"></i> Espace Documentaire</a>
-        <i class="fas fa-chevron-right" style="font-size:10px;"></i>
-        <span style="background:#e2e8f0; padding:2px 8px; border-radius:12px; font-weight:600; color:#475569;">{{ $folder->name }}</span>
+<div style="display:flex; gap:20px; align-items:flex-start; margin-bottom:24px;">
+    <!-- Explorer Sidebar -->
+    <div style="width:220px; background:white; border:1px solid #e2e8f0; border-radius:12px; padding:16px; flex-shrink:0; box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+        <div style="font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; margin-bottom:12px; padding-left:8px;">Explorateur</div>
+        <a href="{{ route('gel-secretary.documents.index') }}" style="display:flex; align-items:center; gap:10px; padding:10px 12px; background:#F0FDF4; color:var(--sec-primary); font-weight:600; font-size:13px; border-radius:8px; text-decoration:none; margin-bottom:8px; border:1px solid #bbf7d0;">
+            <i class="fas fa-hdd"></i> Mon Espace
+        </a>
+        <a href="{{ route('gel-secretary.documents.trash') }}" style="display:flex; align-items:center; gap:10px; padding:10px 12px; color:#64748b; font-weight:600; font-size:13px; border-radius:8px; text-decoration:none; transition:0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+            <i class="fas fa-trash"></i> Corbeille
+        </a>
     </div>
-    <h1 class="sec-page-title" style="margin:0; font-size:24px;">
-      <i class="fas fa-folder-open" style="color:#FBBF24; margin-right:8px; filter: drop-shadow(0 2px 4px rgba(245,158,11,0.3));"></i>{{ $folder->name }}
-    </h1>
-  </div>
-  <div>
-      <button class="sec-btn sec-btn-primary" onclick="openNewFolderModal()">
-          <i class="fas fa-folder-plus"></i> Nouveau Sous-Dossier
-      </button>
-  </div>
-</div>
+
+    <!-- Explorer Main -->
+    <div style="flex:1; background:white; border-radius:12px; padding:20px; min-height:500px; border:1px solid #e2e8f0; box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+            <div>
+                <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--sec-text-muted); margin-bottom:6px;">
+                    <a href="{{ route('gel-secretary.documents.index') }}" style="color:var(--sec-primary); font-weight:600; text-decoration:none;"><i class="fas fa-layer-group"></i> Mon Espace</a>
+                    <i class="fas fa-chevron-right" style="font-size:10px;"></i>
+                    <span style="background:#e2e8f0; padding:2px 8px; border-radius:12px; font-weight:600; color:#475569;">{{ $folder->name }}</span>
+                </div>
+                <h1 style="margin:0; font-size:20px; font-weight:700; color:var(--sec-text); display:flex; align-items:center; gap:10px;">
+                    <i class="fas fa-folder-open" style="color:#FBBF24; filter: drop-shadow(0 2px 4px rgba(245,158,11,0.3));"></i>{{ $folder->name }}
+                </h1>
+            </div>
+            <div>
+                <button class="sec-btn" style="background:white; color:var(--sec-primary); border:1px solid var(--sec-primary); margin-right:8px;" onclick="openCreateFolderModal()">
+                    <i class="fas fa-folder-plus"></i> Nouveau Sous-Dossier
+                </button>
+            </div>
+        </div>
+        
+        <!-- Context Menus -->
+        <div id="itemContextMenu" class="context-menu">
+            <div class="context-menu-item" onclick="openRenameModal()">
+                <i class="fas fa-edit"></i> Renommer
+            </div>
+            <div class="context-menu-item danger" onclick="deleteItemContext()">
+                <i class="fas fa-trash"></i> Supprimer
+            </div>
+        </div>
 
 @if($subfolders && count($subfolders) > 0)
 <div style="margin-bottom: 24px;">
@@ -107,7 +162,7 @@
     </h3>
     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px;">
         @foreach($subfolders as $sub)
-        <a href="{{ route('gel-secretary.documents.folder', $sub->id) }}" style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; text-decoration: none; display: flex; align-items: center; gap: 12px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+        <a href="{{ route('gel-secretary.documents.folder', $sub->id) }}" oncontextmenu="showContextMenu(event, 'folder', {{ $sub->id }}, '{{ $sub->name }}')" style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; text-decoration: none; display: flex; align-items: center; gap: 12px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
             <div style="width: 40px; height: 40px; border-radius: 8px; background: #f8fafc; display: flex; align-items: center; justify-content: center;">
                 <i class="fas fa-folder" style="color: #60A5FA; font-size: 20px;"></i>
             </div>
@@ -125,8 +180,8 @@
 <form action="{{ route('gel-secretary.documents.upload') }}" method="POST" enctype="multipart/form-data" id="dropzoneForm">
   @csrf
   <input type="hidden" name="folder_id" value="{{ $folder->id }}">
-  <input type="file" name="file" id="fileInput" style="display:none;" onchange="submitForm()">
-  
+  <input type="file" name="file" id="fileInput" style="display:none;">
+
   <div class="dropzone-area" id="dropzoneArea" onclick="document.getElementById('fileInput').click()">
     <i class="fas fa-cloud-upload-alt dropzone-icon"></i>
     <h3 style="font-size:18px; font-weight:700; color:var(--sec-text); margin-bottom:8px;">Glissez vos fichiers ici ou cliquez pour parcourir</h3>
@@ -134,7 +189,78 @@
       Le téléversement démarrera instantanément. Formats acceptés : PDF, Excel, Word, Images (Max 10 Mo).
     </p>
   </div>
+
+  {{-- S9 + S14 : métadonnées obligatoires & proposition IA (validation 1 clic) --}}
+  <div id="aiSuggestionBox" style="display:none; margin-top:12px; padding:14px 16px; background:#F0FDFA; border:1px solid #99F6E4; border-radius:12px; text-align:left;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+      <i class="fas fa-robot" style="color:var(--sec-primary);"></i>
+      <strong style="color:var(--sec-text); font-size:13px;">Classification IA proposée & Compléments</strong>
+    </div>
+    <div style="font-size:12px; color:#475569; margin-bottom:8px;">
+      <span id="aiTypeText"></span> — <span id="aiCategText"></span> — Tags&nbsp;:&nbsp;<span id="aiTagsText"></span>
+    </div>
+    
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:12px;">
+      <div>
+        <label style="font-size:10px; font-weight:700; color:#64748b;">Catégorie *</label>
+        <input type="text" name="category" id="aiCategory" required class="sec-form-control" style="font-size:12px; padding:6px 10px; border-radius:8px;">
+      </div>
+      <div>
+        <label style="font-size:10px; font-weight:700; color:#64748b;">Année *</label>
+        <input type="number" name="annee_liee" id="aiAnnee" required class="sec-form-control" style="font-size:12px; padding:6px 10px; border-radius:8px;" value="{{ date('Y') }}">
+      </div>
+      <div>
+        <label style="font-size:10px; font-weight:700; color:#64748b;">Mois (1-12) *</label>
+        <input type="number" name="mois_lie" id="aiMois" required min="1" max="12" class="sec-form-control" style="font-size:12px; padding:6px 10px; border-radius:8px;" value="{{ date('n') }}">
+      </div>
+    </div>
+    
+    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+      <label style="font-size:10px; font-weight:700; color:#64748b;">Date doc.</label>
+      <input type="date" name="document_date" id="aiDocDate" value="{{ date('Y-m-d') }}" style="font-size:12px; padding:6px 10px; border:1px solid #CBD5E1; border-radius:8px;">
+      
+      <button type="button" class="sec-btn" style="background:#fff; border:1px solid #0d9488; color:#0d9488; font-size:12px; padding:6px 12px; border-radius:8px; font-weight:600;" onclick="confirmAiSuggestion()">
+        <i class="fas fa-check me-1"></i> Valider et Enregistrer
+      </button>
+    </div>
+  </div>
 </form>
+
+<script>
+// ─── S14 : analyse IA du fichier sélectionné (proposition de classement) ───
+let fileInput = document.getElementById('fileInput');
+let pendingFile = null;
+if (fileInput) {
+  fileInput.addEventListener('change', async function () {
+    if (!this.files || !this.files.length) return;
+    pendingFile = this.files[0];
+    // Sécurisation : on ne soumet pas tout de suite si l'IA doit analyser
+    // (l'utilisateur pourra ensuite valider la suggestion)
+    const token = document.querySelector('input[name="_token"]').value;
+    const fd = new FormData();
+    fd.append('filename', pendingFile.name);
+    fd.append('_token', token);
+    try {
+      const res = await fetch('{{ route("gel-secretary.documents.analyze-ia") }}', { method:'POST', body: fd, headers: { 'X-CSRF-TOKEN': token } });
+      const data = await res.json();
+      document.getElementById('aiTypeText').textContent = data.type || 'Autre';
+      document.getElementById('aiCategText').textContent = data.categorie || 'autre';
+      document.getElementById('aiTagsText').textContent = (data.tags||[]).join(', ');
+      document.getElementById('aiCategory').value = data.categorie || 'autre';
+      document.getElementById('aiSuggestionBox').style.display = 'block';
+    } catch (e) { console.warn('IA indisponible', e); }
+  });
+}
+function confirmAiSuggestion() {
+  // La secrétaire valide la suggestion → soumet le formulaire
+  document.getElementById('dropzoneForm').submit();
+}
+function skipAi() {
+  // Confirmer manuellement sans proposition IA (le champ category reste vide)
+  document.getElementById('aiCategory').value = '';
+  document.getElementById('dropzoneForm').submit();
+}
+</script>
 
 <div class="premium-card">
   <div style="padding:20px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
@@ -157,7 +283,7 @@
         </thead>
         <tbody>
             @forelse($documents as $doc)
-                <tr>
+                <tr oncontextmenu="showContextMenu(event, 'document', {{ $doc->id }}, '{{ $doc->name }}')">
                     <td>
                         <div style="display:flex; align-items:center; gap:12px;">
                             <form method="POST" action="{{ route('gel-secretary.documents.favorite', $doc->id) }}" style="margin:0;">
@@ -206,9 +332,25 @@
                         @else
                             <span style="font-size:10px; background:#F1F5F9; color:#64748b; padding:2px 6px; border-radius:4px;">Privé</span>
                         @endif
+                        <div style="margin-top:6px;">
+                            @if($doc->workflow_step === 'recu')
+                                <span style="font-size:10px; background:#FEE2E2; color:#EF4444; padding:2px 6px; border-radius:4px; font-weight:600;"><i class="fas fa-inbox"></i> À traiter</span>
+                            @elseif($doc->workflow_step === 'classe')
+                                <span style="font-size:10px; background:#FEF3C7; color:#D97706; padding:2px 6px; border-radius:4px; font-weight:600;"><i class="fas fa-folder-open"></i> Classé</span>
+                            @elseif($doc->workflow_step === 'transmis_comptable')
+                                <span style="font-size:10px; background:#DBEAFE; color:#2563EB; padding:2px 6px; border-radius:4px; font-weight:600;"><i class="fas fa-exchange-alt"></i> Chez le comptable</span>
+                            @elseif($doc->workflow_step === 'valide')
+                                <span style="font-size:10px; background:#DCFCE7; color:#16A34A; padding:2px 6px; border-radius:4px; font-weight:600;"><i class="fas fa-check-circle"></i> Validé</span>
+                            @elseif($doc->workflow_step === 'rejete')
+                                <span style="font-size:10px; background:#FEE2E2; color:#EF4444; padding:2px 6px; border-radius:4px; font-weight:600;"><i class="fas fa-times-circle"></i> Rejeté</span>
+                            @endif
+                        </div>
                     </td>
                     <td style="color:#64748b; font-size:13px;">
-                        {{ \Carbon\Carbon::parse($doc->created_at)->format('d/m/Y H:i') }}
+                        <div style="font-size:11px; font-weight:600; color:#475569; margin-bottom:4px;">
+                            Créé par {{ $doc->uploadedBy->name ?? 'Système' }}
+                        </div>
+                        <div>le {{ \Carbon\Carbon::parse($doc->created_at)->format('d/m/Y à H:i') }}</div>
                     </td>
                     <td style="text-align:right; position:relative;">
                         <div style="display:inline-flex; gap:6px; align-items:center;">
@@ -250,6 +392,46 @@
                                             <i class="fas fa-upload text-info me-2"></i> Téléverser une V{{ $doc->version + 1 }}
                                         </a>
                                     </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    {{-- S10 : actions workflow de circulation --}}
+                                    @if($doc->workflow_step === 'recu')
+                                        <li>
+                                            <form method="POST" action="{{ route('gel-secretary.documents.workflow-process', $doc->id) }}">
+                                                @csrf
+                                                <button type="submit" class="dropdown-item py-2" onclick="return confirm('Marquer ce document comme traité ?')">
+                                                    <i class="fas fa-folder-open text-success me-2"></i> Traiter / Classer
+                                                </button>
+                                            </form>
+                                        </li>
+                                    @endif
+                                    @if(in_array($doc->workflow_step, ['recu', 'classe']))
+                                        <li>
+                                            <form method="POST" action="{{ route('gel-secretary.documents.workflow-transmit', $doc->id) }}">
+                                                @csrf
+                                                <button type="submit" class="dropdown-item py-2" onclick="return confirm('Transmettre ce document au comptable ?')">
+                                                    <i class="fas fa-exchange-alt text-primary me-2"></i> Transmettre au comptable
+                                                </button>
+                                            </form>
+                                        </li>
+                                    @endif
+                                    @if(in_array($doc->workflow_step, ['recu', 'classe', 'transmis_comptable']))
+                                        <li>
+                                            <form method="POST" action="{{ route('gel-secretary.documents.workflow-validate', $doc->id) }}">
+                                                @csrf
+                                                <button type="submit" class="dropdown-item py-2" onclick="return confirm('Valider définitivement ce document ?')">
+                                                    <i class="fas fa-check-circle text-success me-2"></i> Valider
+                                                </button>
+                                            </form>
+                                        </li>
+                                        <li>
+                                            <form method="POST" action="{{ route('gel-secretary.documents.workflow-reject', $doc->id) }}">
+                                                @csrf
+                                                <button type="submit" class="dropdown-item py-2 text-danger" onclick="return confirm('Rejeter ce document ?')">
+                                                    <i class="fas fa-times-circle text-danger me-2"></i> Rejeter
+                                                </button>
+                                            </form>
+                                        </li>
+                                    @endif
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
                                         <a class="dropdown-item py-2 text-danger" href="#" onclick="event.preventDefault(); confirmDelete('{{ route('gel-secretary.documents.destroy', $doc->id) }}', '{{ addslashes($doc->name) }}')">
@@ -313,8 +495,10 @@
         </tbody>
     </table>
   </div>
+  </div>
 </div>
-
+</div>
+</div>
 {{-- Modale Confirmation Suppression --}}
 <div id="deleteConfirmModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.5); backdrop-filter:blur(4px); z-index:9999; align-items:center; justify-content:center;">
     <div style="background:#fff; border-radius:16px; width:400px; max-width:90%; border:1px solid var(--sec-border); box-shadow:0 10px 25px rgba(0,0,0,0.1); overflow:hidden; text-align:center; animation:fadeInDown 0.3s ease;">
@@ -392,16 +576,9 @@ dropzone.addEventListener('drop', (e) => {
   let files = dt.files;
   if(files.length > 0) {
       fileInput.files = files;
-      submitForm();
+      fileInput.dispatchEvent(new Event('change')); // déclenche l'analyse IA
   }
 });
-
-function submitForm() {
-    if(fileInput.files.length > 0) {
-        dropzone.innerHTML = '<div style="padding:20px;"><i class="fas fa-spinner fa-spin" style="font-size:32px; color:var(--sec-primary); margin-bottom:12px;"></i><h3 style="font-size:16px; margin:0;">Envoi en cours...</h3></div>';
-        form.submit();
-    }
-}
 
 // Modals
 function showHistoryModal(id) {
@@ -573,7 +750,102 @@ function showVersionModal(docId) {
     document.getElementById('versionFileInput').value = '';
     document.getElementById('versionModal').style.display = 'flex';
 }
+
+let currentContextType = null;
+let currentContextId = null;
+let currentContextName = null;
+
+function showContextMenu(e, type, id, name) {
+  e.preventDefault();
+  currentContextType = type;
+  currentContextId = id;
+  currentContextName = name;
+  const menu = document.getElementById('itemContextMenu');
+  if(menu) {
+    menu.style.display = 'block';
+    menu.style.left = e.pageX + 'px';
+    menu.style.top = e.pageY + 'px';
+  }
+}
+
+document.addEventListener('click', function(e) {
+  const menu = document.getElementById('itemContextMenu');
+  if (menu && e.target !== menu && !menu.contains(e.target)) {
+    menu.style.display = 'none';
+  }
+});
+
+function openCreateFolderModal() {
+  document.getElementById('createFolderModal').style.display = 'flex';
+}
+
+function openRenameModal() {
+  document.getElementById('renameModal').style.display = 'flex';
+  document.getElementById('renameInput').value = currentContextName;
+  const form = document.getElementById('renameForm');
+  if (currentContextType === 'folder') {
+    form.action = `/gel-secretary/documents/folder/${currentContextId}/rename`;
+  } else {
+    form.action = `/gel-secretary/documents/${currentContextId}/rename`;
+  }
+}
+
+function deleteItemContext() {
+  if (confirm(`Voulez-vous vraiment supprimer "${currentContextName}" ?`)) {
+    const form = document.getElementById('deleteItemForm');
+    if (currentContextType === 'folder') {
+      form.action = `/gel-secretary/documents/folder/${currentContextId}`;
+    } else {
+      form.action = `/gel-secretary/documents/${currentContextId}`;
+    }
+    form.submit();
+  }
+}
 </script>
+
+<!-- CREATE FOLDER MODAL -->
+<div id="createFolderModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+  <div class="sec-card" style="width:400px; padding:24px;">
+    <h2 style="margin-top:0; font-size:16px;"><i class="fas fa-folder-plus"></i> Nouveau Sous-Dossier</h2>
+    <form action="{{ route('gel-secretary.documents.create-folder') }}" method="POST">
+      @csrf
+      <input type="hidden" name="parent_id" value="{{ $folder->id }}">
+      <div style="margin:16px 0;">
+        <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Nom du dossier</label>
+        <input type="text" name="name" required style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px;">
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:12px;">
+        <button type="button" class="sec-btn" onclick="document.getElementById('createFolderModal').style.display='none'">Annuler</button>
+        <button type="submit" class="sec-btn sec-btn-primary">Créer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- RENAME MODAL -->
+<div id="renameModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+  <div class="sec-card" style="width:400px; padding:24px;">
+    <h2 style="margin-top:0; font-size:16px;"><i class="fas fa-edit"></i> Renommer</h2>
+    <form id="renameForm" method="POST">
+      @csrf
+      @method('PUT')
+      <div style="margin:16px 0;">
+        <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Nouveau nom</label>
+        <input type="text" name="name" id="renameInput" required style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px;">
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:12px;">
+        <button type="button" class="sec-btn" onclick="document.getElementById('renameModal').style.display='none'">Annuler</button>
+        <button type="submit" class="sec-btn sec-btn-primary">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- HIDDEN DELETE FORMS -->
+<form id="deleteItemForm" method="POST" style="display:none;">
+  @csrf
+  @method('DELETE')
+</form>
 
 @endsection
 

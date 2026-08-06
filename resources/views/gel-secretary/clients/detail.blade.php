@@ -337,34 +337,50 @@
     {{-- COLONNE DROITE : ONGLETS 360 --}}
     <div class="animate-fade delay-2">
 
-      <div class="tabs-container">
-        <button class="tab-btn active" onclick="openTab('activities')"><i class="fas fa-stream"></i> Activités
-          360°</button>
+      <div class="tabs-container" style="grid-template-columns: repeat(7, 1fr);">
+        <button class="tab-btn active" onclick="openTab('profil')"><i class="fas fa-id-badge"></i> Profil</button>
+        <button class="tab-btn" onclick="openTab('historique')"><i class="fas fa-history"></i> Historique</button>
         <button class="tab-btn" onclick="openTab('docs')"><i class="fas fa-folder-open"></i> Documents <span
             class="badge-sm b-normal">{{ $documents->count() }}</span></button>
-        <button class="tab-btn" onclick="openTab('tasks')"><i class="fas fa-tasks"></i> Tâches <span
-            class="badge-sm b-normal">{{ $tasks->count() }}</span></button>
-        <button class="tab-btn" onclick="openTab('factures')"><i class="fas fa-file-invoice-dollar"></i> Factures <span
-            class="badge-sm {{ $invoices->where('status', '!=', 'paid')->count() > 0 ? 'b-danger' : 'b-normal' }}">{{ $invoices->count() }}</span></button>
-        <button class="tab-btn" onclick="openTab('agenda')"><i class="fas fa-calendar-alt"></i> Agenda <span
-            class="badge-sm b-normal">{{ $events->count() }}</span></button>
-        <button class="tab-btn" onclick="openTab('courriers')"><i class="fas fa-envelope-open-text"></i> Courriers <span
-            class="badge-sm b-normal">{{ $courriers->count() }}</span></button>
-        <button class="tab-btn" onclick="openTab('msg')"><i class="fas fa-comments"></i> Messages <span
-            class="badge-sm {{ $messages->where('sender_type', 'client')->where('est_lu', false)->count() > 0 ? 'b-blue' : 'b-normal' }}">{{ $messages->count() }}</span></button>
-        <button class="tab-btn" onclick="openTab('calls')"><i class="fas fa-phone-alt"></i> Appels <span
-            class="badge-sm b-normal">{{ $callLogs->count() }}</span></button>
-        <button class="tab-btn" onclick="openTab('contacts')"><i class="fas fa-address-book"></i> Contacts <span
-            class="badge-sm b-normal">{{ count($contacts) }}</span></button>
-        <button class="tab-btn" onclick="openTab('notes')"><i class="fas fa-sticky-note"></i> Notes</button>
-        <button class="tab-btn" onclick="openTab('historique')"><i class="fas fa-history"></i> Historique</button>
-        <div class="tab-btn" style="cursor:default; background:transparent;"></div>
+        <button class="tab-btn" onclick="openTab('equipe')"><i class="fas fa-users"></i> Équipe <span
+            class="badge-sm b-normal">{{ $equipe->count() }}</span></button>
+        <button class="tab-btn" onclick="openTab('coordination')"><i class="fas fa-people-arrows"></i> Coordination <span
+            class="badge-sm b-normal">{{ $coordinationActivity->count() }}</span></button>
+        <button class="tab-btn" onclick="openTab('activities')"><i class="fas fa-stream"></i> Activités</button>
+        <button class="tab-btn" onclick="openTab('rapports')"><i class="fas fa-chart-bar"></i> Rapports</button>
       </div>
 
       <div class="panel-card" style="min-height: 400px;">
 
+        {{-- TAB: PROFIL (identité complète + santé) --}}
+        <div id="tab-profil" class="tab-content active">
+          <div class="tab-section-header"><i class="fas fa-id-badge"></i> Profil de l'entreprise</div>
+          <div style="padding:20px;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">
+              @foreach([
+                  ['fas fa-industry', 'Secteur d\'activité', $client->secteur ?? '—'],
+                  ['fas fa-file-invoice', 'IFU', $client->ifu ?? '—'],
+                  ['fas fa-certificate', 'RCCM', $client->rc ?? '—'],
+                  ['fas fa-file-contract', 'Type de contrat', ucfirst($client->contract_type ?? '—')],
+                  ['fas fa-calendar', 'Contrat depuis', $client->contract_start ? \Carbon\Carbon::parse($client->contract_start)->format('d/m/Y') : '—'],
+                  ['fas fa-map-marker-alt', 'Adresse', trim(($client->adresse ?? '') . ' ' . ($client->ville ?? '')) ?: '—'],
+                  ['fas fa-envelope', 'Email', $client->email ?? '—'],
+                  ['fas fa-phone', 'Téléphone', $client->telephone ?? '—'],
+                ] as $pf)
+                <div style="background:#F8FAFC;border:1px solid var(--sec-border);border-radius:8px;padding:14px;">
+                  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                    <i class="fas {{ $pf[0] }}" style="width:16px;color:var(--sec-primary);font-size:15px;"></i>
+                    <div style="font-size:10px;color:var(--sec-text-muted);text-transform:uppercase;font-weight:600;">{{ $pf[1] }}</div>
+                  </div>
+                  <div style="font-size:13px;font-weight:600;color:var(--sec-text);">{{ $pf[2] }}</div>
+                </div>
+              @endforeach
+            </div>
+          </div>
+        </div>
+
         {{-- TAB: ACTIVITES 360° --}}
-        <div id="tab-activities" class="tab-content active">
+        <div id="tab-activities" class="tab-content">
           <div class="tab-section-header"><i class="fas fa-stream"></i> Flux d'activités récent</div>
           <div
             style="position: relative; padding-left: 20px; border-left: 2px solid var(--sec-border); margin-left: 10px;">
@@ -395,7 +411,20 @@
         {{-- TAB: DOCUMENTS --}}
         <div id="tab-docs" class="tab-content">
           <div class="tab-section-header"><i class="fas fa-folder-open"></i> Documents ({{ $documents->count() }})</div>
-          @forelse($documents as $doc)
+          
+          <div style="padding: 24px; text-align: center; background: #F8FAFC; border-radius: 8px; border: 1px dashed var(--sec-border); margin-bottom: 20px;">
+            <i class="fas fa-folder-tree" style="font-size: 40px; color: var(--sec-primary); margin-bottom: 16px; opacity: 0.8;"></i>
+            <h3 style="font-size: 16px; font-weight: 700; color: var(--sec-text); margin-bottom: 8px;">Accéder à l'Espace Documentaire</h3>
+            <p style="font-size: 13px; color: var(--sec-text-muted); margin-bottom: 16px;">
+              Retrouvez l'intégralité des documents permanents et courants (arborescence annuelle) pour cette entreprise dans l'Espace Documentaire centralisé.
+            </p>
+            <a href="{{ route('gel-secretary.documents.index') }}" class="sec-btn sec-btn-primary">
+              <i class="fas fa-external-link-alt" style="margin-right: 8px;"></i> Ouvrir l'Espace Documentaire
+            </a>
+          </div>
+
+          <div style="font-size: 13px; font-weight: 600; color: var(--sec-text-muted); margin-bottom: 12px; text-transform: uppercase;">Derniers documents ajoutés</div>
+          @forelse($documents->take(5) as $doc)
             <div class="list-row">
               <i class="fas fa-file-pdf" style="color:#EF4444; font-size:20px;"></i>
               <div style="flex:1; min-width:0;">
@@ -629,6 +658,26 @@
           </div>
         </div>
 
+        {{-- TAB: COORDINATION (S4.3 / S1.2) — fil partagé Secrétaire ↔ Comptable --}}
+        <div id="tab-coordination" class="tab-content">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+            <div class="tab-section-header" style="margin-bottom:0;"><i class="fas fa-people-arrows"></i> Coordination Secrétaire ↔ Comptable ({{ $coordinationActivity->count() }})</div>
+            <a href="{{ route('gel-secretary.coordination.index', ['client_id' => $client->id]) }}" class="btn btn-sm" style="background:var(--sec-primary); color:#fff; border-radius:8px; text-decoration:none;"><i class="fas fa-arrow-right me-1"></i> Ouvrir l'espace</a>
+          </div>
+          @forelse($coordinationActivity as $ce)
+            <div class="list-row" style="align-items:flex-start;">
+              <div style="width:32px;height:32px;border-radius:50%;background:rgba(13,148,136,.1);color:var(--sec-primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;"><i class="{{ $ce->icon }}"></i></div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:12px;font-weight:600;color:var(--sec-text);">{{ $ce->subject }}</div>
+                <div style="font-size:11px;color:var(--sec-text-muted);">{{ $ce->body }}</div>
+                <div style="font-size:11px;color:#94A3B8;margin-top:2px;">par {{ $ce->actor_name ?? '—' }} · {{ \Carbon\Carbon::parse($ce->created_at)->format('d/m/Y H:i') }}</div>
+              </div>
+            </div>
+          @empty
+            <div class="empty-state"><i class="fas fa-people-arrows" style="font-size:32px; opacity:0.3; margin-bottom:12px; display:block;"></i> Aucune activité de coordination entre la secrétaire et le comptable.</div>
+          @endforelse
+        </div>
+
         {{-- TAB: HISTORIQUE --}}
         <div id="tab-historique" class="tab-content">
           <div class="tab-section-header"><i class="fas fa-history"></i> Historique des actions ({{ $history->count() }})
@@ -651,6 +700,97 @@
                 style="font-size:32px; opacity:0.3; margin-bottom:12px; display:block;"></i> Aucune action enregistrée.
             </div>
           @endforelse
+        </div>
+
+        {{-- TAB: EQUIPE AFFECTEE --}}
+        <div id="tab-equipe" class="tab-content">
+          <div class="tab-section-header"><i class="fas fa-users"></i> Équipe affectée à l'entreprise
+            ({{ $equipe->count() }})</div>
+          @forelse($equipe as $member)
+            @php
+              $roleIcon = match (strtolower($member->role ?? '')) {
+                'secretaire', 'secretary' => 'fa-user-tie',
+                'comptable', 'accountant' => 'fa-calculator',
+                'admin', 'director', 'super_admin' => 'fa-user-shield',
+                default => 'fa-user'
+              };
+              $roleClass = in_array(strtolower($member->role ?? ''), ['comptable', 'accountant']) ? 'b-blue'
+                          : (in_array(strtolower($member->role ?? ''), ['admin', 'director', 'super_admin']) ? 'b-warning'
+                          : 'b-success');
+            @endphp
+            <div class="list-row">
+              <div style="width:40px;height:40px;border-radius:50%;background:#F0FDF4;color:#059669;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i class="fas {{ $roleIcon }}"></i>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;font-weight:600;color:var(--sec-text);">{{ $member->user->name ?? 'Membre' }}</div>
+                <div style="font-size:11px;color:var(--sec-text-muted);">
+                  {{ $member->user?->email ?? 'Email inconnu' }}
+                  @if($member->joined_at) — Intégré le {{ \Carbon\Carbon::parse($member->joined_at)->format('d/m/Y') }} @endif
+                  @if($member->last_accessed_at) — Dernier accès {{ $member->last_accessed_at->diffForHumans() }} @endif
+                </div>
+              </div>
+              <span class="badge-sm {{ $roleClass }}">{{ ucfirst(str_replace('_', ' ', $member->role ?? 'membre')) }}</span>
+            </div>
+          @empty
+            <div class="empty-state"><i class="fas fa-users"
+                style="font-size:32px; opacity:0.3; margin-bottom:12px; display:block;"></i> Aucun membre affecté à cette
+              entreprise pour le moment.</div>
+          @endforelse
+        </div>
+
+        {{-- TAB: RAPPORTS --}}
+        <div id="tab-rapports" class="tab-content">
+          <div class="tab-section-header"><i class="fas fa-chart-bar"></i> Rapport de synthèse</div>
+          <div style="padding:20px;">
+            @php
+              $rapportSoluDue = number_format($invoices->where('status', '!=', 'paid')->sum('balance_due'), 0, ',', ' ');
+              $rapportTachesTerminees = $tasks->where('statut', 'termine')->count();
+            @endphp
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px;">
+              <div style="text-align:center;background:#F8FAFC;border-radius:10px;padding:16px;">
+                <div style="font-size:26px;font-weight:700;color:var(--sec-text);">{{ $documents->count() }}</div>
+                <div style="font-size:11px;color:var(--sec-text-muted);">Documents</div>
+              </div>
+              <div style="text-align:center;background:#F8FAFC;border-radius:10px;padding:16px;">
+                <div style="font-size:26px;font-weight:700;color:var(--sec-text);">{{ $tasks->count() }}</div>
+                <div style="font-size:11px;color:var(--sec-text-muted);">Tâches</div>
+              </div>
+              <div style="text-align:center;background:#F8FAFC;border-radius:10px;padding:16px;">
+                <div style="font-size:26px;font-weight:700;color:#059669;">{{ $rapportTachesTerminees }}</div>
+                <div style="font-size:11px;color:var(--sec-text-muted);">Tâches terminées</div>
+              </div>
+              <div style="text-align:center;background:{{ $invoices->where('status','!=','paid')->sum('balance_due') > 0 ? '#FEF2F2' : '#F0FDF4' }};border-radius:10px;padding:16px;">
+                <div style="font-size:20px;font-weight:700;color:{{ $invoices->where('status','!=','paid')->sum('balance_due') > 0 ? '#DC2626' : '#059669' }};">
+                  {{ $rapportSoluDue }}</div>
+                <div style="font-size:11px;color:var(--sec-text-muted);">Solde dû (€)</div>
+              </div>
+            </div>
+
+            <div style="font-size:11px;font-weight:700;color:var(--sec-text-muted);text-transform:uppercase;margin-bottom:12px;">
+              Rapports générables</div>
+            @foreach($reports as $r)
+              <div class="list-row">
+                <div style="width:40px;height:40px;border-radius:10px;background:#F8FAFC;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <i class="fas {{ $r['icon'] }}" style="color:{{ $r['color'] }};"></i>
+                </div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:13px;font-weight:600;color:var(--sec-text);">{{ $r['titre'] }}</div>
+                  <div style="font-size:11px;color:var(--sec-text-muted);">{{ $r['desc'] }}</div>
+                </div>
+                <button type="button" class="sec-btn sec-btn-secondary sec-btn-sm" onclick="secToast('Rapport en cours de génération...','info')">
+                  <i class="fas fa-download"></i> Générer
+                </button>
+              </div>
+            @endforeach
+
+            <div style="margin-top:16px;">
+              <button type="button" class="sec-btn sec-btn-primary" onclick="generateAiSummary()">
+                <i class="fas fa-sparkles" style="color:#F59E0B;"></i> Résumé IA du dossier
+              </button>
+              <div id="aiSummaryResult" style="margin-top:12px;font-size:13px;color:var(--sec-text);white-space:pre-wrap;"></div>
+            </div>
+          </div>
         </div>
 
       </div>
@@ -686,6 +826,32 @@
       fetch('', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content ?? '' }, body: JSON.stringify({ notes }) })
         .catch(() => { }); // Silently fail for now
       secToast('Notes sauvegardées localement.', 'success');
+    }
+
+    function generateAiSummary() {
+      const btn = document.querySelector('button[onclick="generateAiSummary()"]');
+      const out = document.getElementById('aiSummaryResult');
+      if (!btn || !out) return;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyse en cours...';
+      out.innerHTML = '';
+      fetch("{{ route('gel-secretary.clients.ai-summary', $client->id) }}", {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        out.innerHTML = data.summary || 'Aucun résumé généré.';
+      })
+      .catch(() => { out.innerHTML = 'Impossible de générer le résumé pour le moment.'; })
+      .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-sparkles" style="color:#F59E0B;"></i> Résumé IA du dossier';
+      });
     }
   </script>
 @endsection

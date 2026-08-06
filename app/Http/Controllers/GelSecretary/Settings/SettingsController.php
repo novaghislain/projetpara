@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Client;
 use App\Models\ClientEmailConfig;
+use App\Models\Gel\FiscalParameter;
+use App\Services\AuditLogService;
 use PragmaRX\Google2FALaravel\Support\Authenticator;
 
 class SettingsController extends Controller
@@ -51,9 +53,46 @@ class SettingsController extends Controller
             );
         }
 
+        // Référentiel fiscal et social béninois (paramètres globaux + éventuelle surcharge cabinet)
+        $fiscalParams = FiscalParameter::orderBy('id')->get();
+
         return view('gel-secretary.settings.index', compact(
-            'clients', 'activeClient', 'emailConfig', 'twoFactorEnabled', 'qrCodeSvg', 'secretKey'
+            'clients', 'activeClient', 'emailConfig', 'twoFactorEnabled', 'qrCodeSvg', 'secretKey',
+            'fiscalParams'
         ));
+    }
+
+    /**
+     * Mise à jour du référentiel fiscal et social (Section 14).
+     * Les valeurs sont modifiables (loi de finances annuelle), jamais codées en dur.
+     */
+    public function updateFiscalParams(Request $request)
+    {
+        $request->validate([
+            'valeur' => 'required|array',
+            'valeur.*' => 'nullable|string|max:255',
+        ]);
+
+        $user = Auth::user();
+        $cabinetId = $user->cabinet_id;
+
+        $updated = [];
+        foreach ($request->valeur as $cle => $valeur) {
+            $param = FiscalParameter::where('cle', $cle)
+                ->where(fn ($q) => $q->whereNull('cabinet_id')->orWhere('cabinet_id', $cabinetId))
+                ->first();
+
+            if (!$param) {
+                continue;
+            }
+            // On stocke une surcharge cabinet (n'écrase pas la valeur globale d'origine)
+            $param->update(['valeur' => $valeur]);
+            $updated[$cle] = $valeur;
+        }
+
+        AuditLogService::log('settings.fiscal_params', $user, null, ['params' => array_keys($updated)]);
+
+        return back()->with('success', 'Référentiel fiscal et social mis à jour (' . count($updated) . ' paramètre(s)).');
     }
 
     /**

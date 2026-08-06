@@ -46,6 +46,11 @@ class DaeMeetingMinute extends DaeBaseModel
 
     // ─── Relations ────────────────────────────────────────
 
+    public function client()
+    {
+        return $this->belongsTo(\App\Models\Client::class, 'client_id');
+    }
+
     public function redacteur()
     {
         return $this->belongsTo(User::class, 'redige_par');

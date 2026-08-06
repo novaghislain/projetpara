@@ -64,6 +64,17 @@ class PublicController extends Controller
             ]);
         }
 
+        // S17 — Notifier toutes les secrétaires en temps réel (file « Demandes clients »)
+        $secretaries = User::all()->filter(fn ($u) => $u->isSecretaire());
+        foreach ($secretaries as $secretary) {
+            $secretary->notify(new \App\Notifications\RealTimeNotification(
+                'Nouvelle demande client',
+                $companyRequest->company_name . ' a soumis une demande (' . $companyRequest->contact_name . ')',
+                route('gel-secretary.requests.index'),
+                'fas fa-inbox'
+            ));
+        }
+
         return redirect('/')->with('success', 'Merci ! Nous vous recontacterons dans les plus brefs delais.');
     }
 }

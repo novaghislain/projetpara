@@ -15,7 +15,14 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'ensure.company', 'compa
     Route::get('/dashboard', [\App\Http\Controllers\Company\DashboardController::class, 'dashboard'])->name('dashboard');
     Route::get('/services', [\App\Http\Controllers\Company\DashboardController::class, 'services'])->name('services');
     Route::get('/profile', [\App\Http\Controllers\Company\DashboardController::class, 'profile'])->name('profile');
+    // S1.4 — Historique commun de coordination (lecture seule) vu par l'Admin Entreprise
+    Route::get('/coordination/history', [\App\Http\Controllers\Company\DashboardController::class, 'coordinationHistory'])->name('coordination.history');
     Route::get('/users', [\App\Http\Controllers\Company\UserController::class, 'index'])->name('users');
+    Route::get('/roles', function() { return view('company', ['page' => 'company-roles']); })->name('roles');
+    Route::get('/client-requests', function() { return view('company', ['page' => 'company-requests']); })->name('client-requests');
+    Route::get('/subscription', function() { return view('company', ['page' => 'company-subscription']); })->name('subscription');
+    Route::get('/security', function() { return view('company', ['page' => 'company-security']); })->name('security');
+    Route::get('/audit', function() { return view('company', ['page' => 'company-audit']); })->name('audit');
 
     // Caisse - module:caisse
     Route::middleware('module:caisse')->group(function () {
@@ -88,6 +95,29 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'ensure.company', 'compa
         Route::get('/crm', [\App\Http\Controllers\Company\CrmController::class, 'index'])->name('crm');
     });
 
+    // Secrétariat - module:secretariat
+    Route::middleware('module:secretariat')->group(function () {
+        Route::get('/secretariat', [\App\Http\Controllers\Company\BusinessTripController::class, 'index'])->name('secretariat'); // temporary entry point
+        Route::get('/trips', [\App\Http\Controllers\Company\BusinessTripController::class, 'index'])->name('trips.index');
+        Route::post('/trips', [\App\Http\Controllers\Company\BusinessTripController::class, 'store'])->name('trips.store');
+        Route::put('/trips/{businessTrip}', [\App\Http\Controllers\Company\BusinessTripController::class, 'update'])->name('trips.update');
+        
+        Route::get('/reservations', [\App\Http\Controllers\Company\ReservationController::class, 'index'])->name('reservations.index');
+        Route::post('/reservations', [\App\Http\Controllers\Company\ReservationController::class, 'store'])->name('reservations.store');
+        Route::delete('/reservations/{reservation}', [\App\Http\Controllers\Company\ReservationController::class, 'destroy'])->name('reservations.destroy');
+    });
+
+    // Finance (Notes de frais) - module:notes_frais
+    Route::middleware('module:notes_frais')->group(function () {
+        Route::get('/finance', [\App\Http\Controllers\Company\ExpenseReportController::class, 'index'])->name('finance');
+        
+        Route::post('/expenses', [\App\Http\Controllers\Company\ExpenseReportController::class, 'store'])->name('expenses.store');
+        Route::put('/expenses/{expenseReport}', [\App\Http\Controllers\Company\ExpenseReportController::class, 'update'])->name('expenses.update');
+        
+        Route::post('/light-invoices', [\App\Http\Controllers\Company\LightInvoiceController::class, 'store'])->name('light-invoices.store');
+        Route::put('/light-invoices/{lightInvoice}', [\App\Http\Controllers\Company\LightInvoiceController::class, 'update'])->name('light-invoices.update');
+    });
+
     // Assistant IA
     Route::get('/ai', [\App\Http\Controllers\Company\AiController::class, 'index'])->name('ai');
 
@@ -149,21 +179,50 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'ensure.company', 'compa
 });
 
 // API Entreprise (company admins uniquement — vérification client_id)
-Route::middleware(['auth', 'verified', 'not_suspended', 'ensure.company', 'company.auth'])->group(function () {
+Route::middleware(['auth', 'verified', 'not_suspended', 'ensure.company', 'company.auth', 'restrict.client.ip'])->group(function () {
+    Route::get('/api/company/info', [\App\Http\Controllers\Company\DashboardController::class, 'getCompanyInfo']);
+    Route::post('/api/company/update', [\App\Http\Controllers\Company\DashboardController::class, 'updateCompany']);
+    Route::post('/api/company/transfer-ownership', [\App\Http\Controllers\Company\DashboardController::class, 'transferOwnership']);
+    Route::get('/api/company/cross-portal-stats', [\App\Http\Controllers\Company\DashboardController::class, 'getCrossPortalStats']);
     Route::get('/api/company/{clientId}/info', [\App\Http\Controllers\Company\DashboardController::class, 'getCompanyInfo']);
     Route::put('/api/company/{clientId}/update', [\App\Http\Controllers\Company\DashboardController::class, 'updateCompany']);
+    Route::get('/api/company/{clientId}/legal-docs', [\App\Http\Controllers\Company\DashboardController::class, 'getLegalDocuments']);
+    Route::post('/api/company/{clientId}/legal-docs', [\App\Http\Controllers\Company\DashboardController::class, 'uploadLegalDocument']);
+    Route::delete('/api/company/{clientId}/legal-docs/{docId}', [\App\Http\Controllers\Company\DashboardController::class, 'deleteLegalDocument']);
+    Route::post('/api/company/{clientId}/transfer-ownership', [\App\Http\Controllers\Company\DashboardController::class, 'transferOwnership']);
 
     // Gestion des utilisateurs de l'entreprise (admin uniquement)
     Route::get('/api/company/users', [\App\Http\Controllers\Company\UserController::class, 'listAll']);
+    Route::get('/api/company/users/invitations', [\App\Http\Controllers\Company\UserController::class, 'getInvitations']);
+    Route::post('/api/company/users/invitations', [\App\Http\Controllers\Company\UserController::class, 'invite']);
+    Route::delete('/api/company/users/invitations/{id}', [\App\Http\Controllers\Company\UserController::class, 'revokeInvitation']);
     Route::get('/api/company/users/{id}', [\App\Http\Controllers\Company\UserController::class, 'show']);
     Route::post('/api/company/users', [\App\Http\Controllers\Company\UserController::class, 'store']);
     Route::put('/api/company/users/{id}', [\App\Http\Controllers\Company\UserController::class, 'update']);
+    Route::put('/api/company/users/{id}/suspend', [\App\Http\Controllers\Company\UserController::class, 'toggleSuspension']);
     Route::delete('/api/company/users/{id}', [\App\Http\Controllers\Company\UserController::class, 'destroy']);
+    
+    // File d'attente : conversion de comptes
+    Route::get('/api/company/conversion-requests', [\App\Http\Controllers\Company\UserController::class, 'getConversionRequests']);
+    Route::post('/api/company/conversion-requests/{id}/approve', [\App\Http\Controllers\Company\UserController::class, 'approveConversionRequest']);
+    Route::post('/api/company/conversion-requests/{id}/reject', [\App\Http\Controllers\Company\UserController::class, 'rejectConversionRequest']);
     Route::post('/api/company/users/{id}/permissions', [\App\Http\Controllers\Company\UserController::class, 'updatePermissions']);
     Route::get('/api/company/permissions/available', [\App\Http\Controllers\Company\UserController::class, 'availablePermissions']);
+    Route::get('/api/company/permissions/audit', [\App\Http\Controllers\Company\UserController::class, 'getPermissionsAuditLog']);
 
     // Permissions de l'utilisateur connecté (accessible à tout utilisateur entreprise)
     Route::get('/api/me/permissions', [\App\Http\Controllers\Company\UserController::class, 'myPermissions']);
+
+    // Gestion des demandes clients B2C
+    Route::get('/api/company/client-requests', [\App\Http\Controllers\ClientRequestController::class, 'index']);
+    Route::get('/api/company/client-requests/{id}', [\App\Http\Controllers\ClientRequestController::class, 'show']);
+    Route::put('/api/company/client-requests/{id}/status', [\App\Http\Controllers\ClientRequestController::class, 'updateStatus']);
+    Route::put('/api/company/client-requests/{id}/assign', [\App\Http\Controllers\ClientRequestController::class, 'assign']);
+
+    // Gestion de l'abonnement et Facturation GEL
+    Route::get('/api/company/subscription', [\App\Http\Controllers\Company\SubscriptionController::class, 'getCurrentSubscription']);
+    Route::post('/api/company/subscription/toggle-module', [\App\Http\Controllers\Company\SubscriptionController::class, 'toggleModule']);
+    Route::get('/api/company/invoices', [\App\Http\Controllers\Company\SubscriptionController::class, 'getInvoices']);
 
     // GED — API (module: document)
     Route::middleware('module:document')->group(function () {
@@ -225,7 +284,23 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'ensure.company', 'compa
         Route::post('/api/company/hr/expenses', [\App\Http\Controllers\Company\CompanyRhController::class, 'expenseStore']);
         Route::patch('/api/company/hr/expenses/{id}', [\App\Http\Controllers\Company\CompanyRhController::class, 'expenseApprouver']);
         Route::get('/api/company/hr/stats', [\App\Http\Controllers\Company\CompanyRhController::class, 'stats']);
+
+        // HR Documents
+        Route::get('/hr-documents', [\App\Http\Controllers\Company\HrDocumentController::class, 'index'])->name('hr-documents.index');
+        Route::post('/hr-documents', [\App\Http\Controllers\Company\HrDocumentController::class, 'store'])->name('hr-documents.store');
+        Route::delete('/hr-documents/{hrDocument}', [\App\Http\Controllers\Company\HrDocumentController::class, 'destroy'])->name('hr-documents.destroy');
     });
+
+    // ─── Settings / Paramètres ─────────────────────────────────────
+    Route::get('/document-templates', [\App\Http\Controllers\Company\DocumentTemplateController::class, 'index'])->name('document-templates.index');
+    Route::post('/document-templates', [\App\Http\Controllers\Company\DocumentTemplateController::class, 'store'])->name('document-templates.store');
+    Route::delete('/document-templates/{documentTemplate}', [\App\Http\Controllers\Company\DocumentTemplateController::class, 'destroy'])->name('document-templates.destroy');
+
+    Route::get('/office-supplies', [\App\Http\Controllers\Company\OfficeSupplyController::class, 'index'])->name('office-supplies.index');
+    Route::post('/office-supplies', [\App\Http\Controllers\Company\OfficeSupplyController::class, 'store'])->name('office-supplies.store');
+    Route::post('/office-supplies/request', [\App\Http\Controllers\Company\OfficeSupplyController::class, 'requestSupply'])->name('office-supplies.request');
+    Route::delete('/office-supplies/{officeSupply}', [\App\Http\Controllers\Company\OfficeSupplyController::class, 'destroy'])->name('office-supplies.destroy');
+
 
     // ─── Comptabilité — API (module: comptabilite) ─────────────────
     Route::middleware('module:comptabilite')->group(function () {
@@ -498,3 +573,7 @@ Route::post('/depot/{token}', [\App\Http\Controllers\PublicDepositController::cl
 Route::get('/rdv/success', [\App\Http\Controllers\PublicBookingController::class, 'success'])->name('public.booking.success');
 Route::get('/rdv/{cabinetId?}', [\App\Http\Controllers\PublicBookingController::class, 'showForm'])->name('public.booking.show');
 Route::post('/rdv/{cabinetId?}', [\App\Http\Controllers\PublicBookingController::class, 'book'])->name('public.booking.book');
+
+// ─── Routes Formulaire Contact B2C ───────────────────────────────────────────
+Route::get('/contact/{client_slug}', [\App\Http\Controllers\PublicContactController::class, 'showForm'])->name('public.contact.show');
+Route::post('/contact/{client_slug}', [\App\Http\Controllers\PublicContactController::class, 'submitForm'])->name('public.contact.submit');

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Modèle représentant un dossier de documents pour un client.
@@ -31,6 +32,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class ClientFolder extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'client_id',
         'name',

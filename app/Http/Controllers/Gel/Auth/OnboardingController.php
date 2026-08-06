@@ -87,6 +87,7 @@ class OnboardingController extends Controller
             'email'           => 'nullable|email|max:255',
             'wants_accounting' => 'nullable|boolean',
             'wants_secretary'  => 'nullable|boolean',
+            'service_mode'     => 'nullable|string|in:logiciel_seul,service_gere',
         ]);
 
         // Une entreprise doit choisir au moins un espace (comptabilité ou secrétariat)
@@ -152,6 +153,7 @@ class OnboardingController extends Controller
                 'rccm'             => $validated['rc'] ?? null,
                 'secteur'          => $validated['secteur'] ?? null,
                 'status'           => 'actif',
+                'service_mode'     => $validated['service_mode'] ?? 'logiciel_seul',
                 'wants_accounting' => $request->boolean('wants_accounting'),
                 'wants_secretary'  => $request->boolean('wants_secretary'),
             ];

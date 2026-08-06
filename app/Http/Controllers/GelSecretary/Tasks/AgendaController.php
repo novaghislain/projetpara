@@ -45,7 +45,7 @@ class AgendaController extends Controller
             $onlineBookings = collect();
             if ($activeClient) {
                 $onlineBookings = DaeAgendaEvent::where('client_id', $activeClient->id)
-                    ->where('type', 'rdv')
+                    ->where('type', 'rdv_client')
                     ->whereNull('created_by')
                     ->orderBy('created_at', 'desc')
                     ->get();
@@ -67,7 +67,9 @@ class AgendaController extends Controller
     {
         $request->validate([
             'title'       => 'required|string|max:255',
-            'type'        => 'required|in:rdv,reunion,appel,echeance,autre',
+            // S7 : types étendus — échéances fiscales / CNSS, renouvellements, visites
+            // S7 : types étendus — échéances fiscales / CNSS, renouvellements, visites
+            'type'        => 'required|in:rdv_client,reunion_interne,audience,administratif,echeance_fiscale,echeance_cnss,renouvellement,visite,autre',
             'start_at'    => 'required|date',
             'end_at'      => 'nullable|date|after_or_equal:start_at',
             'location'    => 'nullable|string|max:255',
@@ -94,10 +96,19 @@ class AgendaController extends Controller
             $clientId = $activeClient->id;
         }
 
-        $couleur = '#0D9488';
-        if ($request->type === 'reunion')  $couleur = '#3B82F6';
-        if ($request->type === 'appel')    $couleur = '#F59E0B';
-        if ($request->type === 'echeance') $couleur = '#EF4444';
+        // S7 : couleur par type d'événement
+        $typeColors = [
+            'rdv_client'       => '#3B82F6', // Bleu
+            'reunion_interne'  => '#10B981', // Vert
+            'audience'         => '#EF4444', // Rouge
+            'administratif'    => '#6B7280', // Gris
+            'echeance_fiscale' => '#7C3AED', // violet
+            'echeance_cnss'    => '#EC4899', // rose
+            'renouvellement'   => '#0891B2', // cyan
+            'visite'           => '#65A30D', // lime
+            'autre'            => '#64748B',
+        ];
+        $couleur = $typeColors[$request->type] ?? '#64748B';
 
         $event = DaeAgendaEvent::create([
             'client_id'   => $clientId,

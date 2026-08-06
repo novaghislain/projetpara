@@ -1,4 +1,4 @@
-﻿{{-- ============================================ --}}
+{{-- ============================================ --}}
 {{-- Vue : Complétion de profil après invitation   --}}
 {{-- Contrôleur : App\Http\Controllers\Gel\Onboarding\ProfilController --}}
 {{-- Route : onboarding.profil                     --}}
@@ -133,6 +133,31 @@
             </div>
 
             @if ($account_type === 'entreprise')
+                {{-- Choix du mode de service : Service Géré vs Logiciel Seul --}}
+                <div class="pt-1 mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Mode de service</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="flex items-start gap-3 border border-gray-300 rounded-lg px-4 py-3 cursor-pointer hover:border-primary">
+                            <input type="radio" name="service_mode" value="service_gere"
+                                   @checked(old('service_mode', 'logiciel_seul') === 'service_gere')
+                                   class="mt-1 w-4 h-4 accent-blue-600">
+                            <div>
+                                <span class="block text-sm font-semibold text-gray-900">Cabinet Virtuel</span>
+                                <span class="block text-xs text-gray-500">GEL SABINET vous affecte un(e) secrétaire/comptable.</span>
+                            </div>
+                        </label>
+                        <label class="flex items-start gap-3 border border-gray-300 rounded-lg px-4 py-3 cursor-pointer hover:border-primary">
+                            <input type="radio" name="service_mode" value="logiciel_seul"
+                                   @checked(old('service_mode', 'logiciel_seul') === 'logiciel_seul')
+                                   class="mt-1 w-4 h-4 accent-blue-600">
+                            <div>
+                                <span class="block text-sm font-semibold text-gray-900">Logiciel Seul</span>
+                                <span class="block text-xs text-gray-500">Vous invitez votre propre personnel.</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
                 {{-- Choix des espaces : Comptabilité / Secrétariat --}}
                 <div class="pt-1">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Vos espaces de travail</label>

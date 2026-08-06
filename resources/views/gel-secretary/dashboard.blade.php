@@ -97,7 +97,7 @@
   <div class="pro-actions">
     @if($activeClient)
       <a href="{{ route('gel-secretary.documents.index') }}" class="pro-btn">
-        <i class="fas fa-folder"></i> Documents ({{ $activeClient->company_name }})
+        <i class="fas fa-folder"></i> Documents ({{ $activeClient->nom_entreprise }})
       </a>
     @else
       <a href="{{ route('gel-secretary.clients.index') }}" class="pro-btn">
@@ -112,7 +112,7 @@
   <div class="panel-body" style="padding: 20px;">
     <div style="display:flex; justify-content:space-between; align-items:center;">
       <div>
-        <h2 style="font-size:22px; font-weight:700; color:var(--sec-text); margin-bottom:12px;">Bonjour {{ $user->prenom ?? 'Sophie' }} 👋</h2>
+        <h2 style="font-size:22px; font-weight:700; color:var(--sec-text); margin-bottom:12px;">Bonjour {{ $user->name ?? 'chère collaboratrice' }} 👋</h2>
         <div style="font-size:14px; color:var(--sec-text-muted); margin-bottom:16px;">Aujourd'hui vous avez :</div>
         
         <ul style="list-style:none; padding:0; margin:0; display:flex; gap:24px; flex-wrap:wrap;">
@@ -148,8 +148,8 @@
   <div class="panel-body" style="padding: 16px;">
     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
       <div style="background:#F8FAFC; padding:16px; border-radius:8px; text-align:center;">
-        <div style="font-size:24px; font-weight:700; color:#10B981; margin-bottom:4px;">{{ $stats['productivity']['time_saved'] }}</div>
-        <div style="font-size:11px; color:#64748B; font-weight:600; text-transform:uppercase;">Temps gagné grâce à GEL</div>
+        <div style="font-size:24px; font-weight:700; color:#10B981; margin-bottom:4px;">{{ $stats['productivity']['time_saved'] !== null ? $stats['productivity']['time_saved'].' h' : '—' }}</div>
+        <div style="font-size:11px; color:#64748B; font-weight:600; text-transform:uppercase;">Temps moyen de traitement</div>
       </div>
       <div style="background:#F8FAFC; padding:16px; border-radius:8px; text-align:center;">
         <div style="font-size:24px; font-weight:700; color:var(--sec-text); margin-bottom:4px;">{{ $stats['productivity']['docs_generated'] }}</div>
@@ -227,8 +227,77 @@
 </div>
 
 
+<!-- S1 : FLUX DOCUMENTAIRE & COURRIERS À TRAITER -->
+<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-bottom: 40px;">
+  <!-- Documents à traiter -->
+  <div class="pro-panel animate-fade delay-1">
+    <div class="panel-header">
+      <div class="panel-title">
+        <i class="fas fa-inbox" style="color:#EF4444;"></i> Documents à traiter
+        @if($docsToProcessCount > 0)
+          <span id="docsToProcessBadge" style="background:#FEE2E2; color:#EF4444; border-radius:12px; padding:2px 10px; font-size:11px; font-weight:700; margin-left:8px;">{{ $docsToProcessCount }}</span>
+        @else
+          <span id="docsToProcessBadge" style="display:none; background:#FEE2E2; color:#EF4444; border-radius:12px; padding:2px 10px; font-size:11px; font-weight:700; margin-left:8px;">0</span>
+        @endif
+      </div>
+      <a href="{{ route('gel-secretary.documents.index') }}" style="font-size:11px; color:var(--sec-primary); text-decoration:none; font-weight:600;">Ouvrir l'espace doc →</a>
+    </div>
+    <div class="panel-body">
+      @forelse($docsToProcess as $doc)
+        <a href="{{ route('gel-secretary.documents.folder', $doc->folder_id ?? 0) }}" class="list-row">
+          <div style="width: 4px; height: 32px; background: {{ $doc->priority === 'urgente' ? '#EF4444' : '#F59E0B' }}; border-radius: 4px;"></div>
+          <i class="fas fa-file-alt" style="color: #64748B; font-size: 18px;"></i>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 13px; font-weight: 600; color: var(--sec-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $doc->name }}</div>
+            <div style="font-size: 11px; color: var(--sec-text-muted);">
+              @if($doc->client)<i class="fas fa-building" style="margin-right: 4px;"></i>{{ $doc->client->company_name }} · @endif
+              {{ \Carbon\Carbon::parse($doc->created_at)->diffForHumans() }}
+            </div>
+          </div>
+          @if($doc->priority === 'urgente')<span class="badge-sm b-urgent">Urgent</span>@endif
+        </a>
+      @empty
+        <div class="empty-state">Aucun document en attente de traitement. 🎉</div>
+      @endforelse
+    </div>
+  </div>
+
+  <!-- Courriers non traités -->
+  <div class="pro-panel animate-fade delay-2">
+    <div class="panel-header">
+      <div class="panel-title">
+        <i class="fas fa-envelope-open-text" style="color:#D97706;"></i> Courriers non traités
+        @if($unprocessedCourriersCount > 0)
+          <span id="unprocessedCourriersBadge" style="background:#FEF3C7; color:#D97706; border-radius:12px; padding:2px 10px; font-size:11px; font-weight:700; margin-left:8px;">{{ $unprocessedCourriersCount }}</span>
+        @else
+          <span id="unprocessedCourriersBadge" style="display:none; background:#FEF3C7; color:#D97706; border-radius:12px; padding:2px 10px; font-size:11px; font-weight:700; margin-left:8px;">0</span>
+        @endif
+      </div>
+      <a href="{{ route('gel-secretary.courriers.index') }}" style="font-size:11px; color:var(--sec-primary); text-decoration:none; font-weight:600;">Tout voir →</a>
+    </div>
+    <div class="panel-body">
+      @forelse($unprocessedCourriers as $cr)
+        <a href="{{ route('gel-secretary.courriers.show', $cr->id) }}" class="list-row">
+          <div style="width:32px; height:32px; border-radius:8px; background:#F1F5F9; display:flex; align-items:center; justify-content:center; color:{{ $cr->type === 'entrant' ? '#EF4444' : '#2563EB' }};">
+            <i class="fas {{ $cr->type === 'entrant' ? 'fa-arrow-down' : 'fa-arrow-up' }}"></i>
+          </div>
+          <div style="flex:1; min-width:0;">
+            <div style="font-size:13px; font-weight:600; color:var(--sec-text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $cr->objet }}</div>
+            <div style="font-size:11px; color:var(--sec-text-muted);">
+              {{ $cr->expediteur ?? $cr->destinataire ?? '—' }} · {{ \Carbon\Carbon::parse($cr->date_courrier ?? $cr->created_at)->format('d/m/Y') }}
+            </div>
+          </div>
+          @if($cr->urgence === 'haute' || $cr->urgence === 'critique')<span class="badge-sm b-urgent">Urgent</span>@endif
+        </a>
+      @empty
+        <div class="empty-state">Tous les courriers sont traités. ✅</div>
+      @endforelse
+    </div>
+  </div>
+</div>
+
 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 40px;">
-  
+
   <!-- AUJOURD'HUI -->
   <div class="pro-panel animate-fade delay-2">
     <div class="panel-header">
@@ -257,7 +326,7 @@
           <div style="flex: 1; min-width: 0;">
             <div style="font-size: 13px; font-weight: 500; color: var(--sec-text);">{{ $task->titre }}</div>
             @if($task->client)
-              <div style="font-size: 11px; color: var(--sec-text-muted);"><i class="fas fa-building" style="margin-right: 4px;"></i>{{ $task->client->company_name }}</div>
+              <div style="font-size: 11px; color: var(--sec-text-muted);"><i class="fas fa-building" style="margin-right: 4px;"></i>{{ $task->client->nom_entreprise ?? $task->client->company_name ?? '—' }}</div>
             @endif
           </div>
           <span class="badge-sm b-urgent">Urgent</span>
@@ -381,10 +450,10 @@
       @forelse($clients->take(10) as $c)
       <a href="{{ route('gel-secretary.clients.show', $c->id) }}" class="list-row">
         <div class="avatar-sm">
-          {{ strtoupper(substr($c->company_name ?? 'E', 0, 2)) }}
+          {{ strtoupper(substr($c->nom_entreprise ?? 'E', 0, 2)) }}
         </div>
         <div style="flex: 1; min-width: 0;">
-          <div style="font-size: 13px; font-weight: 600; color: var(--sec-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $c->company_name }}</div>
+          <div style="font-size: 13px; font-weight: 600; color: var(--sec-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $c->nom_entreprise }}</div>
           <div style="font-size: 11px; color: var(--sec-text-muted);">{{ $c->email ?? 'Non renseigné' }}</div>
         </div>
         @if($activeClient?->id == $c->id)

@@ -114,6 +114,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.cabinet'    => \App\Http\Middleware\AdminCabinetMiddleware::class,
             // Super Administrateur (Niveau 2)
             'super_admin'      => \App\Http\Middleware\SuperAdminMiddleware::class,
+            // Restriction IP Client B2B
+            'restrict.client.ip' => \App\Http\Middleware\RestrictClientIp::class,
         ]);
 
         // ─── Middleware applicatif (exécuté après les globaux) ─────────

@@ -24,6 +24,10 @@ class Document extends Model
     protected $fillable = [
         'client_id',
         'folder_id',
+        'category',
+        'annee_liee',
+        'mois_lie',
+        'document_date',
         'name',
         'original_name',
         'file_path',
@@ -39,6 +43,16 @@ class Document extends Model
         'share_token',
         'uploaded_by',
         'is_archived',
+        // S10 — Workflow de circulation
+        'workflow_step',
+        'workflow_notes',
+        'priority',
+        'processed_at',
+        'processed_by',
+        'transmitted_at',
+        'transmitted_by',
+        'validated_at',
+        'validated_by',
     ];
 
     protected function casts(): array

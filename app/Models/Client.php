@@ -108,6 +108,11 @@ class Client extends Model
         'wants_secretary',
         'portal_slug',
         'portal_active',
+        'logo_path',
+        'settings',
+        'assigned_secretary_id',
+        'assigned_accountant_id',
+        'service_mode',
     ];
 
     protected function casts(): array
@@ -124,6 +129,7 @@ class Client extends Model
             'wants_accounting' => 'boolean',
             'wants_secretary' => 'boolean',
             'portal_active' => 'boolean',
+            'settings' => 'array',
         ];
     }
 
@@ -230,7 +236,17 @@ class Client extends Model
 
     public function companyAdmins()
     {
-        return $this->hasMany(User::class)->where('is_company_admin', true);
+        return $this->hasMany(User::class, 'client_id')->where('is_company_admin', true);
+    }
+
+    public function assignedSecretary()
+    {
+        return $this->belongsTo(User::class, 'assigned_secretary_id');
+    }
+
+    public function assignedAccountant()
+    {
+        return $this->belongsTo(User::class, 'assigned_accountant_id');
     }
 
     public function devis(): HasMany

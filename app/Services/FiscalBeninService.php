@@ -153,13 +153,18 @@ class FiscalBeninService
         $now = now();
         $currentMonth = $now->format('Y-m');
 
-        // 1. Alerte échéance TVA (le 15 du mois suivant)
+        // 1. Alerte échéance TVA (le jour du mois suivant, issu du référentiel paramétrable — S14)
         $declared = TvaDeclaration::where('client_id', $clientId)
             ->where('period', $currentMonth)
             ->exists();
 
         if (!$declared) {
-            $dueDate = date('Y-m-15', strtotime('+1 month'));
+            $dueDay = (int) \App\Models\Gel\FiscalParameter::lire(
+                \App\Models\Gel\FiscalParameter::TVA_DUE_DAY,
+                \Illuminate\Support\Facades\Auth::user()?->cabinet_id,
+                15
+            );
+            $dueDate = date('Y-m-' . str_pad($dueDay, 2, '0', STR_PAD_LEFT), strtotime('+1 month'));
             $daysLeft = (strtotime($dueDate) - time()) / 86400;
 
             if ($daysLeft <= 15) {

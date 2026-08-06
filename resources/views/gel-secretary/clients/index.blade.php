@@ -5,13 +5,39 @@
 <div class="sec-page-header">
   <div>
     <div class="sec-page-title">Entreprises clientes</div>
-    <div class="sec-page-sub">{{ $clients->count() }} entreprise(s) enregistrée(s)</div>
+    <div class="sec-page-sub">Portefeuille d'entreprises gérées par le secrétariat</div>
+  </div>
+</div>
+
+{{-- ─── S2 : Arborescence — Chiffres clés du portefeuille ───────────────── --}}
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:18px;">
+  <div class="sec-card" style="padding:16px;display:flex;align-items:center;gap:14px;">
+    <div style="width:44px;height:44px;border-radius:10px;background:rgba(14,165,233,.12);color:#0EA5E9;display:flex;align-items:center;justify-content:center;"><i class="fas fa-building"></i></div>
+    <div><div style="font-size:22px;font-weight:700;">{{ $clients->count() }}</div><div style="font-size:11px;color:var(--sec-text-muted);">Entreprises</div></div>
+  </div>
+  <div class="sec-card" style="padding:16px;display:flex;align-items:center;gap:14px;">
+    <div style="width:44px;height:44px;border-radius:10px;background:rgba(16,185,129,.1);color:#10B981;display:flex;align-items:center;justify-content:center;"><i class="fas fa-folder-open"></i></div>
+    <div><div style="font-size:22px;font-weight:700;">{{ $clients->sum(fn($c) => $c->stats['documents_count'] ?? 0) }}</div><div style="font-size:11px;color:var(--sec-text-muted);">Documents</div></div>
+  </div>
+  <div class="sec-card" style="padding:16px;display:flex;align-items:center;gap:14px;">
+    <div style="width:44px;height:44px;border-radius:10px;background:rgba(139,92,246,.1);color:#8B5CF6;display:flex;align-items:center;justify-content:center;"><i class="fas fa-tasks"></i></div>
+    <div><div style="font-size:22px;font-weight:700;">{{ $clients->sum(fn($c) => $c->stats['tasks_count'] ?? 0) }}</div><div style="font-size:11px;color:var(--sec-text-muted);">Tâches</div></div>
+  </div>
+  <div class="sec-card" style="padding:16px;display:flex;align-items:center;gap:14px;">
+    <div style="width:44px;height:44px;border-radius:10px;background:rgba(245,158,11,.1);color:#F59E0B;display:flex;align-items:center;justify-content:center;"><i class="fas fa-inbox"></i></div>
+    <div><div style="font-size:22px;font-weight:700;">{{ $clients->sum(fn($c) => $c->stats['courriers_count'] ?? 0) }}</div><div style="font-size:11px;color:var(--sec-text-muted);">Courriers</div></div>
   </div>
 </div>
 
 <div class="sec-card">
   <div class="sec-card-header">
-    <div class="sec-card-title"><i class="fas fa-building" style="color:var(--sec-primary);margin-right:6px;"></i>Toutes les entreprises</div>
+    {{-- S2 : Arborescence — racine "ENTREPRISES" → liste des dossiers clients --}}
+    <div class="sec-card-title" style="display:flex;align-items:center;gap:10px;">
+      <i class="fas fa-sitemap" style="color:var(--sec-primary);"></i>
+      <span style="font-weight:700;">ENTREPRISES</span>
+      <span style="color:var(--sec-text-muted);font-weight:500;">/</span>
+      <span style="color:var(--sec-text-muted);">Portefeuille ({{ $clients->count() }})</span>
+    </div>
     <input type="text" class="sec-form-control" style="max-width:240px;" placeholder="🔍 Rechercher..." oninput="filterClients(this.value)">
   </div>
   <div style="padding:0;">

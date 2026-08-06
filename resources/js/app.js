@@ -318,6 +318,10 @@ app.component('legal-privacy', LegalPrivacy);
 
 // ─── DAE Module Components ─────────────────────────────
 import DaeDashboard from './Pages/Modules/Dae/Dashboard.vue';
+import BusinessTripsManager from './components/GelSecretary/Services/BusinessTripsManager.vue';
+app.component('business-trips-manager', BusinessTripsManager);
+import HrManager from './components/GelSecretary/Services/HrManager.vue';
+app.component('hr-manager', HrManager);
 import DaeCourriersIndex from './Pages/Modules/Dae/Courriers/Index.vue';
 import DaeCourriersForm from './Pages/Modules/Dae/Courriers/Form.vue';
 import DaeCourriersShow from './Pages/Modules/Dae/Courriers/Show.vue';

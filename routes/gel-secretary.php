@@ -44,6 +44,15 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'gel.secretaire', \Pragm
             Route::post('/{id}/reject', [\App\Http\Controllers\GelSecretary\Settings\InvitationController::class, 'reject'])->name('reject');
         });
 
+        // ─── S17 : Demandes clients (file de traitement) ──────────────────
+        Route::prefix('requests')->name('requests.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\GelSecretary\Requests\RequestsController::class, 'index'])->name('index');
+            Route::post('/{id}/status', [\App\Http\Controllers\GelSecretary\Requests\RequestsController::class, 'updateStatus'])->name('status');
+            Route::post('/{id}/to-task', [\App\Http\Controllers\GelSecretary\Requests\RequestsController::class, 'toTask'])->name('to-task');
+            Route::post('/{id}/to-courrier', [\App\Http\Controllers\GelSecretary\Requests\RequestsController::class, 'toCourrier'])->name('to-courrier');
+            Route::post('/{id}/to-client', [\App\Http\Controllers\GelSecretary\Requests\RequestsController::class, 'toClient'])->name('to-client');
+        });
+
         // ─── Gestion des entreprises clientes ───────────────────────────
         Route::prefix('clients')->name('clients.')->group(function () {
             Route::get('/', [ClientsController::class, 'index'])->name('index');
@@ -55,21 +64,41 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'gel.secretaire', \Pragm
         // ─── Documents ──────────────────────────────────────────────────
         Route::prefix('documents')->name('documents.')->group(function () {
             Route::get('/', [DocumentsController::class, 'index'])->name('index');
+            Route::get('/vault', [DocumentsController::class, 'vault'])->name('vault');
             Route::post('/init-structure', [DocumentsController::class, 'initStructure'])->name('init-structure');
             Route::post('/create-folder', [DocumentsController::class, 'createFolder'])->name('create-folder');
+            Route::post('/create-year-folder', [DocumentsController::class, 'createYearFolder'])->name('create-year-folder');
             Route::get('/search-folders', [DocumentsController::class, 'searchFolders'])->name('search-folders');
             Route::get('/folder/{folderId}', [DocumentsController::class, 'showFolder'])->name('folder');
             Route::post('/upload', [DocumentsController::class, 'upload'])->name('upload');
-            
+            Route::put('/folder/{id}/rename', [DocumentsController::class, 'renameFolder'])->name('rename-folder');
+            Route::put('/{id}/rename', [DocumentsController::class, 'renameDocument'])->name('rename-document');
             // Nouvelles routes pour Phase 2
             Route::post('/{id}/favorite', [DocumentsController::class, 'toggleFavorite'])->name('favorite');
             Route::post('/{id}/share', [DocumentsController::class, 'generateShareLink'])->name('share');
             Route::post('/{id}/version', [DocumentsController::class, 'uploadNewVersion'])->name('version');
             Route::post('/{id}/metadata', [DocumentsController::class, 'updateMetadata'])->name('metadata');
-            
+
+            // S14 — Intelligence documentaire (analyse & proposition de classement)
+            Route::post('/analyze-ia', [DocumentsController::class, 'analyze'])->name('analyze-ia');
+
+            // S10 — Workflow de circulation (classe / transmet / valide)
+            Route::post('/{id}/workflow-process', [DocumentsController::class, 'workflowProcess'])->name('workflow-process');
+            Route::post('/{id}/workflow-transmit', [DocumentsController::class, 'workflowTransmit'])->name('workflow-transmit');
+            Route::post('/{id}/workflow-validate', [DocumentsController::class, 'workflowValidate'])->name('workflow-validate');
+            Route::post('/{id}/workflow-reject', [DocumentsController::class, 'workflowReject'])->name('workflow-reject');
+
             Route::get('/view/{id}', [DocumentsController::class, 'viewFile'])->name('view');
             Route::get('/download/{id}', [DocumentsController::class, 'download'])->name('download');
             Route::delete('/{id}', [DocumentsController::class, 'destroy'])->name('destroy');
+            Route::delete('/folder/{id}', [DocumentsController::class, 'destroyFolder'])->name('destroy-folder');
+            
+            // Corbeille
+            Route::get('/trash', [DocumentsController::class, 'trash'])->name('trash');
+            Route::post('/restore-folder/{id}', [DocumentsController::class, 'restoreFolder'])->name('restore-folder');
+            Route::post('/restore-document/{id}', [DocumentsController::class, 'restoreDocument'])->name('restore-document');
+            Route::delete('/force-delete-folder/{id}', [DocumentsController::class, 'forceDeleteFolder'])->name('force-delete-folder');
+            Route::delete('/force-delete-document/{id}', [DocumentsController::class, 'forceDeleteDocument'])->name('force-delete-document');
         });
 
         // ─── Contacts ───────────────────────────────────────────────────
@@ -130,6 +159,32 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'gel.secretaire', \Pragm
             Route::post('/draft-ia', [App\Http\Controllers\GelSecretary\Documents\CourrierController::class, 'generateDraft'])->name('draft-ia');
         });
 
+        // ─── S3 : Administration (sous-onglets) ─────────────────────────────────
+        Route::prefix('administration')->name('administration.')->group(function () {
+            Route::get('/', [App\Http\Controllers\GelSecretary\Administration\AdministrationController::class, 'index'])->name('index');
+
+            // Templates (S13)
+            Route::prefix('templates')->name('templates.')->group(function () {
+                Route::get('/', [App\Http\Controllers\GelSecretary\Administration\DocumentTemplateController::class, 'index'])->name('index');
+                Route::post('/generate/{id}', [App\Http\Controllers\GelSecretary\Administration\DocumentTemplateController::class, 'generate'])->name('generate');
+            });
+        });
+
+        // ─── S12 : Coffre-fort numérique ────────────────────────────────────────
+        Route::prefix('safebox')->name('safebox.')->group(function () {
+            Route::get('/', [App\Http\Controllers\GelSecretary\Documents\SafeboxController::class, 'index'])->name('index');
+            Route::get('/view/{id}', [App\Http\Controllers\GelSecretary\Documents\SafeboxController::class, 'view'])->name('view');
+            Route::get('/download/{id}', [App\Http\Controllers\GelSecretary\Documents\SafeboxController::class, 'download'])->name('download');
+            Route::post('/bulk-download', [App\Http\Controllers\GelSecretary\Documents\SafeboxController::class, 'bulkDownload'])->name('bulk-download');
+        });
+
+        // ─── Déplacements & Événements (S17) ─────────────────────────
+        Route::prefix('services')->name('services.')->group(function () {
+            Route::resource('business-trips', \App\Http\Controllers\GelSecretary\Services\BusinessTripController::class);
+            Route::resource('reservations', \App\Http\Controllers\GelSecretary\Services\ReservationController::class);
+            Route::resource('hr', \App\Http\Controllers\GelSecretary\Services\HrController::class);
+        });
+
         // ─── Procès-Verbaux ─────────────────────────────────────────────────────
         Route::prefix('pv')->name('pv.')->group(function () {
             Route::get('/', [App\Http\Controllers\GelSecretary\Tasks\MeetingMinuteController::class, 'index'])->name('index');
@@ -137,6 +192,13 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'gel.secretaire', \Pragm
             Route::get('/{id}', [App\Http\Controllers\GelSecretary\Tasks\MeetingMinuteController::class, 'show'])->name('show');
             Route::put('/{id}', [App\Http\Controllers\GelSecretary\Tasks\MeetingMinuteController::class, 'update'])->name('update');
             Route::post('/extract-ia', [App\Http\Controllers\GelSecretary\Tasks\MeetingMinuteController::class, 'extractPv'])->name('extract-ia');
+        });
+
+        // ─── S6 : Module Réunions (hub ODJ / PV / Décisions / Suivi) ─────────────
+        Route::prefix('reunions')->name('reunions.')->group(function () {
+            Route::get('/', [App\Http\Controllers\GelSecretary\Tasks\ReunionsController::class, 'index'])->name('index');
+            Route::post('/odj', [App\Http\Controllers\GelSecretary\Tasks\ReunionsController::class, 'storeOdj'])->name('odj.store');
+            Route::post('/odj-ia', [App\Http\Controllers\GelSecretary\Tasks\ReunionsController::class, 'generateOdj'])->name('odj.ia');
         });
 
         // ─── Journal d'Appels ───────────────────────────────────────────────────
@@ -157,6 +219,8 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'gel.secretaire', \Pragm
         // ─── Paramètres & Sécurité ──────────────────────────────────────────
         Route::prefix('settings')->name('settings.')->group(function () {
             Route::get('/', [\App\Http\Controllers\GelSecretary\Settings\SettingsController::class, 'index'])->name('index');
+            // S14 — Référentiel fiscal & social béninois (paramétrable)
+            Route::put('/fiscal', [\App\Http\Controllers\GelSecretary\Settings\SettingsController::class, 'updateFiscalParams'])->name('fiscal.update');
             Route::put('/password', [\App\Http\Controllers\GelSecretary\Settings\SettingsController::class, 'updatePassword'])->name('password.update');
             Route::post('/2fa/confirm', [\App\Http\Controllers\GelSecretary\Settings\SettingsController::class, 'confirm2FA'])->name('2fa.confirm');
             Route::post('/2fa/disable', [\App\Http\Controllers\GelSecretary\Settings\SettingsController::class, 'disable2FA'])->name('2fa.disable');
@@ -165,4 +229,11 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'gel.secretaire', \Pragm
 
         // ─── Chat IA Transversal ────────────────────────────────────────────────
         Route::post('/ai-chat', [\App\Http\Controllers\GelSecretary\AiChatController::class, 'chat'])->name('ai-chat');
+
+        // ─── Coordination Secrétaire ↔ Comptable (S4.1 / S2.1 / S2.2 / S4.3) ─────
+        Route::prefix('coordination')->name('coordination.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\GelSecretary\CoordinationController::class, 'index'])->name('index');
+            Route::post('/send-message', [\App\Http\Controllers\GelSecretary\CoordinationController::class, 'sendMessage'])->name('send-message');
+            Route::post('/document-note', [\App\Http\Controllers\GelSecretary\CoordinationController::class, 'addDocumentNote'])->name('document-note');
+        });
     });

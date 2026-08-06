@@ -7,7 +7,19 @@
 {{-- Welcome Banner --}}
 <div class="gel-business-welcome">
     <h1><i class="fas fa-building"></i> Bonjour {{ $stats['entreprise'] ?? 'Mon Entreprise' }}</h1>
-    <p>Comptable : {{ $stats['comptable_nom'] ?? 'Non assigné' }}</p>
+    <div style="margin-top: 8px;">
+        @if(($stats['service_mode'] ?? 'logiciel_seul') === 'service_gere')
+            <span class="badge bg-primary text-white me-2">Cabinet Virtuel GEL SABINET</span>
+            @if($client->wants_secretary)
+                <span class="me-3"><i class="fas fa-user-tie text-info"></i> Votre secrétaire : <strong>{{ $stats['secretaire_nom'] ?? 'En attente' }}</strong></span>
+            @endif
+            @if($client->wants_accounting)
+                <span><i class="fas fa-calculator text-success"></i> Votre comptable : <strong>{{ $stats['comptable_nom'] ?? 'En attente' }}</strong></span>
+            @endif
+        @else
+            <p>Comptable : {{ $stats['comptable_nom'] ?? 'Non assigné' }}</p>
+        @endif
+    </div>
 </div>
 
 {{-- LIGNE 1 — KPIs --}}
@@ -58,7 +70,35 @@
         </div>
     </div>
 
-    {{-- Documents récents --}}
+    {{-- Activité récente (Service Géré) ou Documents --}}
+    @if(($stats['service_mode'] ?? 'logiciel_seul') === 'service_gere' && isset($recentActivities))
+    <div class="gel-card">
+        <div class="gel-card-header">
+            <span style="font-weight:700;"><i class="fas fa-history text-primary"></i> Suivi de mon dossier</span>
+        </div>
+        <div class="gel-card-body" style="padding:0;">
+            @if($recentActivities->count() > 0)
+                <ul class="list-group list-group-flush">
+                @foreach($recentActivities as $activity)
+                    <li class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1 text-sm" style="font-size:13px; font-weight:600;">{{ $activity->description }}</h6>
+                            <small class="text-muted" style="font-size:11px;">{{ $activity->created_at->diffForHumans() }}</small>
+                        </div>
+                        <p class="mb-1" style="font-size:12px; color:var(--gel-text-secondary);">Par {{ $activity->user->name ?? 'GEL SABINET' }}</p>
+                    </li>
+                @endforeach
+                </ul>
+            @else
+                <div class="gel-empty" style="padding:30px;">
+                    <i class="fas fa-clock text-muted"></i>
+                    <h3>Aucune activité récente</h3>
+                    <p>Votre personnel affecté n'a pas encore interagi avec votre dossier.</p>
+                </div>
+            @endif
+        </div>
+    </div>
+    @else
     <div class="gel-card">
         <div class="gel-card-header">
             <span style="font-weight:700;">Documents récents</span>
@@ -81,6 +121,7 @@
             </div>
         </div>
     </div>
+    @endif
 </div>
 
 {{-- LIGNE 3 — Prochaines échéances --}}

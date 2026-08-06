@@ -42,7 +42,7 @@ class TasksController extends Controller
         } else {
             $cabinetId = $user->cabinet_id;
             $query = Task::where('cabinet_id', $cabinetId)
-                ->with(['assigne:id,name', 'client:id,company_name,nom_entreprise'])
+                ->with(['assigne:id,name', 'client:id,nom_entreprise'])
                 ->orderBy('date_echeance', 'asc');
         }
 
@@ -50,28 +50,46 @@ class TasksController extends Controller
 
         $tasksTodo = $allTasks->where('statut', 'a_faire');
         $tasksInProgress = $allTasks->where('statut', 'en_cours');
-        $tasksToValidate = $allTasks->where('statut', 'a_valider');
+        $tasksPending = $allTasks->where('statut', 'en_attente');
         $tasksDone = $allTasks->where('statut', 'terminee');
+
+        // S8 : colonne "En attente" (statut a_valider) + tâches propres à la secrétaire
+        if (!$user->isAutonomousSecretary()) {
+            // La secrétaire voit d'abord SES tâches affectées, puis les siennes créées
+            $myTasks = $allTasks->filter(function ($t) use ($user) {
+                return (int)($t->assigned_to ?? 0) === (int)$user->id || (int)($t->created_by ?? 0) === (int)$user->id;
+            });
+        } else {
+            $myTasks = $allTasks;
+        }
 
         // Statistiques globales pour les indicateurs du tableau de bord
         $stats = [
             'a_faire' => $tasksTodo->count(),
             'en_cours' => $tasksInProgress->count(),
-            'a_valider' => $tasksToValidate->count(),
+            'en_attente' => $tasksPending->count(),
             'terminees' => $tasksDone->count(),
             // Tâches dont l'échéance est dépassée et qui ne sont pas terminées
-            'echues' => $allTasks->whereIn('statut', ['a_faire', 'en_cours', 'a_valider'])
+            'echues' => $allTasks->whereIn('statut', ['a_faire', 'en_cours', 'en_attente'])
                 ->filter(function($t) { return $t->date_echeance && \Carbon\Carbon::parse($t->date_echeance)->isPast(); })
                 ->count(),
         ];
 
-        return view('gel-secretary.tasks.index', compact('tasksTodo', 'tasksInProgress', 'tasksToValidate', 'tasksDone', 'stats') + ['currentSection' => 'tasks', 'currentPage' => 'taches']);
+        // Filtrer les colonnes kanban par "mes tâches" si demandé (query ?mine=1)
+        if ($request->boolean('mine')) {
+            $tasksTodo = $myTasks->where('statut', 'a_faire')->values();
+            $tasksInProgress = $myTasks->where('statut', 'en_cours')->values();
+            $tasksPending = $myTasks->where('statut', 'en_attente')->values();
+            $tasksDone = $myTasks->where('statut', 'terminee')->values();
+        }
+
+        return view('gel-secretary.tasks.index', compact('tasksTodo', 'tasksInProgress', 'tasksPending', 'tasksDone', 'stats', 'myTasks') + ['currentSection' => 'tasks', 'currentPage' => 'taches']);
     }
 
     public function changeStatus(Request $request, $id, $status)
     {
         $task = Task::findOrFail($id);
-        if (in_array($status, ['a_faire', 'en_cours', 'a_valider', 'terminee'])) {
+        if (in_array($status, ['a_faire', 'en_cours', 'en_attente', 'terminee'])) {
             $task->statut = $status;
             if ($status === 'terminee') {
                 $task->termine_at = now();
@@ -149,7 +167,7 @@ class TasksController extends Controller
             'titre' => 'required|string|max:255',
             'description' => 'nullable|string',
             'priorite' => 'required|in:basse,moyenne,haute,critique',
-            'statut' => 'required|in:a_faire,en_cours,terminee',
+            'statut' => 'required|in:a_faire,en_cours,en_attente,terminee',
             'date_echeance' => 'nullable|date',
         ]);
 
@@ -195,7 +213,8 @@ class TasksController extends Controller
         $task = Task::findOrFail($id);
         $task->statut = match ($task->statut) {
             'a_faire' => 'en_cours',
-            'en_cours' => 'terminee',
+            'en_cours' => 'en_attente',
+            'en_attente' => 'terminee',
             default => 'a_faire',
         };
         // Enregistrement de la date de terminaison si le statut devient "terminee"

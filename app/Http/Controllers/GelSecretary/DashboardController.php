@@ -151,7 +151,7 @@ class DashboardController extends Controller
         $todayCalls = \App\Models\ClientCallLog::whereDate('called_at', now()->toDateString())
             ->where('user_id', $user->id)
             ->count();
-            
+
         $stats = [
             'total_clients'    => $clients->count(),
             'tasks_pending'    => $pendingTasksCount,
@@ -167,18 +167,30 @@ class DashboardController extends Controller
             'today_tasks_completed' => $todayTasksCompleted,
             'today_calls' => $todayCalls,
             
-            // Nouvelles statistiques premium (Greeting & Productivité)
+            // Nouvelles statistiques premium (Greeting & Productivité) — valeurs RÉELLES uniquement
             'greeting' => [
                 'meetings' => $todayEvents->count(),
-                'calls' => \App\Models\Gel\Task::where('cabinet_id', $user->cabinet_id)->whereIn('statut', ['a_faire', 'en_cours'])->where('titre', 'like', '%appel%')->count() ?: 3,
-                'mails' => 5, // Simulé ou à connecter à une vraie table Courriers
-                'validations' => 1, // Simulé ou à connecter aux workflows de validation
+                'calls' => \App\Models\Gel\Task::where('cabinet_id', $user->cabinet_id)
+                    ->whereIn('statut', ['a_faire', 'en_cours'])
+                    ->where('titre', 'like', '%appel%')
+                    ->count(),
+                // Vraies données : courriers non traités + documents à traiter
+                'mails' => \App\Models\Dae\DaeCourrier::whereIn('client_id', $clients->pluck('id'))
+                    ->whereIn('statut', ['non_traite', 'en_cours', 'recu'])
+                    ->count(),
+                'validations' => \App\Models\Document::whereIn('client_id', $clients->pluck('id'))
+                    ->where('is_archived', false)
+                    ->where('workflow_step', 'recu')
+                    ->count(),
             ],
             'productivity' => [
-                'time_saved' => '3 h 18 min', // Simulation IA
-                'docs_generated' => 12,
-                'tasks_completed' => $todayTasksCompleted ?: 18,
-                'messages_sent' => \App\Models\Gel\GelMessage::where('sender_id', $user->id)->whereDate('created_at', now()->toDateString())->count() ?: 24,
+                // Temps moyen réel de traitement (en heures) — « — » si aucune donnée
+                'time_saved' => $avgProcessingHours,
+                'docs_generated' => $recentDocsCount,
+                'tasks_completed' => $todayTasksCompleted,
+                'messages_sent' => \App\Models\Gel\GelMessage::where('sender_id', $user->id)
+                    ->whereDate('created_at', now()->toDateString())
+                    ->count(),
             ]
         ];
 
@@ -246,10 +258,112 @@ class DashboardController extends Controller
             });
         }
 
-        return view('gel-secretary.dashboard', compact(
+        // ─── S1 : Documents à traiter (workflow_step=recu) + urgents ────────────
+        $docFlowQuery = \App\Models\Document::query();
+        if ($activeClient) {
+            $docFlowQuery->where('client_id', $activeClient->id);
+        } else {
+            $docFlowQuery->whereIn('client_id', $clients->pluck('id'));
+        }
+        $docsToProcess = (clone $docFlowQuery)
+            ->where('is_archived', false)
+            ->where('workflow_step', 'recu')
+            ->orderBy('created_at', 'desc')
+            ->take(8)
+            ->get();
+        $docsToProcessCount = (clone $docFlowQuery)
+            ->where('workflow_step', 'recu')->count();
+
+        // Documents urgents (priority = urgente) en flow
+        $urgentDocs = (clone $docFlowQuery)
+            ->where('is_archived', false)
+            ->where('priority', 'urgente')
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+
+        // ─── S1 : Courriers non traités ───────────────────────────────────────────
+        $courriersQuery = \App\Models\Dae\DaeCourrier::query();
+        if ($activeClient) {
+            $courriersQuery->where('client_id', $activeClient->id);
+        } else {
+            $courriersQuery->whereIn('client_id', $clients->pluck('id'));
+        }
+        $unprocessedCourriers = (clone $courriersQuery)
+            ->whereIn('statut', ['non_traite', 'en_cours', 'recu'])
+            ->orderBy('date_courrier', 'desc')
+            ->take(5)
+            ->get();
+        $unprocessedCourriersCount = (clone $courriersQuery)
+            ->whereIn('statut', ['non_traite', 'en_cours', 'recu'])->count();
+
+        $viewName = in_array($user->role, ['admin', 'super_admin', 'director', 'dirigeant']) 
+            ? 'gel-secretary.dashboard-director' 
+            : 'gel-secretary.dashboard';
+
+        // ─── S16 : Variables pour la vue Dirigeant ───────────────────────────
+        if ($viewName === 'gel-secretary.dashboard-director') {
+            $cabinetId = $user->cabinet_id;
+            $clientIds = $clients->pluck('id');
+            
+            $dirStats = [
+                'pending_tasks'        => \App\Models\Gel\Task::whereIn('client_id', $clientIds)->whereIn('statut', ['a_faire', 'en_cours'])->count(),
+                'tasks_done'           => \App\Models\Gel\Task::whereIn('client_id', $clientIds)->where('statut', 'termine')->whereMonth('updated_at', now()->month)->count(),
+                'tasks_overdue'        => \App\Models\Gel\Task::whereIn('client_id', $clientIds)->whereIn('statut', ['a_faire', 'en_cours'])->whereDate('date_echeance', '<', now())->count(),
+                'docs_to_process'      => \App\Models\Document::whereIn('client_id', $clientIds)->where('workflow_step', 'recu')->count(),
+                'courriers_unprocessed'=> \App\Models\Dae\DaeCourrier::whereIn('client_id', $clientIds)->whereIn('statut', ['non_traite', 'recu'])->count(),
+                'events_today'         => \App\Models\Dae\DaeAgendaEvent::whereIn('client_id', $clientIds)->whereDate('start_at', now())->count(),
+            ];
+
+            $dirDocsToProcess = \App\Models\Document::with('client')
+                ->whereIn('client_id', $clientIds)
+                ->where('workflow_step', 'recu')
+                ->orderBy('created_at', 'desc')
+                ->take(6)
+                ->get();
+
+            $dirUpcomingEvents = \App\Models\Dae\DaeAgendaEvent::whereIn('client_id', $clientIds)
+                ->where('start_at', '>', now())
+                ->where('start_at', '<=', now()->addDays(7))
+                ->orderBy('start_at')
+                ->take(6)
+                ->get();
+
+            // Activité récente : fusion de plusieurs types d'événements
+            $recentActivity = collect();
+            \App\Models\Document::with('client')->whereIn('client_id', $clientIds)
+                ->where('created_at', '>=', now()->subDays(7))->orderBy('created_at','desc')->take(5)->get()
+                ->each(fn($d) => $recentActivity->push([
+                    'title' => 'Document ajouté : ' . $d->name,
+                    'time'  => $d->created_at->diffForHumans(),
+                    'icon'  => 'fa-file-alt', 'bg' => '#F5F3FF', 'color' => '#7C3AED',
+                ]));
+            \App\Models\Gel\Task::whereIn('client_id', $clientIds)
+                ->where('statut','termine')->where('updated_at', '>=', now()->subDays(7))->orderBy('updated_at','desc')->take(5)->get()
+                ->each(fn($t) => $recentActivity->push([
+                    'title' => 'Tâche terminée : ' . $t->titre,
+                    'time'  => $t->updated_at->diffForHumans(),
+                    'icon'  => 'fa-check-circle', 'bg' => '#ECFDF5', 'color' => '#059669',
+                ]));
+            $recentActivity = $recentActivity->sortByDesc('time')->take(8)->values();
+
+            return view('gel-secretary.dashboard-director', [
+                'user'             => $user,
+                'clients'          => $clients,
+                'activeClient'     => $activeClient,
+                'stats'            => $dirStats,
+                'docsToProcess'    => $dirDocsToProcess,
+                'upcomingEvents'   => $dirUpcomingEvents,
+                'recentActivity'   => $recentActivity,
+            ]);
+        }
+
+        return view($viewName, compact(
             'user', 'stats', 'clients', 'activeClient',
             'urgentTasks', 'todayEvents', 'upcomingEvents', 'recentDocs', 'newBookings',
-            'invoicesDueThisWeek', 'taxDueThisWeek', 'unreadMessagesCount', 'aiChecklist', 'tpsMoyComment', 'aiKpiInsights'
+            'invoicesDueThisWeek', 'taxDueThisWeek', 'unreadMessagesCount', 'aiChecklist', 'tpsMoyComment', 'aiKpiInsights',
+            // S1
+            'docsToProcess', 'docsToProcessCount', 'urgentDocs', 'unprocessedCourriers', 'unprocessedCourriersCount'
         ));
     }
 
@@ -324,22 +438,41 @@ class DashboardController extends Controller
                     'id' => $inv->id,
                     'type' => 'invitation',
                     'title' => 'Nouvelle invitation',
-                    'description' => ($inv->client->nom_entreprise ?? 'Une entreprise') . ' souhaite vous ajouter.',
+                    'description' => ($inv->client->name ?? 'Une entreprise') . ' souhaite vous ajouter.',
                     'time' => $inv->created_at->diffForHumans(),
                     'icon' => 'fas fa-envelope-open-text text-warning',
                     'link' => route('gel-secretary.invitations.index')
                 ];
             });
 
+        // S17 — Demandes clients en attente (file de traitement)
+        $pendingDemandes = \App\Models\CompanyRequest::whereIn('status', ['new', 'pending'])
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get()
+            ->map(function ($d) {
+                return [
+                    'id' => $d->id,
+                    'type' => 'demande',
+                    'title' => 'Nouvelle demande client : ' . $d->company_name,
+                    'description' => ($d->contact_name ?? '—') . ' (' . ($d->email ?? '') . ')',
+                    'time' => $d->created_at->diffForHumans(),
+                    'icon' => 'fas fa-inbox text-danger',
+                    'link' => route('gel-secretary.requests.index')
+                ];
+            });
+
         $notifications = collect($unreadMessages)
             ->concat($urgentTasks)
             ->concat($pendingInvitations)
+            ->concat($pendingDemandes)
             ->sortByDesc('time')
             ->values()
             ->take(10);
 
         return response()->json([
-            'count' => $unreadMessages->count() + $urgentTasks->count() + $pendingInvitations->count(),
+            'count' => $unreadMessages->count() + $urgentTasks->count() + $pendingInvitations->count() + $pendingDemandes->count(),
+            'demandes_count' => $pendingDemandes->count(),
             'items' => $notifications
         ]);
     }

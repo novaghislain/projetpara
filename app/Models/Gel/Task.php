@@ -40,6 +40,8 @@ class Task extends Model
     protected $fillable = [
         'cabinet_id', 'client_id', 'assigned_to', 'created_by',
         'titre', 'description', 'priorite', 'statut', 'date_echeance', 'termine_at',
+        // S2.2 / S3.1 / S3.3 — coordination inter-personnel
+        'source', 'coordination_type', 'related_document_id',
     ];
 
     protected $casts = [

@@ -25,3 +25,4 @@ Artisan::command('relances:process', function () {
 Schedule::job(new \App\Jobs\DailyDigestJob)->dailyAt('07:00');
 Schedule::job(new \App\Jobs\TaskEscalationJob)->hourly();
 Schedule::job(new \App\Jobs\ContactBirthdayJob)->dailyAt('08:00');
+Schedule::command('documents:check-expirations')->dailyAt('09:00');

@@ -82,6 +82,7 @@ class User extends Authenticatable
         'plan_id',
         'personal_company_name',
         'personal_industry',
+        'pool_max_capacity',
     ];
 
     protected $hidden = [
@@ -154,6 +155,7 @@ class User extends Authenticatable
     public function directPermissionModels()
     {
         return $this->belongsToMany(Permission::class, 'user_permissions')
+            ->select('permissions.*')
             ->withPivot('granted_by', 'granted_at', 'client_id', 'expires_at')
             ->withTimestamps();
     }

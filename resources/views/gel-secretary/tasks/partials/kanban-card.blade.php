@@ -54,8 +54,18 @@
     </div>
 
     <div class="kanban-card-title {{ $task->statut === 'terminee' ? 'text-muted' : '' }}" style="{{ $task->statut === 'terminee' ? 'text-decoration:line-through; opacity:0.6;' : '' }}">
+        @if($task->source === 'coordination')
+            <i class="fas fa-people-arrows" style="color:#0D9488; font-size:11px;" title="Tâche de coordination Secrétaire ↔ Comptable"></i>
+        @endif
         {{ $task->titre }}
     </div>
+
+    @if($task->source === 'coordination')
+    <span class="badge" style="background:#CCFBF1; color:#0F766E; border:1px solid #99F6E4; font-size:9px; font-weight:700; margin-top:4px;">
+        <i class="fas fa-people-arrows me-1"></i>
+        {{ $task->coordination_type === 'alerte' ? 'Alerte comptable' : ($task->coordination_type === 'demande_document' ? 'Demande comptable' : ($task->coordination_type === 'note_liee' ? 'Note secrétariat' : 'Coordination')) }}
+    </span>
+    @endif
 
     @if($task->client)
     <div class="kanban-card-meta mb-1">

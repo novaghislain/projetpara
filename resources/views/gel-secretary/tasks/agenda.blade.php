@@ -352,10 +352,14 @@ function updateVisioPlaceholder() {
                 <div class="sec-form-group">
                     <label>Type d'événement *</label>
                     <select name="type" required class="sec-form-select">
-                        <option value="rdv">Rendez-vous standard</option>
-                        <option value="reunion">Réunion interne</option>
-                        <option value="appel">Appel téléphonique</option>
-                        <option value="echeance">Échéance critique</option>
+                        <option value="rdv_client">RDV Client (Bleu)</option>
+                        <option value="reunion_interne">Réunion interne (Vert)</option>
+                        <option value="audience">Audience / Tribunal (Rouge)</option>
+                        <option value="administratif">Administratif (Gris)</option>
+                        <option value="echeance_fiscale">Échéance Fiscale (Violet)</option>
+                        <option value="echeance_cnss">Échéance CNSS (Rose)</option>
+                        <option value="renouvellement">Renouvellement (Cyan)</option>
+                        <option value="visite">Visite (Citron vert)</option>
                         <option value="autre">Autre</option>
                     </select>
                 </div>

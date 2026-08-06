@@ -132,7 +132,10 @@ class AuthenticatedSessionController extends Controller
             $user->role === 'client'
                 => redirect('/mes-commandes'),
 
-            in_array($user->role, ['company_admin', 'company_manager', 'company_employee'])
+            $user->role === 'company_admin'
+                => redirect()->route('company.dashboard'),
+
+            in_array($user->role, ['company_manager', 'company_employee'])
                 => $this->redirectBusinessUser($user),
 
             default => redirect('/login'),
@@ -291,7 +294,10 @@ class AuthenticatedSessionController extends Controller
             $user->role === 'client'
                 => redirect('/mes-commandes'),
 
-            in_array($user->role, ['company_admin', 'company_manager', 'company_employee'])
+            $user->role === 'company_admin'
+                => redirect()->route('company.dashboard'),
+
+            in_array($user->role, ['company_manager', 'company_employee'])
                 => $this->redirectBusinessUser($user),
 
             default => redirect('/login'),

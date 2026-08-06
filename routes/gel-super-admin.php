@@ -17,7 +17,11 @@ Route::prefix('gel-super-admin')->middleware(['auth', 'super_admin'])->name('gel
     Route::post('/tenants/{id}/impersonate', [TenantController::class, 'impersonate'])->name('tenants.impersonate');
     
     Route::resource('plans', \App\Http\Controllers\GelSuperAdmin\PlanController::class)->except(['create', 'edit', 'show']);
-    
+
+    // Pool Management
+    Route::get('/pool', [\App\Http\Controllers\GelSuperAdmin\PoolController::class, 'index'])->name('pool.index');
+    Route::get('/pool/assignments', [\App\Http\Controllers\GelSuperAdmin\PoolController::class, 'assignments'])->name('pool.assignments');
+    Route::post('/pool/assign', [\App\Http\Controllers\GelSuperAdmin\PoolController::class, 'assign'])->name('pool.assign');
     // Security
     Route::get('/security', [\App\Http\Controllers\GelSuperAdmin\SecurityController::class, 'index'])->name('security.index');
     Route::post('/security/store', [\App\Http\Controllers\GelSuperAdmin\SecurityController::class, 'storeAdmin'])->name('security.store');

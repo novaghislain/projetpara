@@ -17,11 +17,22 @@ class GelMessage extends Model
         'client_id',
         'sender_id',
         'sender_type',
+        'receiver_id',
+        'channel',
         'message',
         'piece_jointe',
         'est_lu',
         'portal_contact_id',
     ];
+
+    // Canaux de messagerie (S11)
+    public const CHANNEL_ENTREPRISE = 'entreprise';
+    public const CHANNEL_COMPTABLE = 'interne_comptable';
+    public const CHANNEL_ADMIN = 'interne_admin';
+    // S4.1 — Canal de coordination dédié, strictement réservé à l'échange
+    // Secrétaire ↔ Comptable sur une même entreprise (distinct de la messagerie
+    // visible par l'entreprise et des canaux internes génériques).
+    public const CHANNEL_COORDINATION = 'coordination';
 
     protected $casts = [
         'est_lu' => 'boolean',

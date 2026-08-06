@@ -60,6 +60,15 @@ Route::middleware(['auth', 'redirect.client', 'company'])->prefix('gel-accountan
     // ─── Recherche globale (API AJAX) ───
     Route::get('/api/search', [SearchController::class, 'search'])->name('api.search');
 
+    // ─── Coordination Comptable ↔ Secrétaire (S4.1 / S2.1 / S3.1 / S3.2 / S3.3 / S4.3) ─────
+    Route::prefix('coordination')->name('coordination.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\GelAccountant\CoordinationController::class, 'index'])->name('index');
+        Route::post('/accuser-reception', [\App\Http\Controllers\GelAccountant\CoordinationController::class, 'accusereception'])->name('accuser-reception');
+        Route::post('/request-document', [\App\Http\Controllers\GelAccountant\CoordinationController::class, 'requestDocument'])->name('request-document');
+        Route::post('/send-alert', [\App\Http\Controllers\GelAccountant\CoordinationController::class, 'sendAlert'])->name('send-alert');
+        Route::post('/send-message', [\App\Http\Controllers\GelAccountant\CoordinationController::class, 'sendMessage'])->name('send-message');
+    });
+
     // ─── Clients ───
     Route::prefix('clients')->name('clients.')->group(function () {
         Route::get('/', [ClientsController::class, 'index'])->name('index');

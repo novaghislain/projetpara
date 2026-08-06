@@ -84,6 +84,40 @@ class ClientsController extends Controller
         $courriers = \App\Models\Dae\DaeCourrier::where('client_id', $client->id)
             ->orderBy('created_at', 'desc')->take(20)->get();
 
+        // ─── S2 : Équipe affectée (pivot user_clients) ────────────────────────
+        $equipe = \App\Models\UserClient::where('client_id', $client->id)
+            ->where('is_active', true)
+            ->with(['user:id,name,email,role', 'inviter:id,name'])
+            ->orderBy('role')->get();
+
+        // ─── S2 : Rapports de synthèse ────────────────────────────────────────
+        $reports = collect([
+            [
+                'titre' => 'Synthèse du dossier',
+                'desc'  => 'Vue globale de l\'activité (tâches, docs, courriers, factures).',
+                'icon'  => 'fa-chart-pie',
+                'color' => '#6366F1',
+            ],
+            [
+                'titre' => 'Échéances à venir',
+                'desc'  => 'Factures impayées et déclarations fiscales des 30 prochains jours.',
+                'icon'  => 'fa-calendar-alt',
+                'color' => '#F59E0B',
+            ],
+            [
+                'titre' => 'Courriers du mois',
+                'desc'  => 'Courriers entrants / sortants traités ce mois-ci.',
+                'icon'  => 'fa-envelope-open-text',
+                'color' => '#2563EB',
+            ],
+            [
+                'titre' => 'Productivité secrétariat',
+                'desc'  => 'Tâches terminées, appels, RDV et documents produits.',
+                'icon'  => 'fa-rocket',
+                'color' => '#10B981',
+            ],
+        ]);
+
         // ─── Journal d'appels ─────────────────────────────────────────────────
         $callLogs = ClientCallLog::where('client_id', $client->id)
             ->with('user')
@@ -92,6 +126,9 @@ class ClientsController extends Controller
         // ─── Historique des actions ───────────────────────────────────────────
         $history = \App\Models\AuditLog::where('client_id', $client->id)
             ->orderBy('created_at', 'desc')->take(30)->get();
+
+        // ─── S4.3 — Fil d'activité commun Secrétaire ↔ Comptable ──────────────
+        $coordinationActivity = \App\Services\CoordinationService::feedForClient($client->id, 15);
 
         // ─── Santé client ─────────────────────────────────────────────────────
         $overdueTasksCount   = $tasks->whereIn('statut', ['a_faire', 'en_cours'])
@@ -170,7 +207,8 @@ class ClientsController extends Controller
             'client', 'clients', 'activeClient',
             'documents', 'tasks', 'events', 'messages', 'contacts',
             'invoices', 'courriers', 'callLogs', 'history', 'timeline',
-            'healthStatus', 'healthClass', 'overdueTasksCount', 'unreadMessagesCount'
+            'healthStatus', 'healthClass', 'overdueTasksCount', 'unreadMessagesCount',
+            'equipe', 'reports', 'coordinationActivity'
         ));
     }
 

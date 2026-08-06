@@ -947,6 +947,18 @@
         } catch (\Exception $e) {
           // Silently skip
         }
+
+        // S2.1 — Documents transmis par la secrétaire en attente d'accusé de réception
+        // (garde-fou : on ne compte que si le comptable est rattaché à un client actif)
+        $docTransmisEnAttente = 0;
+        try {
+            $activeClientId = session('active_client_id', auth()->user()->active_client_id ?? 0);
+            if ($activeClientId) {
+                $docTransmisEnAttente = \App\Models\Document::where('workflow_step', 'transmis_comptable')
+                    ->where('client_id', $activeClientId)
+                    ->count();
+            }
+        } catch (\Exception $e) { $docTransmisEnAttente = 0; }
       @endphp
       <div style="position:relative;">
         <button class="topbar-btn" onclick="toggleDropdown('notifDropdown')" title="Notifications" style="position:relative;">
@@ -1078,7 +1090,13 @@
         <span style="background:var(--gel-danger); color:#fff; border-radius:10px; padding: 2px 6px; font-size:10px; font-weight:700;">{{ $unreadAcctMsgCount > 9 ? '9+' : $unreadAcctMsgCount }}</span>
         @endif
       </li>
- 
+
+      {{-- S4.1 — Coordination Secrétaire ↔ Comptable (espace dédié) --}}
+      <li class="sidebar-item {{ (isset($currentSection) && $currentSection == 'coordination') || request()->routeIs('gel-accountant.coordination*') ? 'active' : '' }}" style="display:flex; justify-content:space-between; align-items:center;" data-page="coordination">
+        <div style="display:flex; align-items:center;"><i class="fas fa-people-arrows me-2"></i> Coordination</div>
+        <span title="Documents transmis en attente d'accusé de réception" style="background:var(--gel-accent,#0D9488); color:#fff; border-radius:10px; padding:2px 6px; font-size:10px; font-weight:700;">{{ $docTransmisEnAttente ?? 0 }}</span>
+      </li>
+
       <div class="sidebar-section">Comptabilité</div>
       <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'comptabilite') || request()->routeIs('gel-accountant.comptabilite*') ? 'active' : '' }}" data-dropdown="dd-compta"><i class="fas fa-book me-2"></i> Comptabilité <span class="arrow">▸</span></li>
       <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'facturation') || request()->routeIs('gel-accountant.facturation*') ? 'active' : '' }}" data-dropdown="dd-fact"><i class="fas fa-file-invoice-dollar me-2"></i> Facturation <span class="arrow">▸</span></li>
@@ -2099,6 +2117,60 @@
         document.getElementById('gelSidePanelOverlay').style.display = 'none';
       }, 300);
     }
+  </script>
+
+  {{-- S1.3 / S4.1 — Temps réel comptable : notifications + coordination secrétaire↔comptable --}}
+  <script>
+    (function () {
+      @if(auth()->check())
+        var userId = {{ auth()->id() }};
+        var cabId = {{ auth()->user()->cabinet_id ?? 'null' }};
+      @else
+        var userId = null;
+        var cabId = null;
+      @endif
+
+      if (userId && window.Echo && typeof window.Echo !== 'undefined') {
+
+        // S1.3 — Notifications temps réel (canal privé user.{id})
+        window.Echo.private('user.' + userId)
+          .listen('.NotificationRecuEvent', function (e) {
+            const item = e.notificationData || e;
+            // Son
+            try { new Audio('/audio/notification.wav').play().catch(function(){}); } catch (err) {}
+            // Badge
+            const badge = document.getElementById('notifBadge');
+            if (badge) {
+              let c = parseInt(badge.innerText) || 0;
+              c++;
+              badge.style.display = 'block';
+              badge.innerText = c > 99 ? '99+' : c;
+            }
+            if (item && item.title && typeof showToast === 'function') {
+              showToast(item.title + (item.description ? ' : ' + item.description : ''), 'info');
+            }
+          });
+
+        // S4.1 — Activité de coordination : l'écoute est configurée dans les
+        // vues de coordination (gel-accountant.coordination.* et gel-secretary.coordination.*)
+        // qui connaissent le client_id précis → scoping par entreprise.
+
+        // P1 — Messages internes (secrétaire/admin) → resynchronisation badge
+        if (cabId) {
+          window.Echo.private('chat.interne.' + cabId + '.' + userId)
+            .listen('.MessageEnvoyeEvent', function () {
+              try { new Audio('/audio/notification.wav').play().catch(function(){}); } catch (err) {}
+              const badge = document.getElementById('notifBadge');
+              if (badge) {
+                let c = parseInt(badge.innerText) || 0;
+                c++;
+                badge.style.display = 'block';
+                badge.innerText = c > 99 ? '99+' : c;
+              }
+            });
+        }
+      }
+    })();
   </script>
 </body>
 </html>

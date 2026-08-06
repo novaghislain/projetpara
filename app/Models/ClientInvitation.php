@@ -15,7 +15,17 @@ class ClientInvitation extends Model
         'role',
         'token',
         'status',
+        'expires_at',
+        'portals',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'expires_at' => 'datetime',
+            'portals' => 'array',
+        ];
+    }
 
     public function client()
     {

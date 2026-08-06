@@ -172,7 +172,7 @@
         // Ecoute des nouveaux messages via Laravel Echo
         if (typeof window.Echo !== 'undefined') {
             window.Echo.private('chat.' + cabinetId + '.' + clientId)
-                .listen('MessageEnvoyeEvent', (e) => {
+                .listen('.MessageEnvoyeEvent', (e) => {
                     // Si le message ne vient pas de nous
                     if (e.message.sender_type !== 'business') {
                         appendMessage(e.message, false);

@@ -32,8 +32,21 @@ Route::prefix('onboarding')->name('onboarding.')->group(function () {
 Route::middleware(['auth', 'not_client', 'onboarding'])->prefix('gel-business')->name('gel-business.')->group(function () {
 
     // ─── Dashboard ───
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/', [DashboardController::class, 'index'])->name('home');
+    Route::get('/dashboard', function(Illuminate\Http\Request $request) {
+        $user = auth()->user();
+        if ($user && $user->role === 'company_admin') {
+            return redirect()->route('company.dashboard');
+        }
+        return app(App\Http\Controllers\GelBusiness\DashboardController::class)->index($request);
+    })->name('dashboard');
+
+    Route::get('/', function(Illuminate\Http\Request $request) {
+        $user = auth()->user();
+        if ($user && $user->role === 'company_admin') {
+            return redirect()->route('company.dashboard');
+        }
+        return app(App\Http\Controllers\GelBusiness\DashboardController::class)->index($request);
+    })->name('home');
     Route::get('/workspace/{type}', [DashboardController::class, 'setWorkspace'])->name('workspace.set');
 
     // ─── Messagerie (Chat Messenger) ───

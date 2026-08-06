@@ -61,7 +61,7 @@ class UserController extends BaseCompanyController
                     'role_slug' => $u->roleModel?->slug ?? '',
                     'is_active' => $u->is_active,
                     'is_company_admin' => $u->is_company_admin,
-                    'permissions' => $u->effectivePermissions()->pluck('id')->toArray(),
+                    'permission_ids' => $u->effectivePermissions()->pluck('id')->toArray(),
                     'modules' => $u->getAccessibleModules(),
                     'formatted_permissions' => $u->getFormattedPermissions(),
                     'created_at' => $u->created_at?->format('d/m/Y'),
@@ -99,7 +99,7 @@ class UserController extends BaseCompanyController
             'role_id' => $target->role_id,
             'role_name' => $target->roleModel?->name ?? 'N/A',
             'is_active' => $target->is_active,
-            'permissions' => $target->effectivePermissions()->pluck('id')->toArray(),
+            'permission_ids' => $target->effectivePermissions()->pluck('id')->toArray(),
             'modules' => $target->getAccessibleModules(),
         ]);
     }
@@ -236,6 +236,167 @@ class UserController extends BaseCompanyController
         return response()->json(['message' => 'Utilisateur supprimé.']);
     }
 
+    // ─── Invitations & Suspensions ───────────────────────────────────
+
+    public function invite(Request $request)
+    {
+        $this->authorizeAdmin();
+        $clientId = $this->getClientId();
+
+        $validated = $request->validate([
+            'email' => 'required|email|max:255',
+            'role_id' => 'required|exists:roles,id',
+            'portals' => 'nullable|array',
+        ]);
+
+        $role = Role::findOrFail($validated['role_id']);
+        if (in_array($role->slug, ['super_admin', 'company_admin', 'comptable', 'client'])) {
+            return response()->json(['message' => 'Ce rôle ne peut pas être attribué.'], 403);
+        }
+
+        $existingUser = User::where('client_id', $clientId)->where('email', $validated['email'])->first();
+        if ($existingUser) {
+            return response()->json(['message' => 'Un utilisateur avec cet email existe déjà dans votre entreprise.'], 400);
+        }
+
+        $invitation = \App\Models\ClientInvitation::updateOrCreate(
+            ['client_id' => $clientId, 'email' => $validated['email']],
+            [
+                'role' => $role->slug,
+                'token' => \Illuminate\Support\Str::random(32),
+                'status' => 'pending',
+                'expires_at' => now()->addHours(48),
+                'portals' => $validated['portals'] ?? [],
+            ]
+        );
+
+        return response()->json(['message' => 'Invitation envoyée avec succès.', 'invitation' => $invitation], 201);
+    }
+
+    public function getInvitations()
+    {
+        $this->authorizeAdmin();
+        $clientId = $this->getClientId();
+
+        $invitations = \App\Models\ClientInvitation::where('client_id', $clientId)
+            ->where('status', 'pending')
+            ->latest()
+            ->get();
+
+        return response()->json(['invitations' => $invitations]);
+    }
+
+    public function revokeInvitation($id)
+    {
+        $this->authorizeAdmin();
+        $clientId = $this->getClientId();
+
+        $invitation = \App\Models\ClientInvitation::where('client_id', $clientId)
+            ->where('status', 'pending')
+            ->findOrFail($id);
+            
+        $invitation->delete();
+
+        return response()->json(['message' => 'Invitation révoquée.']);
+    }
+
+    public function toggleSuspension(Request $request, $id)
+    {
+        $this->authorizeAdmin();
+        $clientId = $this->getClientId();
+        $currentUser = Auth::user();
+        
+        $target = User::where('client_id', $clientId)->findOrFail($id);
+
+        if ($target->id === $currentUser->id) {
+            return response()->json(['message' => 'Vous ne pouvez pas suspendre votre propre compte.'], 403);
+        }
+
+        $target->is_suspended = !$target->is_suspended;
+        if ($target->is_suspended) {
+            $target->suspended_at = now();
+            $target->suspended_reason = $request->input('reason', 'Suspension administrative');
+        } else {
+            $target->suspended_at = null;
+            $target->suspended_reason = null;
+        }
+        $target->save();
+
+        return response()->json([
+            'message' => $target->is_suspended ? 'Utilisateur suspendu.' : 'Utilisateur rétabli.',
+            'is_suspended' => $target->is_suspended
+        ]);
+    }
+
+    // ─── Conversion Individuel -> Entreprise ─────────────────────────
+
+    public function getConversionRequests()
+    {
+        $this->authorizeAdmin();
+        $clientId = $this->getClientId();
+
+        $requests = \App\Models\AccountConversionRequest::where('client_id', $clientId)
+            ->where('status', 'pending')
+            ->with('user:id,name,email')
+            ->latest()
+            ->get();
+
+        return response()->json(['requests' => $requests]);
+    }
+
+    public function approveConversionRequest(Request $request, $id)
+    {
+        $this->authorizeAdmin();
+        $clientId = $this->getClientId();
+        
+        $convRequest = \App\Models\AccountConversionRequest::where('client_id', $clientId)
+            ->where('status', 'pending')
+            ->findOrFail($id);
+
+        $user = $convRequest->user;
+        if (!$user) {
+            return response()->json(['message' => 'Utilisateur introuvable.'], 404);
+        }
+
+        // Mettre à jour l'utilisateur (le lier à l'entreprise)
+        $user->client_id = $clientId;
+        $user->role = $convRequest->role;
+        $user->is_active = true;
+        // Optionnel : assigner un role_id spécifique selon $convRequest->role
+        $roleModel = Role::where('slug', $convRequest->role)->first();
+        if ($roleModel) {
+            $user->role_id = $roleModel->id;
+        }
+        $user->save();
+
+        // Marquer la demande comme approuvée
+        $convRequest->status = 'approved';
+        $convRequest->processed_by = Auth::id();
+        $convRequest->processed_at = now();
+        $convRequest->save();
+
+        // Envoyer une notification/email à l'utilisateur si nécessaire
+
+        return response()->json(['message' => 'Demande approuvée. L\'utilisateur a été ajouté à l\'entreprise.']);
+    }
+
+    public function rejectConversionRequest(Request $request, $id)
+    {
+        $this->authorizeAdmin();
+        $clientId = $this->getClientId();
+        
+        $convRequest = \App\Models\AccountConversionRequest::where('client_id', $clientId)
+            ->where('status', 'pending')
+            ->findOrFail($id);
+
+        $convRequest->status = 'rejected';
+        $convRequest->processed_by = Auth::id();
+        $convRequest->processed_at = now();
+        $convRequest->save();
+
+        return response()->json(['message' => 'Demande rejetée.']);
+    }
+
     // ─── Permissions ─────────────────────────────────────────────────
 
     /**
@@ -260,6 +421,32 @@ class UserController extends BaseCompanyController
             'permissions' => $target->fresh()->getDirectPermissionIds(),
             'modules' => $target->fresh()->getAccessibleModules(),
         ]);
+    }
+
+    public function getPermissionsAuditLog()
+    {
+        $this->authorizeAdmin();
+        $clientId = $this->getClientId();
+
+        $logs = \App\Models\UserPermission::whereHas('user', function ($query) use ($clientId) {
+            $query->where('client_id', $clientId);
+        })
+        ->with(['user:id,name', 'grantedBy:id,name', 'permission'])
+        ->orderBy('granted_at', 'desc')
+        ->limit(100)
+        ->get()
+        ->map(function ($up) {
+            return [
+                'id' => $up->id,
+                'user' => $up->user?->name,
+                'granted_by' => $up->grantedBy?->name ?? 'Système',
+                'permission' => $up->permission?->display_name ?? 'Inconnue',
+                'module' => $up->permission?->module ?? '',
+                'date' => $up->granted_at?->format('d/m/Y H:i'),
+            ];
+        });
+
+        return response()->json(['audit_logs' => $logs]);
     }
 
     /**

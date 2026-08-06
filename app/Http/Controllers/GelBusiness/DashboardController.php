@@ -118,12 +118,46 @@ class DashboardController extends Controller
             // ou avoir une structure différente (clients démo / migration en cours)
         }
 
+        // ─── PERSONNEL AFFECTÉ (MODÈLE 2 - SERVICE GÉRÉ) ───
+        $secretaireNom = 'Non assigné';
+        $comptableNom = 'Non assigné';
+        
+        if ($client->service_mode === 'service_gere') {
+            if ($client->assignedSecretary) {
+                $secretaireNom = $client->assignedSecretary->prenom . ' ' . $client->assignedSecretary->name;
+            }
+            if ($client->assignedAccountant) {
+                $comptableNom = $client->assignedAccountant->prenom . ' ' . $client->assignedAccountant->name;
+            }
+        } else {
+            // Logiciel seul : on utilise les infos du cabinet (existant) ou on affiche le collab
+            $comptableNom = $cabinetNom;
+        }
+
+        // ─── ACTIVITÉ RÉCENTE (SERVICE GÉRÉ) ───
+        $recentActivities = collect([]);
+        if ($client->service_mode === 'service_gere') {
+            $assignedUserIds = [];
+            if ($client->assigned_secretary_id) $assignedUserIds[] = $client->assigned_secretary_id;
+            if ($client->assigned_accountant_id) $assignedUserIds[] = $client->assigned_accountant_id;
+            
+            if (!empty($assignedUserIds)) {
+                $recentActivities = \App\Models\AuditLog::where('client_id', $clientId)
+                    ->whereIn('user_id', $assignedUserIds)
+                    ->latest()
+                    ->take(10)
+                    ->get();
+            }
+        }
+
         // Assemblage des statistiques à passer à la vue
         $stats = [
             'entreprise' => $client->company_name ?? 'Mon Entreprise',
             'ca_mensuel' => $caMensuel,
             'charges_mensuelles' => $chargesMensuelles,
-            'comptable_nom' => $cabinetNom,
+            'comptable_nom' => $comptableNom,
+            'secretaire_nom' => $secretaireNom,
+            'service_mode' => $client->service_mode,
             'comptable_email' => $cabinetEmail,
             'comptable_telephone' => $cabinetTelephone,
         ];
@@ -147,7 +181,7 @@ class DashboardController extends Controller
             ->with('user')
             ->get();
 
-        return view('gel-business.dashboard', compact('stats', 'recentEcritures', 'invitations', 'collaborators') + ['currentSection' => 'dashboard']);
+        return view('gel-business.dashboard', compact('client', 'stats', 'recentEcritures', 'invitations', 'collaborators', 'recentActivities') + ['currentSection' => 'dashboard']);
     }
 
     /**

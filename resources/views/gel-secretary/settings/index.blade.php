@@ -45,6 +45,9 @@
             <div class="settings-tab" onclick="switchTab('webmail')">
                 <i class="fas fa-envelope-open-text"></i> Configuration Webmail
             </div>
+            <div class="settings-tab" onclick="switchTab('fiscal')">
+                <i class="fas fa-landmark"></i> Référentiel fiscal & social
+            </div>
         </div>
     </div>
 
@@ -202,7 +205,55 @@
                 </div>
             </form>
         </div>
-        
+
+        {{-- ONGLET RÉFÉRENTIEL FISCAL & SOCIAL (Section 14) --}}
+        <div id="tab-fiscal" class="tab-content">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">Référentiel fiscal & social (Bénin)</h3>
+                    <div style="font-size: 12px; color: var(--sec-text-muted);">
+                        Taux et jours d'échéance du Code Général des Impôts & de la Sécurité Sociale.
+                        Modifiables (loi de finances annuelle) — jamais codés en dur. L'Agenda et les alertes
+                        d'échéance s'appuient sur ces valeurs.
+                    </div>
+                </div>
+            </div>
+
+            @if($fiscalParams->isEmpty())
+                <div class="empty-state">Aucun paramètre fiscal n'est enregistré.</div>
+            @else
+                <form action="{{ route('gel-secretary.settings.fiscal.update') }}" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="row">
+                        @foreach($fiscalParams->groupBy(fn($p) => $p->unite)->flatten() as $p)
+                            @php $displayValeur = (string) ($p->valeur ?? ''); @endphp
+                            <div class="col-md-6 mb-3">
+                                <label class="sec-form-label" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">
+                                    {{ $p->label }}
+                                </label>
+                                <div class="input-group">
+                                    <input type="text" name="valeur[{{ $p->cle }}]" class="sec-form-control"
+                                        value="{{ $displayValeur }}" placeholder="{{ $p->valeur }}">
+                                    @if($p->unite && $p->unite !== '—')
+                                        <span class="input-group-text" style="background:var(--sec-bg); border:1px solid var(--sec-border); border-left:0; font-size:11px; color:var(--sec-text-muted);">
+                                            {{ $p->unite }}
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                    <p style="font-size: 11px; color: var(--sec-text-muted); margin-bottom: 12px;">
+                        {{$fiscalParams->count()}} paramètre(s). Un paramètre sans valeur laisse la valeur par défaut s'appliquer.
+                    </p>
+                    <button type="submit" class="sec-btn" style="background: var(--sec-primary); color: white;">
+                        <i class="fas fa-save"></i> Enregistrer le référentiel fiscal
+                    </button>
+                </form>
+            @endif
+        </div>
+
     </div>
 </div>
 
