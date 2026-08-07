@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\Services\AnthropicService;
 use App\Services\AuditLogService;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Client;
+use App\Models\Gel\Client;
 
 class AiChatController extends Controller
 {
@@ -22,7 +22,7 @@ class AiChatController extends Controller
         $activeClientId = session('active_client_id') ?? $user->active_client_id ?? ($clients->first()?->id);
         
         $activeClient = $activeClientId ? Client::find($activeClientId) : null;
-        $clientName = $activeClient ? $activeClient->company_name : 'tous les clients';
+        $clientName = $activeClient ? $activeClient->nom_entreprise : 'tous les clients';
 
         $aiService = new AnthropicService();
         $system = "Tu es l'Assistant IA pour le portail GEL-Secrétariat. Le client actif actuel est '{$clientName}'. Le secrétaire te pose une question. Réponds de manière concise, professionnelle, et utile. Limite ta réponse à 2-3 phrases.";
@@ -36,3 +36,5 @@ class AiChatController extends Controller
         ]);
     }
 }
+
+

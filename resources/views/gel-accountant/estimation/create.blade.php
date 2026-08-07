@@ -1,4 +1,4 @@
-﻿@extends('layouts.gel-accountant')
+@extends('layouts.gel-accountant')
 
 @section('title', 'Créer une estimation (Devis)')
 
@@ -24,7 +24,7 @@
 </div>
 @endif
 
-<form method="POST" action="#" id="estimationForm">
+<form method="POST" action="{{ route('gel-accountant.estimation.store') }}" id="estimationForm">
 @csrf
 <div class="gel-card p-4 mb-4">
     <div class="doc-form-grid">

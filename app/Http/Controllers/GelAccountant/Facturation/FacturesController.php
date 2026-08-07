@@ -244,21 +244,38 @@ class FacturesController extends Controller
     }
 
     /**
-     * Supprime une facture (brouillon uniquement).
+     * Delete an invoice.
      */
     public function destroy($id)
     {
         $user = Auth::user();
         $clientId = $user->active_client_id ?? $user->client_id;
+        $invoice = Invoice::where('client_id', $clientId)->findOrFail($id);
 
-        $invoice = Invoice::where('client_id', $clientId)
-            ->where('status', 'draft')
-            ->findOrFail($id);
+        if ($invoice->status != 'draft') {
+            return back()->with('error', 'Impossible de supprimer une facture qui n\'est pas en brouillon.');
+        }
 
         $invoice->lines()->delete();
         $invoice->delete();
 
-        return redirect()->route('gel-accountant.factures.index')
-            ->with('success', "Facture {$invoice->invoice_number} supprimée.");
+        return redirect()->route('gel-accountant.factures.index')->with('success', 'Facture supprimée.');
+    }
+
+    /**
+     * Download Invoice as PDF
+     */
+    public function downloadPdf($id)
+    {
+        $user = Auth::user();
+        $clientId = $user->active_client_id ?? $user->client_id;
+        
+        $invoice = Invoice::where('client_id', $clientId)
+            ->with(['partner', 'lines', 'client'])
+            ->findOrFail($id);
+
+        $pdf = Pdf::loadView('pdf.invoice', compact('invoice'));
+        
+        return $pdf->download('Facture_'.$invoice->invoice_number.'.pdf');
     }
 }

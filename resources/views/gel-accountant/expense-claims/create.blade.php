@@ -70,8 +70,19 @@
 
             <div class="mb-4">
                 <label class="form-label">Justificatif (Reçu, Facture)</label>
-                <input type="file" name="receipt" class="form-control" accept="image/*,.pdf">
-                <div class="form-text">Formats acceptés : PDF, JPG, PNG. Taille max : 5Mo.</div>
+                <div id="ocrDropZone" style="border:2px dashed var(--gel-border); border-radius:8px; padding:30px; text-align:center; cursor:pointer;" onclick="document.getElementById('fileInput').click()">
+                    <i class="fas fa-magic" style="font-size:28px; color:var(--gel-primary); margin-bottom:8px;"></i>
+                    <p style="font-size:13px; color:var(--gel-text-secondary); font-weight:600;">Scanner via IA (OCR)</p>
+                    <p style="font-size:11px; color:var(--gel-text-muted);">Importez un reçu pour pré-remplir la note de frais</p>
+                    <input type="file" id="fileInput" name="receipt" style="display:none;" accept="image/*,.pdf" onchange="handleOcrScan(this.files[0])">
+                </div>
+                <div id="ocrLoading" style="display:none; text-align:center; padding:20px;">
+                    <i class="fas fa-spinner fa-spin" style="font-size:24px; color:var(--gel-primary);"></i>
+                    <p style="font-size:12px; margin-top:8px;">Analyse du reçu en cours...</p>
+                </div>
+                <div id="ocrResult" style="display:none; margin-top:10px; font-size:12px; color:var(--gel-success); font-weight:600; text-align:center;">
+                    <i class="fas fa-check-circle"></i> Données extraites avec succès !
+                </div>
             </div>
 
             <div class="d-flex justify-content-end gap-2">
@@ -84,3 +95,55 @@
 </form>
 
 @endsection
+
+@push('scripts')
+<script>
+function handleOcrScan(file) {
+    if (!file) return;
+    
+    document.getElementById('ocrDropZone').style.display = 'none';
+    document.getElementById('ocrLoading').style.display = 'block';
+    document.getElementById('ocrResult').style.display = 'none';
+
+    let formData = new FormData();
+    formData.append('document', file);
+    formData.append('_token', '{{ csrf_token() }}');
+
+    fetch('{{ route("gel-accountant.expenses.ocr-scan") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(res => {
+        document.getElementById('ocrLoading').style.display = 'none';
+        document.getElementById('ocrDropZone').style.display = 'block';
+        
+        if (res.success && res.data) {
+            document.getElementById('ocrResult').style.display = 'block';
+            
+            // Pré-remplir les champs
+            if (res.data.description) document.querySelector('textarea[name="description"]').value = res.data.description;
+            if (res.data.amount_ht) {
+                // Pour une note de frais, on met le montant TTC, simulons que le HT de l'OCR + TVA = TTC.
+                let tvaRate = res.data.tva_rate ? res.data.tva_rate : 0;
+                let ttc = Math.round(res.data.amount_ht * (1 + (tvaRate / 100)));
+                document.querySelector('input[name="amount"]').value = ttc;
+            }
+            if (res.data.account) {
+                // Mappage très basique
+                let catSelect = document.querySelector('select[name="category"]');
+                if(res.data.account.startsWith('625') || res.data.description.toLowerCase().includes('hôtel')) catSelect.value = 'hebergement';
+                else if(res.data.account.startsWith('624') || res.data.description.toLowerCase().includes('transport')) catSelect.value = 'transport';
+                else if(res.data.description.toLowerCase().includes('repas') || res.data.description.toLowerCase().includes('restaurant')) catSelect.value = 'repas';
+                else catSelect.value = 'autre';
+            }
+        }
+    })
+    .catch(error => {
+        document.getElementById('ocrLoading').style.display = 'none';
+        document.getElementById('ocrDropZone').style.display = 'block';
+        alert('Erreur lors de l\'analyse du document.');
+    });
+}
+</script>
+@endpush

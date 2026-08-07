@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\GelSecretary\Documents;
 
 use App\Http\Controllers\Controller;
-use App\Models\Client;
+use App\Models\Gel\Client;
 use App\Models\Document;
 use App\Services\AuditLogService;
 use Illuminate\Http\Request;
@@ -100,9 +100,9 @@ class SafeboxController extends Controller
             Log::warning('Safebox : historique indisponible : ' . $e->getMessage());
         }
 
-        $clients = Client::orderBy('company_name')->get();
+        $clients = Client::orderBy('nom_entreprise')->get();
         $perimetre = $activeClient
-            ? "Entreprise : {$activeClient->company_name} ({$documents->total()} document(s))"
+            ? "Entreprise : {$activeClient->nom_entreprise} ({$documents->total()} document(s))"
             : 'Toutes les entreprises du portefeuille';
 
         return view('gel-secretary.safebox.index', compact(
@@ -167,7 +167,7 @@ class SafeboxController extends Controller
         foreach ($docs as $doc) {
             $fp = Storage::disk('public')->path($doc->file_path);
             if (file_exists($fp)) {
-                $safeName = $doc->client?->company_name . ' / ' . $doc->name;
+                $safeName = $doc->client?->nom_entreprise . ' / ' . $doc->name;
                 $zip->addFile($fp, preg_replace('/[^\w\-. \/]/u', '_', $safeName));
             }
         }
@@ -197,3 +197,5 @@ class SafeboxController extends Controller
         return $doc;
     }
 }
+
+

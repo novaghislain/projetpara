@@ -38,11 +38,12 @@ class TasksController extends Controller
         if ($user->isAutonomousSecretary()) {
             $query = Task::whereNull('cabinet_id')
                 ->where('created_by', $user->id)
+                ->with(['comments.user', 'attachments.user'])
                 ->orderBy('date_echeance', 'asc');
         } else {
             $cabinetId = $user->cabinet_id;
             $query = Task::where('cabinet_id', $cabinetId)
-                ->with(['assigne:id,name', 'client:id,nom_entreprise'])
+                ->with(['assigne:id,name', 'client:id,nom_entreprise', 'comments.user', 'attachments.user'])
                 ->orderBy('date_echeance', 'asc');
         }
 
@@ -225,5 +226,46 @@ class TasksController extends Controller
 
         return redirect()->route('gel-secretary.tasks.index')
             ->with('success', 'Statut de la tâche mis à jour.');
+    }
+
+    /**
+     * Ajoute un commentaire à une tâche.
+     */
+    public function addComment(Request $request, $id)
+    {
+        $request->validate(['content' => 'required|string']);
+        $task = Task::findOrFail($id);
+
+        $task->comments()->create([
+            'user_id' => Auth::id(),
+            'content' => $request->content,
+        ]);
+
+        return back()->with('success', 'Commentaire ajouté.');
+    }
+
+    /**
+     * Ajoute une pièce jointe à une tâche.
+     */
+    public function addAttachment(Request $request, $id)
+    {
+        $request->validate([
+            'file' => 'required|file|max:10240' // max 10MB
+        ]);
+
+        $task = Task::findOrFail($id);
+        $file = $request->file('file');
+        
+        $path = $file->store('tasks/attachments', 'public');
+
+        $task->attachments()->create([
+            'user_id' => Auth::id(),
+            'file_name' => $file->getClientOriginalName(),
+            'file_path' => $path,
+            'file_type' => $file->getClientMimeType(),
+            'file_size' => $file->getSize(),
+        ]);
+
+        return back()->with('success', 'Fichier ajouté avec succès.');
     }
 }

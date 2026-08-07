@@ -15,6 +15,7 @@ class TicketController extends Controller
     public function index(Request $request)
     {
         $status = $request->get('status');
+        $search = $request->get('search');
         
         $query = ItTicket::with(['client', 'author', 'assignedTo'])->latest();
         
@@ -22,9 +23,61 @@ class TicketController extends Controller
             $query->where('status', $status);
         }
         
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('subject', 'like', "%{$search}%")
+                  ->orWhere('id', 'like', "%{$search}%")
+                  ->orWhereHas('client', function($qc) use ($search) {
+                      $qc->where('company_name', 'like', "%{$search}%");
+                  });
+            });
+        }
+        
         $tickets = $query->paginate(20);
+        $tickets->appends(['status' => $status, 'search' => $search]);
 
         return view('gel-informaticien.tickets.index', compact('tickets', 'status'));
+    }
+
+    /**
+     * Formulaire de création de ticket
+     */
+    public function create()
+    {
+        $clients = \App\Models\Client::orderBy('company_name')->get();
+        return view('gel-informaticien.tickets.create', compact('clients'));
+    }
+
+    /**
+     * Enregistrer un nouveau ticket
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'subject' => 'required|string|max:255',
+            'client_id' => 'nullable|exists:clients,id',
+            'priority' => 'required|string|in:basse,normale,haute,urgente',
+            'message' => 'required|string',
+        ]);
+
+        $ticket = ItTicket::create([
+            'subject' => $validated['subject'],
+            'client_id' => $validated['client_id'],
+            'priority' => $validated['priority'],
+            'author_id' => auth()->id(),
+            'status' => 'nouveau',
+        ]);
+
+        event(new \App\Events\ItTicketCreated($ticket));
+
+        ItTicketMessage::create([
+            'it_ticket_id' => $ticket->id,
+            'author_id' => auth()->id(),
+            'message' => $validated['message'],
+            'is_internal' => false,
+        ]);
+
+        return redirect()->route('gel-informaticien.tickets.index')->with('success', 'Ticket créé avec succès.');
     }
 
     /**

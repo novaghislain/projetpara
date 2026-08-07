@@ -81,35 +81,65 @@
     box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
   }
   
-  /* Context Menu */
+  /* Premium Context Menu */
   .context-menu {
     display: none;
     position: absolute;
     z-index: 10000;
-    width: 200px;
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-    padding: 8px 0;
-    border: 1px solid #e2e8f0;
+    width: 220px;
+    background-color: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.05);
+    padding: 8px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    transform-origin: top left;
+    animation: contextMenuFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
+  
+  @keyframes contextMenuFadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
   .context-menu-item {
-    padding: 10px 16px;
-    font-size: 13px;
-    color: #334155;
+    padding: 10px 12px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: #475569;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 10px;
-    transition: background 0.2s;
+    gap: 12px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+  }
+  .context-menu-item i {
+    font-size: 14px;
+    color: #94a3b8;
+    width: 16px;
+    text-align: center;
+    transition: color 0.2s ease;
   }
   .context-menu-item:hover {
-    background-color: #f1f5f9;
+    background-color: #f8fafc;
+    color: var(--sec-primary);
+  }
+  .context-menu-item:hover i {
     color: var(--sec-primary);
   }
   .context-menu-item.danger:hover {
     background-color: #fef2f2;
     color: #ef4444;
+  }
+  .context-menu-item.danger:hover i {
+    color: #ef4444;
+  }
+  .context-menu-divider {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 6px 0;
   }
 </style>
 
@@ -175,6 +205,27 @@
     </div>
 </div>
 @endif
+
+<!-- DELETE ITEM CONFIRM MODAL -->
+<div id="deleteItemConfirmModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.5); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); z-index:10000; align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:16px; width:400px; max-width:90%; border:1px solid var(--sec-border); box-shadow:0 10px 25px rgba(0,0,0,0.1); overflow:hidden; text-align:center; animation:contextMenuFadeIn 0.3s ease;">
+      <div style="padding:30px 20px 24px;">
+          <div style="width:70px; height:70px; border-radius:50%; background:#fef2f2; color:#ef4444; display:flex; align-items:center; justify-content:center; font-size:32px; margin:0 auto 20px; box-shadow:0 4px 10px rgba(239, 68, 68, 0.15);">
+              <i class="fas fa-trash-alt"></i>
+          </div>
+          <h3 style="font-size:20px; font-weight:700; color:var(--sec-text); margin:0 0 12px;">Supprimer cet élément ?</h3>
+          <p style="font-size:14px; color:var(--sec-text-muted); margin:0; line-height:1.5;">
+              Vous êtes sur le point de supprimer :<br>
+              <strong id="deleteItemConfirmName" style="color:#1e293b; display:inline-block; margin-top:8px;"></strong><br>
+              <span style="font-size:12px; color:#ef4444; font-weight:600; display:block; margin-top:12px;">Action irréversible.</span>
+          </p>
+      </div>
+      <div style="padding:20px; background:#f8fafc; border-top:1px solid var(--sec-border); display:flex; justify-content:center; gap:12px;">
+          <button type="button" class="sec-btn sec-btn-secondary" style="border-radius:8px; padding:10px 20px; background:#f1f5f9; color:#475569; border:none;" onclick="document.getElementById('deleteItemConfirmModal').style.display='none'">Annuler</button>
+          <button type="button" class="sec-btn" style="background:#ef4444; color:#fff; border:none; padding:10px 20px; border-radius:8px; font-weight:600; cursor:pointer; box-shadow:0 4px 10px rgba(239, 68, 68, 0.2);" onclick="submitDeleteItem()">Oui, supprimer</button>
+      </div>
+  </div>
+</div>
 
 <!-- Smart Drag & Drop Zone -->
 <form action="{{ route('gel-secretary.documents.upload') }}" method="POST" enctype="multipart/form-data" id="dropzoneForm">
@@ -791,15 +842,19 @@ function openRenameModal() {
 }
 
 function deleteItemContext() {
-  if (confirm(`Voulez-vous vraiment supprimer "${currentContextName}" ?`)) {
-    const form = document.getElementById('deleteItemForm');
-    if (currentContextType === 'folder') {
-      form.action = `/gel-secretary/documents/folder/${currentContextId}`;
-    } else {
-      form.action = `/gel-secretary/documents/${currentContextId}`;
-    }
-    form.submit();
+  document.getElementById('deleteItemConfirmName').innerText = `"${currentContextName}"`;
+  document.getElementById('deleteItemConfirmModal').style.display = 'flex';
+  document.getElementById('itemContextMenu').style.display = 'none';
+}
+
+function submitDeleteItem() {
+  const form = document.getElementById('deleteItemForm');
+  if (currentContextType === 'folder') {
+    form.action = `/gel-secretary/documents/folder/${currentContextId}`;
+  } else {
+    form.action = `/gel-secretary/documents/${currentContextId}`;
   }
+  form.submit();
 }
 </script>
 

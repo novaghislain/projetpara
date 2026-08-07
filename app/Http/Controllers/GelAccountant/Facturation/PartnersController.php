@@ -38,10 +38,9 @@ class PartnersController extends Controller
             'swift' => 'nullable|string|max:50',
         ]);
 
-        // Map type
-        if ($validated['type'] === 'fournisseur') {
-            $validated['type'] = 'supplier';
-        } else if ($validated['type'] === 'client') {
+        // Map type if necessary. To maintain compatibility with PurchaseOrdersController, 
+        // we keep 'fournisseur' as 'fournisseur'.
+        if ($validated['type'] === 'client') {
             $validated['type'] = 'customer';
         }
 
@@ -49,6 +48,10 @@ class PartnersController extends Controller
         $validated['status'] = 'actif';
 
         Partner::create($validated);
+
+        if ($validated['type'] === 'fournisseur' || $validated['type'] === 'supplier') {
+            return redirect()->route('gel-accountant.vendors.index')->with('success', 'Fournisseur enregistré avec succès.');
+        }
 
         return redirect()->route('gel-accountant.dashboard')->with('success', 'Partenaire enregistré avec succès.');
     }

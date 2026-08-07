@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use App\Models\Client;
+use App\Models\Gel\Client;
 use App\Models\ClientEmailConfig;
 use App\Models\Gel\FiscalParameter;
 use App\Services\AuditLogService;
@@ -21,7 +21,7 @@ class SettingsController extends Controller
     {
         $user = Auth::user();
         
-        $clients = Client::orderBy('company_name')->get();
+        $clients = Client::orderBy('nom_entreprise')->get();
         $activeClientId = session('active_client_id') ?? $user->active_client_id ?? $user->client_id;
         $activeClient = $activeClientId ? Client::find($activeClientId) : $clients->first();
         
@@ -221,3 +221,5 @@ class SettingsController extends Controller
         return back()->with('success', 'Configuration Webmail enregistrée avec succès.');
     }
 }
+
+

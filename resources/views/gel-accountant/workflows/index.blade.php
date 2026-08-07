@@ -5,11 +5,16 @@
 <div class="gel-page-header animate-fade" style="border-bottom: 1px solid var(--gel-border); padding-bottom: 12px; margin-bottom: 24px; display:flex; justify-content:space-between; align-items:flex-end;">
     <div>
         <h1 class="gel-page-title" style="font-size: 18px; font-weight: 700; color: var(--gel-text-primary); margin-bottom: 4px;">Workflow Automation</h1>
-        <p class="gel-page-subtitle" style="font-size: 12px; color: var(--gel-text-secondary);">Automatisez vos tâches répétitives</p>
+        <p class="gel-page-subtitle" style="font-size: 12px; color: var(--gel-text-secondary);">Automatisez vos tâches répétitives et gérez vos approbations.</p>
     </div>
-    <button class="gel-btn gel-btn-primary gel-btn-sm" onclick="openPanel('wfPanel')" style="font-weight:600;display:flex;align-items:center;gap:6px;border-radius:6px;padding:8px 14px;">
-        <i class="fas fa-plus"></i> Nouveau workflow
-    </button>
+    <div style="display:flex; gap:10px;">
+        <a href="{{ route('gel-accountant.workflows.pending') }}" class="gel-btn gel-btn-secondary" style="font-weight:600;display:flex;align-items:center;gap:6px;border-radius:6px;padding:8px 14px;">
+            <i class="fas fa-check-double"></i> Approbations en attente
+        </a>
+        <a href="{{ route('gel-accountant.workflows.create') }}" class="gel-btn gel-btn-primary" style="font-weight:600;display:flex;align-items:center;gap:6px;border-radius:6px;padding:8px 14px;">
+            <i class="fas fa-plus"></i> Nouveau workflow
+        </a>
+    </div>
 </div>
 <div class="gel-kpi-grid animate-fade delay-1">
     <div class="gel-kpi-card"><div class="gel-kpi-label">Workflows actifs</div><div class="gel-kpi-value">0</div></div>

@@ -46,6 +46,21 @@ class DashboardController extends Controller
             return redirect()->to(route('gel-accountant.dashboard'));
         }
 
+        // Informaticien → Dashboard Informatique
+        if ($user && $user->role === 'informaticien') {
+            return redirect()->to(route('gel-informaticien.dashboard'));
+        }
+
+        // Communication → Dashboard Communication
+        if ($user && $user->role === 'communication') {
+            return redirect()->to(route('gel-communication.dashboard'));
+        }
+
+        // Secrétaire → Dashboard Secrétariat
+        if ($user && (in_array($user->role, ['secretaire', 'secretary']) || $user->role_secretaire)) {
+            return redirect()->to(route('gel-secretary.dashboard'));
+        }
+
         // Company admin / manager → GEL Business dashboard (Blade)
         if ($user && in_array($user->role, ['company_admin', 'company_manager', 'company_employee'])) {
             return redirect()->to(route('gel-business.dashboard'));

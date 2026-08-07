@@ -31,7 +31,7 @@
         <a href="{{ route('gel-accountant.factures.index') }}" class="gel-btn gel-btn-secondary">
             <i class="fas fa-arrow-left"></i> Retour
         </a>
-        <a href="?export=pdf" target="_blank" class="gel-btn gel-btn-primary">
+        <a href="{{ route('gel-accountant.factures.pdf', $invoice->id) }}" target="_blank" class="gel-btn gel-btn-primary">
             <i class="fas fa-download"></i> Télécharger PDF
         </a>
     </div>

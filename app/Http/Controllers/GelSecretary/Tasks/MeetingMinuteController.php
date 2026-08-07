@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\GelSecretary\Tasks;
 
 use App\Http\Controllers\Controller;
-use App\Models\Client;
+use App\Models\Gel\Client;
 use App\Models\Dae\DaeMeetingMinute;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -24,7 +24,7 @@ class MeetingMinuteController extends Controller
         }
 
         $pvs = $query->orderBy('date_reunion', 'desc')->get();
-        $clients = Client::orderBy('company_name')->get();
+        $clients = Client::orderBy('nom_entreprise')->get();
         $activeClient = $activeClientId ? Client::find($activeClientId) : $clients->first();
 
         return view('gel-secretary.pv.index', compact('pvs', 'clients', 'activeClient'));
@@ -162,3 +162,5 @@ class MeetingMinuteController extends Controller
         return response()->json($result);
     }
 }
+
+

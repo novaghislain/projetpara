@@ -120,14 +120,17 @@ class AuthenticatedSessionController extends Controller
         }
 
         return match (true) {
-            $user->role === 'super_admin'
-                => redirect('/dashboard'),
+            $user->role === 'super_admin' || $user->isSuperAdmin()
+                => redirect('/gel-super-admin'),
 
-            $user->role === 'comptable'
+            $user->role === 'comptable' || $user->account_type === 'comptable'
                 => redirect('/gel-accountant/dashboard'),
 
             in_array($user->role, ['secretaire', 'secretary']) || $user->role_secretaire
                 => redirect('/gel-secretary/dashboard'),
+
+            $user->role === 'informaticien' || $user->account_type === 'informaticien'
+                => redirect('/gel-informaticien/dashboard'),
 
             $user->role === 'client'
                 => redirect('/mes-commandes'),

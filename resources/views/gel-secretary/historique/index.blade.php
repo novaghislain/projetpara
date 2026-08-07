@@ -25,7 +25,7 @@
             <select name="client_id" class="sec-form-select">
                 <option value="">— Toutes —</option>
                 @foreach($clients as $c)
-                    <option value="{{ $c->id }}" {{ request('client_id') == $c->id ? 'selected' : '' }}>{{ $c->company_name }}</option>
+                    <option value="{{ $c->id }}" {{ request('client_id') == $c->id ? 'selected' : '' }}>{{ $c->nom_entreprise }}</option>
                 @endforeach
             </select>
         </div>

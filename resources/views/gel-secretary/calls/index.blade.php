@@ -7,7 +7,7 @@
     <h1 class="sec-page-title">
       <i class="fas fa-phone-alt" style="color:var(--sec-primary); margin-right:8px;"></i>Journal des Appels
     </h1>
-    <p class="sec-page-sub">Historique des appels pour {{ $activeClient ? $activeClient->company_name : 'tous les clients' }}</p>
+    <p class="sec-page-sub">Historique des appels pour {{ $activeClient ? $activeClient->nom_entreprise : 'tous les clients' }}</p>
   </div>
   <button type="button" class="sec-btn sec-btn-primary" onclick="document.getElementById('modalAddCall').style.display='flex'">
     <i class="fas fa-plus"></i> Nouvel appel
@@ -47,7 +47,7 @@
             </td>
             <td style="padding:14px 18px;">
               <div style="font-weight:700;color:#1e293b;">{{ $call->contact_name ?? 'Inconnu' }}</div>
-              <div style="font-size:11px;color:#475569;">{{ $call->client->company_name ?? '—' }} {{ $call->phone ? '('.$call->phone.')' : '' }}</div>
+              <div style="font-size:11px;color:#475569;">{{ $call->client->nom_entreprise ?? '—' }} {{ $call->phone ? '('.$call->phone.')' : '' }}</div>
             </td>
             <td style="padding:14px 18px;">
               <div style="font-weight:600;color:#334155;">{{ \Carbon\Carbon::parse($call->called_at)->format('d/m/Y') }}</div>
@@ -108,7 +108,7 @@
                         <label>Entreprise concernée *</label>
                         <select name="client_id" class="sec-form-control" required>
                             @foreach($clients as $c)
-                                <option value="{{ $c->id }}" {{ ($activeClient && $activeClient->id == $c->id) ? 'selected' : '' }}>{{ $c->company_name }}</option>
+                                <option value="{{ $c->id }}" {{ ($activeClient && $activeClient->id == $c->id) ? 'selected' : '' }}>{{ $c->nom_entreprise }}</option>
                             @endforeach
                         </select>
                     </div>

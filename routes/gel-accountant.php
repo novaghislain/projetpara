@@ -22,9 +22,12 @@ use App\Http\Controllers\GelAccountant\Facturation\PaymentsController;
 use App\Http\Controllers\GelAccountant\Facturation\PartnersController;
 use App\Http\Controllers\GelAccountant\Facturation\ExpensesController;
 use App\Http\Controllers\GelAccountant\Facturation\PayBillsController;
+use App\Http\Controllers\GelAccountant\Facturation\VendorsController;
 use App\Http\Controllers\GelAccountant\Banque\BankAccountsController;
 use App\Http\Controllers\GelAccountant\Banque\BankTransactionsController;
 use App\Http\Controllers\GelAccountant\Banque\BankReconciliationController;
+use App\Http\Controllers\GelAccountant\Fiscalite\TvaController;
+use App\Http\Controllers\GelAccountant\Fiscalite\FiscalYearController;
 use App\Http\Controllers\GelAccountant\Settings\ProfileController;
 use App\Http\Controllers\GelAccountant\Settings\ClientPortalController;
 use App\Http\Controllers\GelAccountant\SearchController;
@@ -98,12 +101,25 @@ Route::middleware(['auth', 'redirect.client', 'company'])->prefix('gel-accountan
         Route::delete('/{id}', [TasksController::class, 'destroy'])->name('destroy');
     });
 
+    // ─── Assistant IA ───
+    Route::prefix('ia')->name('ia.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\GelAccountant\AiController::class, 'index'])->name('index');
+        Route::get('/feed', [\App\Http\Controllers\GelAccountant\AiController::class, 'feed'])->name('feed');
+        Route::post('/chat', [\App\Http\Controllers\GelAccountant\AiController::class, 'chat'])->name('chat');
+    });
+
     // ─── Workflows ───
     Route::prefix('workflows')->name('workflows.')->group(function () {
         Route::get('/', [WorkflowsController::class, 'index'])->name('index');
+        Route::get('/create', fn() => view('gel-accountant.workflows.create'))->name('create');
         Route::post('/', [WorkflowsController::class, 'store'])->name('store');
         Route::patch('/{id}/toggle', [WorkflowsController::class, 'toggle'])->name('toggle');
         Route::delete('/{id}', [WorkflowsController::class, 'destroy'])->name('destroy');
+
+        // Approbations
+        Route::get('/approvals/pending', [WorkflowsController::class, 'pending'])->name('pending');
+        Route::post('/approvals/{id}/approve', [WorkflowsController::class, 'approve'])->name('approve');
+        Route::post('/approvals/{id}/reject', [WorkflowsController::class, 'reject'])->name('reject');
     });
 
     // ─── Rapports ───
@@ -112,6 +128,15 @@ Route::middleware(['auth', 'redirect.client', 'company'])->prefix('gel-accountan
         Route::get('/create', [RapportsController::class, 'create'])->name('create');
         Route::post('/', [RapportsController::class, 'store'])->name('store');
         Route::delete('/{id}', [RapportsController::class, 'destroy'])->name('destroy');
+    });
+
+    // ─── Commerce & POS ───
+    Route::prefix('commerce')->name('commerce.')->group(function () {
+        Route::get('/pos', [\App\Http\Controllers\GelAccountant\Commerce\PosController::class, 'index'])->name('pos.index');
+        Route::post('/pos/{id}/close', [\App\Http\Controllers\GelAccountant\Commerce\PosController::class, 'closeRegister'])->name('pos.close');
+        
+        Route::get('/ecommerce', [\App\Http\Controllers\GelAccountant\Commerce\EcommerceController::class, 'index'])->name('ecommerce.index');
+        Route::post('/ecommerce/sync', [\App\Http\Controllers\GelAccountant\Commerce\EcommerceController::class, 'sync'])->name('ecommerce.sync');
     });
 
     // ─── Profil / Paramètres ───
@@ -150,12 +175,27 @@ Route::middleware(['auth', 'redirect.client', 'company'])->prefix('gel-accountan
         // Rapprochement Bancaire
         Route::resource('rapprochement', BankReconciliationController::class)->except(['edit', 'update', 'destroy']);
         Route::post('rapprochement/{id}/process', [BankReconciliationController::class, 'process'])->name('rapprochement.process');
+        Route::post('rapprochement/{id}/automatch', [BankReconciliationController::class, 'autoMatch'])->name('rapprochement.automatch');
+    });
+
+    // ─── Fiscalité & Clôture ───
+    Route::prefix('fiscalite')->name('fiscalite.')->group(function () {
+        // TVA
+        Route::get('/tva', [TvaController::class, 'index'])->name('tva.index');
+        Route::get('/tva/calcul', [TvaController::class, 'create'])->name('tva.create');
+        Route::post('/tva', [TvaController::class, 'store'])->name('tva.store');
+        Route::post('/tva/{id}/submit', [TvaController::class, 'submit'])->name('tva.submit');
+
+        // Clôture d'exercice
+        Route::get('/exercices', [FiscalYearController::class, 'index'])->name('exercices.index');
+        Route::post('/exercices/{id}/cloture', [FiscalYearController::class, 'close'])->name('exercices.close');
     });
     Route::view('/client-overview', 'gel-accountant.clients.overview')->name('client-overview');
 
     // ─── Factures ───
     Route::resource('factures', FacturesController::class);
     Route::post('factures/{id}/certify', [FacturesController::class, 'certify'])->name('factures.certify');
+    Route::get('factures/{id}/pdf', [FacturesController::class, 'downloadPdf'])->name('factures.pdf');
 
     // ─── Paiements ───
     Route::get('/payments', fn() => view('gel-accountant.payments.index'))->name('payments.index');
@@ -163,17 +203,35 @@ Route::middleware(['auth', 'redirect.client', 'company'])->prefix('gel-accountan
     Route::post('/payments', [PaymentsController::class, 'store'])->name('payments.store');
     Route::get('/payments/api/unpaid-invoices/{partnerId}', [PaymentsController::class, 'getUnpaidInvoices']);
 
-    // ─── Factures Récurrentes & Relances ───
-    Route::get('/recurrentes', fn() => view('gel-accountant.recurrentes.index'))->name('recurrentes.index');
+    // ─── Transactions Récurrentes ───
+    Route::get('/recurrentes', [App\Http\Controllers\GelAccountant\RecurringTransactionsController::class, 'index'])->name('recurrentes.index');
+    Route::get('/recurrentes/create', [App\Http\Controllers\GelAccountant\RecurringTransactionsController::class, 'create'])->name('recurrentes.create');
+    Route::post('/recurrentes', [App\Http\Controllers\GelAccountant\RecurringTransactionsController::class, 'store'])->name('recurrentes.store');
+    Route::post('/recurrentes/{id}/toggle', [App\Http\Controllers\GelAccountant\RecurringTransactionsController::class, 'toggle'])->name('recurrentes.toggle');
+
+    // ─── Workpapers (Dossiers de Travail) ───
+    Route::get('/workpapers', [App\Http\Controllers\GelAccountant\WorkpapersController::class, 'index'])->name('workpapers.index');
+    Route::post('/workpapers/{accountId}/status', [App\Http\Controllers\GelAccountant\WorkpapersController::class, 'updateStatus'])->name('workpapers.status');
+
+    // ─── Magic Links ───
+    Route::get('/magic-links', [App\Http\Controllers\GelAccountant\MagicLinksController::class, 'index'])->name('magic-links.index');
+    Route::get('/magic-links/create', [App\Http\Controllers\GelAccountant\MagicLinksController::class, 'create'])->name('magic-links.create');
+    Route::post('/magic-links', [App\Http\Controllers\GelAccountant\MagicLinksController::class, 'store'])->name('magic-links.store');
+    Route::get('/magic-links/{id}', [App\Http\Controllers\GelAccountant\MagicLinksController::class, 'show'])->name('magic-links.show');
+
     Route::get('/relances', fn() => view('gel-accountant.relances.index'))->name('relances.index');
 
     // ─── Placeholders du Méga-Menu ───
     // Clients
     Route::get('/declaration', fn() => view('gel-accountant.declaration.create'))->name('declaration.create');
-    Route::get('/estimation', fn() => view('gel-accountant.estimation.create'))->name('estimation.create');
-    Route::get('/sales-order', fn() => view('gel-accountant.sales-order.create'))->name('sales-order.create');
-    Route::get('/credit-note', fn() => view('gel-accountant.credit-note.create'))->name('credit-note.create');
-    Route::get('/sales-receipt', fn() => view('gel-accountant.sales-receipt.create'))->name('sales-receipt.create');
+    Route::get('/estimation', [App\Http\Controllers\GelAccountant\Facturation\EstimationController::class, 'create'])->name('estimation.create');
+    Route::post('/estimation', [App\Http\Controllers\GelAccountant\Facturation\EstimationController::class, 'store'])->name('estimation.store');
+    Route::get('/sales-order', [App\Http\Controllers\GelAccountant\Facturation\SalesOrderController::class, 'create'])->name('sales-order.create');
+    Route::post('/sales-order', [App\Http\Controllers\GelAccountant\Facturation\SalesOrderController::class, 'store'])->name('sales-order.store');
+    Route::get('/credit-note', [App\Http\Controllers\GelAccountant\Facturation\CreditNoteController::class, 'create'])->name('credit-note.create');
+    Route::post('/credit-note', [App\Http\Controllers\GelAccountant\Facturation\CreditNoteController::class, 'store'])->name('credit-note.store');
+    Route::get('/sales-receipt', [App\Http\Controllers\GelAccountant\Facturation\SalesReceiptController::class, 'create'])->name('sales-receipt.create');
+    Route::post('/sales-receipt', [App\Http\Controllers\GelAccountant\Facturation\SalesReceiptController::class, 'store'])->name('sales-receipt.store');
     Route::get('/refund-receipt', fn() => view('gel-accountant.refund-receipt.create'))->name('refund-receipt.create');
     Route::get('/delayed-credit', fn() => view('gel-accountant.delayed-credit.create'))->name('delayed-credit.create');
     Route::get('/delayed-charge', fn() => view('gel-accountant.delayed-charge.create'))->name('delayed-charge.create');
@@ -181,6 +239,7 @@ Route::middleware(['auth', 'redirect.client', 'company'])->prefix('gel-accountan
     // Dépenses
     Route::get('/expenses', [ExpensesController::class, 'index'])->name('expenses.index');
     Route::get('/expenses/create', fn() => view('gel-accountant.expenses.create'))->name('expenses.create');
+    Route::post('/expenses/ocr-scan', [ExpensesController::class, 'ocrScan'])->name('expenses.ocr-scan');
     Route::post('/expenses', [ExpensesController::class, 'store'])->name('expenses.store');
     Route::get('/expenses/{id}', [ExpensesController::class, 'show'])->name('expenses.show');
     Route::get('/check/create', fn() => view('gel-accountant.checks.create'))->name('check.create');
@@ -203,7 +262,8 @@ Route::middleware(['auth', 'redirect.client', 'company'])->prefix('gel-accountan
     Route::get('/vendor-credit/create', fn() => view('gel-accountant.vendor-credit.create'))->name('vendor-credit.create');
     Route::get('/client/create', fn() => view('gel-accountant.client.create'))->name('client.create');
     Route::get('/credit-card-credit', fn() => view('gel-accountant.credit-card-credit.create'))->name('credit-card-credit.create');
-    Route::get('/vendors/create', fn() => view('gel-accountant.vendors.create'))->name('vendors.create');
+    Route::get('/vendors', [VendorsController::class, 'index'])->name('vendors.index');
+    Route::get('/vendors/create', [VendorsController::class, 'create'])->name('vendors.create');
 
     // Partenaires (Clients et Fournisseurs)
     Route::post('/partners', [PartnersController::class, 'store'])->name('partners.store');
@@ -240,6 +300,7 @@ Route::middleware(['auth', 'redirect.client', 'company'])->prefix('gel-accountan
         Route::post('/journaux', [JournalController::class, 'store'])->name('journaux.store');
 
         // Écritures
+        Route::get('/ecritures/export', [EcritureController::class, 'exportCsv'])->name('ecritures.export');
         Route::get('/ecritures', [EcritureController::class, 'index'])->name('ecritures');
         Route::get('/ecritures/create', [EcritureController::class, 'create'])->name('ecritures.create');
         Route::post('/ecritures', [EcritureController::class, 'store'])->name('ecritures.store');

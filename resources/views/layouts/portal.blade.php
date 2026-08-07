@@ -243,7 +243,8 @@
             <nav class="portal-nav-links">
                 <a href="{{ route('portal.dashboard', ['slug' => $slug]) }}" class="portal-nav-link active">Tableau de bord</a>
                 <a href="{{ route('portal.invoices', ['slug' => $slug]) }}" class="portal-nav-link">Factures</a>
-                <a href="#" class="portal-nav-link">Documents</a>
+                <a href="{{ route('client.marketing.index', ['slug' => $slug]) }}" class="portal-nav-link text-primary"><i class="fas fa-bullhorn me-1"></i> Marketing & Com'</a>
+                <a href="{{ route('client.it.index', ['slug' => $slug]) }}" class="portal-nav-link"><i class="fas fa-server me-1"></i> Services IT</a>
                 <a href="{{ route('portal.messages', ['slug' => $slug]) }}" class="portal-nav-link">Messagerie</a>
                 <a href="#" onclick="document.getElementById('itSupportModal').showModal()" class="portal-nav-link text-danger" style="font-weight: 600;"><i class="fas fa-life-ring"></i> Support Technique</a>
             </nav>

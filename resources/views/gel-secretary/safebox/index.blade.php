@@ -76,7 +76,7 @@
         </div>
         <div style="flex:1;min-width:0;">
           <div style="font-size:13px;font-weight:600;color:var(--sec-text);word-break:break-word;">{{ $doc->name }}</div>
-          <div style="font-size:11px;color:var(--sec-text-muted);">{{ $doc->client?->company_name }}</div>
+          <div style="font-size:11px;color:var(--sec-text-muted);">{{ $doc->client?->nom_entreprise }}</div>
         </div>
         <input type="checkbox" class="safebox-check" value="{{ $doc->id }}" onchange="updateBulk()">
       </div>

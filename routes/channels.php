@@ -69,3 +69,11 @@ Broadcast::channel('workflow.{client_id}', function ($user, $client_id) {
     return (int) $user->active_client_id === (int) $client_id
         || (int) ($user->client_id ?? 0) === (int) $client_id;
 });
+
+// ─── IT Support (Tickets) ──────────────────────────────
+Broadcast::channel('it.tickets', function ($user) {
+    if (!auth()->check()) {
+        return false;
+    }
+    return $user->account_type === 'informaticien' || $user->isSuperAdmin();
+});

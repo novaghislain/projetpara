@@ -54,6 +54,9 @@ class Task extends Model
     public function client() { return $this->belongsTo(Client::class); }
     public function assigne() { return $this->belongsTo(\App\Models\User::class, 'assigned_to'); }
     public function createur() { return $this->belongsTo(\App\Models\User::class, 'created_by'); }
+    
+    public function comments() { return $this->hasMany(TaskComment::class); }
+    public function attachments() { return $this->hasMany(TaskAttachment::class); }
 
     // ─── Scopes ───
     public function scopeAFaire($q) { return $q->where('statut', 'a_faire'); }

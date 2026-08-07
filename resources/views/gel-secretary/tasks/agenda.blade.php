@@ -10,7 +10,7 @@
     </h1>
     <p class="sec-page-sub">
       @if($activeClient)
-        Rendez-vous et planification pour : <strong>{{ $activeClient->company_name }}</strong>
+        Rendez-vous et planification pour : <strong>{{ $activeClient->nom_entreprise }}</strong>
       @else
         Veuillez sélectionner une entreprise active dans la barre supérieure.
       @endif

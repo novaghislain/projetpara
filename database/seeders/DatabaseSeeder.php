@@ -56,6 +56,7 @@ class DatabaseSeeder extends Seeder
             // ─── GEL Cabinet ─────────────────────────────────────────
             \Database\Seeders\Gel\AccountTypesSeeder::class,
             \Database\Seeders\Gel\PlanComptableSyscohadaSeeder::class,
+            \Database\Seeders\Gel\GelDemoSeeder::class,
         ]);
     }
 }

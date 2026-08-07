@@ -71,4 +71,14 @@ Route::middleware(['web', 'auth', 'admin.cabinet'])->prefix('gel-admin')->name('
     Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
     Route::get('audit-logs/export', [AuditLogController::class, 'export'])->name('audit-logs.export');
 
+    // Gestion des Consultants Externes
+    Route::prefix('consultants')->name('consultants.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\GelAdmin\Consultant\ConsultantManagementController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\GelAdmin\Consultant\ConsultantManagementController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\GelAdmin\Consultant\ConsultantManagementController::class, 'store'])->name('store');
+        Route::get('/{mission}', [\App\Http\Controllers\GelAdmin\Consultant\ConsultantManagementController::class, 'show'])->name('show');
+        Route::post('/{mission}/renew', [\App\Http\Controllers\GelAdmin\Consultant\ConsultantManagementController::class, 'renew'])->name('renew');
+        Route::post('/{mission}/revoke', [\App\Http\Controllers\GelAdmin\Consultant\ConsultantManagementController::class, 'revoke'])->name('revoke');
+    });
+
 });

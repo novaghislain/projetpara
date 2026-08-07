@@ -4,6 +4,9 @@ namespace App\Http\Controllers\GelAccountant\Tasks;
 
 use App\Http\Controllers\Controller;
 use App\Models\Gel\Workflow;
+use App\Models\ApprovalWorkflow;
+use App\Models\ApprovalRequest;
+use App\Models\ApprovalStepLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -114,5 +117,93 @@ class WorkflowsController extends Controller
 
         return redirect()->route('gel-accountant.workflows')
             ->with('success', 'Workflow supprimé.');
+    }
+
+    // ==========================================
+    // MÉTHODES POUR LES APPROBATIONS (Approval Workflows)
+    // ==========================================
+
+    /**
+     * Affiche les demandes d'approbation en attente pour l'utilisateur connecté.
+     */
+    public function pending(Request $request)
+    {
+        $user = Auth::user();
+        
+        // On récupère toutes les requêtes en attente
+        $pendingRequests = ApprovalRequest::where('status', 'pending')
+            ->with(['workflow', 'requester'])
+            ->latest()
+            ->paginate(20);
+
+        // Idéalement on devrait filtrer par approbateur selon les rôles, 
+        // mais pour l'instant on affiche toutes les requêtes en attente pour le cabinet.
+        
+        return view('gel-accountant.workflows.pending', compact('pendingRequests') + ['currentSection' => 'workflows', 'currentPage' => 'workflows']);
+    }
+
+    /**
+     * Approuve une demande d'approbation.
+     */
+    public function approve(Request $request, $id)
+    {
+        $approvalRequest = ApprovalRequest::findOrFail($id);
+        $user = Auth::user();
+
+        // Créer le log de l'étape
+        ApprovalStepLog::create([
+            'request_id' => $approvalRequest->id,
+            'step_number' => $approvalRequest->current_step + 1,
+            'approver_id' => $user->id,
+            'action' => 'approved',
+            'comment' => $request->input('comment'),
+        ]);
+
+        // Mettre à jour la requête
+        $workflow = $approvalRequest->workflow;
+        $steps = json_decode($workflow->steps, true);
+
+        if ($approvalRequest->current_step + 1 >= count($steps)) {
+            // Toutes les étapes sont terminées
+            $approvalRequest->status = 'approved';
+            $approvalRequest->completed_at = now();
+        } else {
+            // Passe à l'étape suivante
+            $approvalRequest->current_step++;
+        }
+        $approvalRequest->save();
+
+        return redirect()->route('gel-accountant.workflows.pending')
+            ->with('success', 'Demande approuvée avec succès.');
+    }
+
+    /**
+     * Rejette une demande d'approbation.
+     */
+    public function reject(Request $request, $id)
+    {
+        $request->validate([
+            'comment' => 'required|string|max:1000'
+        ]);
+
+        $approvalRequest = ApprovalRequest::findOrFail($id);
+        $user = Auth::user();
+
+        // Créer le log de l'étape
+        ApprovalStepLog::create([
+            'request_id' => $approvalRequest->id,
+            'step_number' => $approvalRequest->current_step + 1,
+            'approver_id' => $user->id,
+            'action' => 'rejected',
+            'comment' => $request->input('comment'),
+        ]);
+
+        // Mettre à jour la requête
+        $approvalRequest->status = 'rejected';
+        $approvalRequest->completed_at = now();
+        $approvalRequest->save();
+
+        return redirect()->route('gel-accountant.workflows.pending')
+            ->with('error', 'Demande rejetée.');
     }
 }

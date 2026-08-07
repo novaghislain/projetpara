@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\GelSecretary\Documents;
 
 use App\Http\Controllers\Controller;
-use App\Models\Client;
+use App\Models\Gel\Client;
 use App\Models\ClientFolder;
 use App\Models\Document;
 use App\Services\AuditLogService;
@@ -33,39 +33,9 @@ class DocumentsController extends Controller
             $clientId = null;
             $userId = $user->id;
 
-            $defaultFolders = ['Bilans', 'Relevés bancaires', 'Contrats', 'Factures', 'Courriers', 'Déclarations fiscales', 'Documents permanents'];
-            
-            // S'assurer que les dossiers système par défaut existent pour l'utilisateur
-            foreach ($defaultFolders as $folderName) {
-                $folder = ClientFolder::firstOrCreate(
-                    [
-                        'user_id' => $userId,
-                        'slug' => Str::slug($folderName)
-                    ],
-                    [
-                        'name' => $folderName,
-                        'is_system' => true
-                    ]
-                );
-
-                // S4 : Sous-dossiers de "Documents permanents"
-                if ($folderName === 'Documents permanents') {
-                    $permanentSubFolders = ['RCCM', 'IFU', 'Statuts', 'Pièces d\'identité', 'Agréments', 'Assurances', 'CNSS', 'Impôts', 'Patentes', 'Licences', 'Logo', 'Charte graphique'];
-                    foreach ($permanentSubFolders as $subFolder) {
-                        ClientFolder::firstOrCreate(
-                            [
-                                'user_id' => $userId,
-                                'parent_id' => $folder->id,
-                                'slug' => Str::slug('perm-' . $subFolder)
-                            ],
-                            [
-                                'name' => $subFolder,
-                                'is_system' => true
-                            ]
-                        );
-                    }
-                }
-            }
+            $templateService = new FolderTemplateService();
+            $templateService->generatePermanentStructure(null, $userId);
+            $templateService->generateSecretaryStructure(null, date('Y'), $userId);
 
             // Récupérer uniquement les dossiers racines
             $folders = ClientFolder::where('user_id', $userId)
@@ -87,52 +57,14 @@ class DocumentsController extends Controller
             $favoriteDocuments = collect();
                 
         } else {
-            $clients = Client::orderBy('company_name')->get();
+            $clients = Client::orderBy('nom_entreprise')->get();
             $activeClientId = session('active_client_id') ?? $user->active_client_id ?? ($clients->first()?->id);
             $activeClient = Client::find($activeClientId);
 
             if ($activeClient) {
-                $defaultFolders = ['Bilans', 'Relevés bancaires', 'Contrats', 'Factures', 'Courriers', 'Déclarations fiscales', 'Documents permanents'];
-                
-                // S'assurer que les dossiers système par défaut existent pour le client actif
-                foreach ($defaultFolders as $folderName) {
-                    $folder = ClientFolder::withTrashed()->firstOrCreate(
-                        [
-                            'client_id' => $activeClient->id,
-                            'slug' => Str::slug($folderName)
-                        ],
-                        [
-                            'name' => $folderName,
-                            'is_system' => true
-                        ]
-                    );
-
-                    if ($folder->trashed()) {
-                        $folder->restore();
-                    }
-
-                    // S4 : Sous-dossiers de "Documents permanents"
-                    if ($folderName === 'Documents permanents') {
-                        $permanentSubFolders = ['RCCM', 'IFU', 'Statuts', 'Pièces d\'identité', 'Agréments', 'Assurances', 'CNSS', 'Impôts', 'Patentes', 'Licences', 'Logo', 'Charte graphique'];
-                        foreach ($permanentSubFolders as $subFolder) {
-                            $subFolderModel = ClientFolder::withTrashed()->firstOrCreate(
-                                [
-                                    'client_id' => $activeClient->id,
-                                    'parent_id' => $folder->id,
-                                    'slug' => Str::slug('perm-' . $subFolder)
-                                ],
-                                [
-                                    'name' => $subFolder,
-                                    'is_system' => true
-                                ]
-                            );
-
-                            if ($subFolderModel->trashed()) {
-                                $subFolderModel->restore();
-                            }
-                        }
-                    }
-                }
+                $templateService = new FolderTemplateService();
+                $templateService->generatePermanentStructure($activeClient->id);
+                $templateService->generateSecretaryStructure($activeClient->id, date('Y'));
 
                 // Récupérer uniquement les dossiers racines
                 $folders = ClientFolder::where('client_id', $activeClient->id)
@@ -193,7 +125,7 @@ class DocumentsController extends Controller
     public function showFolder($folderId)
     {
         $user = Auth::user();
-        $clients = Client::orderBy('company_name')->get();
+        $clients = Client::orderBy('nom_entreprise')->get();
         
         $folder = ClientFolder::findOrFail($folderId);
         $activeClient = $folder->client;
@@ -405,8 +337,56 @@ class DocumentsController extends Controller
         // Traçabilité stricte
         AuditLogService::log('document.upload', $document, null, $document->toArray());
 
+        event(new \App\Events\DocumentDeposeEvent($document));
+
         return redirect()->route('gel-secretary.documents.folder', $folder->id)
             ->with('success', 'Document "' . $document->name . '" téléversé et classé avec succès.' . $aiMessage);
+    }
+
+    /**
+     * Gère le téléversement d'une nouvelle version d'un document.
+     */
+    public function uploadVersion(Request $request, $id)
+    {
+        $request->validate([
+            'file' => 'required|file|max:10240',
+        ]);
+
+        $document = Document::findOrFail($id);
+        $user = Auth::user();
+        $file = $request->file('file');
+
+        \App\Models\DocumentVersion::create([
+            'document_id' => $document->id,
+            'version_number' => $document->version ?? 1,
+            'file_path' => $document->file_path,
+            'file_size' => $document->file_size,
+            'mime_type' => $document->mime_type,
+            'created_by' => $document->uploaded_by,
+        ]);
+
+        if ($user->isAutonomousSecretary()) {
+            $path = $file->store('documents/autonomous_' . $user->id, 'public');
+        } else {
+            $path = $file->store('documents/' . $document->client_id, 'public');
+        }
+
+        $document->update([
+            'name' => $file->getClientOriginalName(),
+            'file_path' => $path,
+            'file_type' => $file->getClientOriginalExtension(),
+            'file_size' => $file->getSize(),
+            'mime_type' => $file->getMimeType(),
+            'version' => ($document->version ?? 1) + 1,
+            'uploaded_by' => $user->id,
+            'updated_at' => now()
+        ]);
+
+        AuditLogService::log('document.new_version', $document, null, ['version' => $document->version]);
+
+        event(new \App\Events\DocumentDeposeEvent($document));
+
+        return back()->with('success', 'Nouvelle version (V' . $document->version . ') enregistrée avec succès.');
     }
 
     /**
@@ -466,7 +446,7 @@ class DocumentsController extends Controller
     public function initStructure(Request $request, FolderTemplateService $templateService)
     {
         $user = Auth::user();
-        $clients = Client::orderBy('company_name')->get();
+        $clients = Client::orderBy('nom_entreprise')->get();
         $clientId = session('active_client_id') ?? $user->active_client_id ?? ($clients->first()?->id);
 
         if (!$clientId) {
@@ -496,7 +476,7 @@ class DocumentsController extends Controller
     public function searchFolders(Request $request)
     {
         $user = Auth::user();
-        $clients = Client::orderBy('company_name')->get();
+        $clients = Client::orderBy('nom_entreprise')->get();
         $clientId = session('active_client_id') ?? $user->active_client_id ?? ($clients->first()?->id);
         
         $q = $request->input('q');
@@ -549,39 +529,8 @@ class DocumentsController extends Controller
         $clientId = $request->client_id ?? ($isAutonomous ? null : (session('active_client_id') ?? $user->active_client_id));
         $userId = $isAutonomous ? $user->id : null;
         
-        // Création du dossier Année (ex: "2026")
-        $yearFolder = ClientFolder::firstOrCreate(
-            [
-                'client_id' => $clientId,
-                'user_id' => $userId,
-                'slug' => Str::slug($request->year),
-                'parent_id' => null,
-            ],
-            [
-                'name' => $request->year,
-                'is_system' => true
-            ]
-        );
-
-        $months = [
-            '01_Janvier', '02_Février', '03_Mars', '04_Avril', '05_Mai', '06_Juin',
-            '07_Juillet', '08_Août', '09_Septembre', '10_Octobre', '11_Novembre', '12_Décembre'
-        ];
-
-        foreach ($months as $month) {
-            ClientFolder::firstOrCreate(
-                [
-                    'client_id' => $clientId,
-                    'user_id' => $userId,
-                    'parent_id' => $yearFolder->id,
-                    'slug' => Str::slug($request->year . '-' . $month)
-                ],
-                [
-                    'name' => $month,
-                    'is_system' => true
-                ]
-            );
-        }
+        $templateService = new FolderTemplateService();
+        $templateService->generateSecretaryStructure($clientId, $request->year, $userId);
 
         return back()->with('success', "L'arborescence pour l'année {$request->year} a été générée.");
     }
@@ -918,3 +867,5 @@ class DocumentsController extends Controller
         return back()->with('success', 'Document supprimé définitivement.');
     }
 }
+
+

@@ -144,7 +144,7 @@
         <div id="tab-webmail" class="tab-content">
             <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">Configuration Webmail (IMAP)</h3>
             <p style="font-size: 13px; color: var(--sec-text-muted); margin-bottom: 20px;">
-                Configurez les accès IMAP pour synchroniser les emails du client actuel ({{ $activeClient?->company_name }}). 
+                Configurez les accès IMAP pour synchroniser les emails du client actuel ({{ $activeClient?->nom_entreprise }}). 
                 Cela permettra de lire et gérer leurs emails directement depuis le module Webmail.
             </p>
             

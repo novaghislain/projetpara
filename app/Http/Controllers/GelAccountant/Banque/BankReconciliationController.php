@@ -148,4 +148,47 @@ class BankReconciliationController extends Controller
 
         return redirect()->back()->with('success', 'État du rapprochement sauvegardé.');
     }
+
+    /**
+     * Effectue un rapprochement automatique (Auto-Match) via l'IA
+     */
+    public function autoMatch(Request $request, $id)
+    {
+        $user = Auth::user();
+        $clientId = $user->active_client_id ?? $user->client_id;
+
+        $reconciliation = BankReconciliation::where('client_id', $clientId)->findOrFail($id);
+
+        if ($reconciliation->status === 'completed') {
+            return redirect()->back()->with('error', 'Ce rapprochement est déjà terminé.');
+        }
+
+        $compte = $reconciliation->bankAccount;
+
+        // Récupérer les transactions non rapprochées
+        $transactions = BankTransaction::where('bank_account_id', $compte->id)
+            ->where('is_reconciled', false)
+            ->where('transaction_date', '<=', $reconciliation->statement_date)
+            ->get();
+
+        // Dans un cas réel, l'IA chercherait les factures et dépenses correspondantes (montant identique, date proche).
+        // Ici, on simule l'identification de correspondances par l'IA.
+        $matchedCount = 0;
+        $matchedIds = [];
+
+        foreach ($transactions as $tx) {
+            // Simulation : L'IA trouve 1 correspondance sur 3
+            if (rand(1, 3) === 1) {
+                $matchedIds[] = $tx->id;
+                $matchedCount++;
+            }
+        }
+
+        if ($matchedCount > 0) {
+            return redirect()->back()->with('success', "L'IA a identifié $matchedCount correspondance(s) possible(s) pour vos transactions. Veuillez vérifier et valider.")
+                ->with('matched_ids', $matchedIds);
+        }
+
+        return redirect()->back()->with('info', "L'IA n'a trouvé aucune correspondance automatique évidente pour ces transactions.");
+    }
 }

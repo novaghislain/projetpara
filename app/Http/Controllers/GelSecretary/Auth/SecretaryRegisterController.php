@@ -4,7 +4,7 @@ namespace App\Http\Controllers\GelSecretary\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\Client;
+use App\Models\Gel\Client;
 use App\Models\Gel\Task;
 use App\Models\Dae\DaeAgendaEvent;
 use Illuminate\Http\Request;
@@ -103,3 +103,5 @@ class SecretaryRegisterController extends Controller
         }
     }
 }
+
+

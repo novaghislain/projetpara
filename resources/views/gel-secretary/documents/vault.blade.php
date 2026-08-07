@@ -46,7 +46,7 @@
                             </td>
                             <td>
                                 <span style="font-size:13px; font-weight:600; color:#475569;">
-                                    {{ $doc->client ? ($doc->client->company_name ?? $doc->client->nom_entreprise) : 'Cabinet' }}
+                                    {{ $doc->client ? ($doc->client->nom_entreprise ?? $doc->client->nom_entreprise) : 'Cabinet' }}
                                 </span>
                             </td>
                             <td style="font-family:monospace; color:#475569; font-size:13px;">

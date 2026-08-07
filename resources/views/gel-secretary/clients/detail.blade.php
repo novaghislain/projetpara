@@ -570,7 +570,7 @@
                 style="flex:1; min-width:0; background: #F8FAFC; padding: 10px 12px; border-radius: 8px; border: 1px solid #E2E8F0;">
                 <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                   <span
-                    style="font-size:11px; font-weight:700;">{{ $msg->sender_type === 'client' ? $client->company_name : 'Cabinet' }}</span>
+                    style="font-size:11px; font-weight:700;">{{ $msg->sender_type === 'client' ? $client->nom_entreprise : 'Cabinet' }}</span>
                   <span
                     style="font-size:10px; color:var(--sec-text-muted);">{{ \Carbon\Carbon::parse($msg->created_at)->format('d/m/Y H:i') }}</span>
                 </div>

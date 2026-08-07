@@ -46,7 +46,7 @@ class HistoriqueController extends Controller
         $logs = $query->paginate(20)->withQueryString();
 
         // Liste des clients pour le filtrage
-        $clients = \App\Models\Client::orderBy('company_name')->get();
+        $clients = \App\Models\Gel\Client::orderBy('nom_entreprise')->get();
 
         // Événements distincts
         $events = AuditLog::where('cabinet_id', $user->cabinet_id)
@@ -56,3 +56,6 @@ class HistoriqueController extends Controller
         return view('gel-secretary.historique.index', compact('logs', 'clients', 'events'));
     }
 }
+
+
+

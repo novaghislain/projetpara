@@ -186,8 +186,12 @@ class AccountingAiService
     /**
      * Détecte les anomalies comptables pour un client sur une période donnée
      */
-    public function detectAnomalies(int $clientId, ?string $periodeDebut = null, ?string $periodeFin = null): array
+    public function detectAnomalies(?int $clientId, ?string $periodeDebut = null, ?string $periodeFin = null): array
     {
+        if (!$clientId) {
+            return [];
+        }
+        
         $anomalies = [];
 
         // 1. Écritures non équilibrées

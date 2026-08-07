@@ -1,4 +1,4 @@
-﻿@extends('layouts.gel-accountant')
+@extends('layouts.gel-accountant')
 
 @section('title', 'Récépissé de vente')
 
@@ -14,7 +14,7 @@
     </div>
 </div>
 
-<form method="POST" action="#" id="salesReceiptForm">
+<form method="POST" action="{{ route('gel-accountant.sales-receipt.store') }}" id="salesReceiptForm">
 @csrf
 
 <div class="gel-card p-4 mb-4">

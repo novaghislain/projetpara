@@ -4,7 +4,7 @@ namespace App\Http\Controllers\GelSecretary\Tasks;
 
 use App\Http\Controllers\Controller;
 use App\Mail\AgendaInvitationMail;
-use App\Models\Client;
+use App\Models\Gel\Client;
 use App\Models\Dae\DaeAgendaEvent;
 use App\Services\AuditLogService;
 use Illuminate\Http\Request;
@@ -32,7 +32,7 @@ class AgendaController extends Controller
             $activeClient = null;
         } else {
             // ─── Utilisateur Standard (lié à un ou plusieurs clients) ───────
-            $clients = Client::orderBy('company_name')->get();
+            $clients = Client::orderBy('nom_entreprise')->get();
             $activeClient = Client::find(session('active_client_id') ?? $user->active_client_id ?? ($clients->first()?->id));
 
             $events = collect();
@@ -87,7 +87,7 @@ class AgendaController extends Controller
         $clientId = null;
 
         if (!$user->isAutonomousSecretary()) {
-            $clients = Client::orderBy('company_name')->get();
+            $clients = Client::orderBy('nom_entreprise')->get();
             $activeClient = Client::find(session('active_client_id') ?? $user->active_client_id ?? ($clients->first()?->id));
 
             if (!$activeClient) {
@@ -178,3 +178,5 @@ class AgendaController extends Controller
         return back()->with('success', 'Rendez-vous supprimé de l\'agenda.');
     }
 }
+
+

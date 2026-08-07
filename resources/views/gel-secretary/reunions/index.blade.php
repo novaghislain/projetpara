@@ -88,7 +88,7 @@
           <label style="font-size:11px;font-weight:700;color:var(--sec-text);display:block;margin-bottom:4px;">Entreprise *</label>
           <select name="client_id" class="sec-form-control" required>
             @foreach($clients as $c)
-              <option value="{{ $c->id }}" {{ ($activeClient && $activeClient->id == $c->id) ? 'selected' : '' }}>{{ $c->company_name }}</option>
+              <option value="{{ $c->id }}" {{ ($activeClient && $activeClient->id == $c->id) ? 'selected' : '' }}>{{ $c->nom_entreprise }}</option>
             @endforeach
           </select>
         </div>
@@ -144,7 +144,7 @@
         </div>
         <div style="flex:1;min-width:0;">
           <div style="font-size:13px;font-weight:600;color:var(--sec-text);">{{ $odj->titre }}</div>
-          <div style="font-size:11px;color:var(--sec-text-muted);">{{ $odj->client->company_name ?? '' }} — {{ $odj->heure_debut ?? '' }}</div>
+          <div style="font-size:11px;color:var(--sec-text-muted);">{{ $odj->client->nom_entreprise ?? '' }} — {{ $odj->heure_debut ?? '' }}</div>
           <div style="margin-top:8px;">
             @foreach((array)$odj->ordre_du_jour as $point)
               <div style="font-size:12px;color:var(--sec-text);padding:3px 0;display:flex;gap:6px;">

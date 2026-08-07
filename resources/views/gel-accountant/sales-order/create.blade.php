@@ -1,4 +1,4 @@
-﻿@extends('layouts.gel-accountant')
+@extends('layouts.gel-accountant')
 
 @section('title', 'Commande de vente')
 
@@ -14,7 +14,7 @@
     </div>
 </div>
 
-<form method="POST" action="#" id="salesOrderForm">
+<form method="POST" action="{{ route('gel-accountant.sales-order.store') }}" id="salesOrderForm">
 @csrf
 
 <div class="gel-card p-4 mb-4">

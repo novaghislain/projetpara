@@ -171,6 +171,23 @@ class DashboardController extends Controller
 
         $clients = (clone $clientsQuery)->get(['id', 'nom_entreprise']);
 
+        // 3. Bilans en attente (Exercices dont la date de fin est dépassée mais non clôturés)
+        $bilansQuery = \App\Models\Gel\ExerciceComptable::where('cabinet_id', $user->cabinet_id)
+            ->where('cloture', false)
+            ->where('date_fin', '<', now());
+        if ($clientId) {
+            $bilansQuery->where('client_id', $clientId);
+        }
+        $bilansEnAttente = $bilansQuery->count();
+
+        // 4. Messages non lus
+        $messagesQuery = \App\Models\Gel\GelMessage::where('receiver_id', $user->id)
+            ->where('est_lu', false);
+        $messagesNonLus = $messagesQuery->count();
+
+        $stats['bilans_en_attente'] = $bilansEnAttente;
+        $stats['messages_non_lus'] = $messagesNonLus;
+
         return view('gel-accountant.dashboard', ['currentSection' => 'dashboard', 'currentPage' => 'dashboard'] + compact(
             'stats', 'recentClients', 'recentEcritures', 'clients', 'cabinet'
         ));

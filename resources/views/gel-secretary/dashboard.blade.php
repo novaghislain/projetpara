@@ -250,7 +250,7 @@
           <div style="flex: 1; min-width: 0;">
             <div style="font-size: 13px; font-weight: 600; color: var(--sec-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $doc->name }}</div>
             <div style="font-size: 11px; color: var(--sec-text-muted);">
-              @if($doc->client)<i class="fas fa-building" style="margin-right: 4px;"></i>{{ $doc->client->company_name }} · @endif
+              @if($doc->client)<i class="fas fa-building" style="margin-right: 4px;"></i>{{ $doc->client->nom_entreprise }} · @endif
               {{ \Carbon\Carbon::parse($doc->created_at)->diffForHumans() }}
             </div>
           </div>
@@ -326,7 +326,7 @@
           <div style="flex: 1; min-width: 0;">
             <div style="font-size: 13px; font-weight: 500; color: var(--sec-text);">{{ $task->titre }}</div>
             @if($task->client)
-              <div style="font-size: 11px; color: var(--sec-text-muted);"><i class="fas fa-building" style="margin-right: 4px;"></i>{{ $task->client->nom_entreprise ?? $task->client->company_name ?? '—' }}</div>
+              <div style="font-size: 11px; color: var(--sec-text-muted);"><i class="fas fa-building" style="margin-right: 4px;"></i>{{ $task->client->nom_entreprise ?? $task->client->nom_entreprise ?? '—' }}</div>
             @endif
           </div>
           <span class="badge-sm b-urgent">Urgent</span>
@@ -343,7 +343,7 @@
           <div style="flex: 1; min-width: 0;">
             <div style="font-size: 13px; font-weight: 500; color: var(--sec-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $doc->name }}</div>
             @if($doc->client)
-              <div style="font-size: 11px; color: var(--sec-text-muted);">{{ $doc->client->company_name }}</div>
+              <div style="font-size: 11px; color: var(--sec-text-muted);">{{ $doc->client->nom_entreprise }}</div>
             @endif
           </div>
         </a>
@@ -392,7 +392,7 @@
           <div style="flex:1;min-width:0;">
             <div style="font-size:13px;font-weight:600;color:var(--sec-text);">{{ $inv->invoice_number }}</div>
             <div style="font-size:11px;color:var(--sec-text-muted);">
-              {{ $inv->client->company_name ?? '—' }} — Échéance : {{ \Carbon\Carbon::parse($inv->due_date)->format('d/m/Y') }}
+              {{ $inv->client->nom_entreprise ?? '—' }} — Échéance : {{ \Carbon\Carbon::parse($inv->due_date)->format('d/m/Y') }}
             </div>
           </div>
           <span style="font-size:12px;font-weight:700;color:#D97706;">{{ number_format($inv->balance_due,0,',',' ') }} €</span>
@@ -410,7 +410,7 @@
           <div style="flex:1;min-width:0;">
             <div style="font-size:13px;font-weight:600;color:var(--sec-text);">{{ strtoupper($tax->tax_type ?? '') }} — {{ $tax->reference ?? 'N°'.$tax->id }}</div>
             <div style="font-size:11px;color:var(--sec-text-muted);">
-              {{ $tax->client->company_name ?? '—' }} — Échéance : {{ \Carbon\Carbon::parse($tax->date_echeance)->format('d/m/Y') }}
+              {{ $tax->client->nom_entreprise ?? '—' }} — Échéance : {{ \Carbon\Carbon::parse($tax->date_echeance)->format('d/m/Y') }}
             </div>
           </div>
           <span class="badge-sm" style="background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;">{{ ucfirst($tax->status) }}</span>

@@ -12,6 +12,9 @@
         <a href="{{ route('gel-accountant.comptabilite.ecritures.create') }}" class="gel-btn gel-btn-primary">
             <i class="bi bi-plus-circle"></i> Nouvelle écriture
         </a>
+        <a href="{{ route('gel-accountant.ecritures.export') }}" class="gel-btn gel-btn-secondary">
+            <i class="bi bi-download"></i> Exporter CSV
+        </a>
         <button class="gel-btn gel-btn-secondary" onclick="document.getElementById('filtersPanel').classList.toggle('show')">
             <i class="bi bi-funnel"></i> Filtres
         </button>

@@ -131,7 +131,7 @@
       </h1>
       <p class="sec-page-sub">
         @if($activeClient)
-          Gestion centralisée des archives pour : <strong>{{ $activeClient->company_name }}</strong>
+          Gestion centralisée des archives pour : <strong>{{ $activeClient->nom_entreprise }}</strong>
         @else
           Veuillez sélectionner une entreprise active dans la barre supérieure.
         @endif

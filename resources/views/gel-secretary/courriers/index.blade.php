@@ -7,7 +7,7 @@
     <h1 class="sec-page-title">
       <i class="fas fa-envelope-open-text" style="color:var(--sec-primary); margin-right:8px;"></i>Courriers
     </h1>
-    <p class="sec-page-sub">Gestion des courriers entrants et sortants pour {{ $activeClient ? $activeClient->company_name : 'tous les clients' }}</p>
+    <p class="sec-page-sub">Gestion des courriers entrants et sortants pour {{ $activeClient ? $activeClient->nom_entreprise : 'tous les clients' }}</p>
   </div>
   <button type="button" class="sec-btn sec-btn-primary" onclick="document.getElementById('modalAddCourrier').style.display='flex'">
     <i class="fas fa-plus"></i> Nouveau courrier
@@ -97,9 +97,9 @@ $blockedCourriers = $courriers->filter(function($c) {
             <td style="padding:14px 18px;">
               @if($courrier->type == 'entrant')
                 <div style="font-size:12px;"><span style="color:#94a3b8;">De :</span> {{ $courrier->expediteur }}</div>
-                <div style="font-size:12px;"><span style="color:#94a3b8;">À :</span> {{ $courrier->client->company_name ?? '—' }}</div>
+                <div style="font-size:12px;"><span style="color:#94a3b8;">À :</span> {{ $courrier->client->nom_entreprise ?? '—' }}</div>
               @else
-                <div style="font-size:12px;"><span style="color:#94a3b8;">De :</span> {{ $courrier->client->company_name ?? '—' }}</div>
+                <div style="font-size:12px;"><span style="color:#94a3b8;">De :</span> {{ $courrier->client->nom_entreprise ?? '—' }}</div>
                 <div style="font-size:12px;"><span style="color:#94a3b8;">À :</span> {{ $courrier->destinataire }}</div>
               @endif
             </td>
@@ -179,7 +179,7 @@ $blockedCourriers = $courriers->filter(function($c) {
                     <label>Entreprise *</label>
                     <select name="client_id" class="sec-form-control" required>
                         @foreach($clients as $c)
-                            <option value="{{ $c->id }}" {{ ($activeClient && $activeClient->id == $c->id) ? 'selected' : '' }}>{{ $c->company_name }}</option>
+                            <option value="{{ $c->id }}" {{ ($activeClient && $activeClient->id == $c->id) ? 'selected' : '' }}>{{ $c->nom_entreprise }}</option>
                         @endforeach
                     </select>
                 </div>

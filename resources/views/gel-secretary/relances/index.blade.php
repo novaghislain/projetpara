@@ -51,7 +51,7 @@
                         @endphp
                         <tr>
                             <td><strong>{{ $inv->invoice_number }}</strong></td>
-                            <td>{{ $inv->client->company_name ?? 'Inconnu' }}</td>
+                            <td>{{ $inv->client->nom_entreprise ?? 'Inconnu' }}</td>
                             <td>
                                 <span style="color:#DC2626; font-weight:600;">{{ \Carbon\Carbon::parse($inv->due_date)->format('d/m/Y') }}</span>
                                 <span style="font-size:12px; color:#DC2626; background:#FEF2F2; padding:2px 6px; border-radius:4px; margin-left:8px;">+{{ $daysOverdue }} jours</span>
@@ -111,7 +111,7 @@
                         @endphp
                         <tr>
                             <td><strong>{{ $task->titre }}</strong></td>
-                            <td>{{ $task->client->company_name ?? 'Interne' }}</td>
+                            <td>{{ $task->client->nom_entreprise ?? 'Interne' }}</td>
                             <td>
                                 <span style="color:#DC2626; font-weight:600;">{{ \Carbon\Carbon::parse($task->date_echeance)->format('d/m/Y') }}</span>
                                 <span style="font-size:12px; color:#DC2626; background:#FEF2F2; padding:2px 6px; border-radius:4px; margin-left:8px;">+{{ $daysOverdue }} jours</span>
@@ -173,7 +173,7 @@
                         @php $daysPending = \Carbon\Carbon::parse($quote->created_at)->diffInDays(now()); @endphp
                         <tr>
                             <td><strong>{{ $quote->invoice_number }}</strong></td>
-                            <td>{{ $quote->client->company_name ?? 'Inconnu' }}</td>
+                            <td>{{ $quote->client->nom_entreprise ?? 'Inconnu' }}</td>
                             <td>
                                 <span>{{ \Carbon\Carbon::parse($quote->created_at)->format('d/m/Y') }}</span>
                                 <span style="font-size:12px; color:#D97706; background:#FFFBEB; padding:2px 6px; border-radius:4px; margin-left:8px;">+{{ $daysPending }} jours</span>
@@ -217,7 +217,7 @@
                     @foreach($expiringContracts as $client)
                         @php $daysLeft = now()->diffInDays(\Carbon\Carbon::parse($client->contract_end), false); @endphp
                         <tr>
-                            <td><strong>{{ $client->company_name }}</strong></td>
+                            <td><strong>{{ $client->nom_entreprise }}</strong></td>
                             <td>{{ ucfirst($client->contract_type ?? 'Standard') }}</td>
                             <td>
                                 <span>{{ \Carbon\Carbon::parse($client->contract_end)->format('d/m/Y') }}</span>
@@ -261,7 +261,7 @@
                     @foreach($inactiveClients as $client)
                         @php $monthsInactive = \Carbon\Carbon::parse($client->updated_at)->diffInMonths(now()); @endphp
                         <tr>
-                            <td><strong>{{ $client->company_name }}</strong></td>
+                            <td><strong>{{ $client->nom_entreprise }}</strong></td>
                             <td>{{ $client->secteur ?? '—' }}</td>
                             <td>
                                 <span>{{ \Carbon\Carbon::parse($client->updated_at)->format('d/m/Y') }}</span>

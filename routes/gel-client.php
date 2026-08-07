@@ -49,4 +49,15 @@ Route::middleware(['auth:portal'])->group(function () {
     // Support Technique Informatique (GEL SABINET)
     Route::post('/{slug}/it-support', [\App\Http\Controllers\GelClient\ItSupportController::class, 'store'])->name('portal.it-support.store');
 
+    // Services Informatiques (Missions commerciales)
+    Route::get('/{slug}/it-services', [\App\Http\Controllers\Client\ItServiceController::class, 'index'])->name('client.it.index');
+    Route::get('/{slug}/it-services/subscribe', [\App\Http\Controllers\Client\ItServiceController::class, 'subscribeForm'])->name('client.it.subscribe');
+    Route::post('/{slug}/it-services/subscribe', [\App\Http\Controllers\Client\ItServiceController::class, 'storeMission'])->name('client.it.store-mission');
+    Route::get('/{slug}/it-services/order', [\App\Http\Controllers\Client\ItServiceController::class, 'orderForm'])->name('client.it.order');
+    Route::post('/{slug}/it-services/order', [\App\Http\Controllers\Client\ItServiceController::class, 'storeOrder'])->name('client.it.store-order');
+
+    // Marketing & Communication
+    Route::get('/{slug}/marketing', [\App\Http\Controllers\Client\MarketingController::class, 'index'])->name('client.marketing.index');
+    Route::post('/{slug}/marketing/briefs', [\App\Http\Controllers\Client\MarketingController::class, 'storeBrief'])->name('client.marketing.store_brief');
+    Route::get('/{slug}/marketing/campaigns/{id}', [\App\Http\Controllers\Client\MarketingController::class, 'showCampaign'])->name('client.marketing.show_campaign');
 });

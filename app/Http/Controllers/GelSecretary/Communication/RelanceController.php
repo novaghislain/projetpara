@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Invoice;
 use App\Models\Gel\Task;
-use App\Models\Client;
+use App\Models\Gel\Client;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\RelanceMail;
@@ -87,22 +87,22 @@ class RelanceController extends Controller
         
         if ($type === 'invoice') {
             $invoice = Invoice::with('client')->findOrFail($id);
-            $clientName = $invoice->client ? $invoice->client->company_name : 'Client';
+            $clientName = $invoice->client ? $invoice->client->nom_entreprise : 'Client';
             $prompt .= " Contexte : Facture impayée n°{$invoice->invoice_number}. Client : {$clientName}. Montant restant dû : {$invoice->balance_due} euros. Date d'échéance : {$invoice->due_date}.";
         } elseif ($type === 'task') {
             $task = Task::with('client')->findOrFail($id);
-            $clientName = $task->client ? $task->client->company_name : 'Client';
+            $clientName = $task->client ? $task->client->nom_entreprise : 'Client';
             $prompt .= " Contexte : Tâche/Demande en attente nommée '{$task->titre}'. Client concerné : {$clientName}. Date d'échéance : {$task->date_echeance}. On attend leur retour ou action.";
         } elseif ($type === 'quote') {
             $quote = Invoice::with('client')->findOrFail($id);
-            $clientName = $quote->client ? $quote->client->company_name : 'Client';
+            $clientName = $quote->client ? $quote->client->nom_entreprise : 'Client';
             $prompt .= " Contexte : Devis/Proposition commerciale n°{$quote->invoice_number} envoyé(e) le {$quote->created_at->format('d/m/Y')}. Client concerné : {$clientName}. Sans réponse depuis plus de 7 jours. Demander s'ils ont des questions ou s'ils souhaitent valider la proposition.";
         } elseif ($type === 'contract') {
             $client = Client::findOrFail($id);
-            $prompt .= " Contexte : Le contrat du client '{$client->company_name}' expire bientôt le {$client->contract_end}. Proposer un rendez-vous pour faire le point et renouveler le contrat.";
+            $prompt .= " Contexte : Le contrat du client '{$client->nom_entreprise}' expire bientôt le {$client->contract_end}. Proposer un rendez-vous pour faire le point et renouveler le contrat.";
         } elseif ($type === 'inactive') {
             $client = Client::findOrFail($id);
-            $prompt .= " Contexte : Le client '{$client->company_name}' n'a eu aucune activité avec nous depuis plus de 6 mois (dernière activité le {$client->updated_at->format('d/m/Y')}). Prendre des nouvelles, proposer un point téléphonique ou présenter nos nouveaux services.";
+            $prompt .= " Contexte : Le client '{$client->nom_entreprise}' n'a eu aucune activité avec nous depuis plus de 6 mois (dernière activité le {$client->updated_at->format('d/m/Y')}). Prendre des nouvelles, proposer un point téléphonique ou présenter nos nouveaux services.";
         }
         
         $system = "Tu es un assistant IA pour un secrétaire de direction. Rédige l'email. Ne mets pas d'objet, juste le corps. Laisse des balises [Nom] si besoin.";
@@ -132,7 +132,7 @@ class RelanceController extends Controller
             if ($client && $client->email) {
                 Mail::to($client->email)->send(new RelanceMail([
                     'type'       => 'invoice',
-                    'clientName' => $client->company_name,
+                    'clientName' => $client->nom_entreprise,
                     'reference'  => $invoice->invoice_number,
                     'amount'     => number_format($invoice->balance_due, 2, ',', ' '),
                     'dueDate'    => \Carbon\Carbon::parse($invoice->due_date)->format('d/m/Y'),
@@ -148,7 +148,7 @@ class RelanceController extends Controller
             if ($client && $client->email) {
                 Mail::to($client->email)->send(new RelanceMail([
                     'type'       => 'task',
-                    'clientName' => $client->company_name,
+                    'clientName' => $client->nom_entreprise,
                     'reference'  => $task->titre,
                     'amount'     => null,
                     'dueDate'    => \Carbon\Carbon::parse($task->date_echeance)->format('d/m/Y'),
@@ -161,3 +161,5 @@ class RelanceController extends Controller
         return redirect()->route('gel-secretary.relances.index')->with('success', $message);
     }
 }
+
+

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\GelSecretary\Documents;
 
 use App\Http\Controllers\Controller;
-use App\Models\Client;
+use App\Models\Gel\Client;
 use App\Models\Dae\DaeModeleCourrier;
 use App\Models\Dae\DaeCourrier;
 use App\Services\AuditLogService;
@@ -76,7 +76,7 @@ class ModelesController extends Controller
         if ($activeClient) $modeleQuery->where('client_id', $activeClient->id);
         $modelesEnregistres = $modeleQuery->get();
 
-        $clients = Client::orderBy('company_name')->get();
+        $clients = Client::orderBy('nom_entreprise')->get();
 
         return view('gel-secretary.modeles.index', compact(
             'activeClient', 'bibliotheque', 'modelesEnregistres', 'clients'
@@ -93,8 +93,8 @@ class ModelesController extends Controller
         $client = $clientId ? Client::find($clientId) : null;
 
         $values = [
-            'nom'             => $client?->company_name ?? '',
-            'entreprise'      => $client?->company_name ?? '',
+            'nom'             => $client?->nom_entreprise ?? '',
+            'entreprise'      => $client?->nom_entreprise ?? '',
             'forme_juridique' => $client?->forme_juridique ?? '',
             'adresse'         => $client?->adresse ?? '',
             'telephone'       => $client?->telephone ?? '',
@@ -193,3 +193,5 @@ class ModelesController extends Controller
         return ['objet' => (string) $sujet, 'corps' => (string) $corps];
     }
 }
+
+

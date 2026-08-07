@@ -172,10 +172,18 @@
 
         <div class="gel-card p-4 mb-4">
             <label class="doc-label">Pièce jointe (reçu, facture...)</label>
-            <div style="border:2px dashed var(--gel-border); border-radius:8px; padding:30px; text-align:center; cursor:pointer;" onclick="document.getElementById('fileInput').click()">
-                <i class="fas fa-cloud-upload-alt" style="font-size:28px; color:var(--gel-text-muted); margin-bottom:8px;"></i>
-                <p style="font-size:13px; color:var(--gel-text-secondary);">Glissez ou cliquez pour importer</p>
-                <input type="file" id="fileInput" name="attachment" style="display:none;" accept="image/*,.pdf">
+            <div id="ocrDropZone" style="border:2px dashed var(--gel-border); border-radius:8px; padding:30px; text-align:center; cursor:pointer;" onclick="document.getElementById('fileInput').click()">
+                <i class="fas fa-magic" style="font-size:28px; color:var(--gel-primary); margin-bottom:8px;"></i>
+                <p style="font-size:13px; color:var(--gel-text-secondary); font-weight:600;">Scanner via IA (OCR)</p>
+                <p style="font-size:11px; color:var(--gel-text-muted);">Importez une facture pour pré-remplir le formulaire</p>
+                <input type="file" id="fileInput" name="attachment" style="display:none;" accept="image/*,.pdf" onchange="handleOcrScan(this.files[0])">
+            </div>
+            <div id="ocrLoading" style="display:none; text-align:center; padding:20px;">
+                <i class="fas fa-spinner fa-spin" style="font-size:24px; color:var(--gel-primary);"></i>
+                <p style="font-size:12px; margin-top:8px;">Analyse de la facture en cours...</p>
+            </div>
+            <div id="ocrResult" style="display:none; margin-top:10px; font-size:12px; color:var(--gel-success); font-weight:600; text-align:center;">
+                <i class="fas fa-check-circle"></i> Données extraites avec succès !
             </div>
         </div>
     </div>
@@ -226,6 +234,55 @@ function recalc() {
     document.getElementById('grandTotal').textContent = Math.round(sub + tax - aibAmount).toLocaleString('fr-FR') + ' FCFA';
 }
 document.getElementById('linesTable').addEventListener('input', recalc);
+
+function handleOcrScan(file) {
+    if (!file) return;
+    
+    document.getElementById('ocrDropZone').style.display = 'none';
+    document.getElementById('ocrLoading').style.display = 'block';
+    document.getElementById('ocrResult').style.display = 'none';
+
+    let formData = new FormData();
+    formData.append('document', file);
+    formData.append('_token', '{{ csrf_token() }}');
+
+    fetch('{{ route("gel-accountant.expenses.ocr-scan") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(res => {
+        document.getElementById('ocrLoading').style.display = 'none';
+        document.getElementById('ocrDropZone').style.display = 'block';
+        
+        if (res.success && res.data) {
+            document.getElementById('ocrResult').style.display = 'block';
+            
+            // Pré-remplir les champs
+            if (res.data.date) document.querySelector('input[name="expense_date"]').value = res.data.date;
+            
+            // Pré-remplir la première ligne
+            const firstLine = document.querySelector('.doc-line-row');
+            if (firstLine) {
+                if (res.data.description) firstLine.querySelector('input[name="lines[0][description]"]').value = res.data.description;
+                if (res.data.amount_ht) firstLine.querySelector('.line-amount').value = res.data.amount_ht;
+                if (res.data.tva_rate) firstLine.querySelector('.line-tax').value = res.data.tva_rate;
+                
+                // Set category text (for demo, we just select the closest option or let user decide)
+                // Actually we just set it to 'autre' if we don't have exact match
+                let catSelect = firstLine.querySelector('select[name="lines[0][account_id]"]');
+                catSelect.value = 'autre'; 
+            }
+            
+            recalc();
+        }
+    })
+    .catch(error => {
+        document.getElementById('ocrLoading').style.display = 'none';
+        document.getElementById('ocrDropZone').style.display = 'block';
+        alert('Erreur lors de l\'analyse du document.');
+    });
+}
 </script>
 @endsection
 

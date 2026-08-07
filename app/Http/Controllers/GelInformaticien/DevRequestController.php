@@ -14,6 +14,7 @@ class DevRequestController extends Controller
     public function index(Request $request)
     {
         $status = $request->get('status');
+        $search = $request->get('search');
         
         $query = ItDevRequest::with(['client', 'author'])->latest();
         
@@ -21,9 +22,52 @@ class DevRequestController extends Controller
             $query->where('status', $status);
         }
         
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('subject', 'like', "%{$search}%")
+                  ->orWhere('id', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhereHas('client', function($qc) use ($search) {
+                      $qc->where('company_name', 'like', "%{$search}%");
+                  });
+            });
+        }
+        
         $requests = $query->paginate(20);
+        $requests->appends(['status' => $status, 'search' => $search]);
 
         return view('gel-informaticien.dev-requests.index', compact('requests', 'status'));
+    }
+
+    /**
+     * Formulaire de création de demande dev
+     */
+    public function create()
+    {
+        $clients = \App\Models\Client::orderBy('company_name')->get();
+        return view('gel-informaticien.dev-requests.create', compact('clients'));
+    }
+
+    /**
+     * Enregistrer une nouvelle demande
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'subject' => 'required|string|max:255',
+            'client_id' => 'nullable|exists:clients,id',
+            'description' => 'required|string',
+        ]);
+
+        ItDevRequest::create([
+            'subject' => $validated['subject'],
+            'client_id' => $validated['client_id'],
+            'description' => $validated['description'],
+            'author_id' => auth()->id(),
+            'status' => 'recue',
+        ]);
+
+        return redirect()->route('gel-informaticien.dev-requests.index')->with('success', 'Demande de développement créée avec succès.');
     }
 
     /**

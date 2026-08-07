@@ -44,6 +44,14 @@ return Application::configure(basePath: dirname(__DIR__))
             // Routage du Portail Informatique GEL SABINET (Modèle 3)
             \Illuminate\Support\Facades\Route::middleware('web')
                 ->group(base_path('routes/gel-informaticien.php'));
+                
+            // Routage du Portail Communication Digitale (Modèle 3)
+            \Illuminate\Support\Facades\Route::middleware('web')
+                ->group(base_path('routes/gel-communication.php'));
+
+            // Routage du Portail Consultant (Accès limité et scopé)
+            \Illuminate\Support\Facades\Route::middleware('web')
+                ->group(base_path('routes/gel-consultant.php'));
         },
     )
     ->withSchedule(function (Schedule $schedule): void {
@@ -120,6 +128,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'super_admin'      => \App\Http\Middleware\SuperAdminMiddleware::class,
             // Restriction IP Client B2B
             'restrict.client.ip' => \App\Http\Middleware\RestrictClientIp::class,
+            // Pôle Informatique GEL SABINET
+            'it.permission'    => \App\Http\Middleware\EnsureHasItPermission::class,
+            // Pôle Communication Digitale
+            'communication.permission' => \App\Http\Middleware\EnsureHasCommunicationPermission::class,
+            // Portail Consultant
+            'consultant.access'        => \App\Http\Middleware\EnsureConsultantAccess::class,
         ]);
 
         // ─── Middleware applicatif (exécuté après les globaux) ─────────

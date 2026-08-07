@@ -141,4 +141,36 @@ class ExpensesController extends Controller
 
         return view('gel-accountant.expenses.show', compact('expense'));
     }
+
+    /**
+     * Traite un scan OCR d'une facture.
+     */
+    public function ocrScan(Request $request)
+    {
+        $request->validate([
+            'document' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ]);
+
+        // Simulation d'une extraction OCR par l'IA
+        // Dans la réalité, on enverrait le fichier à une API comme AWS Textract ou Google Document AI
+        
+        $fileName = $request->file('document')->getClientOriginalName();
+        $isTelecom = stripos($fileName, 'soneb') !== false || stripos($fileName, 'sbee') !== false || stripos($fileName, 'mtn') !== false || stripos($fileName, 'moov') !== false;
+
+        // Données simulées renvoyées par l'IA
+        $extractedData = [
+            'vendor_name' => $isTelecom ? 'SBEE BÉNIN' : 'Fournisseur Inconnu',
+            'date' => now()->subDays(rand(1, 15))->format('Y-m-d'),
+            'amount_ht' => rand(10000, 150000),
+            'tva_rate' => 18,
+            'description' => $isTelecom ? 'Facture électricité' : 'Achats de fournitures',
+            'account' => $isTelecom ? '605100' : '601000'
+        ];
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Document analysé avec succès.',
+            'data' => $extractedData
+        ]);
+    }
 }

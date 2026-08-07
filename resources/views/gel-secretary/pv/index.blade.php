@@ -7,7 +7,7 @@
     <h1 class="sec-page-title">
       <i class="fas fa-file-signature" style="color:var(--sec-primary); margin-right:8px;"></i>Procès-Verbaux
     </h1>
-    <p class="sec-page-sub">Comptes-rendus de réunions pour {{ $activeClient ? $activeClient->company_name : 'tous les clients' }}</p>
+    <p class="sec-page-sub">Comptes-rendus de réunions pour {{ $activeClient ? $activeClient->nom_entreprise : 'tous les clients' }}</p>
   </div>
   <button type="button" class="sec-btn sec-btn-primary" onclick="document.getElementById('modalAddPV').style.display='flex'">
     <i class="fas fa-plus"></i> Nouveau PV
@@ -40,7 +40,7 @@
           <tr style="border-bottom:1px solid #f3f4f6;">
             <td style="padding:14px 18px;">
               <div style="font-weight:700;color:#1e293b;">{{ $pv->titre }}</div>
-              <div style="font-size:11px;color:#475569;">{{ $pv->client->company_name ?? '—' }}</div>
+              <div style="font-size:11px;color:#475569;">{{ $pv->client->nom_entreprise ?? '—' }}</div>
             </td>
             <td style="padding:14px 18px;">
               <div style="font-weight:600;color:#334155;">{{ \Carbon\Carbon::parse($pv->date_reunion)->format('d/m/Y') }}</div>
@@ -148,7 +148,7 @@
                         <label>Entreprise concernée *</label>
                         <select name="client_id" class="sec-form-control" required>
                             @foreach($clients as $c)
-                                <option value="{{ $c->id }}" {{ ($activeClient && $activeClient->id == $c->id) ? 'selected' : '' }}>{{ $c->company_name }}</option>
+                                <option value="{{ $c->id }}" {{ ($activeClient && $activeClient->id == $c->id) ? 'selected' : '' }}>{{ $c->nom_entreprise }}</option>
                             @endforeach
                         </select>
                     </div>

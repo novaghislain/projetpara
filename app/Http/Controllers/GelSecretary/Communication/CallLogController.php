@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\GelSecretary\Communication;
 
 use App\Http\Controllers\Controller;
-use App\Models\Client;
+use App\Models\Gel\Client;
 use App\Models\ClientCallLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,7 +22,7 @@ class CallLogController extends Controller
         }
 
         $calls = $query->orderBy('called_at', 'desc')->get();
-        $clients = Client::orderBy('company_name')->get();
+        $clients = Client::orderBy('nom_entreprise')->get();
         $activeClient = $activeClientId ? Client::find($activeClientId) : $clients->first();
 
         return view('gel-secretary.calls.index', compact('calls', 'clients', 'activeClient'));
@@ -63,3 +63,5 @@ class CallLogController extends Controller
         return redirect()->back()->with('success', 'Appel consigné avec succès.');
     }
 }
+
+

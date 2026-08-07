@@ -89,6 +89,8 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'gel.secretaire', \Pragm
             Route::post('/{id}/workflow-reject', [DocumentsController::class, 'workflowReject'])->name('workflow-reject');
 
             Route::get('/view/{id}', [DocumentsController::class, 'viewFile'])->name('view');
+            Route::post('/', [DocumentsController::class, 'upload'])->name('upload');
+            Route::post('/{id}/version', [DocumentsController::class, 'uploadVersion'])->name('version');
             Route::get('/download/{id}', [DocumentsController::class, 'download'])->name('download');
             Route::delete('/{id}', [DocumentsController::class, 'destroy'])->name('destroy');
             Route::delete('/folder/{id}', [DocumentsController::class, 'destroyFolder'])->name('destroy-folder');
@@ -127,10 +129,12 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'gel.secretaire', \Pragm
             Route::post('/extract-task', [App\Http\Controllers\GelSecretary\Communication\MessagerieController::class, 'extractTask'])->name('extract-task');
         });
 
-        // ─── Webmail Externe (IMAP) ──────────────────────────────────
+        // ─── Webmail Externe (IMAP/SMTP) ─────────────────────────────
         Route::prefix('mail')->name('mail.')->group(function () {
             Route::get('/', [App\Http\Controllers\GelSecretary\Communication\MailController::class, 'index'])->name('index');
             Route::post('/config', [App\Http\Controllers\GelSecretary\Communication\MailController::class, 'saveConfig'])->name('save-config');
+            Route::post('/send', [App\Http\Controllers\GelSecretary\Communication\MailController::class, 'send'])->name('send');
+            Route::get('/{uid}', [App\Http\Controllers\GelSecretary\Communication\MailController::class, 'show'])->name('show');
         });
 
         // ─── Tâches ─────────────────────────────────────────────────────
@@ -141,6 +145,8 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'gel.secretaire', \Pragm
             Route::delete('/{id}', [App\Http\Controllers\GelSecretary\Tasks\TasksController::class, 'destroy'])->name('destroy');
             Route::post('/{id}/toggle', [App\Http\Controllers\GelSecretary\Tasks\TasksController::class, 'toggleStatus'])->name('toggle');
             Route::post('/{id}/status/{status}', [App\Http\Controllers\GelSecretary\Tasks\TasksController::class, 'changeStatus'])->name('change-status');
+            Route::post('/{id}/comment', [App\Http\Controllers\GelSecretary\Tasks\TasksController::class, 'addComment'])->name('comment');
+            Route::post('/{id}/attachment', [App\Http\Controllers\GelSecretary\Tasks\TasksController::class, 'addAttachment'])->name('attachment');
         });
 
         // ─── Module de Relances Automatiques ─────────────────────────────
@@ -178,11 +184,18 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'gel.secretaire', \Pragm
             Route::post('/bulk-download', [App\Http\Controllers\GelSecretary\Documents\SafeboxController::class, 'bulkDownload'])->name('bulk-download');
         });
 
-        // ─── Déplacements & Événements (S17) ─────────────────────────
+        // ─── Déplacements & Événements & RH (S17) ─────────────────────────
         Route::prefix('services')->name('services.')->group(function () {
             Route::resource('business-trips', \App\Http\Controllers\GelSecretary\Services\BusinessTripController::class);
             Route::resource('reservations', \App\Http\Controllers\GelSecretary\Services\ReservationController::class);
-            Route::resource('hr', \App\Http\Controllers\GelSecretary\Services\HrController::class);
+            Route::put('reservations/{id}/status', [\App\Http\Controllers\GelSecretary\Services\ReservationController::class, 'updateStatus'])->name('reservations.update');
+            
+            // HR Module
+            Route::get('hr', [\App\Http\Controllers\GelSecretary\Services\HrController::class, 'index'])->name('hr.index');
+            Route::post('hr/employee', [\App\Http\Controllers\GelSecretary\Services\HrController::class, 'storeEmployee'])->name('hr.employee.store');
+            Route::put('hr/employee/{id}', [\App\Http\Controllers\GelSecretary\Services\HrController::class, 'updateEmployee'])->name('hr.employee.update');
+            Route::post('hr/leave', [\App\Http\Controllers\GelSecretary\Services\HrController::class, 'storeLeave'])->name('hr.leave.store');
+            Route::post('hr/leave/{id}/status', [\App\Http\Controllers\GelSecretary\Services\HrController::class, 'updateLeaveStatus'])->name('hr.leave.status');
         });
 
         // ─── Procès-Verbaux ─────────────────────────────────────────────────────
@@ -216,6 +229,7 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'gel.secretaire', \Pragm
 
         // ─── Switch de contexte client ──────────────────────────────────────────
         Route::post('/switch-client', [DashboardController::class, 'switchClient'])->name('switch-client');
+        Route::post('/switch-client-clear', [DashboardController::class, 'clearClient'])->name('switch-client.clear');
         // ─── Paramètres & Sécurité ──────────────────────────────────────────
         Route::prefix('settings')->name('settings.')->group(function () {
             Route::get('/', [\App\Http\Controllers\GelSecretary\Settings\SettingsController::class, 'index'])->name('index');

@@ -140,6 +140,12 @@
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
+    <!-- Variables globales pour Vue -->
+    <script>
+        window.__CLIENT_ID__ = @php echo Auth::check() && Auth::user()->client_id ? Auth::user()->client_id : 'null'; @endphp;
+        window.__IS_COMPANY_ADMIN__ = @php echo Auth::check() && Auth::user()->is_company_admin ? 'true' : 'false'; @endphp;
+    </script>
+
     <!-- Auth Data for Vue -->
     @php
         $authUserApp = Auth::check() ? [

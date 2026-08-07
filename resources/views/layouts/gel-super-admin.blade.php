@@ -367,6 +367,33 @@
                 <i class="bi bi-tags"></i>
                 <span>Forfaits & Tarifs</span>
             </a>
+            <a href="{{ route('gel-super-admin.pool.index') }}"
+               class="sidebar-link {{ request()->routeIs('gel-super-admin.pool.*') ? 'active' : '' }}">
+                <i class="bi bi-people"></i>
+                <span>GEL Pool</span>
+            </a>
+
+            <div class="sidebar-section">Sécurité & Technique</div>
+            <a href="{{ route('gel-super-admin.security.index') }}"
+               class="sidebar-link {{ request()->routeIs('gel-super-admin.security.*') ? 'active' : '' }}">
+                <i class="bi bi-shield-lock"></i>
+                <span>Accès & Sécurité</span>
+            </a>
+            <a href="{{ route('gel-super-admin.it-team.index') }}"
+               class="sidebar-link {{ request()->routeIs('gel-super-admin.it-team.*') ? 'active' : '' }}">
+                <i class="bi bi-cpu"></i>
+                <span>Équipe Informatique</span>
+            </a>
+            <a href="{{ route('gel-super-admin.it-dispatcher.index') }}"
+               class="sidebar-link {{ request()->routeIs('gel-super-admin.it-dispatcher.*') ? 'active' : '' }}">
+                <i class="bi bi-diagram-3"></i>
+                <span>Affectation IT</span>
+            </a>
+            <a href="{{ route('gel-super-admin.platform.config') }}"
+               class="sidebar-link {{ request()->routeIs('gel-super-admin.platform.*') ? 'active' : '' }}">
+                <i class="bi bi-gear"></i>
+                <span>Configuration</span>
+            </a>
 
             <div class="sidebar-section">Système</div>
             <a href="{{ route('gel-super-admin.platform.config') }}"

@@ -168,7 +168,7 @@
                         </button>
                         <div class="gel-dropdown-menu">
                             <a class="gel-dropdown-item" href="{{ route('gel-accountant.factures.show', $invoice->id) }}"><i class="fas fa-eye"></i> Voir</a>
-                            <a class="gel-dropdown-item" href="{{ route('gel-accountant.factures.show', $invoice->id) }}?export=pdf" target="_blank"><i class="fas fa-download"></i> Télécharger PDF</a>
+                            <a class="gel-dropdown-item" href="{{ route('gel-accountant.factures.pdf', $invoice->id) }}" target="_blank"><i class="fas fa-download"></i> Télécharger PDF</a>
                             @if($invoice->status === 'draft')
                             <form action="{{ route('gel-accountant.factures.destroy', $invoice->id) }}" method="POST" onsubmit="return confirm('Supprimer cette facture ?');">
                                 @csrf @method('DELETE')

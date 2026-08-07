@@ -882,8 +882,8 @@
         $query->whereIn('id', $clientIds);
       }
       $clients = $query->orderBy('nom_entreprise')->get();
-      $activeClientId = session('active_client_id') ?? $user?->active_client_id;
-      $activeClient = $clients->firstWhere('id', $activeClientId) ?? $clients->first();
+      $activeClientId = session('active_client_id');
+      $activeClient = $activeClientId ? $clients->firstWhere('id', $activeClientId) : null;
     @endphp
 
     <div class="sec-client-switcher" onclick="toggleClientDropdown()" id="clientSwitcher">
@@ -908,6 +908,20 @@
         @empty
           <div class="client-dd-item" style="color:var(--sec-text-muted);">Aucune entreprise enregistrée</div>
         @endforelse
+        @if($activeClient)
+          <div style="border-top:1px solid var(--sec-border); margin-top:4px; padding-top:4px;">
+            <form method="POST" action="{{ route('gel-secretary.switch-client.clear') }}" style="margin:0;">
+              @csrf
+              <button type="submit" class="client-dd-item w-100 border-0 text-start" style="color: var(--sec-danger);">
+                <div class="client-dd-avatar" style="background: #FEF2F2; color: #EF4444;"><i class="fas fa-times"></i></div>
+                <div>
+                  <div style="font-size:13px; font-weight: 600;">Fermer le dossier</div>
+                  <div style="font-size:11px;color:var(--sec-text-muted);">Retour au menu principal</div>
+                </div>
+              </button>
+            </form>
+          </div>
+        @endif
       </div>
     </div>
     </div>
@@ -1047,6 +1061,7 @@
         </a>
       </li>
 
+      @if($activeClient)
       <li class="sec-nav-section">Organisation</li>
       <li>
         <a href="{{ route('gel-secretary.documents.index') }}"
@@ -1064,6 +1079,12 @@
         <a href="{{ route('gel-secretary.contacts.index') }}"
           class="sec-nav-item {{ request()->routeIs('gel-secretary.contacts.*') ? 'active' : '' }}">
           <i class="fas fa-address-book"></i> Contacts
+        </a>
+      </li>
+      <li>
+        <a href="{{ route('gel-secretary.services.hr.index') }}"
+          class="sec-nav-item {{ request()->routeIs('gel-secretary.services.hr.*') ? 'active' : '' }}">
+          <i class="fas fa-users"></i> Ressources Humaines
         </a>
       </li>
       <li>
@@ -1085,8 +1106,14 @@
         </a>
       </li>
       <li>
+        <a href="{{ route('gel-secretary.services.reservations.index') }}"
+          class="sec-nav-item {{ request()->routeIs('gel-secretary.services.reservations.*') ? 'active' : '' }}">
+          <i class="fas fa-calendar-check"></i> Réservations
+        </a>
+      </li>
+      <li>
         <a href="{{ route('gel-secretary.services.business-trips.index') }}"
-          class="sec-nav-item {{ request()->routeIs('gel-secretary.services.*') ? 'active' : '' }}">
+          class="sec-nav-item {{ request()->routeIs('gel-secretary.services.business-trips.*') ? 'active' : '' }}">
           <i class="fas fa-plane"></i> Déplacements & Évènements
         </a>
       </li>
@@ -1152,7 +1179,7 @@
           <i class="fas fa-bell"></i> Relances
         </a>
       </li>
-
+      
       <li class="sec-nav-section">Paramètres & Audit</li>
       <li>
         <a href="{{ route('gel-secretary.administration.index') }}"
@@ -1172,6 +1199,11 @@
           <i class="fas fa-history"></i> Historique d'audit
         </a>
       </li>
+      @endif
+      
+      @if(!$activeClient)
+      <li class="sec-nav-section">Paramètres & Audit</li>
+      @endif
       <li>
         <a href="{{ route('gel-secretary.settings.index') }}"
           class="sec-nav-item {{ request()->routeIs('gel-secretary.settings.*') ? 'active' : '' }}">

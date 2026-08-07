@@ -130,7 +130,7 @@
         <i class="fas fa-file-pdf" style="color:#EF4444;font-size:18px;"></i>
         <div style="flex:1;min-width:0;">
           <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $doc->name }}</div>
-          <div style="font-size:11px;color:var(--sec-text-muted);">{{ $doc->client->company_name ?? ($doc->client->nom_entreprise ?? '—') }} · {{ \Carbon\Carbon::parse($doc->created_at)->diffForHumans() }}</div>
+          <div style="font-size:11px;color:var(--sec-text-muted);">{{ $doc->client->nom_entreprise ?? ($doc->client->nom_entreprise ?? '—') }} · {{ \Carbon\Carbon::parse($doc->created_at)->diffForHumans() }}</div>
         </div>
       </div>
     @empty
@@ -148,10 +148,10 @@
     @forelse($clients->take(8) as $c)
       <div class="dir-row">
         <div style="width:32px;height:32px;border-radius:6px;background:#E2E8F0;color:#475569;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;">
-          {{ strtoupper(substr($c->nom_entreprise ?? $c->company_name ?? 'E',0,2)) }}
+          {{ strtoupper(substr($c->nom_entreprise ?? $c->nom_entreprise ?? 'E',0,2)) }}
         </div>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:600;">{{ $c->nom_entreprise ?? $c->company_name }}</div>
+          <div style="font-size:13px;font-weight:600;">{{ $c->nom_entreprise ?? $c->nom_entreprise }}</div>
           <div style="font-size:11px;color:var(--sec-text-muted);">{{ $c->email ?? 'Non renseigné' }}</div>
         </div>
       </div>

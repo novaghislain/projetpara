@@ -24,7 +24,7 @@
         }
     }
 @endphp
-<div class="kanban-card" data-id="{{ $task->id }}">
+<div class="kanban-card" data-id="{{ $task->id }}" onclick="document.getElementById('taskDetailsModal{{ $task->id }}').style.display='flex'" style="cursor: pointer;">
     
     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
         <div style="display:flex; align-items:center; gap:8px;">
@@ -70,7 +70,7 @@
     @if($task->client)
     <div class="kanban-card-meta mb-1">
         <i class="fas fa-building" style="color:var(--sec-text-muted); width:14px; text-align:center;"></i>
-        <span>{{ $task->client->company_name ?? $task->client->nom_entreprise }}</span>
+        <span>{{ $task->client->nom_entreprise ?? $task->client->nom_entreprise }}</span>
     </div>
     @endif
     
@@ -92,8 +92,8 @@
         @endif
         
         <div style="display:flex; gap:10px; color:#94A3B8; font-size:12px;">
-            <span title="Pièces jointes"><i class="fas fa-paperclip"></i> 0</span>
-            <span title="Commentaires"><i class="far fa-comment"></i> 0</span>
+            <span title="Pièces jointes"><i class="fas fa-paperclip"></i> {{ $task->attachments ? $task->attachments->count() : 0 }}</span>
+            <span title="Commentaires"><i class="far fa-comment"></i> {{ $task->comments ? $task->comments->count() : 0 }}</span>
         </div>
     </div>
 </div>

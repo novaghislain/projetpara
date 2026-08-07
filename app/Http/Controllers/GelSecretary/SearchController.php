@@ -68,11 +68,18 @@ class SearchController extends Controller
         //    insensible à la casse et aux accents (collation utf8mb4_unicode_ci),
         //    sur TOUS les dossiers du client actif — aucun filtre restrictif par défaut.
         $activeClientId = session('active_client_id') ?? $user->active_client_id;
-        $documents = Document::active()
-            ->when($activeClientId, function ($query) use ($activeClientId) {
+        
+        $documents = Document::active();
+        
+        if ($user->isAutonomousSecretary()) {
+            $documents->where('uploaded_by', $user->id);
+        } else {
+            $documents->when($activeClientId, function ($query) use ($activeClientId) {
                 return $query->where('client_id', $activeClientId);
-            })
-            ->where(function ($qq) use ($q) {
+            });
+        }
+        
+        $documents = $documents->where(function ($qq) use ($q) {
                 $searchTerm = '%' . strtolower($q) . '%';
                 $qq->whereRaw('LOWER(name) LIKE ?', [$searchTerm])
                    ->orWhereRaw('LOWER(original_name) LIKE ?', [$searchTerm])

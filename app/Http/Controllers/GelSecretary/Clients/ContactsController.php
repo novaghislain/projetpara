@@ -172,7 +172,7 @@ class ContactsController extends Controller
             $tasks = \App\Models\Gel\Task::where('client_id', $activeClient->id)->latest()->take(5)->get();
             
             // Appels liés au client
-            $calls = \App\Models\ClientCallLog::where('client_id', $activeClient->id)->latest()->take(5)->get();
+            $calls = \App\Models\Gel\ClientCallLog::where('client_id', $activeClient->id)->latest()->take(5)->get();
 
             // Événements liés au client
             $events = \App\Models\Dae\DaeAgendaEvent::where('client_id', $activeClient->id)->latest()->take(5)->get();
@@ -181,3 +181,4 @@ class ContactsController extends Controller
         return view('gel-secretary.contacts.detail', compact('clients', 'activeClient', 'contact', 'tasks', 'calls', 'events'));
     }
 }
+

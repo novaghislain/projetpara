@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\GelSecretary\Tasks;
 
 use App\Http\Controllers\Controller;
-use App\Models\Client;
+use App\Models\Gel\Client;
 use App\Models\Dae\DaeAgendaEvent;
 use App\Models\Dae\DaeMeetingMinute;
 use App\Models\Gel\Task;
@@ -103,7 +103,7 @@ class ReunionsController extends Controller
             'terminees'=> $planActions->where('statut', 'terminee')->count(),
         ];
 
-        $clients = Client::orderBy('company_name')->get();
+        $clients = Client::orderBy('nom_entreprise')->get();
 
         return view('gel-secretary.reunions.index', compact(
             'reunions', 'ordresDuJour', 'pvs', 'decisions', 'planActions',
@@ -184,3 +184,5 @@ class ReunionsController extends Controller
         return response()->json(['ordre_du_jour' => $result]);
     }
 }
+
+

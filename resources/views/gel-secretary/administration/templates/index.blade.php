@@ -35,7 +35,7 @@
   @if($activeClient)
     <div class="ms-auto">
       <span class="sec-badge" style="background:#EFF6FF;color:#2563EB;border:1px solid #BFDBFE;padding:7px 14px;">
-        <i class="fas fa-building me-1"></i> Contexte : {{ $activeClient->nom_entreprise ?? $activeClient->company_name }}
+        <i class="fas fa-building me-1"></i> Contexte : {{ $activeClient->nom_entreprise ?? $activeClient->nom_entreprise }}
       </span>
     </div>
   @endif
@@ -91,7 +91,7 @@
         @if($activeClient)
           <div style="margin-top:12px;padding:10px 12px;background:#F0FDF4;border-left:3px solid #10B981;border-radius:6px;font-size:12px;color:#059669;">
             <i class="fas fa-magic me-1"></i>
-            Pré-rempli avec les données de <strong>{{ $activeClient->nom_entreprise ?? $activeClient->company_name }}</strong>
+            Pré-rempli avec les données de <strong>{{ $activeClient->nom_entreprise ?? $activeClient->nom_entreprise }}</strong>
           </div>
         @endif
       </div>
@@ -101,10 +101,10 @@
           <div style="display:flex;gap:10px;align-items:center;">
             @if($clients->count() > 0)
               <select name="client_id" class="form-select form-select-sm" style="border-radius:8px;flex:1;">
-                <option value="">{{ $activeClient ? ($activeClient->nom_entreprise ?? $activeClient->company_name) : 'Sélectionner un client...' }}</option>
+                <option value="">{{ $activeClient ? ($activeClient->nom_entreprise ?? $activeClient->nom_entreprise) : 'Sélectionner un client...' }}</option>
                 @foreach($clients as $c)
                   <option value="{{ $c->id }}" {{ ($activeClient && $activeClient->id == $c->id) ? 'selected' : '' }}>
-                    {{ $c->nom_entreprise ?? $c->company_name }}
+                    {{ $c->nom_entreprise ?? $c->nom_entreprise }}
                   </option>
                 @endforeach
               </select>

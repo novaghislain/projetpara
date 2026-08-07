@@ -70,7 +70,7 @@ class DocumentTemplateController extends Controller
             'category' => $template->category,
         ]);
 
-        $clientLabel = $client ? ' pour ' . ($client->nom_entreprise ?? $client->company_name) : '';
+        $clientLabel = $client ? ' pour ' . ($client->nom_entreprise ?? $client->nom_entreprise) : '';
         return back()->with('success', 'Document "' . $template->name . '" pré-rempli généré' . $clientLabel . '. (PDF en préparation)');
     }
 }

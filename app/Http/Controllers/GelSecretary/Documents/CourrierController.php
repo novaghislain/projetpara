@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\GelSecretary\Documents;
 
 use App\Http\Controllers\Controller;
-use App\Models\Client;
+use App\Models\Gel\Client;
 use App\Models\Dae\DaeCourrier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -31,7 +31,7 @@ class CourrierController extends Controller
         }
 
         $courriers = $query->orderBy('created_at', 'desc')->get();
-        $clients = Client::orderBy('company_name')->get();
+        $clients = Client::orderBy('nom_entreprise')->get();
         $activeClient = $activeClientId ? Client::find($activeClientId) : $clients->first();
 
         return view('gel-secretary.courriers.index', compact('courriers', 'clients', 'activeClient', 'tab'));
@@ -149,3 +149,5 @@ class CourrierController extends Controller
         return response()->json(['draft' => $response]);
     }
 }
+
+

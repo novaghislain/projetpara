@@ -170,6 +170,11 @@ class EcritureController extends Controller
                 }
             }
 
+            if ($totalDebit !== $totalCredit) {
+                DB::rollBack();
+                return back()->withInput()->withErrors(['error' => 'L\'écriture n\'est pas équilibrée (Débit: ' . $totalDebit . ' != Crédit: ' . $totalCredit . ').']);
+            }
+
             // Génération du numéro d'écriture séquentiel par jour
             // Format : EC-AAAAMMJJ-NNN
             $numero = 'EC-' . now()->format('Ymd') . '-' . str_pad(EcritureComptable::whereDate('created_at', today())->count() + 1, 3, '0', STR_PAD_LEFT);
@@ -348,5 +353,50 @@ class EcritureController extends Controller
             DB::rollBack();
             return back()->withErrors(['error' => 'Erreur lors de la suppression : ' . $e->getMessage()]);
         }
+    }
+    /**
+     * Exporte les écritures comptables en CSV.
+     */
+    public function exportCsv(Request $request)
+    {
+        $user = Auth::user();
+        $cabinetId = $user->cabinet_id;
+
+        $ecritures = EcritureComptable::where('cabinet_id', $cabinetId)
+            ->with(['journal', 'client'])
+            ->orderByDesc('date_ecriture')
+            ->get();
+
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=ecritures_comptables_" . date('Y-m-d') . ".csv",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $columns = ['ID', 'Date', 'Libellé', 'Journal', 'Client', 'Total Débit', 'Total Crédit', 'Statut'];
+
+        $callback = function() use($ecritures, $columns) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $columns, ';');
+
+            foreach ($ecritures as $ecriture) {
+                $row = [
+                    $ecriture->id,
+                    $ecriture->date_ecriture,
+                    $ecriture->libelle,
+                    $ecriture->journal ? $ecriture->journal->code : '',
+                    $ecriture->client ? $ecriture->client->nom_entreprise : '',
+                    number_format($ecriture->total_debit, 2, '.', ''),
+                    number_format($ecriture->total_credit, 2, '.', ''),
+                    $ecriture->valide ? 'Validée' : 'Brouillon'
+                ];
+                fputcsv($file, $row, ';');
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

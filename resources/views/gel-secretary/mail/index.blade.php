@@ -1,5 +1,5 @@
 @extends('layouts.gel-secretary')
-@section('title', 'Boîte Mail (Webmail) - ' . ($activeClient ? $activeClient->company_name : 'Secrétariat'))
+@section('title', 'Boîte Mail (Webmail) - ' . ($activeClient ? $activeClient->nom_entreprise : 'Secrétariat'))
 
 @section('content')
 <style>
@@ -41,7 +41,7 @@
 <div class="pro-header animate-fade">
   <div>
     <div class="pro-title">Boîte Mail (Webmail)</div>
-    <div class="pro-subtitle">Gérez la véritable adresse e-mail de {{ $activeClient ? $activeClient->company_name : '...' }} en temps réel</div>
+    <div class="pro-subtitle">Gérez la véritable adresse e-mail de {{ $activeClient ? $activeClient->nom_entreprise : '...' }} en temps réel</div>
   </div>
 </div>
 
@@ -115,7 +115,7 @@
       <!-- Sidebar -->
       <div class="mail-sidebar">
         <div style="padding: 0 24px 20px 24px;">
-          <button class="btn w-100" style="background: var(--sec-primary); color: white; font-weight: 600; border-radius: 8px;"><i class="fas fa-pen"></i> Nouveau Message</button>
+          <button class="btn w-100" style="background: var(--sec-primary); color: white; font-weight: 600; border-radius: 8px;" onclick="document.getElementById('composeModal').style.display='flex'"><i class="fas fa-pen"></i> Nouveau Message</button>
         </div>
         
         @php
@@ -173,7 +173,7 @@
         <div style="flex: 1; overflow-y: auto;">
           @if(count($messages) > 0)
             @foreach($messages as $msg)
-              <div class="mail-item {{ $msg->getFlags()->has('\\Seen') ? '' : 'unread' }}">
+              <div class="mail-item {{ $msg->getFlags()->has('\\Seen') ? '' : 'unread' }}" onclick="openMail({{ $msg->getUid() }}, '{{ $currentFolder }}')">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                   <div class="mail-sender">{{ $msg->getFrom()[0]->personal ?? $msg->getFrom()[0]->mail }}</div>
                   <div style="font-size: 12px; color: var(--sec-text-muted);">{{ $msg->getDate()->format('d/m/Y H:i') }}</div>
@@ -182,7 +182,7 @@
                   <div class="mail-subject">{{ $msg->getSubject() }}</div>
                   
                   <!-- Bouton Automatisation : Créer une tâche -->
-                  <form action="{{ route('gel-secretary.tasks.store') }}" method="POST" style="display:inline;" onsubmit="return confirm('Créer une tâche pour cet email ?');">
+                  <form action="{{ route('gel-secretary.tasks.store') }}" method="POST" style="display:inline;" onsubmit="return confirm('Créer une tâche pour cet email ?');" onclick="event.stopPropagation();">
                     @csrf
                     <input type="hidden" name="client_id" value="{{ $activeClient?->id }}">
                     <input type="hidden" name="titre" value="[Email] {{ Str::limit($msg->getSubject(), 50) }}">
@@ -209,6 +209,98 @@
 
     </div>
   @endif
+
+  <!-- Modal Nouveau Message -->
+  <div id="composeModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+      <div style="background:white; border-radius:12px; width:100%; max-width:600px; box-shadow:0 10px 25px rgba(0,0,0,0.1); overflow:hidden;">
+          <div style="background:#F8FAFC; padding:16px 24px; border-bottom:1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center;">
+              <h3 style="margin:0; font-size:16px; font-weight:700;"><i class="fas fa-pen text-primary"></i> Nouveau Message</h3>
+              <button class="btn-close" onclick="document.getElementById('composeModal').style.display='none'"></button>
+          </div>
+          <form action="{{ route('gel-secretary.mail.send') }}" method="POST" style="padding:24px;">
+              @csrf
+              <div style="margin-bottom:16px;">
+                  <input type="email" name="to" id="composeTo" class="form-control" placeholder="À :" required style="border:none; border-bottom:1px solid #E2E8F0; border-radius:0; padding-left:0; box-shadow:none;">
+              </div>
+              <div style="margin-bottom:16px;">
+                  <input type="text" name="subject" id="composeSubject" class="form-control" placeholder="Objet :" required style="border:none; border-bottom:1px solid #E2E8F0; border-radius:0; padding-left:0; box-shadow:none;">
+              </div>
+              <div style="margin-bottom:24px;">
+                  <textarea name="message" id="composeMessage" class="form-control" rows="10" placeholder="Votre message..." required style="border:none; resize:none; padding-left:0; box-shadow:none;"></textarea>
+              </div>
+              <div style="display:flex; justify-content:flex-end; gap:12px;">
+                  <button type="button" class="btn btn-light" onclick="document.getElementById('composeModal').style.display='none'">Annuler</button>
+                  <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Envoyer</button>
+              </div>
+          </form>
+      </div>
+  </div>
+
+  <!-- Modal Lecture Message -->
+  <div id="readModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+      <div style="background:white; border-radius:12px; width:100%; max-width:800px; height:80vh; display:flex; flex-direction:column; box-shadow:0 10px 25px rgba(0,0,0,0.1); overflow:hidden;">
+          <div style="background:#F8FAFC; padding:16px 24px; border-bottom:1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center;">
+              <h3 style="margin:0; font-size:16px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:80%;" id="readSubject">Sujet du message</h3>
+              <button class="btn-close" onclick="document.getElementById('readModal').style.display='none'"></button>
+          </div>
+          <div style="padding:16px 24px; border-bottom:1px solid #F1F5F9; display:flex; justify-content:space-between; align-items:center; background:white;">
+              <div>
+                  <div style="font-weight:700; font-size:14px;" id="readFrom">Expéditeur</div>
+                  <div style="font-size:12px; color:var(--sec-text-muted);" id="readDate">Date</div>
+              </div>
+              <div style="display:flex; gap:8px;">
+                  <button class="btn btn-sm btn-light border" onclick="replyMessage()"><i class="fas fa-reply"></i> Répondre</button>
+              </div>
+          </div>
+          <div id="readBody" style="padding:24px; flex:1; overflow-y:auto; background:white; font-size:14px; line-height:1.6;">
+              <!-- Message content -->
+              <div style="text-align:center; padding:40px;"><div class="spinner-border text-primary" role="status"></div></div>
+          </div>
+      </div>
+  </div>
+
+<script>
+function openMail(uid, folder) {
+    document.getElementById('readSubject').innerHTML = 'Chargement...';
+    document.getElementById('readFrom').innerHTML = '';
+    document.getElementById('readDate').innerHTML = '';
+    document.getElementById('readBody').innerHTML = '<div style="text-align:center; padding:40px;"><div class="spinner-border text-primary" role="status"></div></div>';
+    
+    document.getElementById('readModal').style.display = 'flex';
+
+    fetch(`{{ url('gel-secretary/mail') }}/${uid}?folder=${encodeURIComponent(folder)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('readBody').innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+                return;
+            }
+            document.getElementById('readSubject').innerText = data.subject;
+            document.getElementById('readFrom').innerText = data.from;
+            document.getElementById('readDate').innerText = data.date;
+            
+            // Clean/sanitization might be needed in prod, but for now we inject HTML
+            document.getElementById('readBody').innerHTML = data.body;
+            
+            // Store for reply
+            window.currentMailData = data;
+        })
+        .catch(err => {
+            document.getElementById('readBody').innerHTML = `<div class="alert alert-danger">Erreur de connexion.</div>`;
+        });
+}
+
+function replyMessage() {
+    if (!window.currentMailData) return;
+    document.getElementById('readModal').style.display = 'none';
+    
+    document.getElementById('composeTo').value = window.currentMailData.from;
+    document.getElementById('composeSubject').value = 'Re: ' + window.currentMailData.subject.replace(/^Re:\s*/i, '');
+    document.getElementById('composeMessage').value = `\n\n\n--- En réponse à ---\n${window.currentMailData.from} a écrit le ${window.currentMailData.date}:\n\n` + window.currentMailData.body.replace(/<[^>]*>?/gm, '');
+    
+    document.getElementById('composeModal').style.display = 'flex';
+}
+</script>
 
 @endif
 

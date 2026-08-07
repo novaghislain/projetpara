@@ -15,11 +15,17 @@
         <a href="{{ route('gel-accountant.banque.rapprochement.index') }}" class="gel-btn gel-btn-secondary">
             <i class="fas fa-arrow-left"></i> Quitter
         </a>
+        <form action="{{ route('gel-accountant.banque.rapprochement.automatch', $reconciliation->id) }}" method="POST" style="display:inline;">
+            @csrf
+            <button type="submit" class="gel-btn gel-btn-secondary" style="border-color:var(--gel-primary); color:var(--gel-primary);">
+                <i class="fas fa-magic"></i> Auto-Match IA
+            </button>
+        </form>
         <button form="reconciliationForm" name="action" value="save" class="gel-btn gel-btn-secondary">
-            <i class="fas fa-save"></i> Enregistrer pour plus tard
+            <i class="fas fa-save"></i> Enregistrer
         </button>
         <button form="reconciliationForm" name="action" value="finish" class="gel-btn gel-btn-primary" id="btnFinishRecon" {{ abs($reconciliation->difference) > 0.01 ? 'disabled' : '' }}>
-            <i class="fas fa-flag-checkered"></i> Terminer le rapprochement
+            <i class="fas fa-flag-checkered"></i> Terminer
         </button>
     </div>
 </div>
@@ -81,6 +87,7 @@
                             <td style="text-align:center;">
                                 <input type="checkbox" name="transactions[]" value="{{ $tx->id }}" class="tx-checkbox" 
                                     data-amount="{{ $tx->credit - $tx->debit }}"
+                                    @if(session('matched_ids') && in_array($tx->id, session('matched_ids'))) checked @endif
                                     onchange="calculatePointage()">
                             </td>
                             <td>{{ \Carbon\Carbon::parse($tx->transaction_date)->format('d/m/Y') }}</td>
@@ -131,6 +138,11 @@
 <script>
     const statementBalance = {{ $reconciliation->statement_balance }};
     const openingBalance = {{ $compte->reconciled_balance }};
+    
+    // Si on vient d'un auto-match, on recalcule le pointage au chargement
+    document.addEventListener("DOMContentLoaded", function() {
+        calculatePointage();
+    });
     
     function calculatePointage() {
         const checkboxes = document.querySelectorAll('.tx-checkbox');

@@ -1,4 +1,4 @@
-﻿@extends('layouts.gel-accountant')
+@extends('layouts.gel-accountant')
 
 @section('title', 'Note de Crédit')
 
@@ -14,7 +14,7 @@
     </div>
 </div>
 
-<form method="POST" action="#" id="creditNoteForm">
+<form method="POST" action="{{ route('gel-accountant.credit-note.store') }}" id="creditNoteForm">
 @csrf
 
 <div class="gel-card p-4 mb-4">

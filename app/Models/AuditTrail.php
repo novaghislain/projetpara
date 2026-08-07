@@ -36,7 +36,7 @@ class AuditTrail extends Model
     protected $fillable = [
         'client_id', 'user_id', 'event', 'auditable_type',
         'auditable_id', 'old_values', 'new_values',
-        'ip_address', 'user_agent', 'description',
+        'ip_address', 'user_agent', 'description', 'is_resolved',
     ];
 
     protected function casts(): array
@@ -44,6 +44,7 @@ class AuditTrail extends Model
         return [
             'old_values' => 'json',
             'new_values' => 'json',
+            'is_resolved' => 'boolean',
         ];
     }
 

@@ -10,6 +10,10 @@ use App\Http\Controllers\Catalogue\ClientDashboardController;
 */
 require __DIR__ . '/gel.php';
 
+// ─── Magic Links Publics (sans authentification) ─────────────────────────────
+Route::get('/magic-link/{token}', [App\Http\Controllers\MagicLinkPublicController::class, 'show'])->name('magic-link.public');
+Route::post('/magic-link/{token}/upload', [App\Http\Controllers\MagicLinkPublicController::class, 'upload'])->name('magic-link.upload');
+
 // ─── Portail Entreprise (company admins uniquement) ─────────────────────
 Route::middleware(['auth', 'verified', 'not_suspended', 'ensure.company', 'company.auth'])->prefix('company')->name('company.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Company\DashboardController::class, 'dashboard'])->name('dashboard');

@@ -248,8 +248,33 @@ class User extends Authenticatable
     public function isCompanyAdmin(): bool
     {
         if ($this->is_company_admin) return true;
-        if ($this->roleModel && $this->roleModel->slug === 'company_admin') return true;
-        return $this->hasRole('entreprise_admin');
+        if ($this->hasRole('admin')) return true;
+        return false;
+    }
+
+    /**
+     * Vérifie si l'utilisateur est un Consultant.
+     */
+    public function isConsultant(): bool
+    {
+        return $this->account_type === 'consultant' || $this->role === 'consultant';
+    }
+
+    // ─── Relations Consultant ──────────────────────────────────────────
+
+    public function consultantMissions()
+    {
+        return $this->hasMany(\App\Models\Gel\ConsultantMission::class, 'consultant_id');
+    }
+
+    public function consultantDeliverables()
+    {
+        return $this->hasMany(\App\Models\Gel\ConsultantDeliverable::class, 'consultant_id');
+    }
+
+    public function consultantAudits()
+    {
+        return $this->hasMany(\App\Models\Gel\ConsultantAudit::class, 'user_id');
     }
 
     /**
@@ -295,6 +320,21 @@ class User extends Authenticatable
     {
         if ($this->roleModel && $this->roleModel->slug === 'company_manager') return true;
         if ($this->hasRole('entreprise_admin')) return true;
+        return false;
+    }
+
+    /**
+     * Vérifie si l'utilisateur appartient au Pôle Communication Digitale (Modèle 3).
+     */
+    public function isCommunication(): bool
+    {
+        if ($this->account_type === 'communication') return true;
+        if ($this->role === 'communication') return true;
+        if ($this->hasRole('communication')) return true;
+        
+        // L'informaticien hérite des accès communication (fusion IT / Média)
+        if ($this->account_type === 'informaticien' || $this->role === 'informaticien') return true;
+        
         return false;
     }
 
@@ -793,5 +833,13 @@ class User extends Authenticatable
     public function unreadNotifications()
     {
         return $this->hasMany(Notification::class)->whereNull('read_at');
+    }
+
+    /**
+     * Les missions IT affectées à cet informaticien
+     */
+    public function itMissions()
+    {
+        return $this->belongsToMany(\App\Models\Gel\ItMission::class, 'it_mission_user', 'user_id', 'it_mission_id');
     }
 }

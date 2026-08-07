@@ -25,12 +25,8 @@ class DashboardController extends Controller
         }
         $clients = $query->orderBy('nom_entreprise')->get();
 
-        $activeClientId = session('active_client_id') ?? $user->active_client_id ?? $user->client_id;
-        $activeClient = $activeClientId ? Client::find($activeClientId) : $clients->first();
-
-        if ($activeClient && !session('active_client_id')) {
-            session(['active_client_id' => $activeClient->id]);
-        }
+        $activeClientId = session('active_client_id');
+        $activeClient = $activeClientId ? Client::find($activeClientId) : null;
 
         // Tâches
         $tasksQuery = \App\Models\Gel\Task::where('cabinet_id', $user->cabinet_id);
@@ -368,6 +364,12 @@ class DashboardController extends Controller
     }
 
 
+    public function clearClient(Request $request)
+    {
+        session()->forget('active_client_id');
+        return redirect()->route('gel-secretary.dashboard');
+    }
+
     public function switchClient(Request $request)
     {
         $clientId = $request->input('client_id');
@@ -379,7 +381,7 @@ class DashboardController extends Controller
 
             \App\Services\AuditLogService::log('client.switch_context', $client, null, [
                 'active_client_id' => $client->id,
-                'company_name' => $client->nom_entreprise
+                'nom_entreprise' => $client->nom_entreprise
             ]);
         }
 
@@ -454,7 +456,7 @@ class DashboardController extends Controller
                 return [
                     'id' => $d->id,
                     'type' => 'demande',
-                    'title' => 'Nouvelle demande client : ' . $d->company_name,
+                    'title' => 'Nouvelle demande client : ' . $d->nom_entreprise,
                     'description' => ($d->contact_name ?? '—') . ' (' . ($d->email ?? '') . ')',
                     'time' => $d->created_at->diffForHumans(),
                     'icon' => 'fas fa-inbox text-danger',
@@ -477,3 +479,4 @@ class DashboardController extends Controller
         ]);
     }
 }
+

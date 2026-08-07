@@ -266,7 +266,7 @@ class ClientsController extends Controller
         $tasks = \App\Models\Gel\Task::where('client_id', $clientId)->orderBy('created_at', 'desc')->take(5)->get();
         $courriers = \App\Models\Dae\DaeCourrier::where('client_id', $clientId)->orderBy('created_at', 'desc')->take(3)->get();
         
-        $prompt = "Voici les dernières tâches du client {$client->company_name} :\n";
+        $prompt = "Voici les dernières tâches du client {$client->nom_entreprise} :\n";
         foreach($tasks as $t) $prompt .= "- {$t->titre} (Statut: {$t->statut})\n";
         
         $prompt .= "\nEt les derniers courriers :\n";

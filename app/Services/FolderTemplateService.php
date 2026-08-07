@@ -100,9 +100,9 @@ class FolderTemplateService
      * S4 — Génère la catégorie Documents Permanents (12 sous-dossiers fixes).
      * Ne suit PAS la logique mensuelle (S5). Idempotent par client.
      */
-    public function generatePermanentStructure($clientId)
+    public function generatePermanentStructure($clientId, $userId = null)
     {
-        $perm = $this->createFolder($clientId, 'PERMANENTS', null, 1, 0);
+        $perm = $this->createFolder($clientId, 'PERMANENTS', null, 1, 0, $userId);
 
         $categories = [
             'RCCM',
@@ -120,7 +120,7 @@ class FolderTemplateService
         ];
 
         foreach ($categories as $i => $name) {
-            $this->createFolder($clientId, $name, $perm->id, 2, $i + 1);
+            $this->createFolder($clientId, $name, $perm->id, 2, $i + 1, $userId);
         }
 
         return $perm;
@@ -130,14 +130,14 @@ class FolderTemplateService
      * S5 — Génère l'arborescence des Documents courants pour une année :
      * Année → 12 mois → 6 sous-dossiers. Idempotent.
      */
-    public function generateSecretaryStructure($clientId, $year)
+    public function generateSecretaryStructure($clientId, $year, $userId = null)
     {
-        $yearFolder = $this->createFolder($clientId, (string) $year, null, 1, 0);
+        $yearFolder = $this->createFolder($clientId, (string) $year, null, 1, 0, $userId);
 
         for ($i = 1; $i <= 12; $i++) {
             $monthName = \Carbon\Carbon::create($year, $i, 1)->locale('fr_FR')->translatedFormat('F');
             $folderName = sprintf('%02d_%s', $i, ucfirst($monthName));
-            $month = $this->createFolder($clientId, $folderName, $yearFolder->id, 2, $i);
+            $month = $this->createFolder($clientId, $folderName, $yearFolder->id, 2, $i, $userId);
 
             $subs = [
                 'Courriers',
@@ -148,23 +148,26 @@ class FolderTemplateService
                 'Divers',
             ];
             foreach ($subs as $j => $name) {
-                $this->createFolder($clientId, $name, $month->id, 3, $j + 1);
+                $this->createFolder($clientId, $name, $month->id, 3, $j + 1, $userId);
             }
         }
 
         return $yearFolder;
     }
 
-    private function createFolder($clientId, $name, $parentId, $level, $sortOrder)
+    public function createFolder($clientId, $name, $parentId = null, $level = 1, $sortOrder = 0, $userId = null)
     {
-        // On évite les doublons même si le dossier est dans la corbeille
         $existing = ClientFolder::withTrashed()
             ->where('client_id', $clientId)
+            ->where('user_id', $userId)
             ->where('parent_id', $parentId)
             ->where('name', $name)
             ->first();
 
         if ($existing) {
+            if ($existing->trashed()) {
+                $existing->restore();
+            }
             return $existing;
         }
 
@@ -178,13 +181,14 @@ class FolderTemplateService
 
         return ClientFolder::create([
             'client_id' => $clientId,
+            'user_id' => $userId,
             'name' => $name,
-            'slug' => Str::slug($name) . '-' . uniqid(),
+            'slug' => Str::slug($name . '-' . uniqid()),
             'path' => $path,
             'level' => $level,
             'parent_id' => $parentId,
             'sort_order' => $sortOrder,
-            'is_system' => true,
+            'is_system' => true
         ]);
     }
 }

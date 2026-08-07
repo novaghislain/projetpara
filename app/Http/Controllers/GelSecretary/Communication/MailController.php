@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\GelSecretary\Communication;
 
 use App\Http\Controllers\Controller;
-use App\Models\Client;
+use App\Models\Gel\Client;
 use App\Models\ClientEmailConfig;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,7 +17,7 @@ class MailController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $clients = Client::orderBy('company_name')->get();
+        $clients = Client::orderBy('nom_entreprise')->get();
         
         $activeClientId = session('active_client_id');
         $activeClient = $activeClientId ? Client::find($activeClientId) : null;
@@ -96,4 +96,92 @@ class MailController extends Controller
 
         return back()->with('success', 'Configuration de la boîte mail sauvegardée avec succès.');
     }
+
+    /**
+     * Lit le contenu complet d'un e-mail.
+     */
+    public function show(Request $request, $uid)
+    {
+        $activeClientId = session('active_client_id');
+        $activeClient = $activeClientId ? Client::find($activeClientId) : null;
+        if (!$activeClient) return response()->json(['error' => 'Client non sélectionné'], 400);
+
+        $emailConfig = ClientEmailConfig::where('client_id', $activeClient->id)->first();
+        if (!$emailConfig || !$emailConfig->imap_host) return response()->json(['error' => 'IMAP non configuré'], 400);
+
+        try {
+            $client = ImapClient::make([
+                'host'          => $emailConfig->imap_host,
+                'port'          => $emailConfig->imap_port,
+                'encryption'    => $emailConfig->imap_encryption,
+                'validate_cert' => false,
+                'username'      => $emailConfig->imap_username,
+                'password'      => $emailConfig->imap_password,
+                'protocol'      => 'imap'
+            ]);
+            $client->connect();
+            
+            $folderName = $request->query('folder', 'INBOX');
+            $folder = $client->getFolder($folderName);
+            $message = $folder->query()->getMessageByUid($uid);
+
+            if ($message) {
+                $message->setFlag(['\Seen']); // Mark as read
+                
+                return response()->json([
+                    'subject' => $message->getSubject(),
+                    'from' => $message->getFrom()[0]->mail ?? '',
+                    'date' => $message->getDate()->format('d/m/Y H:i'),
+                    'body' => $message->hasHTMLBody() ? $message->getHTMLBody() : nl2br($message->getTextBody())
+                ]);
+            }
+            return response()->json(['error' => 'Message non trouvé'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Envoie un e-mail en utilisant le SMTP du client.
+     */
+    public function send(Request $request)
+    {
+        $request->validate([
+            'to' => 'required|email',
+            'subject' => 'required|string|max:255',
+            'message' => 'required|string'
+        ]);
+
+        $activeClientId = session('active_client_id');
+        $activeClient = $activeClientId ? Client::find($activeClientId) : null;
+        if (!$activeClient) return back()->with('error', 'Client non sélectionné.');
+
+        $emailConfig = ClientEmailConfig::where('client_id', $activeClient->id)->first();
+        if (!$emailConfig || !$emailConfig->smtp_host) return back()->with('error', 'SMTP non configuré.');
+
+        try {
+            // Configuration dynamique SMTP
+            config([
+                'mail.mailers.smtp.transport' => 'smtp',
+                'mail.mailers.smtp.host' => $emailConfig->smtp_host,
+                'mail.mailers.smtp.port' => $emailConfig->smtp_port,
+                'mail.mailers.smtp.encryption' => $emailConfig->smtp_encryption,
+                'mail.mailers.smtp.username' => $emailConfig->smtp_username,
+                'mail.mailers.smtp.password' => $emailConfig->smtp_password,
+                'mail.from.address' => $emailConfig->smtp_username,
+                'mail.from.name' => $activeClient->nom_entreprise,
+            ]);
+
+            \Illuminate\Support\Facades\Mail::raw($request->message, function ($mail) use ($request) {
+                $mail->to($request->to)
+                     ->subject($request->subject);
+            });
+
+            return back()->with('success', 'Email envoyé avec succès.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Erreur d\'envoi: ' . $e->getMessage());
+        }
+    }
 }
+
+

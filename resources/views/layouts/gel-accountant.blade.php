@@ -353,7 +353,7 @@
     /* KPI Grid */
     .gel-kpi-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 16px;
       margin-bottom: 24px;
     }
@@ -391,6 +391,13 @@
       background: white;
       border: 1px solid var(--gel-border);
       border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+      transition: all 200ms ease;
+    }
+    .gel-card:hover {
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+      border-color: rgba(0,0,0,0.1);
+      transform: translateY(-2px);
     }
     .gel-card-header {
       padding: 14px 18px;
@@ -440,20 +447,32 @@
 
     /* Boutons */
     .gel-btn {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 8px 16px; border-radius: 4px;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 8px 16px; border-radius: 6px;
       font-size: 13px; font-weight: 600;
       border: none; cursor: pointer;
-      transition: all 120ms;
+      transition: all 200ms ease;
     }
     .gel-btn-sm { padding: 5px 10px; font-size: 12px; }
-    .gel-btn-primary { background: var(--gel-primary); color: white !important; }
-    .gel-btn-primary:hover { background: var(--gel-primary-hover); }
+    .gel-btn-primary { 
+      background: var(--gel-primary); color: white !important; 
+      box-shadow: 0 2px 4px rgba(13, 148, 136, 0.2);
+    }
+    .gel-btn-primary:hover { 
+      background: var(--gel-primary-hover); 
+      box-shadow: 0 4px 8px rgba(13, 148, 136, 0.3);
+      transform: translateY(-1px);
+    }
     .gel-btn-secondary {
       background: white; color: var(--gel-text-primary);
       border: 1px solid var(--gel-border);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
-    .gel-btn-secondary:hover { background: var(--gel-sidebar-hover); }
+    .gel-btn-secondary:hover { 
+      background: #f8fafc; 
+      border-color: #cbd5e1;
+      transform: translateY(-1px);
+    }
 
     .gel-filter-select {
       padding: 5px 10px; border: 1px solid var(--gel-border);
@@ -1061,6 +1080,8 @@
         <!-- AUTRE -->
         <div class="mega-col">
           <div class="mega-header">AUTRE</div>
+          <a href="{{ route('gel-accountant.ia.feed') }}" class="mega-item" style="color:var(--gel-primary); font-weight:600;"><i class="fas fa-robot mega-icon"></i> Fil d'Activité IA</a>
+          <a href="{{ route('gel-accountant.workflows.pending') }}" class="mega-item"><i class="fas fa-check-double mega-icon"></i> Approbations en attente</a>
           <a href="{{ route('gel-accountant.task.create') }}" class="mega-item"><i class="fas fa-tasks mega-icon"></i> Tâche</a>
           <a href="{{ route('gel-accountant.bank-deposit') }}" class="mega-item"><i class="fas fa-university mega-icon"></i> Dépôt bancaire</a>
           <a href="{{ route('gel-accountant.transfer') }}" class="mega-item"><i class="fas fa-exchange-alt mega-icon"></i> Transfert</a>
@@ -1098,13 +1119,25 @@
       </li>
 
       <div class="sidebar-section">Comptabilité</div>
-      <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'comptabilite') || request()->routeIs('gel-accountant.comptabilite*') ? 'active' : '' }}" data-dropdown="dd-compta"><i class="fas fa-book me-2"></i> Comptabilité <span class="arrow">▸</span></li>
-      <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'facturation') || request()->routeIs('gel-accountant.facturation*') ? 'active' : '' }}" data-dropdown="dd-fact"><i class="fas fa-file-invoice-dollar me-2"></i> Facturation <span class="arrow">▸</span></li>
-      <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'depenses') || request()->routeIs('gel-accountant.depenses*') ? 'active' : '' }}" data-dropdown="dd-dep"><i class="fas fa-wallet me-2"></i> Dépenses & Achats <span class="arrow">▸</span></li>
-      <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'banque') || request()->routeIs('gel-accountant.banque*') ? 'active' : '' }}" data-dropdown="dd-banque"><i class="fas fa-university me-2"></i> Banque <span class="arrow">▸</span></li>
+      <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'comptabilite') || request()->routeIs('gel-accountant.comptabilite*') ? 'active' : '' }}" data-dropdown="dd-compta" onclick="window.location.href='{{ route('gel-accountant.comptabilite.journaux') }}'"><i class="fas fa-book me-2"></i> Comptabilité <span class="arrow">▸</span></li>
+      <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'facturation') || request()->routeIs('gel-accountant.factures*') || request()->routeIs('gel-accountant.payments*') ? 'active' : '' }}" data-dropdown="dd-fact" onclick="window.location.href='{{ route('gel-accountant.factures.index') }}'"><i class="fas fa-file-invoice-dollar me-2"></i> Facturation <span class="arrow">▸</span></li>
+      <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'depenses') || request()->routeIs('gel-accountant.depenses*') ? 'active' : '' }}" data-dropdown="dd-dep" onclick="window.location.href='{{ route('gel-accountant.expenses.create') }}'"><i class="fas fa-wallet me-2"></i> Dépenses & Achats <span class="arrow">▸</span></li>
+      <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'banque') || request()->routeIs('gel-accountant.banque*') ? 'active' : '' }}" data-dropdown="dd-banque" onclick="window.location.href='{{ route('gel-accountant.banque.transactions.index') }}'"><i class="fas fa-university me-2"></i> Banque <span class="arrow">▸</span></li>
+      
+      <div class="sidebar-section">Commerce & POS</div>
+      <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'commerce') || request()->routeIs('gel-accountant.commerce*') ? 'active' : '' }}" data-dropdown="dd-commerce" onclick="window.location.href='{{ route('gel-accountant.commerce.pos.index') }}'">
+        <i class="fas fa-cash-register me-2"></i> Caisses (POS) <span class="arrow">▸</span>
+      </li>
  
-      <div class="sidebar-section">Analyse</div>
-      <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'rapports') || request()->routeIs('gel-accountant.rapports*') ? 'active' : '' }}" data-dropdown="dd-rapports"><i class="fas fa-chart-bar me-2"></i> Rapports <span class="arrow">▸</span></li>
+      <div class="sidebar-section">Analyse & Clôture</div>
+      <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'ia') || request()->routeIs('gel-accountant.ia*') ? 'active' : '' }}" data-dropdown="dd-ia">
+          <i class="fas fa-robot me-2 text-primary"></i> Agent IA Expert 
+          @php $pendingIa = \App\Models\AiSuggestion::where('status', 'pending')->count(); @endphp
+          @if($pendingIa > 0)<span class="badge" style="background:#ef4444; color:white; border-radius:12px; padding:2px 6px; font-size:10px; margin-left:6px;">{{ $pendingIa }}</span>@endif
+          <span class="arrow">▸</span>
+      </li>
+      <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'fiscalite') || request()->routeIs('gel-accountant.fiscalite*') ? 'active' : '' }}" data-dropdown="dd-fiscalite"><i class="fas fa-file-invoice-dollar me-2"></i> Fiscalité & Clôture <span class="arrow">▸</span></li>
+      <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'rapports') || request()->routeIs('gel-accountant.rapports*') ? 'active' : '' }}" data-dropdown="dd-rapports" onclick="window.location.href='{{ route('gel-accountant.rapports.index') }}'"><i class="fas fa-chart-bar me-2"></i> Rapports <span class="arrow">▸</span></li>
  
       <div class="sidebar-section">Administration</div>
       <li class="sidebar-item {{ (isset($currentSection) && $currentSection == 'equipe') || request()->routeIs('gel-accountant.equipe*') ? 'active' : '' }}" data-page="equipe"><i class="fas fa-users me-2"></i> Équipe</li>
@@ -1208,6 +1241,26 @@
     <div class="dd-item" data-page="virements"><i class="fas fa-exchange-alt me-2"></i> Virements</div>
   </div>
  
+  {{-- Commerce & POS --}}
+  <div id="dd-commerce" class="nested-dropdown">
+    <div class="dd-header">COMMERCE & POS</div>
+    <div class="dd-item" onclick="window.location.href='{{ route('gel-accountant.commerce.pos.index') }}'"><i class="fas fa-cash-register me-2"></i> Caisses (POS)</div>
+    <div class="dd-item" onclick="window.location.href='{{ route('gel-accountant.commerce.ecommerce.index') }}'"><i class="fas fa-shopping-cart me-2"></i> Boutique en ligne</div>
+  </div>
+
+  {{-- Fiscalité --}}
+  <!-- Agent IA Expert -->
+  <div id="dd-ia" class="nested-dropdown">
+    <div class="dd-header">AGENT IA EXPERT</div>
+    <div class="dd-item" data-page="ia"><i class="fas fa-tachometer-alt me-2"></i> Dashboard IA</div>
+    <div class="dd-item" onclick="window.location.href='{{ route('gel-accountant.ia.feed') }}'"><i class="fas fa-stream me-2"></i> Fil d'Activité</div>
+  </div>
+
+  <div id="dd-fiscalite" class="nested-dropdown">
+    <div class="dd-header">FISCALITÉ & CLÔTURE</div>
+    <div class="dd-item" data-page="tva"><i class="fas fa-calculator me-2"></i> Déclarations de TVA</div>
+    <div class="dd-item" data-page="exercices"><i class="fas fa-calendar-check me-2"></i> Exercices fiscaux & Clôture</div>
+  </div> 
   {{-- Rapports --}}
   <div id="dd-rapports" class="nested-dropdown">
     <div class="dd-header">RAPPORTS</div>
@@ -1349,7 +1402,7 @@
             if (ddEl && !ddEl.matches(':hover') && !ddEl.querySelector(':hover')) {
               closeDropdown(ddId);
             }
-          }, 200);
+          }, 400);
         });
       });
 
@@ -1369,7 +1422,7 @@
             self.querySelectorAll('.nested-dropdown.open').forEach(function(child) {
               child.classList.remove('open');
             });
-          }, 200);
+          }, 400);
         });
       });
 
@@ -1395,7 +1448,7 @@
             if (ddEl && !ddEl.matches(':hover') && !ddEl.querySelector(':hover')) {
               ddEl.classList.remove('open');
             }
-          }, 200);
+          }, 400);
         });
       });
 
@@ -1482,6 +1535,7 @@
         var routeMap = {
           // ─── Général ───
           'dashboard':                 '{{ route("gel-accountant.dashboard") }}',
+          'ia':                        '{{ route("gel-accountant.ia.index") }}',
           'clients':                   '{{ route("gel-accountant.clients") }}',
           'gestion-clients':           '{{ route("gel-accountant.clients") }}',
           'equipe':                    '{{ route("gel-accountant.team") }}',
@@ -1513,10 +1567,10 @@
           'relances':                  '{{ route("gel-accountant.rapports.index") }}',
 
           // ─── Dépenses & Achats ───
-          'depenses-achats':           '{{ route("gel-accountant.expenses.create") }}',
-          'bons-commande':             '{{ route("gel-accountant.purchase-orders.create") }}',
-          'fournisseurs':              '{{ route("gel-accountant.vendors.create") }}',
-          'notes-frais':               '{{ route("gel-accountant.check.create") }}',
+          'depenses-achats':           '{{ route("gel-accountant.expenses.index") }}',
+          'bons-commande':             '{{ route("gel-accountant.purchase-orders.index") }}',
+          'fournisseurs':              '{{ route("gel-accountant.vendors.index") }}',
+          'notes-frais':               '{{ route("gel-accountant.expense-claims.index") }}',
 
           // ─── Banque ───
           'transactions':              '{{ route("gel-accountant.banque.transactions.index") }}',
@@ -1524,6 +1578,10 @@
           'regles-bancaires':          '{{ route("gel-accountant.banque.transactions.index") }}',
           'comptes-bancaires':         '{{ route("gel-accountant.banque.comptes.index") }}',
           'virements':                 '{{ route("gel-accountant.transfer") }}',
+
+          // ─── Fiscalité & Clôture ───
+          'tva':                       '{{ route("gel-accountant.fiscalite.tva.index") }}',
+          'exercices':                 '{{ route("gel-accountant.fiscalite.exercices.index") }}',
 
           // ─── Rapports ───
           'rapports-standards':        '{{ route("gel-accountant.rapports.index") }}',
