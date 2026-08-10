@@ -281,6 +281,18 @@
       <div class="kpi-label">RDV en ligne (48h)</div>
     </div>
   </a>
+
+  @if($activeClient)
+  <a href="#" class="kpi-card" style="text-decoration:none; border-color:#99F6E4; background:#F0FDFA;">
+    <div class="kpi-icon" style="--bg-color: white; --icon-color: #0D9488; border:1px solid #99F6E4;">
+      <i class="fas fa-shield-alt"></i>
+    </div>
+    <div>
+      <div class="kpi-val" style="color: #0D9488;">82%</div>
+      <div class="kpi-label">Score Conformité GEL®</div>
+    </div>
+  </a>
+  @endif
 </div>
 
 <!-- CENTRE DE PRODUCTIVITÉ -->
@@ -566,7 +578,35 @@
     </div>
   </div>
 
+  @if(!$activeClient)
+  {{-- V.1 ÉCRAN MON BUREAU : LISTE DES ENTREPRISES --}}
+  <div class="pro-panel animate-fade delay-3" style="grid-column: span 12;">
+    <div class="panel-header">
+      <div class="panel-title"><i class="fas fa-building" style="color:var(--sec-primary);"></i> MES ENTREPRISES</div>
+      <a href="{{ route('gel-secretary.clients.index') }}" style="font-size:12px; font-weight:600; color:var(--sec-primary); text-decoration:none;">Voir toutes</a>
+    </div>
+    <div class="panel-body" style="padding:16px; display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:16px;">
+      @forelse($clients as $c)
+        <a href="{{ route('gel-secretary.clients.show', $c->id) }}" style="display:flex; align-items:center; justify-content:space-between; padding:16px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; text-decoration:none; color:inherit; transition:all 0.2s;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div class="avatar-sm" style="background:#DBEAFE; color:#1D4ED8;"><i class="fas fa-briefcase"></i></div>
+            <div>
+              <div style="font-weight:700; font-size:14px; color:var(--sec-text);">{{ $c->company_name }}</div>
+              <div style="font-size:11px; color:var(--sec-text-muted);">Client depuis {{ $c->created_at->format('M Y') }}</div>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <span class="badge-sm b-normal">0 urgence</span>
+          </div>
+        </a>
+      @empty
+        <div class="empty-state">Aucune entreprise associée.</div>
+      @endforelse
+    </div>
+  </div>
+  @endif
 </div>
+
 @endsection
 
 @push('scripts')
