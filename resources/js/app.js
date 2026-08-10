@@ -31,6 +31,7 @@ import OrderIndex from './Pages/Admin/Orders/Index.vue';
 import OrderDetail from './Pages/Admin/Orders/Show.vue';
 import AdminUsers from './Pages/Admin/Users.vue';
 import AdminSettings from './Pages/Admin/Settings.vue';
+import CompanyHumanResources from './Pages/Company/HumanResources.vue';
 
 const app = createApp({});
 
@@ -57,6 +58,7 @@ app.component('OrderIndex', OrderIndex);
 app.component('OrderDetail', OrderDetail);
 app.component('AdminUsers', AdminUsers);
 app.component('AdminSettings', AdminSettings);
+app.component('CompanyHr', CompanyHumanResources);
 
 // Only mount Vue on pages that have the #app container (auth pages don't)
 if (document.getElementById('app')) {

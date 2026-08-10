@@ -82,5 +82,37 @@ Route::middleware(['auth'])->group(function () {
 Route::post('/api/appointments', [AppointmentController::class, 'store']);
 Route::get('/api/products/{id}', [\App\Http\Controllers\ProductController::class, 'apiShow']);
 
+// ─── Company (Entreprise) Routes ─────────────────────────────────
+
+Route::middleware(['auth'])->prefix('company')->name('company.')->group(function () {
+    // HR Module (Ressources Humaines)
+    Route::get('/hr', [\App\Http\Controllers\Company\HumanResourcesController::class, 'index'])->name('hr');
+});
+
+// ─── Company API Routes ─────────────────────────────────────────
+
+Route::middleware(['auth'])->prefix('api/company/hr')->name('api.company.hr.')->group(function () {
+    // Employees
+    Route::get('/employees', [\App\Http\Controllers\Company\HumanResourcesController::class, 'employees'])->name('employees');
+    Route::get('/employees/{id}', [\App\Http\Controllers\Company\HumanResourcesController::class, 'employeeShow'])->name('employees.show');
+    Route::post('/employees', [\App\Http\Controllers\Company\HumanResourcesController::class, 'storeEmployee'])->name('employees.store');
+    Route::put('/employees/{id}', [\App\Http\Controllers\Company\HumanResourcesController::class, 'updateEmployee'])->name('employees.update');
+    Route::delete('/employees/{id}', [\App\Http\Controllers\Company\HumanResourcesController::class, 'destroyEmployee'])->name('employees.destroy');
+    Route::get('/departments', [\App\Http\Controllers\Company\HumanResourcesController::class, 'departments'])->name('departments');
+
+    // Leave Requests
+    Route::get('/leaves', [\App\Http\Controllers\Company\HumanResourcesController::class, 'leaveRequests'])->name('leaves');
+    Route::post('/leaves', [\App\Http\Controllers\Company\HumanResourcesController::class, 'storeLeaveRequest'])->name('leaves.store');
+    Route::put('/leaves/{id}/approve', [\App\Http\Controllers\Company\HumanResourcesController::class, 'approveLeave'])->name('leaves.approve');
+
+    // Expenses
+    Route::get('/expenses', [\App\Http\Controllers\Company\HumanResourcesController::class, 'expenses'])->name('expenses');
+    Route::post('/expenses', [\App\Http\Controllers\Company\HumanResourcesController::class, 'storeExpense'])->name('expenses.store');
+    Route::put('/expenses/{id}/approve', [\App\Http\Controllers\Company\HumanResourcesController::class, 'approveExpense'])->name('expenses.approve');
+
+    // Stats
+    Route::get('/stats', [\App\Http\Controllers\Company\HumanResourcesController::class, 'stats'])->name('stats');
+});
+
 require __DIR__.'/auth.php';
 require __DIR__.'/debug.php';
