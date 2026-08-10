@@ -58,6 +58,11 @@ app.component('OrderDetail', OrderDetail);
 app.component('AdminUsers', AdminUsers);
 app.component('AdminSettings', AdminSettings);
 
+// Company Portal Components
+import CompanyNotifications from './Pages/Company/Notifications.vue';
+
+app.component('CompanyNotifications', CompanyNotifications);
+
 // Only mount Vue on pages that have the #app container (auth pages don't)
 if (document.getElementById('app')) {
     app.mount('#app');

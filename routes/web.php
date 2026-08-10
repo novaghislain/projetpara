@@ -82,5 +82,21 @@ Route::middleware(['auth'])->group(function () {
 Route::post('/api/appointments', [AppointmentController::class, 'store']);
 Route::get('/api/products/{id}', [\App\Http\Controllers\ProductController::class, 'apiShow']);
 
+// ─── Portail Entreprise ─────────────────────────────────────────────
+Route::middleware(['auth', 'company.auth'])->prefix('company')->name('company.')->group(function () {
+    Route::get('/notifications', function () {
+        return view('company', ['page' => 'company-notifications']);
+    })->name('notifications');
+});
+
+// ─── API Notifications entreprise ───────────────────────────────────
+Route::middleware(['auth', 'company.auth'])->group(function () {
+    Route::get('/api/company/notifications', [\App\Http\Controllers\Company\NotificationController::class, 'index']);
+    Route::get('/api/company/notifications/unread-count', [\App\Http\Controllers\Company\NotificationController::class, 'unreadCount']);
+    Route::patch('/api/company/notifications/{id}/read', [\App\Http\Controllers\Company\NotificationController::class, 'markAsRead']);
+    Route::patch('/api/company/notifications/read-all', [\App\Http\Controllers\Company\NotificationController::class, 'markAllAsRead']);
+    Route::delete('/api/company/notifications/{id}', [\App\Http\Controllers\Company\NotificationController::class, 'destroy']);
+});
+
 require __DIR__.'/auth.php';
 require __DIR__.'/debug.php';
