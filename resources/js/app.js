@@ -58,6 +58,21 @@ app.component('OrderDetail', OrderDetail);
 app.component('AdminUsers', AdminUsers);
 app.component('AdminSettings', AdminSettings);
 
+// Company Portal Components
+import CompanyDashboard from './Pages/Company/Dashboard.vue';
+import CompanyServices from './Pages/Company/Services.vue';
+import CompanyProfile from './Pages/Company/Profile.vue';
+import CompanyUsers from './Pages/Company/Users.vue';
+import CompanyGed from './Pages/Company/Ged.vue';
+import CompanyInvoices from './Pages/Company/Invoices.vue';
+
+app.component('CompanyDashboard', CompanyDashboard);
+app.component('CompanyServices', CompanyServices);
+app.component('CompanyProfile', CompanyProfile);
+app.component('CompanyUsers', CompanyUsers);
+app.component('CompanyGed', CompanyGed);
+app.component('CompanyInvoices', CompanyInvoices);
+
 // Only mount Vue on pages that have the #app container (auth pages don't)
 if (document.getElementById('app')) {
     app.mount('#app');
