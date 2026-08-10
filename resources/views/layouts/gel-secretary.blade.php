@@ -874,56 +874,80 @@
     {{-- Sélecteur d'entreprise --}}
     @php
       $user = auth()->user();
+      $isAutonomous = $user ? $user->isAutonomousSecretary() : false;
       $clientIds = $user ? $user->userClients()->pluck('client_id')->toArray() : [];
-      $query = \App\Models\Gel\Client::query();
+      // Utilise App\Models\Client (table: clients) référencée par user_clients.client_id
+      $query = \App\Models\Client::query();
       if ($user && $user->cabinet_id) {
-        $query->where('cabinet_id', $user->cabinet_id)->orWhereIn('id', $clientIds);
+        $query->where('created_by', $user->cabinet_id)->orWhereIn('id', $clientIds);
       } else {
         $query->whereIn('id', $clientIds);
       }
-      $clients = $query->orderBy('nom_entreprise')->get();
+      $clients = $query->orderBy('company_name')->get();
       $activeClientId = session('active_client_id');
-      $activeClient = $activeClientId ? $clients->firstWhere('id', $activeClientId) : null;
+      
+      if ($isAutonomous && $clients->count() > 0) {
+          $activeClient = $clients->first();
+          if (!$activeClientId) {
+              session(['active_client_id' => $activeClient->id]);
+              $activeClientId = $activeClient->id;
+          }
+      } else {
+          $activeClient = $activeClientId ? $clients->firstWhere('id', $activeClientId) : null;
+      }
     @endphp
 
-    <div class="sec-client-switcher" onclick="toggleClientDropdown()" id="clientSwitcher">
-      <i class="fas fa-building" style="opacity:.8;font-size:13px;"></i>
-      <span class="name">{{ $activeClient?->nom_entreprise ?? 'Sélectionner une entreprise' }}</span>
-      <i class="fas fa-chevron-down" style="font-size:10px;opacity:.7;"></i>
+    @if($isAutonomous)
+      <div class="sec-client-switcher" style="cursor: default;">
+        <i class="fas fa-building" style="opacity:.8;font-size:13px;"></i>
+        @if($clients->count() > 0)
+          <span class="name">{{ $clients->first()->company_name }}</span>
+        @else
+          <a href="{{ route('gel-secretary.autonomous.enterprise.create') }}" style="color: inherit; text-decoration: none;">
+            <span class="name text-warning"><i class="fas fa-plus"></i> Créer mon entreprise</span>
+          </a>
+        @endif
+      </div>
+    @else
+      <div class="sec-client-switcher" onclick="toggleClientDropdown()" id="clientSwitcher">
+        <i class="fas fa-building" style="opacity:.8;font-size:13px;"></i>
+        <span class="name">{{ $activeClient?->company_name ?? 'Sélectionner une entreprise' }}</span>
+        <i class="fas fa-chevron-down" style="font-size:10px;opacity:.7;"></i>
 
-      <div class="client-dropdown" id="clientDropdown">
-        @forelse($clients as $c)
-          <form method="POST" action="{{ route('gel-secretary.switch-client') }}" style="margin:0;">
-            @csrf
-            <input type="hidden" name="client_id" value="{{ $c->id }}">
-            <button type="submit"
-              class="client-dd-item w-100 border-0 text-start {{ $activeClient?->id == $c->id ? 'active' : '' }}">
-              <div class="client-dd-avatar">{{ strtoupper(substr($c->nom_entreprise ?? 'E', 0, 2)) }}</div>
-              <div>
-                <div style="font-size:13px;">{{ $c->nom_entreprise }}</div>
-                <div style="font-size:11px;color:var(--sec-text-muted);">{{ $c->email ?? '—' }}</div>
-              </div>
-            </button>
-          </form>
-        @empty
-          <div class="client-dd-item" style="color:var(--sec-text-muted);">Aucune entreprise enregistrée</div>
-        @endforelse
-        @if($activeClient)
-          <div style="border-top:1px solid var(--sec-border); margin-top:4px; padding-top:4px;">
-            <form method="POST" action="{{ route('gel-secretary.switch-client.clear') }}" style="margin:0;">
+        <div class="client-dropdown" id="clientDropdown">
+          @forelse($clients as $c)
+            <form method="POST" action="{{ route('gel-secretary.switch-client') }}" style="margin:0;">
               @csrf
-              <button type="submit" class="client-dd-item w-100 border-0 text-start" style="color: var(--sec-danger);">
-                <div class="client-dd-avatar" style="background: #FEF2F2; color: #EF4444;"><i class="fas fa-times"></i></div>
+              <input type="hidden" name="client_id" value="{{ $c->id }}">
+              <button type="submit"
+                class="client-dd-item w-100 border-0 text-start {{ $activeClient?->id == $c->id ? 'active' : '' }}">
+                <div class="client-dd-avatar">{{ strtoupper(substr($c->company_name ?? 'E', 0, 2)) }}</div>
                 <div>
-                  <div style="font-size:13px; font-weight: 600;">Fermer le dossier</div>
-                  <div style="font-size:11px;color:var(--sec-text-muted);">Retour au menu principal</div>
+                  <div style="font-size:13px;">{{ $c->company_name }}</div>
+                  <div style="font-size:11px;color:var(--sec-text-muted);">{{ $c->email ?? '—' }}</div>
                 </div>
               </button>
             </form>
-          </div>
-        @endif
+          @empty
+            <div class="client-dd-item" style="color:var(--sec-text-muted);">Aucune entreprise enregistrée</div>
+          @endforelse
+          @if($activeClient)
+            <div style="border-top:1px solid var(--sec-border); margin-top:4px; padding-top:4px;">
+              <form method="POST" action="{{ route('gel-secretary.switch-client.clear') }}" style="margin:0;">
+                @csrf
+                <button type="submit" class="client-dd-item w-100 border-0 text-start" style="color: var(--sec-danger);">
+                  <div class="client-dd-avatar" style="background: #FEF2F2; color: #EF4444;"><i class="fas fa-times"></i></div>
+                  <div>
+                    <div style="font-size:13px; font-weight: 600;">Fermer le dossier</div>
+                    <div style="font-size:11px;color:var(--sec-text-muted);">Retour au menu principal</div>
+                  </div>
+                </button>
+              </form>
+            </div>
+          @endif
+        </div>
       </div>
-    </div>
+    @endif
     </div>
 
     <div style="margin-left: 20px; position: relative; flex:1; max-width:400px;">

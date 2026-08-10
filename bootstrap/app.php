@@ -62,6 +62,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('it:asset-alerts')->weeklyOn(1, '08:00');
         // Sauvegarde automatique de la base de données chaque jour à 02h00
         $schedule->command('db:backup --compress')->dailyAt('02:00');
+        // Espace Documentaire — garantit automatiquement le mois/l'année en cours
+        // (idempotent, 4×/jour : un échec nocturne est auto-réparé à la passe
+        // suivante et déclenche une notification). Ne dépend jamais d'une action
+        // manuelle.
+        $schedule->command('folders:calendar')->everySixHours();
     })
     ->withMiddleware(function (Middleware $middleware): void {
         // ─── Middleware global (appliqué à TOUTES les requêtes) ────────
@@ -134,6 +139,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'communication.permission' => \App\Http\Middleware\EnsureHasCommunicationPermission::class,
             // Portail Consultant
             'consultant.access'        => \App\Http\Middleware\EnsureConsultantAccess::class,
+            // Secrétaire Autonome Onboarding
+            'check.autonomous'         => \App\Http\Middleware\CheckAutonomousOnboarding::class,
         ]);
 
         // ─── Middleware applicatif (exécuté après les globaux) ─────────

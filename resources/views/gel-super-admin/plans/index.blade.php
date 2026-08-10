@@ -33,6 +33,9 @@
             @if(!$plan->is_active)
                 <div class="position-absolute top-0 end-0 m-3 badge bg-danger rounded-pill">Inactif</div>
             @endif
+            <div class="mb-1 text-muted text-uppercase" style="font-size: 0.7rem; font-weight: bold; letter-spacing: 1px;">
+                Cible: {{ str_replace('_', ' ', $plan->profile_type) }}
+            </div>
             <h4 class="fw-bold mb-3">{{ $plan->name }}</h4>
             <div class="display-6 fw-bold text-primary mb-3">{{ number_format($plan->price, 0, ',', ' ') }} <small class="fs-6">FCFA/mois</small></div>
             <p class="text-muted" style="font-size: 0.85rem; min-height: 40px;">{{ $plan->description }}</p>
@@ -87,6 +90,15 @@
                                 <label class="form-label">Quota IA</label>
                                 <input type="number" name="ia_quota" class="form-control border-light" value="{{ $plan->ia_quota }}" required min="0">
                             </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Type de profil ciblé</label>
+                            <select name="profile_type" class="form-select border-light" required>
+                                <option value="entreprise" {{ $plan->profile_type == 'entreprise' ? 'selected' : '' }}>Entreprise (Client direct)</option>
+                                <option value="secretaire_independant" {{ $plan->profile_type == 'secretaire_independant' ? 'selected' : '' }}>Secrétaire Indépendant(e)</option>
+                                <option value="comptable_independant" {{ $plan->profile_type == 'comptable_independant' ? 'selected' : '' }}>Comptable Indépendant(e)</option>
+                                <option value="gel_pool" {{ $plan->profile_type == 'gel_pool' ? 'selected' : '' }}>Usage Interne (GEL)</option>
+                            </select>
                         </div>
                         <div class="form-check form-switch mb-3">
                             <input class="form-check-input" type="checkbox" name="is_active" id="isActive{{ $plan->id }}" {{ $plan->is_active ? 'checked' : '' }} value="1">
@@ -147,6 +159,15 @@
                             <label class="form-label">Quota IA</label>
                             <input type="number" name="ia_quota" class="form-control border-light" value="0" required min="0">
                         </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Type de profil ciblé</label>
+                        <select name="profile_type" class="form-select border-light" required>
+                            <option value="entreprise">Entreprise (Client direct)</option>
+                            <option value="secretaire_independant">Secrétaire Indépendant(e)</option>
+                            <option value="comptable_independant">Comptable Indépendant(e)</option>
+                            <option value="gel_pool">Usage Interne (GEL)</option>
+                        </select>
                     </div>
                     <div class="form-check form-switch mb-3">
                         <input class="form-check-input" type="checkbox" name="is_active" id="isActiveNew" checked value="1">

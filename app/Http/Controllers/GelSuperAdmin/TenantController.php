@@ -196,4 +196,34 @@ class TenantController extends Controller
 
         return redirect()->route('gel-business.dashboard')->with('warning', 'Vous êtes en mode Support.');
     }
+
+    public function stopImpersonate(Request $request)
+    {
+        if (!session()->has('impersonated_by_superadmin')) {
+            return redirect('/');
+        }
+
+        $superAdminId = session('impersonate_original');
+        
+        // Log end of impersonation
+        AuditTrail::create([
+            'user_id' => $superAdminId,
+            'event' => 'IMPERSONATE_STOP',
+            'description' => "Fin de la session de support technique.",
+            'ip_address' => request()->ip(),
+            'auditable_type' => User::class,
+            'auditable_id' => Auth::id()
+        ]);
+
+        session()->forget([
+            'impersonated_by_superadmin',
+            'impersonate_original',
+            'impersonate_reason',
+            'impersonate_started_at'
+        ]);
+
+        Auth::loginUsingId($superAdminId);
+
+        return redirect()->route('gel-super-admin.tenants.index')->with('success', 'Session de support terminée.');
+    }
 }

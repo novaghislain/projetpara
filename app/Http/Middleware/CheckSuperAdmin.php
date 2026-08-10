@@ -38,6 +38,15 @@ class CheckSuperAdmin
             abort(403, 'Accès réservé aux Super Administrateurs.');
         }
 
+        // 2FA Obligatoire sans exception pour le Super Admin
+        if (empty(Auth::user()->two_factor_secret) || empty(Auth::user()->two_factor_confirmed_at)) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'L\'authentification à double facteur (2FA) est strictement obligatoire pour cet accès.'], 403);
+            }
+            // Idéalement rediriger vers la page de profil pour l'activation
+            return redirect()->route('profile.show')->with('error', 'Vous devez activer l\'authentification à deux facteurs (2FA) pour accéder au portail Super Admin.');
+        }
+
         return $next($request);
     }
 }

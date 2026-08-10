@@ -89,6 +89,19 @@
                     </div>
                 </div>
 
+                <div class="row mb-4">
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label text-white">URL du Calendrier Fiscal partagé (iCal / Google Calendar)</label>
+                        <input type="hidden" name="settings[tax_calendar_url][type]" value="string">
+                        <input type="hidden" name="settings[tax_calendar_url][description]" value="URL publique du calendrier fiscal pour tous les cabinets">
+                        <input type="url" class="form-control" name="settings[tax_calendar_url][value]" 
+                               value="{{ $settings['tax_calendar_url']->value ?? '' }}"
+                               placeholder="https://calendar.google.com/calendar/ical/..."
+                               style="background-color: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1);">
+                        <small class="text-muted">Lien affiché et synchronisé sur les tableaux de bord des cabinets.</small>
+                    </div>
+                </div>
+
                 <h5 class="text-white mb-4 border-bottom border-secondary pb-2 mt-5">
                     <i class="fas fa-globe text-info me-2"></i> Maintenance
                 </h5>

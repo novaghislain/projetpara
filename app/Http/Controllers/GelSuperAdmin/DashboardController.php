@@ -88,8 +88,8 @@ class DashboardController extends Controller
         $systemStatus = [
             'database' => $this->checkDatabase(),
             'mailing' => $this->checkMailing(),
-            'anthropic' => 'Opérationnel', // Simulé, potentiellement vérifier un appel API simple
-            'momo' => 'Opérationnel', // Simulé
+            'anthropic' => $this->checkAnthropic(),
+            'momo' => $this->checkMobileMoney(),
             'disk_space' => $this->checkDiskSpace(),
         ];
 
@@ -143,6 +143,48 @@ class DashboardController extends Controller
         } catch (\Exception $e) {
             return ['status' => 'Inconnu', 'free' => 'N/A'];
         }
+    }
+
+    private function checkAnthropic()
+    {
+        $key = config('services.anthropic.key') ?: env('ANTHROPIC_API_KEY');
+        if (empty($key)) {
+            return 'Clé API manquante';
+        }
+
+        try {
+            // Un ping très simple (requête invalide exprès mais qui valide la connectivité)
+            $response = \Illuminate\Support\Facades\Http::withHeaders([
+                'x-api-key' => $key,
+                'anthropic-version' => '2023-06-01'
+            ])->post('https://api.anthropic.com/v1/messages', [
+                'model' => 'claude-3-haiku-20240307',
+                'max_tokens' => 1,
+                'messages' => [['role' => 'user', 'content' => 'ping']]
+            ]);
+
+            if ($response->successful() || $response->status() === 400) {
+                // Si on a 400 (Invalid Request) c'est que l'API a répondu et validé l'existence du endpoint
+                $body = $response->json();
+                if (isset($body['error']) && strpos($body['error']['message'] ?? '', 'credit balance is too low') !== false) {
+                    return 'Solde insuffisant';
+                }
+                return 'Opérationnel';
+            }
+            return 'Erreur API';
+        } catch (\Exception $e) {
+            return 'Inaccessible';
+        }
+    }
+
+    private function checkMobileMoney()
+    {
+        // Vérification fictive mais basée sur l'existence des clés FedaPay/KKiaPay si configurées
+        $fedapay = env('FEDAPAY_SECRET_KEY');
+        if ($fedapay) {
+            return 'Configuré (FedaPay)';
+        }
+        return 'Non configuré';
     }
 
     private function getChartData()

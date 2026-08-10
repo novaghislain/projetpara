@@ -24,7 +24,8 @@ class PlanController extends Controller
             'price' => 'required|numeric|min:0',
             'max_users' => 'nullable|integer|min:1',
             'ia_quota' => 'required|integer|min:0',
-            'is_active' => 'boolean'
+            'is_active' => 'boolean',
+            'profile_type' => 'required|in:entreprise,secretaire_independant,comptable_independant,gel_pool'
         ]);
 
         $plan = SubscriptionPlan::create([
@@ -33,6 +34,7 @@ class PlanController extends Controller
             'price' => $validated['price'],
             'max_users' => $validated['max_users'],
             'ia_quota' => $validated['ia_quota'],
+            'profile_type' => $validated['profile_type'],
             'is_active' => $request->has('is_active'),
         ]);
 
@@ -58,7 +60,8 @@ class PlanController extends Controller
             'price' => 'required|numeric|min:0',
             'max_users' => 'nullable|integer|min:1',
             'ia_quota' => 'required|integer|min:0',
-            'is_active' => 'boolean'
+            'is_active' => 'boolean',
+            'profile_type' => 'required|in:entreprise,secretaire_independant,comptable_independant,gel_pool'
         ]);
 
         $plan->update([
@@ -67,6 +70,7 @@ class PlanController extends Controller
             'price' => $validated['price'],
             'max_users' => $validated['max_users'],
             'ia_quota' => $validated['ia_quota'],
+            'profile_type' => $validated['profile_type'],
             'is_active' => $request->has('is_active'),
         ]);
 

@@ -44,13 +44,18 @@ use App\Http\Controllers\Gel\GelChatController;
 | Middleware : auth, vérification rôle comptable
 */
 
+// ─── Inscription Autonome (Comptable Indépendant) ────────────────
+Route::get('/register/choices', [\App\Http\Controllers\GelAccountant\Auth\AccountantRegisterController::class, 'showChoices'])->name('gel-accountant.register.choices');
+Route::get('/register/autonome', [\App\Http\Controllers\GelAccountant\Auth\AccountantRegisterController::class, 'showAutonomousForm'])->name('gel-accountant.register.autonomous');
+Route::post('/register/autonome', [\App\Http\Controllers\GelAccountant\Auth\AccountantRegisterController::class, 'registerAutonomous']);
+
 // ─── Route publique d'acceptation d'invitation ─────────────────────
 Route::get('/invitation/accept/{token}', [InvitationAcceptController::class, 'showAcceptForm'])
     ->name('gel.invitation.accept');
 Route::post('/invitation/accept/{token}', [InvitationAcceptController::class, 'accept']);
 
 // ─── Routes protégées (auth requise) ─────────────────────────────
-Route::middleware(['auth', 'redirect.client', 'company'])->prefix('gel-accountant')->name('gel-accountant.')->group(function () {
+Route::middleware(['auth', 'redirect.client', 'company', \App\Http\Middleware\CheckComptableSubscription::class])->prefix('gel-accountant')->name('gel-accountant.')->group(function () {
 
     // ─── Dashboard ───
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -80,6 +85,19 @@ Route::middleware(['auth', 'redirect.client', 'company'])->prefix('gel-accountan
         Route::put('/{id}', [ClientsController::class, 'update'])->name('update');
     });
     Route::get('/clients', [ClientsController::class, 'index'])->name('clients');
+
+    // ─── Comptable Indépendant (Gestion de ses propres clients) ───
+    Route::middleware([\App\Http\Middleware\EnsureComptableIndependantAccess::class])->prefix('independant')->name('independant.')->group(function () {
+        Route::resource('clients', \App\Http\Controllers\GelAccountant\IndependantClientController::class);
+        Route::post('clients/{id}/invitation', [\App\Http\Controllers\GelAccountant\IndependantClientController::class, 'generateInvitationLink'])->name('clients.invite');
+        
+        // Abonnement
+        Route::get('/subscription', [\App\Http\Controllers\GelAccountant\Subscription\IndependantSubscriptionController::class, 'index'])->name('subscription.index');
+        Route::post('/subscription', [\App\Http\Controllers\GelAccountant\Subscription\IndependantSubscriptionController::class, 'subscribe'])->name('subscription.subscribe');
+        Route::get('/subscription/expired', function() {
+            return view('gel-accountant.independant.subscription.expired');
+        })->name('subscription.expired');
+    });
 
     // ─── Sélection de client (comptable → bascule sur une entreprise) ───
     Route::get('/client/{clientId}/select', [ClientSelectionController::class, 'select'])->name('client.select');

@@ -54,6 +54,7 @@ class Client extends Model
         'secteur',
         'logo',
         'statut',
+        'compte_comptable_id',
     ];
 
     protected $casts = [

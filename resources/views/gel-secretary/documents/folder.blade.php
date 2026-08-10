@@ -159,19 +159,41 @@
     <div style="flex:1; background:white; border-radius:12px; padding:20px; min-height:500px; border:1px solid #e2e8f0; box-shadow:0 1px 3px rgba(0,0,0,0.02);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
             <div>
-                <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--sec-text-muted); margin-bottom:6px;">
-                    <a href="{{ route('gel-secretary.documents.index') }}" style="color:var(--sec-primary); font-weight:600; text-decoration:none;"><i class="fas fa-layer-group"></i> Mon Espace</a>
-                    <i class="fas fa-chevron-right" style="font-size:10px;"></i>
+                <div style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--sec-text-muted); margin-bottom:8px; flex-wrap:wrap;">
+                    <a href="{{ route('gel-secretary.documents.index') }}" style="color:var(--sec-primary); font-weight:600; text-decoration:none;"><i class="fas fa-layer-group"></i> Espace Documentaire</a>
+                    @foreach($ancestors as $ancestor)
+                        <i class="fas fa-chevron-right" style="font-size:10px; color:#cbd5e1;"></i>
+                        <a href="{{ $ancestor['url'] }}" style="color:#64748b; font-weight:500; text-decoration:none;" onmouseover="this.style.color='var(--sec-primary)'" onmouseout="this.style.color='#64748b'">{{ $ancestor['name'] }}</a>
+                    @endforeach
+                    <i class="fas fa-chevron-right" style="font-size:10px; color:#cbd5e1;"></i>
                     <span style="background:#e2e8f0; padding:2px 8px; border-radius:12px; font-weight:600; color:#475569;">{{ $folder->name }}</span>
                 </div>
-                <h1 style="margin:0; font-size:20px; font-weight:700; color:var(--sec-text); display:flex; align-items:center; gap:10px;">
+                <h1 style="margin:0; font-size:20px; font-weight:700; color:var(--sec-text); display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                     <i class="fas fa-folder-open" style="color:#FBBF24; filter: drop-shadow(0 2px 4px rgba(245,158,11,0.3));"></i>{{ $folder->name }}
+                    @if($isCurrentMonth)
+                        <span class="badge bg-success" style="font-size:10px; padding:4px 10px;" title="Mois en cours — dépos automatique garanti">
+                            <i class="fas fa-circle"></i> Mois actuel
+                        </span>
+                    @elseif($isClosed)
+                        <span class="badge bg-secondary" style="font-size:10px; padding:4px 10px;" title="Mois clôturé — lecture seule">
+                            🔒 Mois clôturé
+                        </span>
+                    @endif
                 </h1>
             </div>
             <div>
-                <button class="sec-btn" style="background:white; color:var(--sec-primary); border:1px solid var(--sec-primary); margin-right:8px;" onclick="openCreateFolderModal()">
-                    <i class="fas fa-folder-plus"></i> Nouveau Sous-Dossier
-                </button>
+                @if($isClosed)
+                    <span style="display:inline-flex; align-items:center; gap:8px; background:#f1f5f9; color:#64748b; font-size:12.5px; font-weight:600; padding:10px 16px; border-radius:10px;">
+                        <i class="fas fa-lock"></i> Lecture seule
+                    </span>
+                @else
+                    <button class="sec-btn sec-btn-primary" style="margin-right:8px;" onclick="window.SecScanner && SecScanner.open({{ $folder->id }}, '{{ addslashes($folder->name) }}')" title="Scanner & classer un document dans ce dossier">
+                        <i class="fas fa-camera"></i> Scanner
+                    </button>
+                    <button class="sec-btn" style="background:white; color:var(--sec-primary); border:1px solid var(--sec-primary);" onclick="openCreateFolderModal()">
+                        <i class="fas fa-folder-plus"></i> Nouveau Sous-Dossier
+                    </button>
+                @endif
             </div>
         </div>
         
@@ -228,6 +250,15 @@
 </div>
 
 <!-- Smart Drag & Drop Zone -->
+@if($isClosed)
+<div style="padding:18px 20px; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:12px; color:#64748b; font-size:13px; margin-bottom:24px; display:flex; align-items:center; gap:12px;">
+  <i class="fas fa-lock" style="font-size:22px; color:#94a3b8;"></i>
+  <div>
+    <strong style="color:#475569;">Mois clôturé — lecture seule.</strong><br>
+    L'ajout, le renommage et la suppression sont désactivés pour cette période. Les documents restent consultables et téléchargeables.
+  </div>
+</div>
+@else
 <form action="{{ route('gel-secretary.documents.upload') }}" method="POST" enctype="multipart/form-data" id="dropzoneForm">
   @csrf
   <input type="hidden" name="folder_id" value="{{ $folder->id }}">
@@ -276,6 +307,7 @@
     </div>
   </div>
 </form>
+@endif
 
 <script>
 // ─── S14 : analyse IA du fichier sélectionné (proposition de classement) ───
@@ -600,36 +632,38 @@ function skipAi() {
 </div>
 
 <script>
-// Drag and Drop Script
+// Drag and Drop Script (désactivé sur mois clôturé : lecture seule)
 const dropzone = document.getElementById('dropzoneArea');
 const fileInput = document.getElementById('fileInput');
 const form = document.getElementById('dropzoneForm');
 
-['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-  dropzone.addEventListener(eventName, preventDefaults, false);
-});
+if (dropzone && fileInput && form) {
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, preventDefaults, false);
+  });
 
-function preventDefaults (e) {
-  e.preventDefault();
-  e.stopPropagation();
-}
-
-['dragenter', 'dragover'].forEach(eventName => {
-  dropzone.addEventListener(eventName, () => dropzone.classList.add('dragover'), false);
-});
-
-['dragleave', 'drop'].forEach(eventName => {
-  dropzone.addEventListener(eventName, () => dropzone.classList.remove('dragover'), false);
-});
-
-dropzone.addEventListener('drop', (e) => {
-  let dt = e.dataTransfer;
-  let files = dt.files;
-  if(files.length > 0) {
-      fileInput.files = files;
-      fileInput.dispatchEvent(new Event('change')); // déclenche l'analyse IA
+  function preventDefaults (e) {
+    e.preventDefault();
+    e.stopPropagation();
   }
-});
+
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropzone.addEventListener(eventName, () => dropzone.classList.add('dragover'), false);
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, () => dropzone.classList.remove('dragover'), false);
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    let dt = e.dataTransfer;
+    let files = dt.files;
+    if(files.length > 0) {
+        fileInput.files = files;
+        fileInput.dispatchEvent(new Event('change')); // déclenche l'analyse IA
+    }
+  });
+}
 
 // Modals
 function showHistoryModal(id) {
@@ -902,5 +936,12 @@ function submitDeleteItem() {
   @method('DELETE')
 </form>
 
+{{-- Zone d'accueil du module de scan caméra (resources/js/scanning.js) --}}
+<div id="secScannerRoot"></div>
+
 @endsection
+
+@push('scripts')
+  @vite(['resources/js/scanning.js'])
+@endpush
 

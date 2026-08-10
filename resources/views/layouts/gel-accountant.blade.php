@@ -864,32 +864,55 @@
         <span>GEL <small>Accountant</small></span>
       </div>
 
-      {{-- Go To Business --}}
+    {{-- Go To Business / Select Client --}}
       <div style="position:relative;">
         <button class="btn-go-business" id="btnGoBusiness" onclick="toggleDropdown('dropdownGoBusiness')">
-          <i class="fas fa-exchange-alt"></i> Go To GEL Business <i class="fas fa-chevron-down" style="font-size:9px;"></i>
+          <i class="fas fa-exchange-alt"></i> 
+          @if(auth()->user()->isAutonomousAccountant())
+             @if(auth()->user()->activeIndependantClient)
+                Dossier : {{ Str::limit(auth()->user()->activeIndependantClient->nom_entreprise, 15) }}
+             @else
+                Sélectionner un dossier
+             @endif
+          @else
+             Go To GEL Business 
+          @endif
+          <i class="fas fa-chevron-down" style="font-size:9px;"></i>
         </button>
         <div class="nested-dropdown" id="dropdownGoBusiness" style="position:absolute;left:0;top:calc(100% + 6px);min-width:300px;">
-          <div class="dd-header">Mes clients</div>
+          <div class="dd-header">Mes dossiers clients</div>
           @php 
-            $cabinetClients = []; 
-            try { 
-              $u = auth()->user();
-              $cabinetClients = \App\Models\Gel\Client::where(function($q) use ($u) {
-                  if ($u?->cabinet_id) $q->where('cabinet_id', $u->cabinet_id);
-                  $q->orWhereIn('id', function($sub) use ($u) {
-                      $sub->select('client_id')->from('user_clients')->where('user_id', $u->id);
-                  });
-              })->where('statut', 'actif')->get(); 
-            } catch(\Exception $e) {} 
+            $u = auth()->user();
+            if ($u->isAutonomousAccountant()) {
+                $myClients = \App\Models\IndependantComptableClient::where('comptable_id', $u->id)->get();
+                foreach($myClients as $c) {
+                    echo '<a href="'.route('gel-accountant.independant.client.select', $c->id).'" class="dd-item" style="text-decoration:none;"><span class="dd-icon"><i class="fas fa-folder me-1"></i></span> '.$c->nom_entreprise.'</a>';
+                }
+                if ($myClients->isEmpty()) {
+                    echo '<div class="dd-item" style="color:rgba(255,255,255,0.5);"><span class="dd-icon"><i class="fas fa-folder me-1"></i></span> Aucun dossier</div>';
+                }
+                echo '<div class="dd-divider"></div>';
+                echo '<a href="'.route('gel-accountant.independant.clients.index').'" class="dd-item" style="text-decoration:none;"><span class="dd-icon"><i class="fas fa-cog me-1"></i></span> Gérer mes clients</a>';
+            } else {
+                $cabinetClients = []; 
+                try { 
+                  $cabinetClients = \App\Models\Gel\Client::where(function($q) use ($u) {
+                      if ($u?->cabinet_id) $q->where('cabinet_id', $u->cabinet_id);
+                      $q->orWhereIn('id', function($sub) use ($u) {
+                          $sub->select('client_id')->from('user_clients')->where('user_id', $u->id);
+                      });
+                  })->where('statut', 'actif')->get(); 
+                } catch(\Exception $e) {} 
+                foreach($cabinetClients as $c) {
+                    echo '<div class="dd-item" data-route="client-'.$c->id.'"><span class="dd-icon"><i class="fas fa-building me-1"></i></span> '.$c->nom_entreprise.'</div>';
+                }
+                if ($cabinetClients->isEmpty()) {
+                    echo '<div class="dd-item" style="color:rgba(255,255,255,0.5);"><span class="dd-icon"><i class="fas fa-building me-1"></i></span> Aucun client actif</div>';
+                }
+                echo '<div class="dd-divider"></div>';
+                echo '<div class="dd-item" data-route="gestion-clients"><span class="dd-icon"><i class="fas fa-cog me-1"></i></span> Gérer les clients</div>';
+            }
           @endphp
-          @forelse($cabinetClients as $c)
-          <div class="dd-item" data-route="client-{{ $c->id }}"><span class="dd-icon"><i class="fas fa-building me-1"></i></span> {{ $c->nom_entreprise }}</div>
-          @empty
-          <div class="dd-item" style="color:rgba(255,255,255,0.5);"><span class="dd-icon"><i class="fas fa-building me-1"></i></span> Aucun client actif</div>
-          @endforelse
-          <div class="dd-divider"></div>
-          <div class="dd-item" data-route="gestion-clients"><span class="dd-icon"><i class="fas fa-cog me-1"></i></span> Gérer les clients</div>
         </div>
       </div>
     </div>
@@ -1037,6 +1060,9 @@
     </div>
   </header>
 
+  {{-- ════════════════════════════════════════════ BANNIÈRE ESSAI ═══════════════ --}}
+  @include('gel-accountant.independant.subscription.trial-banner')
+
   {{-- ════════════════════════════════════════════ SIDEBAR ═══════════════ --}}
   <aside class="gel-sidebar">
     <div style="padding: 16px 16px 8px;">
@@ -1119,13 +1145,13 @@
       </li>
 
       <div class="sidebar-section">Comptabilité</div>
-      <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'comptabilite') || request()->routeIs('gel-accountant.comptabilite*') ? 'active' : '' }}" data-dropdown="dd-compta" onclick="window.location.href='{{ route('gel-accountant.comptabilite.journaux') }}'"><i class="fas fa-book me-2"></i> Comptabilité <span class="arrow">▸</span></li>
-      <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'facturation') || request()->routeIs('gel-accountant.factures*') || request()->routeIs('gel-accountant.payments*') ? 'active' : '' }}" data-dropdown="dd-fact" onclick="window.location.href='{{ route('gel-accountant.factures.index') }}'"><i class="fas fa-file-invoice-dollar me-2"></i> Facturation <span class="arrow">▸</span></li>
-      <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'depenses') || request()->routeIs('gel-accountant.depenses*') ? 'active' : '' }}" data-dropdown="dd-dep" onclick="window.location.href='{{ route('gel-accountant.expenses.create') }}'"><i class="fas fa-wallet me-2"></i> Dépenses & Achats <span class="arrow">▸</span></li>
-      <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'banque') || request()->routeIs('gel-accountant.banque*') ? 'active' : '' }}" data-dropdown="dd-banque" onclick="window.location.href='{{ route('gel-accountant.banque.transactions.index') }}'"><i class="fas fa-university me-2"></i> Banque <span class="arrow">▸</span></li>
+      <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'comptabilite') || request()->routeIs('gel-accountant.comptabilite*') ? 'active' : '' }}" data-dropdown="dd-compta"><i class="fas fa-book me-2"></i> Comptabilité <span class="arrow">▸</span></li>
+      <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'facturation') || request()->routeIs('gel-accountant.factures*') || request()->routeIs('gel-accountant.payments*') ? 'active' : '' }}" data-dropdown="dd-fact"><i class="fas fa-file-invoice-dollar me-2"></i> Facturation <span class="arrow">▸</span></li>
+      <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'depenses') || request()->routeIs('gel-accountant.depenses*') ? 'active' : '' }}" data-dropdown="dd-dep"><i class="fas fa-wallet me-2"></i> Dépenses & Achats <span class="arrow">▸</span></li>
+      <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'banque') || request()->routeIs('gel-accountant.banque*') ? 'active' : '' }}" data-dropdown="dd-banque"><i class="fas fa-university me-2"></i> Banque <span class="arrow">▸</span></li>
       
       <div class="sidebar-section">Commerce & POS</div>
-      <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'commerce') || request()->routeIs('gel-accountant.commerce*') ? 'active' : '' }}" data-dropdown="dd-commerce" onclick="window.location.href='{{ route('gel-accountant.commerce.pos.index') }}'">
+      <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'commerce') || request()->routeIs('gel-accountant.commerce*') ? 'active' : '' }}" data-dropdown="dd-commerce">
         <i class="fas fa-cash-register me-2"></i> Caisses (POS) <span class="arrow">▸</span>
       </li>
  
@@ -1137,7 +1163,7 @@
           <span class="arrow">▸</span>
       </li>
       <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'fiscalite') || request()->routeIs('gel-accountant.fiscalite*') ? 'active' : '' }}" data-dropdown="dd-fiscalite"><i class="fas fa-file-invoice-dollar me-2"></i> Fiscalité & Clôture <span class="arrow">▸</span></li>
-      <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'rapports') || request()->routeIs('gel-accountant.rapports*') ? 'active' : '' }}" data-dropdown="dd-rapports" onclick="window.location.href='{{ route('gel-accountant.rapports.index') }}'"><i class="fas fa-chart-bar me-2"></i> Rapports <span class="arrow">▸</span></li>
+      <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'rapports') || request()->routeIs('gel-accountant.rapports*') ? 'active' : '' }}" data-dropdown="dd-rapports"><i class="fas fa-chart-bar me-2"></i> Rapports <span class="arrow">▸</span></li>
  
       <div class="sidebar-section">Administration</div>
       <li class="sidebar-item {{ (isset($currentSection) && $currentSection == 'equipe') || request()->routeIs('gel-accountant.equipe*') ? 'active' : '' }}" data-page="equipe"><i class="fas fa-users me-2"></i> Équipe</li>
@@ -1536,8 +1562,8 @@
           // ─── Général ───
           'dashboard':                 '{{ route("gel-accountant.dashboard") }}',
           'ia':                        '{{ route("gel-accountant.ia.index") }}',
-          'clients':                   '{{ route("gel-accountant.clients") }}',
-          'gestion-clients':           '{{ route("gel-accountant.clients") }}',
+          'clients':                   '{{ route("gel.crm.clients.index") }}',
+          'gestion-clients':           '{{ route("gel.crm.clients.index") }}',
           'equipe':                    '{{ route("gel-accountant.team") }}',
           'invitations':               '{{ route("gel-accountant.invitations") }}',
           'settings':                  '{{ route("gel-accountant.settings") }}',
@@ -1559,7 +1585,7 @@
           'workflows':                 '{{ route("gel-accountant.workflows.index") }}',
 
           // ─── Facturation ───
-          'factures':                  '{{ route("gel-accountant.factures.index") }}',
+          'factures':                  '{{ route("gel.facturation.factures.index") }}',
           'devis':                     '{{ route("gel-accountant.estimation.create") }}',
           'produits':                  '{{ route("gel-accountant.add-product") }}',
           'paiements':                 '{{ route("gel-accountant.payments.create") }}',

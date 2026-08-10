@@ -25,7 +25,10 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        return view('landing');
+        if (view()->exists('landing')) {
+            return view('landing', ['bestSellers' => '[]']);
+        }
+        return redirect()->route('login');
     }
 
     /**

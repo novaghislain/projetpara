@@ -36,6 +36,7 @@ class ClientFolder extends Model
 
     protected $fillable = [
         'client_id',
+        'user_id',
         'name',
         'slug',
         'path',
@@ -95,6 +96,16 @@ class ClientFolder extends Model
     public function scopeForClient($query, $clientId)
     {
         return $query->where('client_id', $clientId);
+    }
+
+    // Scope isolé : client (entreprise) OU user (secrétaire autonome sans entreprise)
+    public function scopeForClientOrUser($query, ?int $clientId, ?int $userId)
+    {
+        if ($clientId !== null && $clientId !== 0) {
+            return $query->where('client_id', $clientId);
+        }
+
+        return $query->whereNull('client_id')->where('user_id', $userId);
     }
 
     // Obtenir le chemin complet affichable

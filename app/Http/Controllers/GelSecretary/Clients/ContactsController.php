@@ -78,31 +78,20 @@ class ContactsController extends Controller
         ]);
 
         $user = Auth::user();
-        
-        $clientId = null;
-        
-        if (!$user->isAutonomousSecretary()) {
-            $clientIds = $user->userClients()->pluck('client_id')->toArray();
-            $query = Client::query();
-            if ($user->cabinet_id) {
-                $query->where('cabinet_id', $user->cabinet_id)->orWhereIn('id', $clientIds);
-            } else {
-                $query->whereIn('id', $clientIds);
-            }
-            $clients = $query->orderBy('nom_entreprise')->get();
-            
-            $activeClientId = session('active_client_id') ?? $user->active_client_id ?? ($clients->first()?->id);
-            $activeClient = $clients->firstWhere('id', $activeClientId);
+        $activeClientId = session('active_client_id') ?? $user->active_client_id;
 
-            if (!$activeClient) {
-                return back()->with('error', 'Veuillez sélectionner une entreprise active au préalable.');
-            }
-            $clientId = $activeClient->id;
+        // Si l'utilisateur a une entreprise active (même autonome), on l'utilise
+        $clientId = $activeClientId ? $activeClientId : null;
+        // S'il n'a pas d'entreprise et est autonome, on utilise user_id
+        $userId = (!$clientId && $user->isAutonomousSecretary()) ? $user->id : null;
+
+        if (!$clientId && !$userId) {
+            return back()->with('error', 'Veuillez sélectionner une entreprise active au préalable.');
         }
 
         $contact = ClientContact::create([
             'client_id' => $clientId,
-            'user_id' => $user->isAutonomousSecretary() ? $user->id : null,
+            'user_id' => $userId,
             'name' => $request->name,
             'position' => $request->position,
             'phone' => $request->phone,

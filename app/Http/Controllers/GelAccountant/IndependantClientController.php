@@ -206,8 +206,25 @@ class IndependantClientController extends Controller
             'invitation_sent_at'  => now(),
         ]);
 
-        $link = route('gel-accountant.independant.client.accept-invitation', ['token' => $token]);
+        $link = url('/invitation/independant-client/' . $token);
 
         return response()->json(['link' => $link]);
+    }
+
+    /**
+     * Sélectionne un client pour l'isolation du contexte (bascule).
+     */
+    public function selectClient($id)
+    {
+        $this->ensureIndependantAccountant();
+        $user = Auth::user();
+        
+        $client = ComptableClient::where('comptable_id', $user->id)->findOrFail($id);
+        
+        $user->update([
+            'active_independant_client_id' => $client->id
+        ]);
+        
+        return redirect()->route('gel-accountant.dashboard')->with('success', "Vous travaillez maintenant sur le dossier : {$client->nom_entreprise}");
     }
 }

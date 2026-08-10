@@ -398,7 +398,7 @@
 
             <div class="sidebar-section">Facturation</div>
             @can('crm.consulter')
-            <a href="{{ route('gel.factures') }}"
+            <a href="{{ route('gel.facturation.factures.index') }}"
                class="sidebar-link {{ str_contains($currentRoute, 'facture') ? 'active' : '' }}">
                 <i class="bi bi-receipt"></i>
                 <span>Factures</span>
@@ -431,7 +431,7 @@
 
             <div class="sidebar-section">Clients</div>
             @can('client.consulter')
-            <a href="{{ route('gel.clients') }}"
+            <a href="{{ route('gel.crm.clients.index') }}"
                class="sidebar-link {{ str_contains($currentRoute, 'client') ? 'active' : '' }}">
                 <i class="bi bi-person-lines-fill"></i>
                 <span>Clients</span>

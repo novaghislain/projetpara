@@ -70,21 +70,33 @@
       <i class="fas fa-chart-line" style="margin-right:10px; color:#3B82F6;"></i> GEL Direction
     </div>
     <ul class="dir-nav">
-      <li class="dir-nav-item active">
-        <i class="fas fa-home"></i> Vue d'ensemble
-      </li>
-      <li class="dir-nav-item">
-        <i class="fas fa-file-signature"></i> Validations <span class="badge bg-danger ms-auto">3</span>
-      </li>
-      <li class="dir-nav-item">
-        <i class="fas fa-chart-pie"></i> Rapports
-      </li>
-      <li class="dir-nav-item">
-        <i class="fas fa-users"></i> Équipe
-      </li>
+      <a href="{{ route('gel-direction.dashboard') }}" class="dir-nav-item {{ request()->routeIs('gel-direction.dashboard') ? 'active' : '' }}">
+        <i class="fas fa-home" style="width:20px;"></i> Vue d'ensemble
+      </a>
+      <a href="{{ route('gel-direction.clients.index') }}" class="dir-nav-item {{ request()->routeIs('gel-direction.clients.*') ? 'active' : '' }}">
+        <i class="fas fa-building" style="width:20px;"></i> Clients & CA
+      </a>
+      <a href="{{ route('gel-direction.team.index') }}" class="dir-nav-item {{ request()->routeIs('gel-direction.team.*') ? 'active' : '' }}">
+        <i class="fas fa-users" style="width:20px;"></i> Supervision RH
+      </a>
+      <a href="{{ route('gel-direction.finance.index') }}" class="dir-nav-item {{ request()->routeIs('gel-direction.finance.*') ? 'active' : '' }}">
+        <i class="fas fa-chart-pie" style="width:20px;"></i> Finance
+      </a>
+      <a href="{{ route('gel-direction.validations.index') }}" class="dir-nav-item {{ request()->routeIs('gel-direction.validations.*') ? 'active' : '' }}">
+        <i class="fas fa-file-signature" style="width:20px;"></i> Validations 
+        <span class="badge ms-auto" style="background:#EF4444; color:white; font-size:10px; border-radius:10px; padding:2px 6px;">3</span>
+      </a>
     </ul>
     <div style="padding:16px; border-top:1px solid rgba(255,255,255,0.1); font-size:12px; color:rgba(255,255,255,0.5);">
       <i class="fas fa-user-tie" style="margin-right:6px;"></i> Dirigeant : {{ Auth::user()->name ?? 'Admin' }}
+      <div style="margin-top:10px;">
+        <form method="POST" action="{{ route('logout') }}">
+          @csrf
+          <button type="submit" style="background:none; border:none; color:inherit; font-size:12px; cursor:pointer;">
+             <i class="fas fa-sign-out-alt"></i> Déconnexion
+          </button>
+        </form>
+      </div>
     </div>
   </aside>
 
@@ -92,7 +104,10 @@
   <header class="dir-topbar">
     <div class="dir-topbar-title">@yield('page_title', 'Tableau de bord Exécutif')</div>
     <div class="ms-auto d-flex align-items-center gap-3">
-        <a href="{{ route('gel-secretary.dashboard') }}" class="btn btn-sm btn-outline-secondary">
+        <div style="font-size:13px; color:var(--dir-text-muted); margin-right:10px;">
+            <i class="fas fa-calendar-day"></i> {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}
+        </div>
+        <a href="{{ route('gel-secretary.dashboard') }}" class="btn btn-sm" style="background:#F1F5F9; color:#475569; border:1px solid #E2E8F0; font-weight:500;">
             <i class="fas fa-arrow-left"></i> Retour Secrétariat
         </a>
     </div>

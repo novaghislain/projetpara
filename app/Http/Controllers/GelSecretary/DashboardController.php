@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\GelSecretary;
 
 use App\Http\Controllers\Controller;
-use App\Models\Gel\Client;
+use App\Models\Client;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,14 +19,20 @@ class DashboardController extends Controller
         $clientIds = $user->userClients()->pluck('client_id')->toArray();
         $query = Client::query();
         if ($user->cabinet_id) {
-            $query->where('cabinet_id', $user->cabinet_id)->orWhereIn('id', $clientIds);
+            $query->where('created_by', $user->cabinet_id)->orWhereIn('id', $clientIds);
         } else {
             $query->whereIn('id', $clientIds);
         }
-        $clients = $query->orderBy('nom_entreprise')->get();
+        $clients = $query->orderBy('company_name')->get();
 
         $activeClientId = session('active_client_id');
-        $activeClient = $activeClientId ? Client::find($activeClientId) : null;
+        
+        if ($user->isAutonomousSecretary() && $clients->count() > 0 && !$activeClientId) {
+            $activeClient = $clients->first();
+            session(['active_client_id' => $activeClient->id]);
+        } else {
+            $activeClient = $activeClientId ? Client::find($activeClientId) : null;
+        }
 
         // Tâches
         $tasksQuery = \App\Models\Gel\Task::where('cabinet_id', $user->cabinet_id);

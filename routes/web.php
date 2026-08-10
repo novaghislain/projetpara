@@ -483,6 +483,9 @@ Route::middleware(['auth', 'not_suspended'])->group(function () {
     Route::post('/api/me/switch-context', [\App\Http\Controllers\MeController::class, 'switchContext'])->name('api.me.switch-context');
 });
 
+// Route globale de dés-impersonation
+Route::post('/impersonation/stop', [\App\Http\Controllers\GelSuperAdmin\TenantController::class, 'stopImpersonate'])->name('impersonation.stop')->middleware('auth');
+
 // —— Wizard d'inscription entreprise (5 étapes) ———————————————-
 Route::prefix('register/company')->name('register.company.')->group(function () {
     Route::get('/step/{step}', [\App\Http\Controllers\Auth\CompanyRegistrationController::class, 'step'])->name('step');
@@ -581,3 +584,34 @@ Route::post('/rdv/{cabinetId?}', [\App\Http\Controllers\PublicBookingController:
 // ─── Routes Formulaire Contact B2C ───────────────────────────────────────────
 Route::get('/contact/{client_slug}', [\App\Http\Controllers\PublicContactController::class, 'showForm'])->name('public.contact.show');
 Route::post('/contact/{client_slug}', [\App\Http\Controllers\PublicContactController::class, 'submitForm'])->name('public.contact.submit');
+
+// ─── Lot P1.4 : CRM et Facturation ─────────────────────────────────────────
+Route::middleware(['web', 'auth'])->group(function () {
+    // API CRM Clients
+    Route::get('/api/gel/crm/clients', [\App\Http\Controllers\Gel\CrmClientController::class, 'index']);
+    Route::post('/api/gel/crm/clients', [\App\Http\Controllers\Gel\CrmClientController::class, 'store']);
+    Route::get('/api/gel/crm/clients/{id}', [\App\Http\Controllers\Gel\CrmClientController::class, 'show']);
+    Route::put('/api/gel/crm/clients/{id}', [\App\Http\Controllers\Gel\CrmClientController::class, 'update']);
+    Route::delete('/api/gel/crm/clients/{id}', [\App\Http\Controllers\Gel\CrmClientController::class, 'destroy']);
+
+    // API Facturation
+    Route::get('/api/gel/facturation/factures', [\App\Http\Controllers\Gel\FactureController::class, 'index']);
+    Route::post('/api/gel/facturation/factures', [\App\Http\Controllers\Gel\FactureController::class, 'store']);
+    Route::get('/api/gel/facturation/factures/{id}', [\App\Http\Controllers\Gel\FactureController::class, 'show']);
+    Route::put('/api/gel/facturation/factures/{id}', [\App\Http\Controllers\Gel\FactureController::class, 'update']);
+    Route::delete('/api/gel/facturation/factures/{id}', [\App\Http\Controllers\Gel\FactureController::class, 'destroy']);
+    Route::post('/api/gel/facturation/factures/{id}/valider', [\App\Http\Controllers\Gel\FactureController::class, 'validerFacture']);
+
+    // Web Views
+    Route::get('/gel/crm/clients', function() {
+        return view('gel.crm.clients.index');
+    })->name('gel.crm.clients.index');
+
+    Route::get('/gel/facturation/factures', function() {
+        return view('gel.facturation.factures.index');
+    })->name('gel.facturation.factures.index');
+
+    Route::get('/gel/facturation/factures/create', function() {
+        return view('gel.facturation.factures.create');
+    })->name('gel.facturation.factures.create');
+});

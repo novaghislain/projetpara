@@ -6,13 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Models\Gel\Client;
 use App\Models\ClientFolder;
 use App\Models\Document;
+use App\Models\RestructureReport;
+use App\Services\AnthropicService;
 use App\Services\AuditLogService;
+use App\Services\FolderStructureService;
 use App\Services\FolderTemplateService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use App\Services\AnthropicService;
 
 class DocumentsController extends Controller
 {
@@ -22,75 +26,74 @@ class DocumentsController extends Controller
     public function index()
     {
         $user = Auth::user();
-        
-        $folders = collect();
-        $recentDocuments = collect();
-        $favoriteDocuments = collect();
+        $structure = new FolderStructureService();
+
         $clients = collect();
         $activeClient = null;
+        $clientId = null;
+        $userId = null;
 
         if ($user->isAutonomousSecretary()) {
-            $clientId = null;
-            $userId = $user->id;
-
-            $templateService = new FolderTemplateService();
-            $templateService->generatePermanentStructure(null, $userId);
-            $templateService->generateSecretaryStructure(null, date('Y'), $userId);
-
-            // Récupérer uniquement les dossiers racines
-            $folders = ClientFolder::where('user_id', $userId)
-                ->whereNull('parent_id')
-                ->orderBy('sort_order')
-                ->orderBy('name', 'desc')
-                ->withCount('documents')
-                ->get();
-                
-            $latestYearFolder = ClientFolder::where('user_id', $userId)
-                ->whereNull('parent_id')
-                ->whereRaw('name REGEXP "^[0-9]{4}$"')
-                ->orderBy('name', 'desc')
-                ->first();
-                
-            $nextYear = $latestYearFolder ? (intval($latestYearFolder->name) + 1) : date('Y');
-            
-            $recentDocuments = collect();
-            $favoriteDocuments = collect();
-                
+            $activeClientId = session('active_client_id') ?? $user->active_client_id;
+            if ($activeClientId) {
+                $activeClient = \App\Models\Client::find($activeClientId);
+                $clients = $activeClient ? collect([$activeClient]) : collect();
+            }
+            $clientId = $activeClient?->id ?? null;
+            $userId = $activeClient ? null : $user->id;
         } else {
             $clients = Client::orderBy('nom_entreprise')->get();
             $activeClientId = session('active_client_id') ?? $user->active_client_id ?? ($clients->first()?->id);
             $activeClient = Client::find($activeClientId);
-
-            if ($activeClient) {
-                $templateService = new FolderTemplateService();
-                $templateService->generatePermanentStructure($activeClient->id);
-                $templateService->generateSecretaryStructure($activeClient->id, date('Y'));
-
-                // Récupérer uniquement les dossiers racines
-                $folders = ClientFolder::where('client_id', $activeClient->id)
-                    ->whereNull('parent_id')
-                    ->orderBy('sort_order')
-                    ->orderBy('name', 'desc')
-                    ->withCount('documents')
-                    ->get();
-                    
-                $latestYearFolder = ClientFolder::where('client_id', $activeClient->id)
-                    ->whereNull('parent_id')
-                    ->whereRaw('name REGEXP "^[0-9]{4}$"')
-                    ->orderBy('name', 'desc')
-                    ->first();
-                    
-                $nextYear = $latestYearFolder ? (intval($latestYearFolder->name) + 1) : date('Y');
-                
-                // Documents Récents
-                $recentDocuments = collect();
-                $favoriteDocuments = collect();
-            } else {
-                $nextYear = date('Y');
-            }
+            $clientId = $activeClient?->id ?? null;
         }
 
-        return view('gel-secretary.documents.index', compact('clients', 'activeClient', 'folders', 'nextYear', 'recentDocuments', 'favoriteDocuments'));
+        // Arbre canonique unique (Documents → Permanents/Courants → Année → Mois).
+        // Création IDEMPOTENTE : plus aucun générateur dispersif (templates/EDEN)
+        // n'empile de racines plates ici.
+        if ($clientId !== null || $userId !== null) {
+            $structure->ensureCanonical($clientId, $userId);
+        }
+
+        $tree = $structure->buildTree($clientId, $userId);
+
+        // Grille racine VALIDÉE : les 10 dossiers de niveau 1, compteurs
+        // directs « X document(s) » (avecCount), ordre sort_order/name.
+        $folders = ClientFolder::forClientOrUser($clientId, $userId)
+            ->whereNull('parent_id')
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->withCount('documents')
+            ->get();
+
+        $now = Carbon::now();
+        $currentMonth = null;
+        $nextYear = $now->year;
+
+        $courantsNode = collect($tree['children'] ?? [])->firstWhere('kind', 'courants');
+        if ($courantsNode) {
+            $yearNodes = collect($courantsNode['children'] ?? [])->where('kind', 'year')->values();
+            $lastYear = $yearNodes->max(fn ($y) => (int) $y['name']);
+            if ($lastYear && (int) $lastYear >= $now->year) {
+                $nextYear = (int) $lastYear + 1;
+            }
+
+            $monthNode = $yearNodes
+                ->flatMap(fn ($y) => $y['children'] ?? [])
+                ->firstWhere('is_current_month', true);
+            $currentMonth = $monthNode['id'] ?? null;
+        }
+
+        $folderIds = ClientFolder::forClientOrUser($clientId, $userId)->pluck('id');
+        $recentDocuments = Document::whereIn('folder_id', $folderIds)
+            ->where('is_archived', false)->latest()->take(6)->get();
+        $favoriteDocuments = Document::whereIn('folder_id', $folderIds)
+            ->where('is_favorite', true)->latest()->take(6)->get();
+
+        return view('gel-secretary.documents.index', compact(
+            'clients', 'activeClient', 'tree', 'folders', 'nextYear',
+            'recentDocuments', 'favoriteDocuments', 'currentMonth'
+        ));
     }
 
     /**
@@ -126,12 +129,21 @@ class DocumentsController extends Controller
     {
         $user = Auth::user();
         $clients = Client::orderBy('nom_entreprise')->get();
-        
+        $structure = new FolderStructureService();
+
         $folder = ClientFolder::findOrFail($folderId);
+
+        // Isolation stricte par entreprise / secrétaire autonome.
+        $this->assertScopeAccess($folder, $user);
+
         $activeClient = $folder->client;
-        
-        // Mettre à jour la session active
-        session(['active_client_id' => $activeClient->id]);
+        if ($activeClient) {
+            session(['active_client_id' => $activeClient->id]);
+        }
+
+        $ancestors = $this->ancestors($folder);
+        $isClosed = $structure->isInClosedFolder($folder);
+        $isCurrentMonth = $structure->isCurrentMonthFolder($folder);
 
         $subfolders = ClientFolder::where('parent_id', $folderId)
             ->orderBy('sort_order')
@@ -152,7 +164,10 @@ class DocumentsController extends Controller
                 ->get();
         }
 
-        return view('gel-secretary.documents.folder', compact('clients', 'activeClient', 'folder', 'subfolders', 'documents'));
+        return view('gel-secretary.documents.folder', compact(
+            'clients', 'activeClient', 'folder', 'subfolders', 'documents',
+            'ancestors', 'isClosed', 'isCurrentMonth'
+        ));
     }
 
     /**
@@ -167,20 +182,23 @@ class DocumentsController extends Controller
 
         $user = Auth::user();
         $activeClient = null;
-        if (!$user->isAutonomousSecretary()) {
-            $activeClientId = session('active_client_id') ?? $user->active_client_id;
-            if ($activeClientId) {
-                $activeClient = Client::find($activeClientId);
-            }
+        $activeClientId = session('active_client_id') ?? $user->active_client_id;
+
+        // Pour le secrétaire autonome AVEC une entreprise, utiliser son client comme un secrétaire normal
+        // Pour le secrétaire autonome SANS entreprise, utiliser user_id
+        if ($activeClientId) {
+            $activeClient = \App\Models\Client::find($activeClientId);
         }
 
         $clientId = $activeClient ? $activeClient->id : null;
-        $userId = $user->isAutonomousSecretary() ? $user->id : null;
+        $userId = (!$activeClient && $user->isAutonomousSecretary()) ? $user->id : null;
         $level = 1;
         $path = $request->name;
         
         if ($request->parent_id) {
             $parent = ClientFolder::findOrFail($request->parent_id);
+            $this->assertScopeAccess($parent, $user);
+            $this->ensure_folder_open($parent);
             $clientId = $parent->client_id; // override with parent's client_id just in case
             $level = $parent->level + 1;
             $path = $parent->path . ' / ' . $request->name;
@@ -204,6 +222,8 @@ class DocumentsController extends Controller
     {
         $request->validate(['name' => 'required|string|max:255']);
         $folder = ClientFolder::findOrFail($id);
+        $this->assertScopeAccess($folder, Auth::user());
+        $this->ensure_folder_open($folder);
         $folder->update([
             'name' => $request->name,
             'slug' => Str::slug($request->name . '-' . time())
@@ -215,6 +235,9 @@ class DocumentsController extends Controller
     {
         $request->validate(['name' => 'required|string|max:255']);
         $document = Document::findOrFail($id);
+        if ($document->folder) {
+            $this->ensure_folder_open($document->folder);
+        }
         $document->update([
             'name' => $request->name
         ]);
@@ -252,6 +275,8 @@ class DocumentsController extends Controller
         ]);
 
         $folder = ClientFolder::findOrFail($request->folder_id);
+        $this->assertScopeAccess($folder, Auth::user());
+        $this->ensure_folder_open($folder);
         $client = $folder->client;
         $file = $request->file('file');
 
@@ -353,6 +378,9 @@ class DocumentsController extends Controller
         ]);
 
         $document = Document::findOrFail($id);
+        if ($document->folder) {
+            $this->ensure_folder_open($document->folder);
+        }
         $user = Auth::user();
         $file = $request->file('file');
 
@@ -429,6 +457,9 @@ class DocumentsController extends Controller
     public function destroy($id)
     {
         $document = Document::findOrFail($id);
+        if ($document->folder) {
+            $this->ensure_folder_open($document->folder);
+        }
 
         // Traçabilité stricte
         AuditLogService::log('document.delete', $document, $document->toArray(), null);
@@ -440,34 +471,18 @@ class DocumentsController extends Controller
     }
 
     /**
-     * Initialise l'arborescence standard (S5 Documents courants : année → mois)
-     * et s'assure que les Documents Permanents (S4) existent pour le client.
+     * Initialise l'arborescence standard (S5 Courant / Annuel : année → mois)
+     * et s'assure que les Documents permanents (S4) existent pour le client.
      */
-    public function initStructure(Request $request, FolderTemplateService $templateService)
+    public function initStructure(Request $request)
     {
         $user = Auth::user();
-        $clients = Client::orderBy('nom_entreprise')->get();
-        $clientId = session('active_client_id') ?? $user->active_client_id ?? ($clients->first()?->id);
+        [$clientId, $userId] = $this->currentScope($user);
 
-        if (!$clientId) {
-            return back()->with('error', 'Veuillez sélectionner un client.');
-        }
+        $structure = new FolderStructureService();
+        $structure->ensureCanonical($clientId, $userId, Carbon::now());
 
-        // S4 — Documents permanents (une seule fois)
-        $templateService->generatePermanentStructure($clientId);
-
-        // S5 — Documents courants : nouvelle année
-        $latestYearFolder = ClientFolder::where('client_id', $clientId)
-            ->whereNull('parent_id')
-            ->whereRaw('name REGEXP "^[0-9]{4}$"')
-            ->orderBy('name', 'desc')
-            ->first();
-
-        $year = $latestYearFolder ? (intval($latestYearFolder->name) + 1) : date('Y');
-
-        $templateService->generateSecretaryStructure($clientId, $year);
-
-        return back()->with('success', "Structure initialisée : Documents permanents + année {$year}.");
+        return back()->with('success', 'Structure canonique garantie : Documents → Permanents/Courants + mois en cours.');
     }
 
     /**
@@ -524,15 +539,23 @@ class DocumentsController extends Controller
         ]);
 
         $user = Auth::user();
-        $isAutonomous = $user->isAutonomousSecretary();
-        
-        $clientId = $request->client_id ?? ($isAutonomous ? null : (session('active_client_id') ?? $user->active_client_id));
-        $userId = $isAutonomous ? $user->id : null;
-        
-        $templateService = new FolderTemplateService();
-        $templateService->generateSecretaryStructure($clientId, $request->year, $userId);
+        $structure = new FolderStructureService();
 
-        return back()->with('success', "L'arborescence pour l'année {$request->year} a été générée.");
+        [$clientId, $userId] = $this->currentScope($user);
+
+        // Année ajoutée SOUS Courant (jamais en racine plate).
+        // Les mois sont générés automatiquement par `folders:calendar`.
+        $courant = $structure->ensureCourantsRoot($clientId, $userId);
+        $structure->createFolder(
+            $clientId,
+            (string) $request->year,
+            $courant->id,
+            $courant->level + 1,
+            (int) $request->year,
+            $userId
+        );
+
+        return back()->with('success', "L'année {$request->year} a été ajoutée sous Courant.");
     }
 
     /**
@@ -598,6 +621,9 @@ class DocumentsController extends Controller
     public function uploadNewVersion(Request $request, $id)
     {
         $document = Document::findOrFail($id);
+        if ($document->folder) {
+            $this->ensure_folder_open($document->folder);
+        }
 
         $request->validate([
             'file' => 'required|file|max:10240', // Max 10Mo
@@ -804,6 +830,8 @@ class DocumentsController extends Controller
     public function destroyFolder($id)
     {
         $folder = ClientFolder::findOrFail($id);
+        $this->assertScopeAccess($folder, Auth::user());
+        $this->ensure_folder_open($folder);
         $folder->delete();
         return back()->with('success', 'Dossier déplacé vers la corbeille.');
     }
@@ -865,6 +893,269 @@ class DocumentsController extends Controller
         }
         $document->forceDelete();
         return back()->with('success', 'Document supprimé définitivement.');
+    }
+
+    /* ════════════════════════════════════════════════════════════════════
+     * S3 — Scanning caméra (Section 3.1)
+     * Mêmes règles de métadonnées et de permissions que l'upload classique.
+     * L'IA propose (jamais n'applique seule) : OCR → text_content pour la
+     * recherche plein texte, + tags suggérés dans la modale de validation.
+     * ════════════════════════════════════════════════════════════════════ */
+    public function uploadScan(Request $request)
+    {
+        if (!$request->filled('annee_liee')) $request->merge(['annee_liee' => date('Y')]);
+        if (!$request->filled('mois_lie')) $request->merge(['mois_lie' => date('n')]);
+
+        $request->validate([
+            'file' => 'required|file|max:10240', // Max 10Mo (PDF multi-pages ou image)
+            'folder_id' => 'required|exists:client_folders,id',
+            'description' => 'nullable|string|max:500',
+            'category' => 'required|string|max:255',
+            'annee_liee' => 'required|integer',
+            'mois_lie' => 'required|integer|min:1|max:12',
+            'document_date' => 'nullable|date',
+            'privacy_level' => 'nullable|in:standard,interne,confidentiel',
+            'priority' => 'nullable|in:normale,urgente',
+            'scan_image' => 'nullable|string', // dataURL JPEG de la première page
+        ]);
+
+        $user = Auth::user();
+        $folder = ClientFolder::findOrFail($request->folder_id);
+        $this->assertScopeAccess($folder, $user);
+        $this->ensure_folder_open($folder);
+
+        $client = $folder->client;
+        $file = $request->file('file');
+
+        if ($user->isAutonomousSecretary()) {
+            $path = $file->store('documents/autonomous_' . $user->id, 'public');
+            $clientId = null;
+        } else {
+            $path = $file->store('documents/' . $client->id, 'public');
+            $clientId = $client->id;
+        }
+
+        $document = Document::create([
+            'client_id' => $clientId,
+            'folder_id' => $folder->id,
+            'reference_number' => 'SCAN-' . date('Y') . '-' . strtoupper(Str::random(5)),
+            'category' => $request->category,
+            'annee_liee' => $request->annee_liee,
+            'mois_lie' => $request->mois_lie,
+            'document_date' => $request->document_date ?? now()->toDateString(),
+            'name' => $file->getClientOriginalName(),
+            'file_path' => $path,
+            'file_type' => $file->getClientOriginalExtension(),
+            'file_size' => $file->getSize(),
+            'mime_type' => $file->getMimeType(),
+            'description' => $request->description,
+            'uploaded_by' => $user->id,
+            'privacy_level' => $request->privacy_level ?? 'standard',
+            'priority' => $request->priority ?? 'normale',
+            'tags' => [],
+            'workflow_step' => 'classe',
+            'processed_at' => now(),
+            'processed_by' => $user->id,
+        ]);
+
+        // OCR par Claude Vision (jamais fictif : si pas de clé → message clair).
+        $ocrNote = '';
+        if ($request->filled('scan_image')) {
+            $ocrNote = $this->runVisionOcr($document, (string) $request->input('scan_image'));
+        }
+
+        AuditLogService::log('document.scan', $document, null, $document->toArray());
+        event(new \App\Events\DocumentDeposeEvent($document));
+
+        // Requête portable (fetch du module scanning.js) → JSON ; navigateur → redirect.
+        if ($request->expectsJson()) {
+            return response()->json([
+                'document_id' => $document->id,
+                'folder_id'   => $folder->id,
+                'name'        => $document->name,
+                'ocr_note'    => $ocrNote,
+            ]);
+        }
+
+        return redirect()->route('gel-secretary.documents.folder', $folder->id)
+            ->with('success', 'Document scanné « ' . $document->name . ' » enregistré.' . $ocrNote);
+    }
+
+    /** OCR/classement par Claude Vision → poll text_content + tags. */
+    protected function runVisionOcr(Document $document, string $dataUrl): string
+    {
+        if (!preg_match('#^data:(image/\w+);base64,(.+)$#is', $dataUrl, $m)) {
+            return ' (image de scan invalide, aucun OCR)';
+        }
+        $bin = base64_decode($m[2]);
+        if ($bin === false || $bin === '') {
+            return ' (image de scan invalide, aucun OCR)';
+        }
+
+        $tmp = storage_path('app/tmp_scan_' . $document->id . '.jpg');
+        file_put_contents($tmp, $bin);
+
+        try {
+            $ai = new AnthropicService();
+            $prompt = "Ceci est le scan d'un document d'entreprise.\n"
+                . "1) Retranscris TOUT le texte visible, fidèlement (OCR).\n"
+                . "2) Réponds UNIQUEMENT en JSON : "
+                . '{"contenu":"<texte retranscrit>","type":"Facture|Contrat|Relevé bancaire|Déclaration fiscale|Autre","tags":["mot-clé1","mot-clé2"],"categorie":"comptable|courrier|rh|divers"}';
+
+            $result = $ai->generateVisionJson($prompt, $tmp);
+
+            if ($result === null) {
+                return ' — OCR non disponible (clé API non configurée) : document enregistré sans texte indexé.';
+            }
+
+            $text = trim((string) ($result['contenu'] ?? ''));
+            if ($text !== '') {
+                $document->update(['text_content' => $text]);
+            }
+
+            $save = false;
+            $tags = is_array($result['tags'] ?? null)
+                ? array_values(array_unique(array_map('strval', $result['tags'])))
+                : [];
+            if (!empty($result['type']) && is_string($result['type'])) {
+                array_unshift($tags, $result['type']);
+            }
+            if (count($tags)) {
+                $document->tags = array_merge($document->tags ?? [], $tags);
+                $save = true;
+            }
+            if ($save) {
+                $document->save();
+            }
+
+            return $text !== ''
+                ? ' — OCR OK, texte indexé pour la recherche.'
+                : ' — classé (OCR sans texte détecté).';
+        } finally {
+            @unlink($tmp);
+        }
+    }
+
+    /* ════════════════════════════════════════════════════════════════════
+     * S1 — Rapport de restructuration (avant/après) & validation humaine
+     * ════════════════════════════════════════════════════════════════════ */
+    public function restructureReport()
+    {
+        $user = Auth::user();
+        [$clientId, $userId] = $this->currentScope($user);
+
+        $reports = RestructureReport::where('client_id', $clientId)
+            ->where('user_id', $userId)
+            ->orderByDesc('id')
+            ->get();
+
+        return view('gel-secretary.documents.restructure', compact('reports', 'clientId', 'userId'));
+    }
+
+    /** Validation explicite : approuve le rapport, puis exécute `--apply`. */
+    public function restructureApprove($id)
+    {
+        $user = Auth::user();
+        [$clientId, $userId] = $this->currentScope($user);
+
+        $report = RestructureReport::where('id', $id)
+            ->where('client_id', $clientId)
+            ->where('user_id', $userId)
+            ->firstOrFail();
+
+        if ($report->status === 'proposed') {
+            $report->update(['status' => 'approved', 'created_by' => $user->id]);
+        }
+
+        $exit = Artisan::call('folders:restructure', ['--apply' => true]);
+        $output = trim(Artisan::output());
+        $report->refresh();
+
+        if ($exit !== 0 || $report->status === 'rejected') {
+            return back()->with('error', 'Exécution terminée avec un problème. Détail : ' . Str::limit($output ?: $report->payload['error'] ?? 'inconnu', 300));
+        }
+
+        return redirect()->route('gel-secretary.documents.restructure-rapport')
+            ->with('success', 'Fusions appliquées (aucune perte — dossiers sources en Corbeille). Rapport marqué « exécuté ».');
+    }
+
+    /** Rejette le rapport : aucune fusion. */
+    public function restructureReject($id)
+    {
+        $user = Auth::user();
+        [$clientId, $userId] = $this->currentScope($user);
+
+        $report = RestructureReport::where('id', $id)
+            ->where('client_id', $clientId)
+            ->where('user_id', $userId)
+            ->firstOrFail();
+
+        $report->update(['status' => 'rejected', 'created_by' => $user->id]);
+
+        return back()->with('error', 'Rapport rejeté — aucune fusion effectuée.');
+    }
+
+    /* ════════════════════════════════════════════════════════════════════
+     * Helpers (scoper, isolation, clôture)
+     * ════════════════════════════════════════════════════════════════════ */
+
+    /** Périmètre courant : [client_id, user_id] pour la secrétaire. */
+    protected function currentScope($user): array
+    {
+        if ($user->isAutonomousSecretary()) {
+            $activeClientId = session('active_client_id') ?? $user->active_client_id;
+            if ($activeClientId) {
+                $activeClient = \App\Models\Client::find($activeClientId);
+                return [$activeClient?->id ?? null, null];
+            }
+
+            return [null, $user->id];
+        }
+
+        $clients = Client::orderBy('nom_entreprise')->get();
+        $activeClientId = session('active_client_id') ?? $user->active_client_id ?? ($clients->first()?->id);
+
+        return [$activeClientId, null];
+    }
+
+    /** Isolation stricte : un dossier n'est accessible que dans son périmètre. */
+    protected function assertScopeAccess(ClientFolder $folder, $user): void
+    {
+        if ($folder->user_id !== null && (int) $folder->user_id !== (int) $user->id) {
+            abort(403, 'Accès refusé — isolation stricte par entreprise.');
+        }
+
+        if ($folder->client_id !== null && $user->isAutonomousSecretary()) {
+            $activeId = session('active_client_id') ?? $user->active_client_id;
+            if ((int) $folder->client_id !== (int) $activeId) {
+                abort(403, 'Accès refusé — ce dossier appartient à une autre entreprise.');
+            }
+        }
+    }
+
+    /** Bloquer toute mutation ciblant un mois clôturé (lecture seule). */
+    protected function ensure_folder_open(ClientFolder $folder): void
+    {
+        if ((new FolderStructureService())->isInClosedFolder($folder)) {
+            abort(403, 'Ce mois est clôturé : lecture seule. Aucune modification, création ni suppression autorisée.');
+        }
+    }
+
+    /** Chaîne d'ancêtres [racine → dossier] pour le fil d'Ariane hiérarchique. */
+    protected function ancestors(ClientFolder $folder): array
+    {
+        $chain = [];
+        $current = $folder;
+        while ($current->parent_id) {
+            $parent = $current->parent()->first();
+            if (!$parent) {
+                break;
+            }
+            array_unshift($chain, ['id' => $parent->id, 'name' => $parent->name, 'url' => route('gel-secretary.documents.folder', $parent->id)]);
+            $current = $parent;
+        }
+
+        return $chain;
     }
 }
 

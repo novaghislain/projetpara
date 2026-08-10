@@ -49,6 +49,7 @@ export default defineConfig({
             input: [
                 'resources/js/app.js',
                 'resources/js/echo.js',
+                'resources/js/scanning.js',
                 'resources/css/app.css',
             ],
             refresh: true,

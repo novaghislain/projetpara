@@ -24,7 +24,7 @@ Route::middleware(['web'])->prefix('gel-secretary/register')->name('gel-secretar
     Route::post('/autonomous', [\App\Http\Controllers\GelSecretary\Auth\SecretaryRegisterController::class, 'registerAutonomous'])->name('autonomous.submit');
 });
 
-Route::middleware(['auth', 'verified', 'not_suspended', 'gel.secretaire', \PragmaRX\Google2FALaravel\Middleware::class, \App\Http\Middleware\CheckSecretarySubscription::class])
+Route::middleware(['auth', 'verified', 'not_suspended', 'gel.secretaire', \PragmaRX\Google2FALaravel\Middleware::class, \App\Http\Middleware\CheckSecretarySubscription::class, 'check.autonomous'])
     ->prefix('gel-secretary')
     ->name('gel-secretary.')
     ->group(function () {
@@ -33,6 +33,10 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'gel.secretaire', \Pragm
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('/dashboard-notifications', [DashboardController::class, 'notifications'])->name('dashboard.notifications');
         Route::get('/search', [\App\Http\Controllers\GelSecretary\SearchController::class, 'search'])->name('search');
+
+        // ─── Entreprise Autonome ────────────────────────────────────────
+        Route::get('/autonomous/enterprise/create', [\App\Http\Controllers\GelSecretary\AutonomousEnterpriseController::class, 'create'])->name('autonomous.enterprise.create');
+        Route::post('/autonomous/enterprise', [\App\Http\Controllers\GelSecretary\AutonomousEnterpriseController::class, 'store'])->name('autonomous.enterprise.store');
 
         // ─── Abonnement ──────────────────────────────────────────────────
         Route::get('/subscription/expired', [\App\Http\Controllers\GelSecretary\Settings\SubscriptionController::class, 'expired'])->name('subscription.expired');
@@ -101,6 +105,14 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'gel.secretaire', \Pragm
             Route::post('/restore-document/{id}', [DocumentsController::class, 'restoreDocument'])->name('restore-document');
             Route::delete('/force-delete-folder/{id}', [DocumentsController::class, 'forceDeleteFolder'])->name('force-delete-folder');
             Route::delete('/force-delete-document/{id}', [DocumentsController::class, 'forceDeleteDocument'])->name('force-delete-document');
+
+            // ─── Sx — Scanning caméra (mêmes métadonnées que l'upload classique) ──
+            Route::post('/scan', [DocumentsController::class, 'uploadScan'])->name('scan');
+
+            // ─── Sx — Rapport de restructuration (Section 1) ────────────────────
+            Route::get('/restructure-rapport', [DocumentsController::class, 'restructureReport'])->name('restructure-rapport');
+            Route::post('/restructure-approve/{id}', [DocumentsController::class, 'restructureApprove'])->name('restructure-approve');
+            Route::post('/restructure-reject/{id}', [DocumentsController::class, 'restructureReject'])->name('restructure-reject');
         });
 
         // ─── Contacts ───────────────────────────────────────────────────

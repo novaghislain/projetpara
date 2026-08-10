@@ -51,6 +51,7 @@ class User extends Authenticatable
         'is_admin',
         'client_id',
         'active_client_id',
+        'active_independant_client_id',
         'is_company_admin',
         'role_id',
         'fonction',
@@ -179,11 +180,28 @@ class User extends Authenticatable
     // ─── Relations Multi-Tenant ──────────────────────────────────────────
 
     /**
-     * Client actif sélectionné par l'utilisateur (multi-entreprise).
+     * Entreprise parente de l'utilisateur (GEL Client portal).
+     */
+    public function client()
+    {
+        return $this->belongsTo(Client::class, 'client_id');
+    }
+
+    /**
+     * L'entreprise actuellement sélectionnée par le comptable/secrétaire 
+     * (Contexte Client Actif).
      */
     public function activeClient()
     {
         return $this->belongsTo(Client::class, 'active_client_id');
+    }
+
+    /**
+     * Le client indépendant actuellement sélectionné (Comptable Indépendant).
+     */
+    public function activeIndependantClient()
+    {
+        return $this->belongsTo(IndependantComptableClient::class, 'active_independant_client_id');
     }
 
     /**
@@ -359,7 +377,7 @@ class User extends Authenticatable
      */
     public function isAutonomousSecretary(): bool
     {
-        return $this->workspace_type === 'individuel';
+        return in_array($this->workspace_type, ['individuel', 'secretaire_independant']);
     }
 
     /**
@@ -818,11 +836,6 @@ class User extends Authenticatable
     public function tenant()
     {
         return $this->belongsTo(Tenant::class);
-    }
-
-    public function client()
-    {
-        return $this->belongsTo(Client::class);
     }
 
     public function notifications()

@@ -19,6 +19,17 @@
     @stack('styles')
 </head>
 <body>
+    @if(session()->has('impersonated_by_superadmin'))
+        <div class="alert alert-danger mb-0 rounded-0 text-center fw-bold sticky-top" style="z-index: 9999;">
+            <i class="fas fa-user-shield me-2"></i> Mode Support Technique (Impersonation)
+            <span class="ms-3 fw-normal">Toutes vos actions sont enregistrées.</span>
+            <form action="{{ route('impersonation.stop') }}" method="POST" class="d-inline ms-3">
+                @csrf
+                <button type="submit" class="btn btn-sm btn-dark">Terminer le support</button>
+            </form>
+        </div>
+    @endif
+
     <div class="gel-wrapper">
         <aside class="gel-sidebar" id="gelSidebar">
             @include('gel-business.layouts.partials._sidebar')

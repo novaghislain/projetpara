@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\GelSuperAdmin\DashboardController;
 use App\Http\Controllers\GelSuperAdmin\TenantController;
 
-Route::prefix('gel-super-admin')->middleware(['auth', 'super_admin'])->name('gel-super-admin.')->group(function () {
+Route::prefix('s-admin-portal-947x')->middleware(['auth', 'super_admin'])->name('gel-super-admin.')->group(function () {
     
     // Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
@@ -37,6 +37,10 @@ Route::prefix('gel-super-admin')->middleware(['auth', 'super_admin'])->name('gel
     Route::get('/it-dispatcher', [\App\Http\Controllers\GelSuperAdmin\ItMissionDispatcherController::class, 'index'])->name('it-dispatcher.index');
     Route::post('/it-dispatcher/mission/{id}', [\App\Http\Controllers\GelSuperAdmin\ItMissionDispatcherController::class, 'assignMission'])->name('it-dispatcher.assign-mission');
     Route::post('/it-dispatcher/order/{id}', [\App\Http\Controllers\GelSuperAdmin\ItMissionDispatcherController::class, 'assignOrder'])->name('it-dispatcher.assign-order');
+
+    // Consultants
+    Route::resource('consultants', \App\Http\Controllers\GelSuperAdmin\ConsultantController::class);
+    Route::post('/consultants/{id}/assign', [\App\Http\Controllers\GelSuperAdmin\ConsultantController::class, 'assign'])->name('consultants.assign');
 
     
     // Platform

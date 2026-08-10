@@ -106,6 +106,94 @@ class AnthropicService
         return $decoded;
     }
 
+    /**
+     * Appel MULTIMODAL (vision) : envoie une image locale + une instruction.
+     * Utilisé pour l'OCR/la classification des documents scannés (Section 3).
+     *
+     * GARANTIE « aucune donnée fictive » : si la clé API est absente, on
+     * retourne toujours null (jamais de réponse simulée), et l'appelant
+     * affiche « OCR non disponible ».
+     */
+    public function generateWithVision(string $prompt, string $imagePath, string $mimeType = 'image/jpeg', string $systemPrompt = ''): ?string
+    {
+        if (!$this->isConfigured()) {
+            Log::warning('AnthropicService: generateWithVision skipped — clé API non configurée.');
+            return null;
+        }
+
+        if (!file_exists($imagePath)) {
+            Log::warning('AnthropicService: image introuvable ' . $imagePath);
+            return null;
+        }
+
+        $imageData = base64_encode(file_get_contents($imagePath));
+
+        try {
+            $payload = [
+                'model' => config('services.anthropic.vision_model', env('ANTHROPIC_VISION_MODEL', 'claude-haiku-4-5-20251001')),
+                'max_tokens' => 2048,
+                'temperature' => 0.2,
+                'system' => $systemPrompt,
+                'messages' => [
+                    [
+                        'role' => 'user',
+                        'content' => [
+                            ['type' => 'image', 'source' => ['type' => 'base64', 'media_type' => $mimeType, 'data' => $imageData]],
+                            ['type' => 'text', 'text' => $prompt],
+                        ],
+                    ],
+                ],
+            ];
+
+            $response = Http::timeout(45)
+                ->withHeaders([
+                    'x-api-key' => $this->apiKey,
+                    'anthropic-version' => $this->version,
+                    'content-type' => 'application/json',
+                ])
+                ->post('https://api.anthropic.com/v1/messages', $payload);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                return $data['content'][0]['text'] ?? '';
+            }
+
+            Log::error('Anthropic Vision API Error', ['status' => $response->status(), 'body' => $response->body()]);
+
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Anthropic Vision API Exception', ['message' => $e->getMessage()]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Version « JSON uniquement » de generateWithVision.
+     * Retourne null si la réponse est illisible ou non confirmée.
+     */
+    public function generateVisionJson(string $prompt, string $imagePath, string $mimeType = 'image/jpeg', string $systemPrompt = ''): ?array
+    {
+        $systemPrompt .= "\n\nTu dois répondre UNIQUEMENT avec du JSON valide, sans balises markdown ni texte environnant.";
+
+        $response = $this->generateWithVision($prompt, $imagePath, $mimeType, $systemPrompt);
+
+        if ($response === null || $response === '') {
+            return null;
+        }
+
+        $cleaned = trim(str_replace(['```json', '```'], '', $response));
+        $decoded = json_decode($cleaned, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            Log::warning('AnthropicService: réponse vision illisible', ['body' => mb_substr($response, 0, 500)]);
+
+            return null;
+        }
+
+        return $decoded;
+    }
+
     private function mockResponse(string $prompt, string $systemPrompt = ''): string
     {
         if (str_contains(strtolower($systemPrompt), 'tps moy traitement')) {
