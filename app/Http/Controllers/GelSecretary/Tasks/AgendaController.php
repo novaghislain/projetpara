@@ -177,6 +177,79 @@ class AgendaController extends Controller
 
         return back()->with('success', 'Rendez-vous supprimé de l\'agenda.');
     }
+
+    public function update(Request $request, $id)
+    {
+        $event = DaeAgendaEvent::findOrFail($id);
+        
+        if ($request->has('start_at')) {
+            $event->start_at = $request->start_at;
+            if ($request->has('end_at')) {
+                $event->end_at = $request->end_at;
+            }
+        }
+        
+        if ($request->has('proces_verbal')) {
+            $event->proces_verbal = $request->proces_verbal;
+        }
+
+        if ($request->has('title')) {
+            $event->title = $request->title;
+            $event->location = $request->location;
+            $event->description = $request->description;
+        }
+
+        $event->save();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Rendez-vous mis à jour.']);
+        }
+
+        return back()->with('success', 'Rendez-vous mis à jour avec succès.');
+    }
+
+    public function accept($id)
+    {
+        $event = DaeAgendaEvent::findOrFail($id);
+        $event->statut = 'planifie';
+        $event->created_by = Auth::id();
+        $event->save();
+
+        if ($event->guest_email) {
+            try {
+                $cabinetName = config('app.name', 'Cabinet');
+                Mail::to($event->guest_email)->send(new AgendaInvitationMail($event, $cabinetName));
+                $event->invitation_sent = true;
+                $event->save();
+            } catch (\Exception $e) {
+                \Log::warning('Agenda invitation email failed on accept: ' . $e->getMessage());
+            }
+        }
+
+        return back()->with('success', 'La demande de rendez-vous a été acceptée et planifiée.');
+    }
+
+    public function summarizePv($id)
+    {
+        $event = DaeAgendaEvent::findOrFail($id);
+        
+        if (!$event->proces_verbal) {
+            return response()->json(['success' => false, 'message' => 'Aucun brouillon de PV à résumer.']);
+        }
+
+        $aiService = new \App\Services\AnthropicService();
+        $prompt = "Voici les notes brouillons d'une réunion :\n\n" . $event->proces_verbal . "\n\nRédige un compte-rendu (Procès-Verbal) propre, professionnel, avec les décisions clés et tâches. Ne mets pas de blabla introductif.";
+        
+        $summary = $aiService->generate($prompt, "Tu es un(e) secrétaire de direction expert(e) en rédaction de PV.");
+
+        if ($summary) {
+            $event->proces_verbal = $summary;
+            $event->save();
+            return response()->json(['success' => true, 'summary' => $summary]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Erreur lors du résumé par IA.']);
+    }
 }
 
 

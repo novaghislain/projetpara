@@ -43,14 +43,19 @@ class PermissionSeeder extends Seeder
             ['name' => 'paie.consulter',   'module' => 'paie', 'label_fr' => 'Consulter la paie',         'description' => 'Voir les bulletins et données salariales', 'portail' => 'gel'],
             ['name' => 'paie.bulletin',    'module' => 'paie', 'label_fr' => 'Générer les bulletins',     'description' => 'Calculer et éditer les bulletins de paie', 'portail' => 'gel'],
             ['name' => 'paie.decla_cnss',  'module' => 'paie', 'label_fr' => 'Déclarations CNSS',        'description' => 'Générer et soumettre les déclarations CNSS', 'portail' => 'gel'],
-            ['name' => 'paie.decla_irpp',  'module' => 'paie', 'label_fr' => 'Déclarations IRPP',        'description' => 'Générer et soumettre les déclarations IRPP', 'portail' => 'gel'],
+            ['name' => 'paie.decla_its',  'module' => 'paie', 'label_fr' => 'Déclarations ITS + ORTB',   'description' => 'Générer et soumettre les déclarations ITS (impôt sur traitements et salaires) — identifiant technique conservé pour rétro-compatibilité', 'portail' => 'gel'],
             ['name' => 'paie.contrat',     'module' => 'paie', 'label_fr' => 'Gérer les contrats',       'description' => 'Créer et modifier les contrats de travail', 'portail' => 'gel'],
             ['name' => 'paie.editer',      'module' => 'paie', 'label_fr' => 'Éditer la paie',           'description' => 'Modifier les éléments de paie avant validation', 'portail' => 'gel'],
         ];
 
         // ─────────────────────────────────────────────────────────────
-        // 3. FISCALITÉ (6 permissions)
+        // 3. FISCALITÉ (12 permissions)
         // ─────────────────────────────────────────────────────────────
+        // Les 6 premières conservent la rétro-compatibilité avec les gates
+        // existantes ; les 6 suivantes (lire, parametrer_regle, valider_regle,
+        // preparer_declaration, valider_declaration, televerser_declaration)
+        // sont les actions exigées par le plan de convergence FD2 §22.1
+        // (Action 3) et cohérentes avec les endpoints FIS-* du CDC §6.3.
         $fiscalite = [
             ['name' => 'fiscalite.consulter',  'module' => 'fiscalite', 'label_fr' => 'Consulter la fiscalité',     'description' => 'Voir les déclarations et obligations fiscales', 'portail' => 'gel'],
             ['name' => 'fiscalite.tva',        'module' => 'fiscalite', 'label_fr' => 'Gérer la TVA',              'description' => 'Calculer et déclarer la TVA', 'portail' => 'gel'],
@@ -58,6 +63,13 @@ class PermissionSeeder extends Seeder
             ['name' => 'fiscalite.suivi',      'module' => 'fiscalite', 'label_fr' => 'Suivi fiscal',             'description' => 'Suivre les échéances et obligations fiscales', 'portail' => 'gel'],
             ['name' => 'fiscalite.e_mecef',    'module' => 'fiscalite', 'label_fr' => 'e-MECeF',                 'description' => 'Gérer les factures normalisées et e-MECeF', 'portail' => 'gel'],
             ['name' => 'fiscalite.optimiser',  'module' => 'fiscalite', 'label_fr' => 'Optimisation fiscale',     'description' => 'Proposer des stratégies d\'optimisation fiscale', 'portail' => 'gel'],
+            // ── Actions exigées CDC FD2 §22.1 Action 3 ───────────────
+            ['name' => 'fiscalite.lire',           'module' => 'fiscalite', 'label_fr' => 'Lire la fiscalité',     'description' => 'Lecture seule des données et règles fiscales (rôle Auditeur/Réviseur externe)', 'portail' => 'gel'],
+            ['name' => 'fiscalite.parametrer_regle', 'module' => 'fiscalite', 'label_fr' => 'Paramétrer les règles fiscales', 'description' => 'Créer/modifier une RegleFiscale — reste en en_attente_validation (CDC §7.5)', 'portail' => 'gel'],
+            ['name' => 'fiscalite.valider_regle',  'module' => 'fiscalite', 'label_fr' => 'Valider les règles fiscales', 'description' => 'Valider/approuver une RegleFiscale — double contrôle réservé au Super Administrateur (CDC §7.5 / FIS-MOTEUR-06)', 'portail' => 'gel'],
+            ['name' => 'fiscalite.preparer_declaration', 'module' => 'fiscalite', 'label_fr' => 'Préparer les déclarations', 'description' => 'Calculer et préparer une déclaration fiscale (brouillon)', 'portail' => 'gel'],
+            ['name' => 'fiscalite.valider_declaration',  'module' => 'fiscalite', 'label_fr' => 'Valider les déclarations', 'description' => 'Valider/approuver une déclaration fiscale', 'portail' => 'gel'],
+            ['name' => 'fiscalite.televerser_declaration', 'module' => 'fiscalite', 'label_fr' => 'Téléverser les déclarations', 'description' => 'Soumettre/téléverser une déclaration à la DGI', 'portail' => 'gel'],
         ];
 
         // ─────────────────────────────────────────────────────────────
@@ -174,6 +186,7 @@ class PermissionSeeder extends Seeder
         ]);
 
         // comptable_senior : TOUTE la compta + fiscalité + export
+        // + préparation/validation/téléversement des déclarations (CDC §6.3)
         $this->assignToRole('comptable_senior', [
             'comptabilite.consulter', 'comptabilite.ecrire', 'comptabilite.valider',
             'comptabilite.exporter', 'comptabilite.cloturer', 'comptabilite.journaux',
@@ -181,6 +194,8 @@ class PermissionSeeder extends Seeder
             'comptabilite.analyse', 'comptabilite.param',
             'fiscalite.consulter', 'fiscalite.tva', 'fiscalite.declarer',
             'fiscalite.suivi', 'fiscalite.e_mecef',
+            'fiscalite.preparer_declaration', 'fiscalite.valider_declaration',
+            'fiscalite.televerser_declaration',
         ]);
 
         // chef_comptable : compta sans clôture + validation
@@ -191,18 +206,21 @@ class PermissionSeeder extends Seeder
             'comptabilite.analyse',
             'fiscalite.consulter', 'fiscalite.tva', 'fiscalite.declarer',
             'fiscalite.suivi',
+            'fiscalite.preparer_declaration', 'fiscalite.valider_declaration',
         ]);
 
-        // comptable_junior : saisie uniquement
+        // comptable_junior : saisie uniquement (+ préparation des déclarations,
+        // jamais la validation ni le téléversement — CDC rôle junior)
         $this->assignToRole('comptable_junior', [
             'comptabilite.consulter', 'comptabilite.ecrire',
             'comptabilite.journaux', 'comptabilite.balance',
+            'fiscalite.preparer_declaration',
         ]);
 
         // agent_paie : paie complète
         $this->assignToRole('agent_paie', [
             'paie.consulter', 'paie.bulletin', 'paie.decla_cnss',
-            'paie.decla_irpp', 'paie.contrat', 'paie.editer',
+            'paie.decla_its', 'paie.contrat', 'paie.editer',
         ]);
 
         // agent_client : CRM + client (lecture)
@@ -227,12 +245,25 @@ class PermissionSeeder extends Seeder
             'ia.consulter',
         ]);
 
-        // auditeur : consultation compta + fiscal
+        // auditeur / réviseur externe : consultation compta + fiscal uniquement.
+        // Lecture seule codée en dur au niveau du guard (middleware auditeur.readonly),
+        // indépendamment du contenu de cette liste (défense en profondeur, CDC §7.9).
         $this->assignToRole('auditeur', [
             'comptabilite.consulter', 'comptabilite.balance',
             'comptabilite.bilan', 'comptabilite.resultat',
-            'fiscalite.consulter', 'fiscalite.suivi',
+            'fiscalite.consulter', 'fiscalite.lire', 'fiscalite.suivi',
             'admin.logs',
+        ]);
+
+        // fiscaliste : configuration du moteur fiscal + règles fiscales,
+        // SANS la validation finale (valider_regle) réservée au Super Admin
+        // (double contrôle FIS-MOTEUR-06, CDC §7.5).
+        $this->assignToRole('fiscaliste', [
+            'fiscalite.consulter', 'fiscalite.lire', 'fiscalite.suivi',
+            'fiscalite.tva', 'fiscalite.e_mecef', 'fiscalite.optimiser',
+            'fiscalite.parametrer_regle',
+            'fiscalite.preparer_declaration', 'fiscalite.valider_declaration',
+            'fiscalite.televerser_declaration',
         ]);
 
         // entreprise_admin : toutes les permissions entreprise

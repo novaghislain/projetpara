@@ -115,7 +115,7 @@ class ChatAiService
                 ],
                 'fiscal' => [
                     ['question' => 'Quelles sont les échéances fiscales du mois ?', 'categorie' => 'Échéances'],
-                    ['question' => 'Comment calculer l\'IRPP au Bénin ?', 'categorie' => 'Impôts'],
+                    ['question' => 'Comment calculer l\'impôt sur les salaires (ITS) au Bénin ?', 'categorie' => 'Impôts'],
                     ['question' => 'Quels sont les taux de TVA applicables ?', 'categorie' => 'TVA'],
                     ['question' => 'Comment déclarer la TVA en ligne ?', 'categorie' => 'Déclarations'],
                     ['question' => 'Quelles sont les pénalités pour retard de déclaration ?', 'categorie' => 'Risques'],
@@ -179,7 +179,7 @@ class ChatAiService
 
         $contextes = [
             'comptabilite' => "\nContexte : Comptabilité SYSCOHADA. Tu aides le comptable à analyser les écritures, équilibrer la balance, préparer la clôture, et respecter le plan comptable OHADA. Réponds avec des références aux articles du SYSCOHADA quand nécessaire.",
-            'fiscal' => "\nContexte : Fiscalité béninoise. Tu aides à la déclaration TVA, IRPP, IS, CNSS, et aux obligations fiscales. Cite les textes de loi et les échéances. Sois précis sur les taux et les dates limites.",
+            'fiscal' => "\nContexte : Fiscalité béninoise. Tu aides à la déclaration TVA, ITS, IS, CNSS, et aux obligations fiscales. Cite les textes de loi et les échéances. Sois précis sur les taux et les dates limites.",
             'paie' => "\nContexte : Gestion de la paie et RH. Tu aides au calcul des salaires, charges sociales CNSS, déclarations, et conformité sociale au Bénin.",
             'client' => "\nContexte : Relation client et CRM. Tu aides à analyser le portefeuille clients, suggérer des actions de relance, identifier les opportunités de vente additionnelle, et réduire le taux d'attrition.",
             'tresorerie' => "\nContexte : Trésorerie et gestion financière. Tu aides à analyser la trésorerie, optimiser le BFR, prévoir les flux, et conseiller sur les décisions financières.",
@@ -273,12 +273,13 @@ class ChatAiService
 
         $reponses = [
             'salaire' => "Pour le calcul des salaires au Bénin, voici les éléments à prendre en compte :\n\n"
-                . "1. **Salaire de base** (conventionnel ou contractuel)\n"
-                . "2. **Heures supplémentaires** (majorées à 15%, 30%, 60%)\n"
-                . "3. **Primes** (ancienneté, rendement, panier, logement)\n"
-                . "4. **Cotisations CNSS** (part salariale ~3.85%)\n"
-                . "5. **IRPP** (calculé selon le barème progressif)\n\n"
-                . "Le salaire net = Salaire brut - Cotisations CNSS - IRPP + Avantages en nature.",
+                . "1. **Salaire brut** (base + primes + heures supplémentaires)\n"
+                . "2. **Avantages en nature** (logement/domesticité = 15 % du salaire de base ; électricité, eau, téléphone, nourriture, véhicules 2 et 4 roues — art. 123 CGI ; ajoutés à la base imposable)\n"
+                . "3. **Cotisations CNSS** (part salariale 3,36 %, plafond 450 000 F/mois)\n"
+                . "4. **ITS** — impôt sur les traitements et salaires (CGI 2026, art. 125) : barème MENSuel progressif 0 % ≤ 60 000 ; 10 % 60 001-150 000 ; 15 % 150 001-250 000 ; 19 % 250 001-500 000 ; 30 % > 500 000\n"
+                . "5. **ORTB** — redevance de 1 000 F sur le salaire de mars et 3 000 F sur celui de juin (exonérée du prélèvement de juin si revenu imposable ≤ 60 000 F)\n\n"
+                . "Salaire net = Salaire brut − CNSS salariale − ITS − ORTB.\n"
+                . "L'ITS est prélevé à la source et déclaré mensuellement par l'employeur.",
 
             'tva' => "La TVA au Bénin (TVA) est actuellement de **18%**.\n\n"
                 . "**Taux particuliers :**\n"

@@ -38,7 +38,7 @@ GEL Cabinet est une plateforme SaaS complète qui centralise **l'ensemble des ou
 ### Contexte Bénin
 
 - Conformité **OHADA / SYSCOHADA** (Plan comptable, Bilan, CRP, TAFIRE)
-- Calcul automatique **IRPP/CNSS** (barèmes Bénin 2026)
+- Calcul automatique **ITS/CNSS** (ITS CGI 2026 — barème mensuel progressif 0/10/15/19/30 % + redevance ORTB mars/juin)
 - Intégration **e-MECeF / Sygmef** (facture normalisée DGI)
 - Paiements **Mobile Money** (MTN MoMo, Moov Money)
 - Modules spécifiques : **Tontine/Microfinance**, **Signature électronique**
@@ -62,7 +62,7 @@ GEL Cabinet est une plateforme SaaS complète qui centralise **l'ensemble des ou
 | Module | Description |
 |--------|-------------|
 | 📒 **Comptabilité** | Plan comptable OHADA, journaux, balance, grand livre, bilan, compte de résultat, clôture d'exercice |
-| 📑 **Télédéclaration** | TVA, IRPP, CNSS, IS, AIB — calcul automatique, export XML/Excel format DGI |
+| 📑 **Télédéclaration** | TVA, ITS, CNSS, IS, AIB — calcul automatique, export XML/Excel format DGI |
 | ✅ **Conformité** | Obligations réglementaires, échéances, statuts, alertes |
 | 📎 **e-MECeF** | Facture normalisée DGI, QR code, transmission API Sygmef |
 
@@ -79,9 +79,9 @@ GEL Cabinet est une plateforme SaaS complète qui centralise **l'ensemble des ou
 ### 🔷 Ressources Humaines
 | Module | Description |
 |--------|-------------|
-| 👷 **RH & Paie** | Employés, contrats, bulletins, déclarations CNSS/IRPP |
+| 👷 **RH & Paie** | Employés, contrats, bulletins, déclarations CNSS/ITS |
 | 🏖️ **Congés** | Demandes, validation, solde |
-| 💰 **Calcul paie** | Barèmes IRPP Bénin 2026 (7 tranches), CNSS employeur 15,4% / salarié 3,36% |
+| 💰 **Calcul paie** | Barèmes ITS Bénin 2026 (mensuel 5 tranches 0/10/15/19/30 % + ORTB), CNSS employeur 15,4% / salarié 3,36% |
 
 ### 🔷 Juridique
 | Module | Description |
@@ -346,7 +346,7 @@ class EmecefController extends Controller
     ) {}
 }
 ```
-Services clés : `EmecefService`, `MobileMoneyService`, `SmsService`, `WhatsAppService`, `IrppCalculator`, `CnssCalculator`, `ActeGeneratorService`, `BankReconciliationService`
+Services clés : `EmecefService`, `MobileMoneyService`, `SmsService`, `WhatsAppService`, `ItScalculator`, `CnssCalculator`, `ActeGeneratorService`, `BankReconciliationService`
 
 ### Notifications (App\Models\Notification)
 - Champs : `user_id`, `type`, `title`, `message`, `data` (array JSON), `read_at`

@@ -717,6 +717,7 @@
       cursor: pointer;
       font-size: 13px;
       color: var(--sec-text);
+      text-decoration: none;
     }
 
     .sec-dd-item:hover {
@@ -856,6 +857,38 @@
     nav[role="navigation"] span {
       text-decoration: none;
     }
+    /* ─── APP SWITCHER ─── */
+    .app-switcher-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      padding: 10px;
+    }
+    .app-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 10px;
+      border-radius: 8px;
+      text-decoration: none;
+      color: var(--sec-text);
+      transition: background 0.2s;
+      text-align: center;
+    }
+    .app-item:hover {
+      background: var(--sec-sidebar-hover);
+      text-decoration: none;
+      color: var(--sec-primary);
+    }
+    .app-icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    .app-name {
+      font-size: 11px;
+      font-weight: 600;
+    }
   </style>
   @stack('styles')
   @vite(['resources/js/echo.js'])
@@ -874,26 +907,19 @@
     {{-- Sélecteur d'entreprise --}}
     @php
       $user = auth()->user();
-      $isAutonomous = $user ? $user->isAutonomousSecretary() : false;
-      $clientIds = $user ? $user->userClients()->pluck('client_id')->toArray() : [];
-      // Utilise App\Models\Client (table: clients) référencée par user_clients.client_id
-      $query = \App\Models\Client::query();
-      if ($user && $user->cabinet_id) {
-        $query->where('created_by', $user->cabinet_id)->orWhereIn('id', $clientIds);
-      } else {
-        $query->whereIn('id', $clientIds);
-      }
-      $clients = $query->orderBy('company_name')->get();
-      $activeClientId = session('active_client_id');
+      $isAutonomous = false;
       
-      if ($isAutonomous && $clients->count() > 0) {
-          $activeClient = $clients->first();
-          if (!$activeClientId) {
-              session(['active_client_id' => $activeClient->id]);
-              $activeClientId = $activeClient->id;
+      if (!isset($clients)) {
+          $clientIds = \DB::table('user_clients')->where('user_id', $user->id)->pluck('client_id')->toArray();
+          if ($user->cabinet_id) {
+              $clients = \App\Models\Gel\Client::where('cabinet_id', $user->cabinet_id)->orWhereIn('id', $clientIds)->get();
+          } else {
+              $clients = \App\Models\Gel\Client::whereIn('id', $clientIds)->get();
           }
-      } else {
-          $activeClient = $activeClientId ? $clients->firstWhere('id', $activeClientId) : null;
+      }
+      
+      if (!isset($activeClient)) {
+          $activeClient = \App\Models\Gel\Client::find(session('active_client_id'));
       }
     @endphp
 
@@ -901,7 +927,7 @@
       <div class="sec-client-switcher" style="cursor: default;">
         <i class="fas fa-building" style="opacity:.8;font-size:13px;"></i>
         @if($clients->count() > 0)
-          <span class="name">{{ $clients->first()->company_name }}</span>
+          <span class="name">{{ $clients->first()->nom_entreprise }}</span>
         @else
           <a href="{{ route('gel-secretary.autonomous.enterprise.create') }}" style="color: inherit; text-decoration: none;">
             <span class="name text-warning"><i class="fas fa-plus"></i> Créer mon entreprise</span>
@@ -909,9 +935,9 @@
         @endif
       </div>
     @else
-      <div class="sec-client-switcher" onclick="toggleClientDropdown()" id="clientSwitcher">
+      <div class="sec-client-switcher" id="clientSwitcher">
         <i class="fas fa-building" style="opacity:.8;font-size:13px;"></i>
-        <span class="name">{{ $activeClient?->company_name ?? 'Sélectionner une entreprise' }}</span>
+        <span class="name">{{ $activeClient?->nom_entreprise ?? 'Sélectionner une entreprise' }}</span>
         <i class="fas fa-chevron-down" style="font-size:10px;opacity:.7;"></i>
 
         <div class="client-dropdown" id="clientDropdown">
@@ -921,9 +947,9 @@
               <input type="hidden" name="client_id" value="{{ $c->id }}">
               <button type="submit"
                 class="client-dd-item w-100 border-0 text-start {{ $activeClient?->id == $c->id ? 'active' : '' }}">
-                <div class="client-dd-avatar">{{ strtoupper(substr($c->company_name ?? 'E', 0, 2)) }}</div>
+                <div class="client-dd-avatar">{{ strtoupper(substr($c->nom_entreprise ?? 'E', 0, 2)) }}</div>
                 <div>
-                  <div style="font-size:13px;">{{ $c->company_name }}</div>
+                  <div style="font-size:13px;">{{ $c->nom_entreprise }}</div>
                   <div style="font-size:11px;color:var(--sec-text-muted);">{{ $c->email ?? '—' }}</div>
                 </div>
               </button>
@@ -987,29 +1013,48 @@
         </div>
       </div>
 
-      <!-- Centre de notifications intelligent -->
+
+
+      <!-- APP SWITCHER -->
       <div style="position:relative;">
-        <button class="sec-topbar-btn" title="Notifications" onclick="toggleSecDropdown('notifDd')">
-          <i class="fas fa-bell"></i>
-          <span class="notif-badge" id="notifBadge"></span>
+        <button class="sec-topbar-btn" title="Applications GEL" onclick="toggleSecDropdown('appSwitcherDd')">
+          <i class="fas fa-th"></i>
         </button>
-        <div class="sec-dropdown" id="notifDd" style="right:0;top:calc(100% + 6px); width:320px; padding:0;">
-          <div
-            style="padding:12px 14px; border-bottom:1px solid var(--sec-border); font-weight:700; font-size:13px; background:#F8FAFC; border-radius:8px 8px 0 0; display:flex; justify-content:space-between; align-items:center;">
-            <span>GEL Intelligence</span>
-            <i class="fas fa-magic" style="color:var(--sec-primary);"></i>
+        <div class="sec-dropdown" id="appSwitcherDd" style="right:0;top:calc(100% + 6px); width:320px; padding:0;">
+          <div style="padding:14px; border-bottom:1px solid var(--sec-border); font-weight:600; font-size:13px; color:var(--sec-text);">
+            Applications
           </div>
-          <div id="notifList" style="max-height:300px; overflow-y:auto; padding:0;">
-            <div style="padding:16px; text-align:center; color:var(--sec-text-muted); font-size:12px;">
-              <i class="fas fa-circle-notch fa-spin"></i> Chargement des notifications…
-            </div>
-          </div>
-          <div style="padding:8px; border-top:1px solid var(--sec-border); text-align:center;">
-            <form method="POST" action="{{ route('gel-secretary.notifications.read-all') }}" style="margin:0;"
-              onsubmit="event.preventDefault(); fetch(this.action,{method:'POST',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content}}).then(()=>{ fetchNotifications(); secToast('Notifications marquées comme lues','success'); }).catch(()=>secToast('Erreur lors de la mise à jour','err'));">
-              @csrf
-              <button type="submit" style="background:none;border:none;font-size:12px;color:var(--sec-primary);font-weight:500;cursor:pointer;">Marquer tout comme lu</button>
-            </form>
+          <div class="app-switcher-grid">
+            @if(auth()->user()->hasRoleForActiveEntreprise('company_admin'))
+            <a href="{{ route('gel-direction.dashboard') }}" class="app-item">
+              <i class="fas fa-chart-line app-icon" style="color:#0D9488;"></i>
+              <span class="app-name">Direction</span>
+            </a>
+            @endif
+            @if(auth()->user()->hasRoleForActiveEntreprise('secretary'))
+            <a href="{{ route('gel-secretary.dashboard') }}" class="app-item">
+              <i class="fas fa-tachometer-alt app-icon" style="color:#3B82F6;"></i>
+              <span class="app-name">Secrétariat</span>
+            </a>
+            @endif
+            @if(auth()->user()->hasRoleForActiveEntreprise('accountant'))
+            <a href="{{ route('gel-accountant.dashboard') }}" class="app-item">
+              <i class="fas fa-chart-pie app-icon" style="color:#F59E0B;"></i>
+              <span class="app-name">Comptabilité</span>
+            </a>
+            @endif
+            @if(auth()->user()->hasRoleForActiveEntreprise('rh'))
+            <a href="{{ route('gel-rh.dashboard') }}" class="app-item">
+              <i class="fas fa-user-friends app-icon" style="color:#7C3AED;"></i>
+              <span class="app-name">Ressources Humaines</span>
+            </a>
+            @endif
+            @if(auth()->user()->hasRoleForActiveEntreprise('legal'))
+            <a href="{{ route('gel-legal.dashboard') }}" class="app-item">
+              <i class="fas fa-balance-scale app-icon" style="color:#E11D48;"></i>
+              <span class="app-name">Juridique</span>
+            </a>
+            @endif
           </div>
         </div>
       </div>
@@ -1055,11 +1100,24 @@
     </div>
 
     <ul class="sec-nav">
+      @php $clientIdNav = request()->query('client_id') ?? session('active_client_id') ?? null; @endphp
       <li class="sec-nav-section">Principal</li>
+        <li>
+          <a href="{{ route('gel-secretary.contrats.index') }}"
+            class="sec-nav-item {{ request()->routeIs('gel-secretary.contrats.*') ? 'active' : '' }}">
+            <i class="fas fa-file-contract"></i> Contrats
+          </a>
+        </li>
       <li>
         <a href="{{ route('gel-secretary.dashboard') }}"
           class="sec-nav-item {{ request()->routeIs('gel-secretary.dashboard') ? 'active' : '' }}">
           <i class="fas fa-tachometer-alt"></i> Tableau de bord
+        </a>
+      </li>
+      <li>
+        <a href="{{ route('gel-secretary.ai-assistant') }}"
+          class="sec-nav-item {{ request()->routeIs('gel-secretary.ai-assistant') ? 'active' : '' }}">
+          <i class="fas fa-robot"></i> GEL Intelligence
         </a>
       </li>
 
@@ -1075,8 +1133,8 @@
           class="sec-nav-item {{ request()->routeIs('gel-secretary.requests.*') || request()->routeIs('gel-secretary.invitations.*') ? 'active' : '' }}">
           <i class="fas fa-inbox"></i> Boîte de réception
           @php
-            $inv_count = \App\Models\ClientInvitation::where('email', Auth::user()->email)->where('status', 'pending')->count();
-            $demande_count = \App\Models\CompanyRequest::whereIn('status', ['new', 'pending'])->count();
+            $inv_count = 0;
+            $demande_count = 0;
             $total_inbox = $inv_count + $demande_count;
           @endphp
           @if($total_inbox > 0)
@@ -1108,9 +1166,11 @@
       <li>
         <a href="{{ route('gel-secretary.services.hr.index') }}"
           class="sec-nav-item {{ request()->routeIs('gel-secretary.services.hr.*') ? 'active' : '' }}">
-          <i class="fas fa-users"></i> Ressources Humaines
+          <i class="fas fa-users"></i> Ressources Humaines (Ancien)
         </a>
       </li>
+      
+      
       <li>
         <a href="{{ route('gel-secretary.agenda.index') }}"
           class="sec-nav-item {{ request()->routeIs('gel-secretary.agenda.*') ? 'active' : '' }}">
@@ -1142,11 +1202,54 @@
         </a>
       </li>
 
-      <li class="sec-nav-section">Communication</li>
+
+      <li class="sec-nav-section">Communication & Organisation</li>
+      <li>
+        <a href="{{ route('gel-secretary.notes.index') }}"
+          class="sec-nav-item {{ request()->routeIs('gel-secretary.notes.*') ? 'active' : '' }}">
+          <i class="fas fa-file-word"></i> Éditeur de Texte & Notes
+        </a>
+      </li>
       <li>
         <a href="{{ route('gel-secretary.courriers.index') }}"
           class="sec-nav-item {{ request()->routeIs('gel-secretary.courriers.*') ? 'active' : '' }}">
-          <i class="fas fa-envelope-open-text"></i> Courriers
+          <i class="fas fa-envelope-open-text"></i> Courriers & Boîte de réception
+        </a>
+      </li>
+        <li>
+          <a href="{{ route('gel-secretary.contrats.index') }}"
+            class="sec-nav-item {{ request()->routeIs('gel-secretary.contrats.*') ? 'active' : '' }}">
+            <i class="fas fa-file-contract"></i> Contrats
+          </a>
+        </li>
+      <li>
+        <a href="{{ route('gel-secretary.clients.ventes.index') }}"
+          class="sec-nav-item {{ request()->routeIs('gel-secretary.clients.ventes.*') ? 'active' : '' }}">
+          <i class="fas fa-file-invoice"></i> Facturation & Ventes
+        </a>
+      </li>
+      <li>
+        <a href="{{ route('gel-secretary.clients.declarations.index') }}"
+          class="sec-nav-item {{ request()->routeIs('gel-secretary.clients.declarations.*') ? 'active' : '' }}">
+          <i class="fas fa-file-invoice-dollar"></i> Déclarations Fiscales
+        </a>
+      </li>
+      <li>
+        <a href="{{ route('gel-secretary.agenda.index') }}"
+          class="sec-nav-item {{ request()->routeIs('gel-secretary.agenda.*') ? 'active' : '' }}">
+          <i class="fas fa-calendar-alt"></i> Agenda & Événements
+        </a>
+      </li>
+      <li>
+        <a href="{{ route('gel-secretary.tasks.index') }}"
+          class="sec-nav-item {{ request()->routeIs('gel-secretary.tasks.*') ? 'active' : '' }}">
+          <i class="fas fa-tasks"></i> Suivi des Tâches
+        </a>
+      </li>
+      <li>
+        <a href="{{ route('gel-secretary.contacts.index') }}"
+          class="sec-nav-item {{ request()->routeIs('gel-secretary.contacts.*') ? 'active' : '' }}">
+          <i class="fas fa-address-book"></i> Carnet d'Adresses
         </a>
       </li>
       <li>
@@ -1166,7 +1269,7 @@
           class="sec-nav-item {{ request()->routeIs('gel-secretary.messagerie.*') ? 'active' : '' }}">
           <i class="fas fa-comments"></i> Messagerie
           @php
-            $unreadMsg = \App\Models\Gel\GelMessage::where('cabinet_id', auth()->user()->cabinet_id)->where('sender_type', 'business')->where('est_lu', false)->count();
+            $unreadMsg = 0;
           @endphp
           @if($unreadMsg > 0)
             <span class="sec-nav-badge">{{ $unreadMsg }}</span>
@@ -1180,10 +1283,7 @@
           class="sec-nav-item {{ request()->routeIs('gel-secretary.coordination.*') ? 'active' : '' }}">
           <i class="fas fa-people-arrows"></i> Coordination
           @php
-            $coordAlertes = \App\Models\Gel\Task::where('assigned_to', auth()->id())
-                ->where('source', 'coordination')
-                ->where('statut', '!=', 'termine')
-                ->count();
+            $coordAlertes = 0;
           @endphp
           @if($coordAlertes > 0)
             <span class="sec-nav-badge">{{ $coordAlertes }}</span>
@@ -1203,7 +1303,54 @@
           <i class="fas fa-bell"></i> Relances
         </a>
       </li>
+      <li>
+        <a href="{{ route('gel-secretary.conformite.index') }}"
+          class="sec-nav-item {{ request()->routeIs('gel-secretary.conformite.*') ? 'active' : '' }}">
+          <i class="fas fa-shield-halved"></i> Conformité GEL®
+          @php
+            $nbNonConformes = 0;
+          @endphp
+          @if($nbNonConformes > 0)
+            <span class="sec-nav-badge" style="background:#ef4444;">{{ $nbNonConformes }}</span>
+          @endif
+        </a>
+      </li>
       
+      @endif
+      @if(auth()->user()->account_type === 'cabinet')
+      <li class="sec-nav-section">Mode Cabinet (Marketplace)</li>
+      <li>
+        <a href="{{ route('gel-secretary.cabinet.profil.index') }}"
+          class="sec-nav-item {{ request()->routeIs('gel-secretary.cabinet.profil.*') ? 'active' : '' }}">
+          <i class="fas fa-id-badge"></i> Mon Profil
+        </a>
+      </li>
+      <li>
+        <a href="{{ route('gel-secretary.cabinet.portefeuille') }}"
+          class="sec-nav-item {{ request()->routeIs('gel-secretary.cabinet.portefeuille') ? 'active' : '' }}">
+          <i class="fas fa-briefcase"></i> Portefeuille
+        </a>
+      </li>
+      <li>
+        <a href="{{ route('gel-secretary.cabinet.collaborateurs') }}"
+          class="sec-nav-item {{ request()->routeIs('gel-secretary.cabinet.collaborateurs') ? 'active' : '' }}">
+          <i class="fas fa-users-cog"></i> Collaborateurs
+        </a>
+      </li>
+      <li>
+        <a href="{{ route('gel-secretary.cabinet.taches') }}"
+          class="sec-nav-item {{ request()->routeIs('gel-secretary.cabinet.taches') ? 'active' : '' }}">
+          <i class="fas fa-tasks"></i> Tâches Globales
+        </a>
+      </li>
+      <li>
+        <a href="{{ route('gel-secretary.cabinet.facturation.index') }}"
+          class="sec-nav-item {{ request()->routeIs('gel-secretary.cabinet.facturation.*') ? 'active' : '' }}">
+          <i class="fas fa-file-invoice"></i> Honoraires Cabinet
+        </a>
+      </li>
+      @endif
+
       <li class="sec-nav-section">Paramètres & Audit</li>
       <li>
         <a href="{{ route('gel-secretary.administration.index') }}"
@@ -1222,9 +1369,8 @@
           class="sec-nav-item {{ request()->routeIs('gel-secretary.historique') ? 'active' : '' }}">
           <i class="fas fa-history"></i> Historique d'audit
         </a>
-      </li>
-      @endif
       
+
       @if(!$activeClient)
       <li class="sec-nav-section">Paramètres & Audit</li>
       @endif
@@ -1315,49 +1461,66 @@
       // Flash auto
       var flash = document.getElementById('sec-flash');
       if (flash) secToast(flash.dataset.msg, flash.dataset.type);
+    }); // <-- FIN de DOMContentLoaded
 
-      // ─── User dropdown ─────────────────────────────────────────────────
-      window.toggleSecDropdown = function (id) {
-        var el = document.getElementById(id);
-        if (!el) return;
-        var open = el.classList.contains('open');
-        document.querySelectorAll('.sec-dropdown.open').forEach(function (d) { d.classList.remove('open'); });
-        if (!open) el.classList.add('open');
-      };
+    // ─── Global Functions (hors de DOMContentLoaded pour garantir leur disponibilité) ───
+    window.toggleSecDropdown = function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      var open = el.classList.contains('open');
+      document.querySelectorAll('.sec-dropdown.open').forEach(function (d) { d.classList.remove('open'); });
+      if (!open) el.classList.add('open');
+    };
 
-      // ─── Client dropdown ───────────────────────────────────────────────
-      window.toggleClientDropdown = function (e) {
-        var dd = document.getElementById('clientDropdown');
-        if (dd) dd.classList.toggle('open');
-      };
-
-      function toggleSecDropdown(id) {
-        document.querySelectorAll('.sec-dropdown').forEach(d => {
-          if (d.id !== id) d.classList.remove('open');
-        });
-        const d = document.getElementById(id);
-        if (d) d.classList.toggle('open');
-      }
-
-      document.addEventListener('click', (e) => {
-        if (!e.target.closest('.sec-avatar') && !e.target.closest('#userDd') && !e.target.closest('.sec-topbar-btn') && !e.target.closest('#notifDd') && !e.target.closest('.sec-omnisearch') && !e.target.closest('#searchDd')) {
-          document.querySelectorAll('.sec-dropdown').forEach(d => d.classList.remove('open'));
-        }
+    function toggleSecDropdown(id) {
+      document.querySelectorAll('.sec-dropdown').forEach(d => {
+        if (d.id !== id) d.classList.remove('open');
       });
+      const d = document.getElementById(id);
+      if (d) d.classList.toggle('open');
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.sec-avatar') && !e.target.closest('#userDd') && !e.target.closest('.sec-topbar-btn') && !e.target.closest('#notifDd') && !e.target.closest('.sec-omnisearch') && !e.target.closest('#searchDd')) {
+        document.querySelectorAll('.sec-dropdown').forEach(d => d.classList.remove('open'));
+      }
+      if (!e.target.closest('#clientSwitcher')) {
+        const dd = document.getElementById('clientDropdown');
+        if (dd) dd.classList.remove('open');
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+      // ─── Client dropdown robust logic ───
+      const switcher = document.getElementById('clientSwitcher');
+      const dd = document.getElementById('clientDropdown');
+      
+      if (switcher && dd) {
+        switcher.addEventListener('click', function(e) {
+          e.stopPropagation();
+          dd.classList.toggle('open');
+        });
+        
+        dd.addEventListener('click', function(e) {
+          e.stopPropagation();
+        });
+      }
 
       // Fetch Notifications via AJAX
       function fetchNotifications() {
-        fetch('{{ route("gel-secretary.dashboard.notifications") }}')
+        fetch(''#'')
           .then(response => response.json())
           .then(data => {
             const badge = document.getElementById('notifBadge');
             const list = document.getElementById('notifList');
 
-            if (data.count > 0) {
-              badge.style.display = 'block';
-              badge.innerText = data.count > 99 ? '99+' : data.count;
-            } else {
-              badge.style.display = 'none';
+            if (badge) {
+              if (data.count > 0) {
+                badge.style.display = 'block';
+                badge.innerText = data.count > 99 ? '99+' : data.count;
+              } else {
+                badge.style.display = 'none';
+              }
             }
 
             // S17/S19 — Resynchroniser le badge latéral « Demandes clients »
@@ -1372,25 +1535,28 @@
               }
             }
 
-            if (data.items.length === 0) {
-              list.innerHTML = '<div style="padding:16px; text-align:center; color:var(--sec-text-muted); font-size:12px;">Aucune notification.</div>';
-            } else {
-              list.innerHTML = data.items.map(item => `
-            <a href="${item.link}" style="display:flex; gap:12px; padding:10px 14px; text-decoration:none; border-bottom:1px solid #F1F5F9; color:inherit; align-items:flex-start;">
-              <div style="width:32px; height:32px; border-radius:50%; background:#F8FAFC; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                <i class="${item.icon}"></i>
-              </div>
-              <div>
-                <div style="font-size:13px; font-weight:600; color:var(--sec-text);">${item.title}</div>
-                <div style="font-size:12px; color:var(--sec-text-muted); margin-top:2px;">${item.description}</div>
-                <div style="font-size:10px; color:#94A3B8; margin-top:4px;">${item.time}</div>
-              </div>
-            </a>
-          `).join('');
+            if (list) {
+              if (data.items.length === 0) {
+                list.innerHTML = '<div style="padding:16px; text-align:center; color:var(--sec-text-muted); font-size:12px;">Aucune notification.</div>';
+              } else {
+                list.innerHTML = data.items.map(item => `
+              <a href="${item.link}" style="display:flex; gap:12px; padding:10px 14px; text-decoration:none; border-bottom:1px solid #F1F5F9; color:inherit; align-items:flex-start;">
+                <div style="width:32px; height:32px; border-radius:50%; background:#F8FAFC; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                  <i class="${item.icon}"></i>
+                </div>
+                <div>
+                  <div style="font-size:13px; font-weight:600; color:var(--sec-text);">${item.title}</div>
+                  <div style="font-size:12px; color:var(--sec-text-muted); margin-top:2px;">${item.description}</div>
+                  <div style="font-size:10px; color:#94A3B8; margin-top:4px;">${item.time}</div>
+                </div>
+              </a>
+            `).join('');
+              }
             }
           })
           .catch(error => {
-            document.getElementById('notifList').innerHTML = '<div style="padding:16px; text-align:center; color:#EF4444; font-size:12px;">Erreur de chargement.</div>';
+            const list = document.getElementById('notifList');
+            if(list) list.innerHTML = '<div style="padding:16px; text-align:center; color:#EF4444; font-size:12px;">Erreur de chargement.</div>';
           });
       }
 
@@ -1488,7 +1654,7 @@
             searchDd.classList.add('open');
             searchResults.innerHTML = '<div style="padding:16px; text-align:center; color:var(--sec-text-muted); font-size:12px;"><i class="fas fa-circle-notch fa-spin"></i> Recherche en cours...</div>';
 
-            fetch('{{ route("gel-secretary.search") }}?q=' + encodeURIComponent(q))
+            fetch(''#'?q=' + encodeURIComponent(q))
               .then(res => res.json())
               .then(data => {
                 if (Object.keys(data).length === 0) {
@@ -1745,7 +1911,7 @@
         input.value = '';
         const loadingDiv = appendMsg('...', 'received');
 
-        fetch('{{ route("gel-secretary.ai-chat") }}', {
+        fetch(''#'', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

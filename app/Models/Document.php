@@ -53,6 +53,12 @@ class Document extends Model
         'transmitted_by',
         'validated_at',
         'validated_by',
+        'is_secured',
+        'secure_password',
+    ];
+
+    protected $hidden = [
+        'secure_password',
     ];
 
     protected function casts(): array

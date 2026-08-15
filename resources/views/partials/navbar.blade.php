@@ -48,9 +48,9 @@
                     <i class="bi-chevron-down chevron"></i>
                 </a>
                 <ul class="gel-dropdown">
-                    <li><a href="{{ route('notre-cabinet') }}"><span class="drop-icon"><i class="bi-building"></i></span> Notre Cabinet</a></li>
-                    <li><a href="{{ route('notre-equipe') }}"><span class="drop-icon"><i class="bi-people-fill"></i></span> Notre Équipe</a></li>
-                    <li><a href="{{ route('carrieres') }}"><span class="drop-icon"><i class="bi-briefcase-fill"></i></span> Carrières</a></li>
+                    <li><a href="/notre-cabinet"><span class="drop-icon"><i class="bi-building"></i></span> Notre Cabinet</a></li>
+                    <li><a href="/notre-equipe"><span class="drop-icon"><i class="bi-people-fill"></i></span> Notre Équipe</a></li>
+                    <li><a href="/carrieres"><span class="drop-icon"><i class="bi-briefcase-fill"></i></span> Carrières</a></li>
                 </ul>
             </li>
             <li class="gel-nav-item">
@@ -80,9 +80,9 @@
 
             @auth
                 @if(auth()->user()->role === 'client')
-                    <a href="{{ route('client.orders.index') }}" class="gel-btn-nav gel-btn-nav-outline"><i class="bi-speedometer2"></i> Mon Espace</a>
+                    <a href="/" class="gel-btn-nav gel-btn-nav-outline"><i class="bi-speedometer2"></i> Mon Espace</a>
                 @elseif(auth()->user()->client_id)
-                    <a href="{{ route('company.dashboard') }}" class="gel-btn-nav gel-btn-nav-outline"><i class="bi-speedometer2"></i> Portail</a>
+                    <a href="/" class="gel-btn-nav gel-btn-nav-outline"><i class="bi-speedometer2"></i> Portail</a>
                 @else
                     <a href="{{ route('dashboard') }}" class="gel-btn-nav gel-btn-nav-outline"><i class="bi-speedometer2"></i> Tableau de bord</a>
                 @endif
@@ -117,9 +117,9 @@
     <a href="/documentation" class="gel-mobile-link"><i class="bi-file-text text-orange me-2"></i>Documentation</a>
     <a href="/faq" class="gel-mobile-link"><i class="bi-question-circle text-orange me-2"></i>FAQ</a>
     <a href="/centre-aide" class="gel-mobile-link"><i class="bi-headset text-orange me-2"></i>Centre d'aide</a>
-    <a href="{{ route('notre-cabinet') }}" class="gel-mobile-link"><i class="bi-building text-orange me-2"></i>Notre Cabinet</a>
-    <a href="{{ route('notre-equipe') }}" class="gel-mobile-link"><i class="bi-people-fill text-orange me-2"></i>Notre Équipe</a>
-    <a href="{{ route('carrieres') }}" class="gel-mobile-link"><i class="bi-briefcase-fill text-orange me-2"></i>Carrières</a>
+    <a href="/notre-cabinet" class="gel-mobile-link"><i class="bi-building text-orange me-2"></i>Notre Cabinet</a>
+    <a href="/notre-equipe" class="gel-mobile-link"><i class="bi-people-fill text-orange me-2"></i>Notre Équipe</a>
+    <a href="/carrieres" class="gel-mobile-link"><i class="bi-briefcase-fill text-orange me-2"></i>Carrières</a>
     <a href="/tarifs" class="gel-mobile-link"><i class="bi-currency-dollar text-orange me-2"></i>Tarifs</a>
     <a href="/ia" class="gel-mobile-link"><i class="bi-robot text-orange me-2"></i>IA</a>
     <a href="/contact" class="gel-mobile-link"><i class="bi-envelope text-orange me-2"></i>Contact</a>

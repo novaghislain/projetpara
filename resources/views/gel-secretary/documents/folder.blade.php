@@ -187,7 +187,7 @@
                         <i class="fas fa-lock"></i> Lecture seule
                     </span>
                 @else
-                    <button class="sec-btn sec-btn-primary" style="margin-right:8px;" onclick="window.SecScanner && SecScanner.open({{ $folder->id }}, '{{ addslashes($folder->name) }}')" title="Scanner & classer un document dans ce dossier">
+                    <button class="sec-btn sec-btn-primary" style="margin-right:8px;" onclick="window.SecScanner && SecScanner.open('{{ $folder->id }}', '{{ addslashes($folder->name) }}')" title="Scanner & classer un document dans ce dossier">
                         <i class="fas fa-camera"></i> Scanner
                     </button>
                     <button class="sec-btn" style="background:white; color:var(--sec-primary); border:1px solid var(--sec-primary);" onclick="openCreateFolderModal()">
@@ -202,6 +202,17 @@
             <div class="context-menu-item" onclick="openRenameModal()">
                 <i class="fas fa-edit"></i> Renommer
             </div>
+            <div class="context-menu-item" id="downloadFolderContextItem" onclick="downloadItemContext()" style="display: none;">
+                <i class="fas fa-download"></i> Télécharger le dossier
+            </div>
+            <div class="context-menu-item" onclick="openSecureItemModal()">
+                <i class="fas fa-lock"></i> Sécuriser l'élément
+            </div>
+            @if(Auth::check() && Auth::user()->isSuperAdmin())
+            <div class="context-menu-item" id="resetSecurityContextItem" onclick="resetItemSecurityContext()" style="display: none;">
+                <i class="fas fa-unlock-alt"></i> Réinitialiser la sécurité
+            </div>
+            @endif
             <div class="context-menu-item danger" onclick="deleteItemContext()">
                 <i class="fas fa-trash"></i> Supprimer
             </div>
@@ -214,12 +225,17 @@
     </h3>
     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px;">
         @foreach($subfolders as $sub)
-        <a href="{{ route('gel-secretary.documents.folder', $sub->id) }}" oncontextmenu="showContextMenu(event, 'folder', {{ $sub->id }}, '{{ $sub->name }}')" style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; text-decoration: none; display: flex; align-items: center; gap: 12px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+        <a href="{{ route('gel-secretary.documents.folder', $sub->id) }}" class="subfolder-item" data-id="{{ $sub->id }}" data-secured="{{ $sub->is_secured ? 'true' : 'false' }}" oncontextmenu="showContextMenu(event, 'folder', '{{ $sub->id }}', '{{ addslashes($sub->name) }}', {{ $sub->is_secured ? 'true' : 'false' }})" style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; text-decoration: none; display: flex; align-items: center; gap: 12px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
             <div style="width: 40px; height: 40px; border-radius: 8px; background: #f8fafc; display: flex; align-items: center; justify-content: center;">
                 <i class="fas fa-folder" style="color: #60A5FA; font-size: 20px;"></i>
             </div>
             <div>
-                <div style="font-weight: 700; color: #1e293b; font-size: 13px;">{{ $sub->name }}</div>
+                <div style="font-weight: 700; color: #1e293b; font-size: 13px;">
+                    {{ $sub->name }}
+                    @if($sub->is_secured)
+                        <i class="fas fa-lock" style="color: #94a3b8; font-size: 12px; margin-left: 5px;" title="Dossier sécurisé"></i>
+                    @endif
+                </div>
                 <div style="font-size: 11px; color: #94a3b8;">{{ $sub->documents_count }} fichier(s)</div>
             </div>
         </a>
@@ -366,7 +382,7 @@ function skipAi() {
         </thead>
         <tbody>
             @forelse($documents as $doc)
-                <tr oncontextmenu="showContextMenu(event, 'document', {{ $doc->id }}, '{{ $doc->name }}')">
+                <tr class="document-item" data-id="{{ $doc->id }}" data-secured="{{ $doc->is_secured ? 'true' : 'false' }}" oncontextmenu="showContextMenu(event, 'document', '{{ $doc->id }}', '{{ addslashes($doc->name) }}', {{ $doc->is_secured ? 'true' : 'false' }})">
                     <td>
                         <div style="display:flex; align-items:center; gap:12px;">
                             <form method="POST" action="{{ route('gel-secretary.documents.favorite', $doc->id) }}" style="margin:0;">
@@ -381,6 +397,9 @@ function skipAi() {
                             <div>
                                 <div style="font-weight:700; color:#1e293b; font-size:14px; display:flex; align-items:center; gap:6px;">
                                     {{ $doc->name }}
+                                    @if($doc->is_secured)
+                                        <i class="fas fa-lock" style="color: #94a3b8; font-size: 12px; margin-left:5px;" title="Fichier sécurisé"></i>
+                                    @endif
                                     @if($doc->privacy_level === 'confidentiel')
                                         <span style="font-size:9px; background:#FEE2E2; color:#EF4444; padding:2px 6px; border-radius:4px; text-transform:uppercase;">Confidentiel</span>
                                     @elseif($doc->privacy_level === 'interne')
@@ -438,18 +457,18 @@ function skipAi() {
                     <td style="text-align:right; position:relative;">
                         <div style="display:inline-flex; gap:6px; align-items:center;">
                             @if(strtolower($doc->file_type) === 'pdf')
-                                <button type="button" onclick="previewPDF('{{ route('gel-secretary.documents.view', $doc->id) }}', '{{ addslashes($doc->name) }}')" class="btn-action-premium" title="Aperçu rapide">
+                                <button type="button" class="btn-action-premium secure-intercept-view" data-id="{{ $doc->id }}" data-secured="{{ $doc->is_secured ? 'true' : 'false' }}" data-url="{{ route('gel-secretary.documents.view', $doc->id) }}" data-name="{{ addslashes($doc->name) }}" title="Aperçu rapide">
                                     <i class="fas fa-eye"></i>
                                 </button>
                             @else
-                                <a href="{{ route('gel-secretary.documents.view', $doc->id) }}" target="_blank" class="btn-action-premium" title="Lire le document">
+                                <a href="{{ route('gel-secretary.documents.view', $doc->id) }}" class="btn-action-premium secure-intercept-view" data-id="{{ $doc->id }}" data-secured="{{ $doc->is_secured ? 'true' : 'false' }}" data-url="{{ route('gel-secretary.documents.view', $doc->id) }}" title="Lire le document">
                                     <i class="fas fa-external-link-alt"></i>
                                 </a>
                             @endif
-                            <button type="button" onclick="showHistoryModal({{ $doc->id }})" class="btn-action-premium" title="Historique">
+                            <button type="button" onclick="showHistoryModal('{{ $doc->id }}')" class="btn-action-premium" title="Historique">
                                 <i class="fas fa-history"></i>
                             </button>
-                            <a href="{{ route('gel-secretary.documents.download', $doc->id) }}" class="btn-action-premium" title="Télécharger">
+                            <a href="{{ route('gel-secretary.documents.download', $doc->id) }}" class="btn-action-premium secure-intercept-download" data-id="{{ $doc->id }}" data-secured="{{ $doc->is_secured ? 'true' : 'false' }}" data-url="{{ route('gel-secretary.documents.download', $doc->id) }}" title="Télécharger">
                                 <i class="fas fa-download"></i>
                             </a>
                             <div class="dropdown" style="display:inline-block;">
@@ -458,7 +477,7 @@ function skipAi() {
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="border:none; border-radius:12px; font-size:13px;">
                                     <li>
-                                        <a class="dropdown-item py-2" href="#" onclick="event.preventDefault(); showMetadataModal({{ $doc->id }}, '{{ $doc->privacy_level }}', '{{ implode(',', $doc->tags ?? []) }}')">
+                                        <a class="dropdown-item py-2" href="#" onclick="event.preventDefault(); showMetadataModal('{{ $doc->id }}', '{{ $doc->privacy_level }}', '{{ implode(',', $doc->tags ?? []) }}')">
                                             <i class="fas fa-tags text-secondary me-2"></i> Propriétés & Étiquettes
                                         </a>
                                     </li>
@@ -471,7 +490,7 @@ function skipAi() {
                                         </form>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item py-2" href="#" onclick="event.preventDefault(); showVersionModal({{ $doc->id }})">
+                                        <a class="dropdown-item py-2" href="#" onclick="event.preventDefault(); showVersionModal('{{ $doc->id }}')">
                                             <i class="fas fa-upload text-info me-2"></i> Téléverser une V{{ $doc->version + 1 }}
                                         </a>
                                     </li>
@@ -839,14 +858,27 @@ function showVersionModal(docId) {
 let currentContextType = null;
 let currentContextId = null;
 let currentContextName = null;
+let currentContextIsSecured = false;
+let pendingUnlockAction = null; // 'download_folder', 'navigate_folder', 'download_document', 'view_document'
+let pendingUnlockUrl = null;
+let pendingUnlockName = null;
 
-function showContextMenu(e, type, id, name) {
+function showContextMenu(e, type, id, name, isSecured) {
   e.preventDefault();
   currentContextType = type;
   currentContextId = id;
   currentContextName = name;
+  currentContextIsSecured = isSecured;
   const menu = document.getElementById('itemContextMenu');
   if(menu) {
+    const downloadFolderBtn = document.getElementById('downloadFolderContextItem');
+    if (downloadFolderBtn) {
+        downloadFolderBtn.style.display = type === 'folder' ? 'block' : 'none';
+    }
+    const resetBtn = document.getElementById('resetSecurityContextItem');
+    if (resetBtn) {
+        resetBtn.style.display = isSecured ? 'block' : 'none';
+    }
     menu.style.display = 'block';
     menu.style.left = e.pageX + 'px';
     menu.style.top = e.pageY + 'px';
@@ -890,7 +922,217 @@ function submitDeleteItem() {
   }
   form.submit();
 }
+
+function openSecureItemModal() {
+    document.getElementById('secureItemName').innerText = currentContextName;
+    document.getElementById('secureItemPassword').value = '';
+    document.getElementById('secureItemModal').style.display = 'flex';
+}
+
+function submitSecureItem() {
+    const password = document.getElementById('secureItemPassword').value;
+    if (!password || password.length < 4) {
+        alert("Le mot de passe doit contenir au moins 4 caractères.");
+        return;
+    }
+
+    const url = currentContextType === 'folder' 
+        ? `{{ url('gel-secretary/documents/folder') }}/${currentContextId}/secure`
+        : `{{ url('gel-secretary/documents/file') }}/${currentContextId}/secure`;
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ password: password })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success) {
+            window.location.reload();
+        } else {
+            alert(data.message || 'Erreur lors de la sécurisation.');
+        }
+    })
+    .catch(err => alert('Erreur serveur.'));
+}
+
+function resetItemSecurityContext() {
+    if(confirm(`Voulez-vous vraiment réinitialiser le mot de passe pour cet élément : ${currentContextName} ?`)) {
+        const url = currentContextType === 'folder' 
+            ? `{{ url('gel-secretary/documents/folder') }}/${currentContextId}/unlock-reset`
+            : `{{ url('gel-secretary/documents/file') }}/${currentContextId}/unlock-reset`;
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message || 'Erreur.');
+            }
+        })
+        .catch(err => alert('Erreur serveur.'));
+    }
+}
+
+function downloadItemContext() {
+    if (currentContextType === 'folder') {
+        if (currentContextIsSecured) {
+            pendingUnlockAction = 'download_folder';
+            document.getElementById('unlockItemError').style.display = 'none';
+            document.getElementById('unlockItemPassword').value = '';
+            document.getElementById('unlockItemModal').style.display = 'flex';
+        } else {
+            window.location.href = `{{ url('gel-secretary/documents/folder') }}/${currentContextId}/download`;
+        }
+    }
+}
+
+function submitUnlockItem() {
+    const password = document.getElementById('unlockItemPassword').value;
+    const itemType = (pendingUnlockAction === 'navigate_folder' || pendingUnlockAction === 'download_folder') ? 'folder' : 'document';
+    
+    fetch(`{{ route('gel-secretary.documents.verify-password') }}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ type: itemType, id: currentContextId, password: password })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('unlockItemModal').style.display = 'none';
+            if (pendingUnlockAction === 'download_folder') {
+                window.location.href = `{{ url('gel-secretary/documents/folder') }}/${currentContextId}/download`;
+            } else if (pendingUnlockAction === 'navigate_folder') {
+                window.location.href = `{{ url('gel-secretary/documents/folder') }}/${currentContextId}`;
+            } else if (pendingUnlockAction === 'download_document') {
+                window.location.href = pendingUnlockUrl;
+            } else if (pendingUnlockAction === 'view_document') {
+                if (pendingUnlockName) {
+                    previewPDF(pendingUnlockUrl, pendingUnlockName);
+                } else {
+                    window.open(pendingUnlockUrl, '_blank');
+                }
+            }
+        } else {
+            document.getElementById('unlockItemError').style.display = 'block';
+            document.getElementById('unlockItemError').innerText = data.message || 'Mot de passe incorrect.';
+        }
+    })
+    .catch(err => {
+        document.getElementById('unlockItemError').style.display = 'block';
+        document.getElementById('unlockItemError').innerText = 'Erreur serveur.';
+    });
+}
+
+// Override clicks for secured items
+document.querySelectorAll('.subfolder-item').forEach(el => {
+    el.addEventListener('click', function(e) {
+        const isSecured = this.getAttribute('data-secured') === 'true';
+        if (isSecured) {
+            e.preventDefault();
+            currentContextId = this.getAttribute('data-id');
+            pendingUnlockAction = 'navigate_folder';
+            document.getElementById('unlockItemError').style.display = 'none';
+            document.getElementById('unlockItemPassword').value = '';
+            document.getElementById('unlockItemModal').style.display = 'flex';
+        }
+    });
+});
+
+document.querySelectorAll('.secure-intercept-view').forEach(el => {
+    el.addEventListener('click', function(e) {
+        const isSecured = this.getAttribute('data-secured') === 'true';
+        if (isSecured) {
+            e.preventDefault();
+            currentContextId = this.getAttribute('data-id');
+            pendingUnlockAction = 'view_document';
+            pendingUnlockUrl = this.getAttribute('data-url');
+            pendingUnlockName = this.getAttribute('data-name');
+            document.getElementById('unlockItemError').style.display = 'none';
+            document.getElementById('unlockItemPassword').value = '';
+            document.getElementById('unlockItemModal').style.display = 'flex';
+        } else if (el.tagName === 'BUTTON') {
+            // Standard PDF preview
+            previewPDF(this.getAttribute('data-url'), this.getAttribute('data-name'));
+        }
+    });
+});
+
+document.querySelectorAll('.secure-intercept-download').forEach(el => {
+    el.addEventListener('click', function(e) {
+        const isSecured = this.getAttribute('data-secured') === 'true';
+        if (isSecured) {
+            e.preventDefault();
+            currentContextId = this.getAttribute('data-id');
+            pendingUnlockAction = 'download_document';
+            pendingUnlockUrl = this.getAttribute('data-url');
+            document.getElementById('unlockItemError').style.display = 'none';
+            document.getElementById('unlockItemPassword').value = '';
+            document.getElementById('unlockItemModal').style.display = 'flex';
+        }
+    });
+});
 </script>
+
+<!-- SECURE ITEM MODAL -->
+<div id="secureItemModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.5); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); z-index:10000; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:16px; width:450px; max-width:90%; border:1px solid var(--sec-border); box-shadow:0 10px 25px rgba(0,0,0,0.1); overflow:hidden;">
+    <div style="padding:24px; border-bottom:1px solid var(--sec-border); display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="margin:0; font-size:18px; color:var(--sec-text);"><i class="fas fa-lock" style="margin-right:8px; color:var(--sec-primary);"></i> Sécuriser l'élément</h3>
+        <button type="button" onclick="document.getElementById('secureItemModal').style.display='none'" style="background:none; border:none; font-size:20px; color:#94a3b8; cursor:pointer;">&times;</button>
+    </div>
+    <div style="padding:24px;">
+        <p style="font-size:14px; color:var(--sec-text-muted); margin-bottom:16px;">
+        Définissez un mot de passe pour protéger cet élément : <strong id="secureItemName"></strong>
+        </p>
+        <div style="margin-bottom:16px;">
+        <label style="display:block; font-size:13px; font-weight:600; color:var(--sec-text); margin-bottom:6px;">Mot de passe</label>
+        <input type="password" id="secureItemPassword" class="sec-input" style="width:100%;" placeholder="Mot de passe sécurisé">
+        </div>
+    </div>
+    <div style="padding:16px 24px; background:#f8fafc; text-align:right; border-top:1px solid var(--sec-border);">
+        <button type="button" onclick="document.getElementById('secureItemModal').style.display='none'" class="sec-btn sec-btn-outline" style="margin-right:8px;">Annuler</button>
+        <button type="button" onclick="submitSecureItem()" class="sec-btn sec-btn-primary">Sécuriser</button>
+    </div>
+    </div>
+</div>
+
+<!-- UNLOCK ITEM MODAL -->
+<div id="unlockItemModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.5); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); z-index:10000; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:16px; width:450px; max-width:90%; border:1px solid var(--sec-border); box-shadow:0 10px 25px rgba(0,0,0,0.1); overflow:hidden;">
+    <div style="padding:24px; border-bottom:1px solid var(--sec-border); display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="margin:0; font-size:18px; color:var(--sec-text);"><i class="fas fa-key" style="margin-right:8px; color:#eab308;"></i> Élément sécurisé</h3>
+        <button type="button" onclick="document.getElementById('unlockItemModal').style.display='none'" style="background:none; border:none; font-size:20px; color:#94a3b8; cursor:pointer;">&times;</button>
+    </div>
+    <div style="padding:24px;">
+        <p style="font-size:14px; color:var(--sec-text-muted); margin-bottom:16px;">
+        Veuillez entrer le mot de passe pour accéder à cet élément.
+        </p>
+        <div style="margin-bottom:16px;">
+        <label style="display:block; font-size:13px; font-weight:600; color:var(--sec-text); margin-bottom:6px;">Mot de passe</label>
+        <input type="password" id="unlockItemPassword" class="sec-input" style="width:100%;" placeholder="Votre mot de passe">
+        </div>
+        <div id="unlockItemError" style="color:#ef4444; font-size:13px; display:none;">Mot de passe incorrect.</div>
+    </div>
+    <div style="padding:16px 24px; background:#f8fafc; text-align:right; border-top:1px solid var(--sec-border);">
+        <button type="button" onclick="document.getElementById('unlockItemModal').style.display='none'" class="sec-btn sec-btn-outline" style="margin-right:8px;">Annuler</button>
+        <button type="button" onclick="submitUnlockItem()" class="sec-btn sec-btn-primary">Déverrouiller</button>
+    </div>
+    </div>
+</div>
 
 <!-- CREATE FOLDER MODAL -->
 <div id="createFolderModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">

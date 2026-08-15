@@ -85,7 +85,7 @@
                             </span>
                         </td>
                         <td style="padding:14px 18px; font-size:12px;">
-                            <span style="font-weight:700; text-transform:uppercase; color:{{ $log->event === 'deleted' || $log->event === 'document.delete' ? '#dc2626' : (in_array($log->event, ['created', 'document.upload']) ? '#059669' : '#312e81') }}">
+                            <span style="font-weight:700; text-transform:uppercase; color:{{ $log->event === 'deleted' || $log->event === 'document.delete' ? '#dc2626' : (in_array($log->event, ['created', 'document.upload']) ? 'var(--gel-primary)' : '#312e81') }}">
                                 {{ $log->readable_event }}
                             </span>
                         </td>

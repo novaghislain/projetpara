@@ -11,8 +11,7 @@ class PartnersController extends Controller
 {
     public function store(Request $request)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $validated = $request->validate([
             'type' => 'required|in:customer,fournisseur,client',

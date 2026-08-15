@@ -20,13 +20,21 @@
             <form action="{{ route('gel-accountant.comptabilite.ecritures.valider', $ecriture->id) }}" method="POST" style="display:inline;"
                   onsubmit="return confirm('Valider cette écriture ? Cette action est irréversible.');">
                 @csrf
-                <button type="submit" style="display:inline-flex; align-items:center; gap:7px; padding:10px 18px; background:linear-gradient(135deg,#10b981,#059669); color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; box-shadow:0 2px 8px rgba(16,185,129,.3);">
+                <button type="submit" style="display:inline-flex; align-items:center; gap:7px; padding:10px 18px; background:linear-gradient(135deg,#10b981,var(--gel-primary)); color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; box-shadow:0 2px 8px rgba(16,185,129,.3);">
                     <i class="bi bi-patch-check-fill"></i> Valider l'écriture
                 </button>
             </form>
             <a href="{{ route('gel-accountant.comptabilite.ecritures.edit', $ecriture->id) }}" style="display:inline-flex; align-items:center; gap:7px; padding:10px 18px; background:#fff; color:#475569; border:1px solid #e2e8f0; border-radius:8px; font-size:13px; font-weight:600; text-decoration:none; box-shadow:0 1px 3px rgba(0,0,0,.05);">
                 <i class="bi bi-pencil-square"></i> Modifier
             </a>
+        @else
+            <form action="{{ route('gel-accountant.comptabilite.ecritures.extourner', $ecriture->id) }}" method="POST" style="display:inline;"
+                  onsubmit="return confirm('Extourner cette écriture ? Une écriture d\'annulation sera générée automatiquement.');">
+                @csrf
+                <button type="submit" style="display:inline-flex; align-items:center; gap:7px; padding:10px 18px; background:linear-gradient(135deg,#ef4444,#dc2626); color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; box-shadow:0 2px 8px rgba(220,38,38,.3);">
+                    <i class="bi bi-arrow-counterclockwise"></i> Extourner
+                </button>
+            </form>
         @endif
         <a href="{{ route('gel-accountant.comptabilite.ecritures') }}" style="display:inline-flex; align-items:center; gap:7px; padding:10px 18px; background:#fff; color:#475569; border:1px solid #e2e8f0; border-radius:8px; font-size:13px; font-weight:600; text-decoration:none; box-shadow:0 1px 3px rgba(0,0,0,.05);">
             <i class="bi bi-arrow-left"></i> Retour aux écritures
@@ -51,7 +59,7 @@
     @endphp
     <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:16px 18px; box-shadow:0 1px 3px rgba(0,0,0,.04);">
         <div style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:6px; letter-spacing:.5px;">Total Débit</div>
-        <div style="font-size:20px; font-weight:800; color:#059669;">{{ number_format($totD, 0, ',', ' ') }}</div>
+        <div style="font-size:20px; font-weight:800; color:var(--gel-primary);">{{ number_format($totD, 0, ',', ' ') }}</div>
         <div style="font-size:11px; color:#94a3b8; margin-top:2px;">FCFA</div>
     </div>
     <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:16px 18px; box-shadow:0 1px 3px rgba(0,0,0,.04);">
@@ -61,7 +69,7 @@
     </div>
     <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:16px 18px; box-shadow:0 1px 3px rgba(0,0,0,.04);">
         <div style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:6px; letter-spacing:.5px;">Équilibre</div>
-        <div style="font-size:18px; font-weight:800; color:{{ $equilibre ? '#059669' : '#dc2626' }}; display:flex; align-items:center; gap:6px;">
+        <div style="font-size:18px; font-weight:800; color:{{ $equilibre ? 'var(--gel-primary)' : '#dc2626' }}; display:flex; align-items:center; gap:6px;">
             @if($equilibre)
                 <i class="bi bi-check-circle-fill" style="font-size:16px;"></i> Équilibrée
             @else
@@ -184,7 +192,7 @@
     <div style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.05);">
         <div style="padding:14px 20px; background:linear-gradient(135deg,#f8fafc,#f1f5f9); border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
             <div style="display:flex; align-items:center; gap:8px;">
-                <i class="bi bi-table" style="color:#059669; font-size:15px;"></i>
+                <i class="bi bi-table" style="color:var(--gel-primary); font-size:15px;"></i>
                 <span style="font-size:14px; font-weight:700; color:#0f172a;">Lignes comptables</span>
                 <span style="background:#e0f2fe; color:#0369a1; font-size:11px; font-weight:700; padding:2px 8px; border-radius:12px;">{{ $ecriture->lignes->count() }}</span>
             </div>
@@ -198,7 +206,7 @@
                         <th style="padding:11px 14px; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.5px; text-align:left; white-space:nowrap;">Compte</th>
                         <th style="padding:11px 14px; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.5px; text-align:left;">Intitulé du compte</th>
                         <th style="padding:11px 14px; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.5px; text-align:left;">Libellé de la ligne</th>
-                        <th style="padding:11px 14px; font-size:11px; font-weight:700; color:#059669; text-transform:uppercase; letter-spacing:.5px; text-align:right; white-space:nowrap;">Débit (FCFA)</th>
+                        <th style="padding:11px 14px; font-size:11px; font-weight:700; color:var(--gel-primary); text-transform:uppercase; letter-spacing:.5px; text-align:right; white-space:nowrap;">Débit (FCFA)</th>
                         <th style="padding:11px 14px; font-size:11px; font-weight:700; color:#dc2626; text-transform:uppercase; letter-spacing:.5px; text-align:right; white-space:nowrap;">Crédit (FCFA)</th>
                     </tr>
                 </thead>
@@ -225,7 +233,7 @@
                             </td>
                             <td style="padding:14px; text-align:right; white-space:nowrap;">
                                 @if($isDebit)
-                                    <span style="font-size:14px; font-weight:700; color:#059669;">{{ number_format($montant, 0, ',', ' ') }}</span>
+                                    <span style="font-size:14px; font-weight:700; color:var(--gel-primary);">{{ number_format($montant, 0, ',', ' ') }}</span>
                                 @else
                                     <span style="color:#cbd5e1; font-size:13px;">—</span>
                                 @endif
@@ -244,7 +252,7 @@
                     <tr style="background:linear-gradient(135deg,#f8fafc,#f1f5f9); border-top:2px solid #e2e8f0;">
                         <td style="padding:0; width:4px;"></td>
                         <td colspan="3" style="padding:14px 14px 14px 16px; font-size:12px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:.5px; text-align:right;">Totaux de l'écriture</td>
-                        <td style="padding:14px; text-align:right; font-size:16px; font-weight:800; color:#059669; white-space:nowrap;">{{ number_format($totD, 0, ',', ' ') }} <span style="font-size:11px; font-weight:600;">FCFA</span></td>
+                        <td style="padding:14px; text-align:right; font-size:16px; font-weight:800; color:var(--gel-primary); white-space:nowrap;">{{ number_format($totD, 0, ',', ' ') }} <span style="font-size:11px; font-weight:600;">FCFA</span></td>
                         <td style="padding:14px; text-align:right; font-size:16px; font-weight:800; color:#dc2626; white-space:nowrap;">{{ number_format($totC, 0, ',', ' ') }} <span style="font-size:11px; font-weight:600;">FCFA</span></td>
                     </tr>
                     @if($equilibre)

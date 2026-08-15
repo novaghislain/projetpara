@@ -18,8 +18,7 @@ class TvaController extends Controller
      */
     public function index(Request $request)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $declarations = TvaDeclaration::where('client_id', $clientId)
             ->with('fiscalYear', 'createdBy')
@@ -37,8 +36,7 @@ class TvaController extends Controller
      */
     public function create(Request $request)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $result = null;
         $period = $request->query('period'); // Format: YYYY-MM
@@ -74,8 +72,7 @@ class TvaController extends Controller
      */
     public function store(Request $request)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $validated = $request->validate([
             'period'         => 'required|regex:/^\d{4}-\d{2}$/',
@@ -120,8 +117,7 @@ class TvaController extends Controller
      */
     public function submit($id)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $d = TvaDeclaration::where('client_id', $clientId)
             ->where('status', 'draft')

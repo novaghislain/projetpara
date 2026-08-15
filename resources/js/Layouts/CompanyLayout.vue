@@ -516,7 +516,7 @@ onUnmounted(() => {
     align-items: center;
     gap: 10px;
     padding: 10px 16px;
-    margin: 1px 8px;
+    margin: 4px 12px;
     font-size: 13px;
     font-weight: 600;
     color: rgba(255,255,255,0.75);
@@ -525,15 +525,37 @@ onUnmounted(() => {
     border-left: 3px solid transparent;
     transition: all 0.12s;
     white-space: nowrap;
+    position: relative;
 }
 .gs-nav-item:hover {
     color: #fff;
     background: rgba(255,255,255,0.08);
 }
-.gs-nav-active {
-    color: #fff !important;
-    background: rgba(245,158,11,0.2);
-    border-left-color: #F59E0B;
+.gs-nav-active, .gs-nav-active:hover {
+    color: #0F172A !important;
+    background: #F5F0FF !important;
+    border-left-color: transparent;
+    border-radius: 20px 0 0 20px;
+    margin: 4px -1px 4px 12px;
+}
+.gs-nav-active::before,
+.gs-nav-active::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    background: transparent;
+    border-radius: 50%;
+    pointer-events: none;
+}
+.gs-nav-active::before {
+    top: -20px;
+    box-shadow: 10px 10px 0 0 #F5F0FF;
+}
+.gs-nav-active::after {
+    bottom: -20px;
+    box-shadow: 10px -10px 0 0 #F5F0FF;
 }
 .gs-nav-icon {
     font-size: 16px;
@@ -541,7 +563,7 @@ onUnmounted(() => {
     text-align: center;
     flex-shrink: 0;
 }
-.gs-nav-active .gs-nav-icon { color: #F59E0B; }
+.gs-nav-active .gs-nav-icon { color: #FF7900; }
 .gs-nav-label { line-height: 1; }
 
 /* -- Bas de sidebar --- Compte --------------- */

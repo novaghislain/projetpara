@@ -16,51 +16,55 @@ class GeneralLedgerService
         ?string $endDate = null,
         int $perPage = 50
     ): array {
-        $account = AccountingAccount::where('id', $accountId)
-            ->where('client_id', $clientId)
-            ->firstOrFail();
+        $account = DB::table('gel_account_types')
+            ->where('id', $accountId)
+            ->first();
+
+        if (!$account) {
+            throw new \Exception("Account not found");
+        }
 
         $startDate = $startDate ?? date('Y-01-01');
         $endDate = $endDate ?? date('Y-m-d');
 
         // Solde antérieur (avant startDate)
-        $openingQuery = DB::table('entry_lines')
-            ->join('journal_entries', 'entry_lines.entry_id', '=', 'journal_entries.id')
-            ->where('entry_lines.account_id', $accountId)
-            ->where('journal_entries.client_id', $clientId)
-            ->where('journal_entries.status', 'posted')
-            ->whereDate('journal_entries.entry_date', '<', $startDate);
+        $openingQuery = DB::table('gel_lignes_ecriture as gl')
+            ->join('gel_ecritures as ge', 'gl.ecriture_id', '=', 'ge.id')
+            ->where('gl.compte_id', $accountId)
+            ->where('ge.client_id', $clientId)
+            ->where('ge.valide', true)
+            ->whereDate('ge.date_ecriture', '<', $startDate);
 
-        $openingDebit = (float) $openingQuery->sum('entry_lines.debit');
-        $openingCredit = (float) $openingQuery->sum('entry_lines.credit');
+        $openingDebit = (float) (clone $openingQuery)->where('gl.sens', 'debit')->sum('gl.montant');
+        $openingCredit = (float) (clone $openingQuery)->where('gl.sens', 'credit')->sum('gl.montant');
         $openingBalance = $openingDebit - $openingCredit;
 
         // Lignes de la période (paginated)
-        $linesQuery = DB::table('entry_lines')
-            ->join('journal_entries', 'entry_lines.entry_id', '=', 'journal_entries.id')
-            ->leftJoin('journals', 'journal_entries.journal_id', '=', 'journals.id')
-            ->where('entry_lines.account_id', $accountId)
-            ->where('journal_entries.client_id', $clientId)
-            ->where('journal_entries.status', 'posted')
-            ->whereDate('journal_entries.entry_date', '>=', $startDate)
-            ->whereDate('journal_entries.entry_date', '<=', $endDate)
-            ->orderBy('journal_entries.entry_date')
-            ->orderBy('journal_entries.created_at')
+        $linesQuery = DB::table('gel_lignes_ecriture as gl')
+            ->join('gel_ecritures as ge', 'gl.ecriture_id', '=', 'ge.id')
+            ->leftJoin('gel_journaux as gj', 'ge.journal_id', '=', 'gj.id')
+            ->where('gl.compte_id', $accountId)
+            ->where('ge.client_id', $clientId)
+            ->where('ge.valide', true)
+            ->whereDate('ge.date_ecriture', '>=', $startDate)
+            ->whereDate('ge.date_ecriture', '<=', $endDate)
+            ->orderBy('ge.date_ecriture')
+            ->orderBy('ge.created_at')
             ->select([
-                'journal_entries.id as entry_id',
-                'journal_entries.entry_date',
-                'journal_entries.reference',
-                'journal_entries.description as entry_description',
-                'journals.code as journal_code',
-                'journals.label as journal_name',
-                'entry_lines.id as line_id',
-                'entry_lines.debit',
-                'entry_lines.credit',
-                'entry_lines.description as line_description',
+                'ge.id as entry_id',
+                'ge.date_ecriture as entry_date',
+                'ge.reference',
+                'ge.libelle as entry_description',
+                'gj.code as journal_code',
+                'gj.libelle as journal_name',
+                'gl.id as line_id',
+                'gl.sens',
+                'gl.montant',
+                'gl.libelle_ligne as line_description',
             ]);
 
-        $totalDebit = (float) (clone $linesQuery)->sum('debit');
-        $totalCredit = (float) (clone $linesQuery)->sum('credit');
+        $totalDebit = (float) (clone $linesQuery)->where('gl.sens', 'debit')->sum('gl.montant');
+        $totalCredit = (float) (clone $linesQuery)->where('gl.sens', 'credit')->sum('gl.montant');
 
         $perPage = min($perPage, 500);
         $page = request()->input('page', 1);
@@ -69,10 +73,11 @@ class GeneralLedgerService
         $offset = ($page - 1) * $perPage;
         $items = $linesQuery->offset($offset)->limit($perPage)->get();
 
-        // Calcul du solde courant avec running balance
         $runningBalance = $openingBalance;
         $linesCollection = collect($items)->map(function ($line) use (&$runningBalance) {
-            $runningBalance += (float) $line->debit - (float) $line->credit;
+            $debit = $line->sens === 'debit' ? (float) $line->montant : 0;
+            $credit = $line->sens === 'credit' ? (float) $line->montant : 0;
+            $runningBalance += $debit - $credit;
             return [
                 'entry_id' => $line->entry_id,
                 'entry_date' => $line->entry_date,
@@ -81,8 +86,8 @@ class GeneralLedgerService
                 'journal_name' => $line->journal_name,
                 'entry_description' => $line->entry_description,
                 'line_description' => $line->line_description,
-                'debit' => (float) $line->debit,
-                'credit' => (float) $line->credit,
+                'debit' => $debit,
+                'credit' => $credit,
                 'running_balance' => round($runningBalance, 2),
             ];
         });
@@ -93,9 +98,9 @@ class GeneralLedgerService
             'account' => [
                 'id' => $account->id,
                 'code' => $account->code,
-                'name' => $account->name,
-                'type' => $account->type,
-                'nature' => $account->account_nature,
+                'name' => $account->libelle,
+                'type' => $account->classe ?? '',
+                'nature' => '',
             ],
             'parameters' => [
                 'start_date' => $startDate,
@@ -124,9 +129,8 @@ class GeneralLedgerService
         ?string $startDate = null,
         ?string $endDate = null
     ): array {
-        $accounts = AccountingAccount::where('client_id', $clientId)
+        $accounts = DB::table('gel_account_types')
             ->where('code', 'like', $classCode . '%')
-            ->where('is_active', true)
             ->orderBy('code')
             ->get();
 

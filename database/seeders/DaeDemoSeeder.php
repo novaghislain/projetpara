@@ -539,7 +539,7 @@ class DaeDemoSeeder extends Seeder
             [
                 'client_id' => $client1->id,
                 'type_conformite' => 'Fiscal',
-                'titre' => 'Déclaration IRPP 2024',
+                'titre' => 'Déclaration ITS 2024',
                 'description' => 'Déclaration annuelle des revenus.',
                 'exigence_reglementaire' => 'Code Général des Impôts Art. 150',
                 'autorite_competente' => 'Direction Générale des Impôts',

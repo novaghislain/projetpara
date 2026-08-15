@@ -25,7 +25,8 @@ class CoordinationController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $client = Client::findOrFail($request->client_id ?? (session('active_client_id') ?? $user->active_client_id ?? 1));
+        $clientId = $request->client_id ?? session('active_client_id') ?? $user->active_client_id;
+        $client = $clientId ? Client::findOrFail($clientId) : Client::firstOrFail();
 
         // Isolation stricte : le secrétaire doit être rattaché à cette entreprise
         abort_unless(CoordinationService::isAttachedToClient($user, $client->id) && CoordinationService::isSecretaire($user), 403);
@@ -47,9 +48,14 @@ class CoordinationController extends Controller
             ->get();
 
         // Demandes adressées au secrétaire par le comptable (Kanban badgé, S3.1/S3.3)
+        // Les tâches terminées depuis plus de 24h sont automatiquement archivées (S3.4)
         $demandesRecues = Task::where('client_id', $client->id)
             ->where('assigned_to', $user->id)
             ->where('source', 'coordination')
+            ->where(function ($q) {
+                $q->where('statut', '!=', 'terminee')
+                  ->orWhere('termine_at', '>=', now()->subHours(24));
+            })
             ->orderByDesc('date_echeance')
             ->get();
 

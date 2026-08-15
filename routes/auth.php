@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
     Route::get('register', [RegisteredUserController::class, 'create'])
-        ->name('register');
+       ->name('register');
 
     Route::post('register', [RegisteredUserController::class, 'store']);
 
@@ -56,4 +56,9 @@ Route::middleware('auth')->group(function () {
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
+
+    // ─── 2FA — Activation (authentifié) ──────────────────────────────────────────
+    Route::get('/user/two-factor/enable', [\App\Http\Controllers\TwoFactorController::class, 'show'])->name('2fa.setup');
+    Route::post('/user/two-factor/confirm', [\App\Http\Controllers\TwoFactorController::class, 'confirm'])->name('2fa.confirm');
+    Route::post('/user/two-factor/disable', [\App\Http\Controllers\TwoFactorController::class, 'disable'])->name('2fa.disable');
 });

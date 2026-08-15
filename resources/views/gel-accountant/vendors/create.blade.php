@@ -1,156 +1,137 @@
 @extends('layouts.gel-accountant')
 
-@section('title', 'Ajouter un fournisseur')
+@section('title', 'Nouveau Fournisseur')
+
+@push('styles')
+<style>
+/* ==========================================================================
+   CREATE VENDOR - DESIGN
+   ========================================================================== */
+.form-section {
+    background: white; border: 1px solid var(--gel-border);
+    border-radius: 12px; padding: 24px; margin-bottom: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+.section-title {
+    font-size: 15px; font-weight: 700; color: #1E293B; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #E2E8F0; padding-bottom: 12px;
+}
+.section-title i { color: var(--gel-primary); }
+
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px; }
+.form-control, .form-select {
+    width: 100%; padding: 10px 14px; border: 1px solid #E2E8F0;
+    border-radius: 8px; font-size: 14px; outline: none; transition: all 0.2s;
+    background: #F8FAFC;
+}
+.form-control:focus, .form-select:focus { background: white; border-color: var(--gel-primary); }
+
+.form-actions { display: flex; justify-content: flex-end; gap: 16px; margin-top: 32px; }
+.btn-cancel { background: white; color: #475569; border: 1px solid #E2E8F0; padding: 12px 24px; border-radius: 8px; font-weight: 600; text-decoration: none; }
+.btn-submit { background: var(--gel-primary); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+.btn-submit:hover { background: var(--gel-primary-hover); }
+</style>
+@endpush
 
 @section('content')
-
 <div class="gel-page-header">
     <div>
-        <h1 class="gel-page-title"><i class="fas fa-truck-loading" style="color:var(--gel-primary); margin-right:8px;"></i> Ajouter un fournisseur</h1>
-        <p class="gel-page-subtitle">Créez une fiche fournisseur complète avec ses coordonnées et conditions commerciales.</p>
-    </div>
-    <div style="display:flex; gap:8px;">
-        <a href="javascript:history.back()" class="gel-btn gel-btn-secondary"><i class="fas fa-arrow-left"></i> Retour</a>
+        <a href="{{ route('gel-accountant.vendors.index') }}" style="font-size:13px; color:#64748B; text-decoration:none; margin-bottom:8px; display:inline-block;"><i class="fas fa-arrow-left"></i> Retour aux fournisseurs</a>
+        <h1 class="gel-page-title">Nouveau Fournisseur</h1>
     </div>
 </div>
 
-<form method="POST" action="{{ route('gel-accountant.partners.store') }}" id="vendorForm">
-@csrf
-
-<div class="gel-card p-4 mb-4">
-    <h3 style="font-size:15px; font-weight:700; margin-bottom:16px; color:var(--gel-text-primary);"><i class="fas fa-building" style="color:var(--gel-primary);"></i> Informations générales</h3>
-    <div class="doc-form-grid">
-        <div class="doc-form-group">
-            <label class="doc-label">Raison sociale *</label>
-            <input type="text" name="company_name" class="doc-input" required placeholder="Ex: SARL Approvisionnement Pro">
-        </div>
-        <div class="doc-form-group">
-            <label class="doc-label">Nom du contact</label>
-            <input type="text" name="last_name" class="doc-input" placeholder="Nom de famille">
-        </div>
-        <div class="doc-form-group">
-            <label class="doc-label">Prénom du contact</label>
-            <input type="text" name="first_name" class="doc-input" placeholder="Prénom">
-        </div>
-        <div class="doc-form-group">
-            <label class="doc-label">Email</label>
-            <input type="email" name="email" class="doc-input" placeholder="contact@fournisseur.com">
-        </div>
-        <div class="doc-form-group">
-            <label class="doc-label">Téléphone</label>
-            <input type="tel" name="phone" class="doc-input" placeholder="+241 XX XX XX XX">
-        </div>
-        <div class="doc-form-group">
-            <label class="doc-label">Mobile</label>
-            <input type="tel" name="mobile" class="doc-input" placeholder="+241 0X XX XX XX">
-        </div>
-        <div class="doc-form-group">
-            <label class="doc-label">Site web</label>
-            <input type="url" name="website" class="doc-input" placeholder="https://www.fournisseur.com">
-        </div>
-    </div>
+@if($errors->any())
+<div class="alert alert-danger" style="background: #FEF2F2; border: 1px solid #FECACA; color: #991B1B; border-radius: 8px; padding:12px 16px; margin-bottom:20px;">
+    {{ $errors->first() }}
 </div>
+@endif
 
-<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
-    <div class="gel-card p-4 mb-4">
-        <h3 style="font-size:15px; font-weight:700; margin-bottom:16px; color:var(--gel-text-primary);"><i class="fas fa-map-marker-alt" style="color:var(--gel-primary);"></i> Adresse</h3>
-        <div class="doc-form-grid" style="grid-template-columns:1fr;">
-            <div class="doc-form-group">
-                <label class="doc-label">Adresse</label>
-                <input type="text" name="address" class="doc-input" placeholder="Rue, quartier...">
+<form action="{{ route('gel-accountant.partners.store') }}" method="POST">
+    @csrf
+    <input type="hidden" name="type" value="fournisseur">
+
+    <div class="form-section">
+        <div class="section-title"><i class="fas fa-industry"></i> Informations de l'entreprise</div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label">Nom de l'entreprise <span class="text-danger">*</span></label>
+                <input type="text" name="company_name" class="form-control" value="{{ old('company_name') }}" required>
             </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                <div class="doc-form-group">
-                    <label class="doc-label">Ville</label>
-                    <input type="text" name="city" class="doc-input" placeholder="Libreville">
-                </div>
-                <div class="doc-form-group">
-                    <label class="doc-label">Pays</label>
-                    <select name="country" class="doc-input">
-                        <option value="BJ" selected>Bénin</option>
-                        <option value="GA">Gabon</option>
-                        <option value="CM">Cameroun</option>
-                        <option value="CG">Congo</option>
-                        <option value="CI">Côte d'Ivoire</option>
-                        <option value="SN">Sénégal</option>
-                        <option value="FR">France</option>
-                        <option value="OTHER">Autre</option>
-                    </select>
-                </div>
+            <div class="form-group">
+                <label class="form-label">Numéro IFU (Identifiant Fiscal)</label>
+                <input type="text" name="tax_id" class="form-control" value="{{ old('tax_id') }}">
             </div>
-            <div class="doc-form-group">
-                <label class="doc-label">Code Postal</label>
-                <input type="text" name="postal_code" class="doc-input" placeholder="BP XXXX">
+        </div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label">Prénom du contact principal</label>
+                <input type="text" name="first_name" class="form-control" value="{{ old('first_name') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Nom du contact principal</label>
+                <input type="text" name="last_name" class="form-control" value="{{ old('last_name') }}">
             </div>
         </div>
     </div>
 
-    <div class="gel-card p-4 mb-4">
-        <h3 style="font-size:15px; font-weight:700; margin-bottom:16px; color:var(--gel-text-primary);"><i class="fas fa-file-invoice" style="color:var(--gel-primary);"></i> Informations fiscales & bancaires</h3>
-        <div class="doc-form-grid" style="grid-template-columns:1fr;">
-            <div class="doc-form-group">
-                <label class="doc-label">IFU (Identifiant Fiscal Unique)</label>
-                <input type="text" name="tax_id" class="doc-input" placeholder="Numéro IFU">
+    <div class="form-section">
+        <div class="section-title"><i class="fas fa-address-card"></i> Coordonnées</div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label">Adresse Email</label>
+                <input type="email" name="email" class="form-control" value="{{ old('email') }}">
             </div>
-            <div class="doc-form-group">
-                <label class="doc-label">RCCM</label>
-                <input type="text" name="rccm" class="doc-input" placeholder="Numéro RCCM">
+            <div class="form-group">
+                <label class="form-label">Téléphone</label>
+                <input type="text" name="phone" class="form-control" value="{{ old('phone') }}">
             </div>
-            <div class="doc-form-group">
-                <label class="doc-label">IBAN</label>
-                <input type="text" name="iban" class="doc-input" placeholder="GA00 0000 0000 0000 0000 0000 000">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Adresse complète</label>
+            <textarea name="address" class="form-control" rows="3">{{ old('address') }}</textarea>
+        </div>
+        <div class="grid-3">
+            <div class="form-group">
+                <label class="form-label">Ville</label>
+                <input type="text" name="city" class="form-control" value="{{ old('city') }}">
             </div>
-            <div class="doc-form-group">
-                <label class="doc-label">Code SWIFT</label>
-                <input type="text" name="swift" class="doc-input" placeholder="BICIGABX">
+            <div class="form-group">
+                <label class="form-label">Pays</label>
+                <input type="text" name="country" class="form-control" value="{{ old('country', 'Bénin') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Site Web</label>
+                <input type="url" name="website" class="form-control" value="{{ old('website') }}" placeholder="https://">
             </div>
         </div>
     </div>
-</div>
 
-<div class="gel-card p-4 mb-4">
-    <h3 style="font-size:15px; font-weight:700; margin-bottom:16px; color:var(--gel-text-primary);"><i class="fas fa-cog" style="color:var(--gel-primary);"></i> Conditions commerciales</h3>
-    <div class="doc-form-grid">
-        <div class="doc-form-group">
-            <label class="doc-label">Devise par défaut</label>
-            <select name="currency" class="doc-input">
-                <option value="XAF" selected>FCFA (XAF)</option>
-                <option value="EUR">Euro (EUR)</option>
-                <option value="USD">Dollar (USD)</option>
-            </select>
+    <div class="form-section">
+        <div class="section-title"><i class="fas fa-university"></i> Informations bancaires (Optionnel)</div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label">Nom de la Banque</label>
+                <input type="text" name="bank_name" class="form-control" value="{{ old('bank_name') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">RIB / IBAN</label>
+                <input type="text" name="bank_account" class="form-control" value="{{ old('bank_account') }}">
+            </div>
         </div>
-        <div class="doc-form-group">
-            <label class="doc-label">Délai de paiement (jours)</label>
-            <input type="number" name="payment_term_days" class="doc-input" value="30" min="0">
-        </div>
-        <div class="doc-form-group">
-            <label class="doc-label">Méthode de paiement préférée</label>
-            <select name="payment_method" class="doc-input">
-                <option value="virement">Virement bancaire</option>
-                <option value="cheque">Chèque</option>
-                <option value="especes">Espèces</option>
-                <option value="mobile_money">Mobile Money</option>
-            </select>
-        </div>
-        <div class="doc-form-group">
-            <label class="doc-label">Limite de Crédit (FCFA)</label>
-            <input type="number" name="credit_limit" class="doc-input" value="0" min="0">
-        </div>
-        <div class="doc-form-group" style="grid-column: span 2;">
-            <label class="doc-label">Notes internes</label>
-            <textarea name="notes" class="doc-input" rows="3" placeholder="Informations complémentaires sur ce fournisseur..."></textarea>
+        <div class="form-group">
+            <label class="form-label">Notes ou Conditions de paiement</label>
+            <textarea name="notes" class="form-control" rows="2">{{ old('notes') }}</textarea>
         </div>
     </div>
-</div>
 
-<input type="hidden" name="type" value="fournisseur">
-
-<div style="display:flex; justify-content:flex-end; gap:10px; padding-bottom:30px;">
-    <a href="javascript:history.back()" class="gel-btn gel-btn-secondary">Annuler</a>
-    <button type="submit" class="gel-btn gel-btn-primary"><i class="fas fa-save"></i> Enregistrer le fournisseur</button>
-</div>
+    <div class="form-actions">
+        <a href="{{ route('gel-accountant.vendors.index') }}" class="btn-cancel">Annuler</a>
+        <button type="submit" class="btn-submit"><i class="fas fa-save"></i> Enregistrer le fournisseur</button>
+    </div>
 </form>
-
-
 @endsection
-

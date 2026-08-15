@@ -3,56 +3,77 @@
 namespace App\Http\Controllers\Gel;
 
 use App\Http\Controllers\Controller;
-use App\Services\Paie\IrppCalculator;
+use App\Services\Paie\ItScalculator;
 use App\Services\Paie\CnssCalculator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * API de calcul de la paie (IRPP + CNSS).
+ * API de calcul de la paie (ITS + ORTB + CNSS).
  * Utilisé par la Vue calculateur.
+ *
+ * L'impôt sur les traitements et salaires (ITS, CGI 2026 — jamais « ITS »)
+ * est calculé sur le barème mensuel progressif (0/10/15/19/30 %), majoré de la
+ * redevance ORTB (mars / juin) et des avantages en nature (article 123).
  */
 class PaieApiController extends Controller
 {
-    /**
-     * Contrôleur API de calcul de la paie.
-     * Calcule l'IRPP (Impôt sur le Revenu des Personnes Physiques)
-     * et les cotisations CNSS à partir du salaire brut mensuel.
-     * Utilisé par le calculateur de paie côté Vue.
-     */
-
     public function __construct(
-        private readonly IrppCalculator $irpp,
+        private readonly ItScalculator $its,
         private readonly CnssCalculator $cnss,
     ) {}
 
     /**
-     * Calcule le salaire net après IRPP et CNSS.
+     * Calcule le salaire net après ITS, ORTB et CNSS.
      *
-     * @param Request $request La requête HTTP avec le salaire brut et la situation familiale
-     * @return JsonResponse Le détail du calcul (salaire brut, net, IRPP, CNSS)
+     * @param Request $request salaire_brut, salaire_base (optionnel), mois (1-12),
+     *                         cadre (bool), avantages (liste de codes),
+     *                         avantages_reels (montant), situation (ignorée, ITS
+     *                         sans quotient familial).
+     * @return JsonResponse Le détail du calcul (brut, net, ITS, ORTB, avantages, CNSS)
      */
     public function calculer(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'salaire_brut' => 'required|numeric|min:0',
-            'situation'    => 'nullable|string|in:celibataire,marie_sans_enf,marie_1_enf,marie_2_enf,marie_3_enf',
+            'salaire_brut'     => 'required|numeric|min:0',
+            'salaire_base'     => 'nullable|numeric|min:0',
+            'mois'             => 'nullable|integer|min:1|max:12',
+            'cadre'            => 'nullable|boolean',
+            'avantages'        => 'nullable|array',
+            'avantages.*'      => 'string|in:logement,domesticite,electricite,eau,telephone,nourriture,vehicule4,vehicule2',
+            'avantages_reels'  => 'nullable|numeric|min:0',
         ]);
 
-        $salaire = (float) $validated['salaire_brut'];
-        $situation = $validated['situation'] ?? 'celibataire';
+        $brut  = (float) $validated['salaire_brut'];
+        $base  = (float) ($validated['salaire_base'] ?? $brut);
+        $mois  = (int) ($validated['mois'] ?? 0);
+        $cadre = (bool) ($validated['cadre'] ?? false);
+        $avantagesActifs = $validated['avantages'] ?? [];
+        $avantagesReels  = (float) ($validated['avantages_reels'] ?? 0);
 
-        // Calculs IRPP et CNSS via les services dédiés
-        $irppResult = $this->irpp->calculateMonthly($salaire, $situation);
-        $cnssResult = $this->cnss->calculate($salaire);
+        // ITS (barème mensuel progressif) + ORTB (mars/juin) + avantages nature
+        $itsResult = $this->its->calculerPaieITS(
+            $brut,
+            $base,
+            $mois,
+            $cadre,
+            $avantagesActifs,
+            $avantagesReels
+        );
 
-        // Salaire net = brut - IRPP - part salariale CNSS
-        $salaireNet = $salaire - ($irppResult['irpp_mensuel'] ?? 0) - ($cnssResult['part_salarie'] ?? 0);
+        // CNSS (plafond mensuel 450 000 FCFA)
+        $cnssResult = $this->cnss->calculate($brut);
+
+        // Salaire net = brut − part salariale CNSS − ITS − ORTB
+        $retenues = ($cnssResult['part_salarie'] ?? 0)
+                  + ($itsResult['its_mensuel'] ?? 0)
+                  + ($itsResult['ortb']['montant'] ?? 0);
+        $salaireNet = max(0, $brut - $retenues);
 
         return response()->json([
-            'salaire_brut' => $salaire,
-            'salaire_net'  => max(0, $salaireNet),
-            'irpp'         => $irppResult,
+            'salaire_brut' => $brut,
+            'salaire_net'  => round($salaireNet, 0),
+            'its'          => $itsResult,
             'cnss'         => $cnssResult,
         ]);
     }

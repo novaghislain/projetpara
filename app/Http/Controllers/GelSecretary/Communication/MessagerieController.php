@@ -66,7 +66,7 @@ class MessagerieController extends Controller
                 });
             }
 
-            $colleagues = $colleagueQuery->orderBy('name')->get(['id', 'name', 'email', 'role']);
+            $colleagues = $colleagueQuery->orderBy('nom')->get(['id', 'nom', 'email', 'role']);
 
             $receiverId = $request->input('receiver_id');
             if ($receiverId) {

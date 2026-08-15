@@ -172,7 +172,7 @@ class LegalDemoSeeder extends Seeder
             ['intitule' => 'Cotisations INSS', 'type' => 'obligation_sociale', 'organisme' => 'INSS', 'periodicite' => 'trimestriel', 'date_echeance' => '2026-07-31', 'statut' => 'conforme'],
             ['intitule' => 'Dépôt comptes annuels (RCCM)', 'type' => 'déclaration_obligatoire', 'organisme' => 'RCCM/CCEI', 'periodicite' => 'annuel', 'date_echeance' => '2026-06-30', 'statut' => 'expiré'],
             ['intitule' => 'Déclaration annuelle de TVA', 'type' => 'déclaration_obligatoire', 'organisme' => 'DGI', 'periodicite' => 'annuel', 'date_echeance' => '2026-04-30', 'statut' => 'conforme'],
-            ['intitule' => 'Déclaration IRPP employés', 'type' => 'obligation_sociale', 'organisme' => 'DGI', 'periodicite' => 'mensuel', 'date_echeance' => '2026-07-15', 'statut' => 'en_cours'],
+            ['intitule' => 'Déclaration ITS + ORTB employés', 'type' => 'obligation_sociale', 'organisme' => 'DGI', 'periodicite' => 'mensuel', 'date_echeance' => '2026-07-15', 'statut' => 'en_cours'],
             ['intitule' => 'Archives des registres sociaux', 'type' => 'déclaration_obligatoire', 'organisme' => 'Ministère du Travail', 'periodicite' => 'annuel', 'date_echeance' => '2026-12-31', 'statut' => 'conforme'],
         ];
 

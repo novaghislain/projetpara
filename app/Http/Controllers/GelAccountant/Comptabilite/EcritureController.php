@@ -39,7 +39,7 @@ class EcritureController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        $cabinetId = $user->cabinet_id;
+        $cabinetId = $user->cabinet_id ?? session('cabinet_id');
 
         $query = EcritureComptable::where('cabinet_id', $cabinetId)
             ->with(['journal:id,code', 'client:id,nom_entreprise', 'lignes']);
@@ -94,7 +94,7 @@ class EcritureController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        $cabinetId = $user->cabinet_id;
+        $cabinetId = $user->cabinet_id ?? session('cabinet_id');
 
         $clients = Client::where('cabinet_id', $cabinetId)->actif()->get(['id', 'nom_entreprise']);
         $journaux = Journal::where('cabinet_id', $cabinetId)->actif()->get(['id', 'code', 'libelle']);
@@ -329,7 +329,7 @@ class EcritureController extends Controller
 
         // L'écriture ne doit pas être déjà validée
         if ($ecriture->valide) {
-            return back()->withErrors(['error' => 'Impossible de supprimer une écriture validée.']);
+            return back()->withErrors(['error' => 'Impossible de supprimer une écriture validée. Veuillez utiliser la fonction d\'extourne.']);
         }
 
         DB::beginTransaction();
@@ -354,13 +354,75 @@ class EcritureController extends Controller
             return back()->withErrors(['error' => 'Erreur lors de la suppression : ' . $e->getMessage()]);
         }
     }
+
+    /**
+     * Annule une écriture validée en créant son extourne (écriture miroir inversée).
+     */
+    public function extourner($id, Request $request)
+    {
+        $user = Auth::user();
+        $ecriture = EcritureComptable::where('cabinet_id', $user->cabinet_id)
+            ->with('lignes')
+            ->findOrFail($id);
+
+        if (!$ecriture->valide) {
+            return back()->withErrors(['error' => 'On ne peut extourner qu\'une écriture validée. Si elle est en brouillon, vous pouvez simplement la supprimer ou la modifier.']);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $numero = 'EXT-' . now()->format('Ymd') . '-' . str_pad(EcritureComptable::whereDate('created_at', today())->count() + 1, 3, '0', STR_PAD_LEFT);
+
+            $extourne = EcritureComptable::create([
+                'cabinet_id' => $ecriture->cabinet_id,
+                'client_id' => $ecriture->client_id,
+                'journal_id' => $ecriture->journal_id,
+                'numero' => $numero,
+                'date_ecriture' => now(), // Date du jour
+                'date_piece' => $ecriture->date_piece,
+                'ref_piece' => $ecriture->ref_piece,
+                'libelle' => 'Extourne de ' . $ecriture->numero . ' : ' . $ecriture->libelle,
+                'total_debit' => $ecriture->total_credit, // Inversé (bien que ce soit égal en principe)
+                'total_credit' => $ecriture->total_debit,
+                'createur_id' => $user->id,
+                'notes' => $request->input('motif', 'Extourne générée manuellement.'),
+                'valide' => true, // L'extourne est validée par défaut
+                'valide_at' => now(),
+                'valide_par' => $user->id,
+            ]);
+
+            foreach ($ecriture->lignes as $ligne) {
+                // Inverser le sens
+                $nouveauSens = $ligne->sens === 'debit' ? 'credit' : 'debit';
+                LigneEcriture::create([
+                    'ecriture_id' => $extourne->id,
+                    'compte_id' => $ligne->compte_id,
+                    'tiers_id' => $ligne->tiers_id,
+                    'sens' => $nouveauSens,
+                    'montant' => $ligne->montant,
+                    'libelle_ligne' => 'Extourne : ' . $ligne->libelle_ligne,
+                ]);
+            }
+
+            \App\Services\AuditService::log('extourned', $ecriture, ['extourne_id' => $extourne->id], []);
+
+            DB::commit();
+
+            return redirect()->route('gel-accountant.comptabilite.ecritures')
+                ->with('success', 'Écriture extournée avec succès. N° extourne : ' . $numero);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Erreur lors de l\'extourne : ' . $e->getMessage()]);
+        }
+    }
     /**
      * Exporte les écritures comptables en CSV.
      */
     public function exportCsv(Request $request)
     {
         $user = Auth::user();
-        $cabinetId = $user->cabinet_id;
+        $cabinetId = $user->cabinet_id ?? session('cabinet_id');
 
         $ecritures = EcritureComptable::where('cabinet_id', $cabinetId)
             ->with(['journal', 'client'])

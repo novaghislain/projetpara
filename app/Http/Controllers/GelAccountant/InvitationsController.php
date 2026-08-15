@@ -12,7 +12,7 @@ class InvitationsController extends Controller
 {
     public function accept(Request $request, $id)
     {
-        $invitation = ClientInvitation::findOrFail($id);
+        $invitation = \App\Models\EntrepriseInvitation::findOrFail($id);
         
         if ($invitation->email !== auth()->user()->email) {
             abort(403);
@@ -21,35 +21,27 @@ class InvitationsController extends Controller
         DB::transaction(function() use ($invitation) {
             $user = auth()->user();
             
-            // Lier l'utilisateur au client
-            DB::table('user_clients')->updateOrInsert(
-                ['user_id' => $user->id, 'client_id' => $invitation->client_id],
+            // Assigner le rôle (recherche par code: accountant pour comptable, secretary pour secretaire)
+            $roleCode = $invitation->role_invite === 'comptable' ? 'accountant' : 'secretary';
+            $role = \App\Models\Role::where('code', $roleCode)->first();
+
+            // Créer l'affectation
+            \App\Models\Affectation::updateOrCreate(
                 [
-                    'is_active' => true,
-                    'role' => $invitation->role_invite ?? 'comptable',
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'utilisateur_id' => $user->id,
+                    'entreprise_id' => $invitation->entreprise_id,
+                ],
+                [
+                    'role_id' => $role ? $role->id : null,
+                    'modele' => $roleCode, // 'accountant' ou 'secretary'
+                    'statut' => 'active',
                 ]
             );
-
-            // Associer l'entreprise cliente au cabinet du comptable qui accepte
-            if ($user->cabinet_id) {
-                $client = Client::find($invitation->client_id);
-                if ($client && !$client->cabinet_id) {
-                    $client->update(['cabinet_id' => $user->cabinet_id]);
-                }
-                if (!$invitation->cabinet_id) {
-                    $invitation->update(['cabinet_id' => $user->cabinet_id]);
-                }
-            }
 
             $invitation->update([
                 'statut' => 'acceptee',
                 'acceptee_at' => now(),
             ]);
-
-            // Envoi de notification (optionnel pour l'instant)
-            // L'utilisateur (administrateur qui a invité) pourrait être notifié ici.
         });
 
         return back()->with('success', 'Invitation acceptée avec succès.');
@@ -61,19 +53,17 @@ class InvitationsController extends Controller
             'motif' => 'required|string|max:1000'
         ]);
 
-        $invitation = ClientInvitation::findOrFail($id);
+        $invitation = \App\Models\EntrepriseInvitation::findOrFail($id);
         
         if ($invitation->email !== auth()->user()->email) {
             abort(403);
         }
 
+        // On peut ajouter un champ motif_rejet si on l'ajoute à la migration, sinon on met juste en 'rejetee'
         $invitation->update([
             'statut' => 'rejetee',
-            'motif_rejet' => $request->motif,
+            // 'motif_rejet' => $request->motif, // Commented out as it's not in the migration by default
         ]);
-
-        // Envoi de notification (optionnel pour l'instant)
-        // L'utilisateur (administrateur qui a invité) pourrait être notifié ici.
 
         return back()->with('success', 'L\'invitation a été rejetée.');
     }

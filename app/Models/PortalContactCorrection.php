@@ -30,3 +30,5 @@ class PortalContactCorrection extends Model
     {
         return $this->belongsTo(\App\Models\User::class, 'proposed_by_user_id');
     }
+}
+

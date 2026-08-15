@@ -256,6 +256,13 @@
         Arrêté la présente facture à la somme de {{ $amountInWords ?: $invoice->total_ttc }} francs CFA TTC
     </div>
 
+    @if(!empty($invoice->emecef_is_simulation))
+    <div style="margin-top:30px; padding:15px; border:2px solid #f59e0b; background:#fffbeb; text-align:center; font-weight:bold; color:#92400e; font-size:12px; page-break-inside:avoid;">
+        ⚠ SIMULATION — MODE TEST : cette facture N'A PAS été transmise à la DGI e-MECeF.
+        Les éléments de sécurité ci-dessous sont simulés à des fins de développement.
+    </div>
+    @endif
+
     <div class="security-box">
         <div class="security-title">-- ELÉMENTS DE SÉCURITÉ DE LA FACTURE NORMALISÉE --</div>
         <table style="width: 100%;">

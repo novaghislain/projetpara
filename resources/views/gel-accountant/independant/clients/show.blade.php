@@ -23,9 +23,13 @@
         <a href="{{ route('gel-accountant.independant.clients.edit', $client->id) }}" class="gel-btn gel-btn-outline" style="font-weight:600;display:flex;align-items:center;gap:6px;border-radius:6px;padding:8px 14px;">
             <i class="bi bi-pencil"></i> Éditer
         </a>
-        <a href="{{ route('gel-accountant.client.select', $client->id) }}" class="gel-btn gel-btn-primary" style="font-weight:600;display:flex;align-items:center;gap:6px;border-radius:6px;padding:8px 14px;">
-            <i class="bi bi-box-arrow-in-right"></i> Ouvrir la comptabilité
-        </a>
+        <form action="{{ route('gel-accountant.independant.clients.select', $client->id) }}" method="POST" class="d-inline">
+            @csrf
+            <input type="hidden" name="redirect" value="{{ route('gel-accountant.dashboard') }}">
+            <button type="submit" class="gel-btn gel-btn-primary" style="font-weight:600;display:flex;align-items:center;gap:6px;border-radius:6px;padding:8px 14px;">
+                <i class="bi bi-box-arrow-in-right"></i> Ouvrir la comptabilité
+            </button>
+        </form>
     </div>
 </div>
 
@@ -87,7 +91,7 @@
                             <i class="bi bi-envelope me-2"></i> Générer un lien d'invitation
                         </button>
                     </div>
-                @elseif($client->invitation_token && !$client->is_linked)
+                @elseif($client->invitation_token && !$client->invitation_accepted_at)
                     <div class="alert alert-warning border-0">
                         <div class="d-flex align-items-center mb-2">
                             <i class="bi bi-clock-history me-2 fs-5"></i>
@@ -95,7 +99,7 @@
                         </div>
                         <p class="small mb-2">Envoyez ce lien à votre client pour qu'il rejoigne la plateforme :</p>
                         <div class="input-group input-group-sm">
-                            <input type="text" class="form-control" id="inviteLink" value="{{ route('gel-accountant.independant.client.accept-invitation', ['token' => $client->invitation_token]) }}" readonly>
+                            <input type="text" class="form-control" id="inviteLink" value="{{ url('/invitation/independant-client/' . $client->invitation_token) }}" readonly>
                             <button class="btn btn-outline-secondary" type="button" onclick="copyLink()">Copier</button>
                         </div>
                     </div>

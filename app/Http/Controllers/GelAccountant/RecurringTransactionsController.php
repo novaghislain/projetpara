@@ -11,8 +11,7 @@ class RecurringTransactionsController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $transactions = RecurringTransaction::where('client_id', $clientId)
             ->orderByDesc('is_active')
@@ -29,8 +28,7 @@ class RecurringTransactionsController extends Controller
 
     public function store(Request $request)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $validated = $request->validate([
             'type'             => 'required|in:scheduled,reminder,template',

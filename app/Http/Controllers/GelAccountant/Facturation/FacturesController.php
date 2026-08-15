@@ -26,12 +26,12 @@ class FacturesController extends Controller
      */
     public function index(Request $request)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+        $clientId = session('active_client_id') ?? session('current_client_id');
 
-        $query = Invoice::where('client_id', $clientId)
-            ->where('type', 'customer_invoice')
-            ->with(['partner', 'lines']);
+        $query = Invoice::query()->where('type', 'customer_invoice')->with(['partner', 'lines']);
+        if ($clientId) {
+            $query->where('client_id', $clientId);
+        }
 
         // Filtrage par statut
         if ($request->filled('status')) {
@@ -50,14 +50,16 @@ class FacturesController extends Controller
         $invoices = $query->orderByDesc('invoice_date')->paginate(20);
 
         // Statistiques rapides
+        $baseQuery = Invoice::query()->where('type', 'customer_invoice');
+        if ($clientId) $baseQuery->where('client_id', $clientId);
         $stats = [
-            'total' => Invoice::where('client_id', $clientId)->where('type', 'customer_invoice')->count(),
-            'draft' => Invoice::where('client_id', $clientId)->where('type', 'customer_invoice')->where('status', 'draft')->count(),
-            'sent' => Invoice::where('client_id', $clientId)->where('type', 'customer_invoice')->where('status', 'sent')->count(),
-            'overdue' => Invoice::where('client_id', $clientId)->where('type', 'customer_invoice')->where('status', 'overdue')->count(),
-            'paid' => Invoice::where('client_id', $clientId)->where('type', 'customer_invoice')->where('status', 'paid')->count(),
-            'total_amount' => Invoice::where('client_id', $clientId)->where('type', 'customer_invoice')->sum('total'),
-            'total_due' => Invoice::where('client_id', $clientId)->where('type', 'customer_invoice')->whereNotIn('status', ['paid', 'cancelled'])->sum('balance_due'),
+            'total'        => (clone $baseQuery)->count(),
+            'draft'        => (clone $baseQuery)->where('status', 'draft')->count(),
+            'sent'         => (clone $baseQuery)->where('status', 'sent')->count(),
+            'overdue'      => (clone $baseQuery)->where('status', 'overdue')->count(),
+            'paid'         => (clone $baseQuery)->where('status', 'paid')->count(),
+            'total_amount' => (clone $baseQuery)->sum('total'),
+            'total_due'    => (clone $baseQuery)->whereNotIn('status', ['paid', 'cancelled'])->sum('balance_due'),
         ];
 
         return view('gel-accountant.factures.index', compact('invoices', 'stats'));
@@ -68,19 +70,15 @@ class FacturesController extends Controller
      */
     public function create()
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+        $clientId = session('active_client_id') ?? session('current_client_id');
 
-        $partners = Partner::where('client_id', $clientId)
-            ->whereIn('type', ['customer', 'both'])
-            ->where('status', 'actif')
-            ->orderBy('company_name')
-            ->get();
+        $partners = $clientId
+            ? Partner::where('client_id', $clientId)->whereIn('type', ['customer', 'both'])->where('status', 'actif')->orderBy('company_name')->get()
+            : collect();
 
-        $products = Product::where('client_id', $clientId)
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get();
+        $products = $clientId
+            ? Product::where('client_id', $clientId)->where('status', 'actif')->orderBy('name')->get()
+            : collect();
 
         return view('gel-accountant.factures.create', compact('partners', 'products'));
     }
@@ -104,8 +102,7 @@ class FacturesController extends Controller
             'lines.*.vat_rate' => 'nullable|numeric|min:0|max:100',
         ]);
 
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
         $partner = Partner::findOrFail($validated['partner_id']);
 
         return DB::transaction(function () use ($validated, $user, $clientId, $partner) {
@@ -193,8 +190,7 @@ class FacturesController extends Controller
      */
     public function show(Request $request, $id)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $invoice = Invoice::where('client_id', $clientId)
             ->with(['lines', 'partner', 'payments'])
@@ -225,8 +221,7 @@ class FacturesController extends Controller
      */
     public function certify($id, EmecefService $emecefService)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $invoice = Invoice::where('client_id', $clientId)->findOrFail($id);
 
@@ -237,7 +232,13 @@ class FacturesController extends Controller
         $result = $emecefService->emettreFactureNormalisee($invoice);
 
         if ($result['success']) {
-            return back()->with('success', 'Facture certifiée avec succès ! NIM: ' . ($result['nim'] ?? ''));
+            $message = !empty($result['simulation'])
+                ? 'Facture certifiée en MODE TEST (simulation) — aucun échange avec la DGI. NIM: ' . ($result['nim'] ?? '') . ' — à confirmer avant facturation réelle.'
+                : 'Facture certifiée avec succès ! NIM: ' . ($result['nim'] ?? '');
+            if (!empty($result['aib_amount']) && (float) $result['aib_amount'] > 0) {
+                $message .= ' — AIB ' . number_format((float) $result['aib_amount'], 0, ',', ' ') . ' FCFA (taux ' . (float) $result['aib_rate'] . '%)';
+            }
+            return back()->with('success', $message);
         } else {
             return back()->with('error', 'Erreur de certification e-MECeF : ' . ($result['error'] ?? 'Erreur inconnue'));
         }
@@ -248,8 +249,7 @@ class FacturesController extends Controller
      */
     public function destroy($id)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
         $invoice = Invoice::where('client_id', $clientId)->findOrFail($id);
 
         if ($invoice->status != 'draft') {
@@ -267,8 +267,7 @@ class FacturesController extends Controller
      */
     public function downloadPdf($id)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
         
         $invoice = Invoice::where('client_id', $clientId)
             ->with(['partner', 'lines', 'client'])

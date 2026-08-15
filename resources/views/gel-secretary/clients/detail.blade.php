@@ -196,6 +196,10 @@
         style="background:#F0FDF4;color:#16A34A;border-color:#BBF7D0;">
         <i class="fas fa-calendar-plus"></i> Lien RDV
       </button>
+      <a href="{{ route('gel-secretary.conformite.passeport', $client->id) }}" class="sec-btn sec-btn-secondary"
+        style="background:#0F766E;color:white;border-color:#0D9488;">
+        <i class="fas fa-file-pdf"></i> Passeport GEL®
+      </a>
       <form method="POST" action="{{ route('gel-secretary.switch-client') }}" style="margin:0;">
         @csrf
         <input type="hidden" name="client_id" value="{{ $client->id }}">
@@ -236,6 +240,18 @@
             <i class="fas {{ $healthStatus === 'Sain' ? 'fa-heartbeat' : 'fa-exclamation-triangle' }}"></i> Santé :
             {{ $healthStatus }}
           </div>
+
+          @php
+            $scoreConf = $client->score_conformite ?? 0;
+            $scoreBg = $scoreConf >= 80 ? '#dcfce7' : ($scoreConf >= 50 ? '#fef9c3' : '#fee2e2');
+            $scoreColor = $scoreConf >= 80 ? '#059669' : ($scoreConf >= 50 ? '#d97706' : '#dc2626');
+            $scoreBorder = $scoreConf >= 80 ? '#A7F3D0' : ($scoreConf >= 50 ? '#FDE68A' : '#FECACA');
+          @endphp
+          <a href="{{ route('gel-secretary.conformite.index', ['client_id' => $client->id]) }}"
+            style="display:inline-flex; align-items:center; gap:6px; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700;
+               background: {{ $scoreBg }}; color: {{ $scoreColor }}; border: 1px solid {{ $scoreBorder }}; text-decoration:none; margin-top:8px;">
+            <i class="fas fa-shield-halved"></i> Score GEL : {{ $scoreConf }}/100
+          </a>
         </div>
 
         <div style="padding: 0 16px 16px;">

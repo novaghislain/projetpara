@@ -851,6 +851,38 @@
       .slide-panel { width: 100%; }
       .gel-kpi-grid { grid-template-columns: 1fr 1fr; }
     }
+    /* ─── APP SWITCHER ─── */
+    .app-switcher-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      padding: 10px;
+    }
+    .app-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 10px;
+      border-radius: 8px;
+      text-decoration: none;
+      color: var(--gel-text);
+      transition: background 0.2s;
+      text-align: center;
+    }
+    .app-item:hover {
+      background: var(--gel-sidebar-hover);
+      text-decoration: none;
+      color: var(--gel-primary);
+    }
+    .app-icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    .app-name {
+      font-size: 11px;
+      font-weight: 600;
+    }
   </style>
 
   @stack('styles')
@@ -866,54 +898,10 @@
 
     {{-- Go To Business / Select Client --}}
       <div style="position:relative;">
-        <button class="btn-go-business" id="btnGoBusiness" onclick="toggleDropdown('dropdownGoBusiness')">
+        <a href="{{ route('dashboard') }}" class="btn-go-business" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px;">
           <i class="fas fa-exchange-alt"></i> 
-          @if(auth()->user()->isAutonomousAccountant())
-             @if(auth()->user()->activeIndependantClient)
-                Dossier : {{ Str::limit(auth()->user()->activeIndependantClient->nom_entreprise, 15) }}
-             @else
-                Sélectionner un dossier
-             @endif
-          @else
-             Go To GEL Business 
-          @endif
-          <i class="fas fa-chevron-down" style="font-size:9px;"></i>
-        </button>
-        <div class="nested-dropdown" id="dropdownGoBusiness" style="position:absolute;left:0;top:calc(100% + 6px);min-width:300px;">
-          <div class="dd-header">Mes dossiers clients</div>
-          @php 
-            $u = auth()->user();
-            if ($u->isAutonomousAccountant()) {
-                $myClients = \App\Models\IndependantComptableClient::where('comptable_id', $u->id)->get();
-                foreach($myClients as $c) {
-                    echo '<a href="'.route('gel-accountant.independant.client.select', $c->id).'" class="dd-item" style="text-decoration:none;"><span class="dd-icon"><i class="fas fa-folder me-1"></i></span> '.$c->nom_entreprise.'</a>';
-                }
-                if ($myClients->isEmpty()) {
-                    echo '<div class="dd-item" style="color:rgba(255,255,255,0.5);"><span class="dd-icon"><i class="fas fa-folder me-1"></i></span> Aucun dossier</div>';
-                }
-                echo '<div class="dd-divider"></div>';
-                echo '<a href="'.route('gel-accountant.independant.clients.index').'" class="dd-item" style="text-decoration:none;"><span class="dd-icon"><i class="fas fa-cog me-1"></i></span> Gérer mes clients</a>';
-            } else {
-                $cabinetClients = []; 
-                try { 
-                  $cabinetClients = \App\Models\Gel\Client::where(function($q) use ($u) {
-                      if ($u?->cabinet_id) $q->where('cabinet_id', $u->cabinet_id);
-                      $q->orWhereIn('id', function($sub) use ($u) {
-                          $sub->select('client_id')->from('user_clients')->where('user_id', $u->id);
-                      });
-                  })->where('statut', 'actif')->get(); 
-                } catch(\Exception $e) {} 
-                foreach($cabinetClients as $c) {
-                    echo '<div class="dd-item" data-route="client-'.$c->id.'"><span class="dd-icon"><i class="fas fa-building me-1"></i></span> '.$c->nom_entreprise.'</div>';
-                }
-                if ($cabinetClients->isEmpty()) {
-                    echo '<div class="dd-item" style="color:rgba(255,255,255,0.5);"><span class="dd-icon"><i class="fas fa-building me-1"></i></span> Aucun client actif</div>';
-                }
-                echo '<div class="dd-divider"></div>';
-                echo '<div class="dd-item" data-route="gestion-clients"><span class="dd-icon"><i class="fas fa-cog me-1"></i></span> Gérer les clients</div>';
-            }
-          @endphp
-        </div>
+          Changer d'entreprise
+        </a>
       </div>
     </div>
 
@@ -954,53 +942,7 @@
       {{-- Notifications --}}
       @php
         $notifications = collect();
-        try {
-          $authUser = auth()->user();
-          $cabId = $authUser->cabinet_id ?? null;
-
-          // Dernières écritures validées (max 3)
-          $recentEcritures = \App\Models\Gel\EcritureComptable::where(function($q) use ($cabId) {
-              if ($cabId) $q->where('cabinet_id', $cabId);
-          })->where('valide', true)->orderByDesc('updated_at')->limit(3)->get();
-          foreach ($recentEcritures as $ec) {
-              $notifications->push([
-                  'icon' => 'fas fa-check-circle text-success',
-                  'text' => 'Écriture validée — ' . $ec->ref_piece,
-                  'time' => $ec->updated_at->diffForHumans(),
-                  'url'  => route('gel-accountant.comptabilite.ecritures.show', $ec->id),
-              ]);
-          }
-
-          // Derniers clients ajoutés (max 2)
-          $recentClients = \App\Models\Gel\Client::where(function($q) use ($cabId) {
-              if ($cabId) $q->where('cabinet_id', $cabId);
-          })->orderByDesc('created_at')->limit(2)->get();
-          foreach ($recentClients as $cl) {
-              $notifications->push([
-                  'icon' => 'fas fa-building text-info',
-                  'text' => 'Nouveau client — ' . $cl->nom_entreprise,
-                  'time' => $cl->created_at->diffForHumans(),
-                  'url'  => route('gel-accountant.clients') . '?q=' . urlencode($cl->nom_entreprise),
-              ]);
-          }
-
-          // Trier par date
-          $notifications = $notifications->take(5);
-        } catch (\Exception $e) {
-          // Silently skip
-        }
-
-        // S2.1 — Documents transmis par la secrétaire en attente d'accusé de réception
-        // (garde-fou : on ne compte que si le comptable est rattaché à un client actif)
         $docTransmisEnAttente = 0;
-        try {
-            $activeClientId = session('active_client_id', auth()->user()->active_client_id ?? 0);
-            if ($activeClientId) {
-                $docTransmisEnAttente = \App\Models\Document::where('workflow_step', 'transmis_comptable')
-                    ->where('client_id', $activeClientId)
-                    ->count();
-            }
-        } catch (\Exception $e) { $docTransmisEnAttente = 0; }
       @endphp
       <div style="position:relative;">
         <button class="topbar-btn" onclick="toggleDropdown('notifDropdown')" title="Notifications" style="position:relative;">
@@ -1032,6 +974,50 @@
         </div>
       </div>
 
+      <!-- APP SWITCHER -->
+      <div style="position:relative;">
+        <button class="topbar-btn" title="Applications GEL" onclick="toggleDropdown('appSwitcherDdAccountant')">
+          <i class="fas fa-th"></i>
+        </button>
+        <div class="nested-dropdown" id="appSwitcherDdAccountant" style="position:absolute;right:0;left:auto;top:calc(100% + 6px);width:320px;padding:0;">
+          <div style="padding:14px; border-bottom:1px solid var(--gel-border); font-weight:600; font-size:13px; color:var(--gel-text);">
+            Applications
+          </div>
+          <div class="app-switcher-grid">
+            @if(auth()->user()->hasRoleForActiveEntreprise('company_admin'))
+            <a href="{{ route('gel-direction.dashboard') }}" class="app-item">
+              <i class="fas fa-chart-line app-icon" style="color:#0D9488;"></i>
+              <span class="app-name">Direction</span>
+            </a>
+            @endif
+            @if(auth()->user()->hasRoleForActiveEntreprise('secretary'))
+            <a href="{{ route('gel-secretary.dashboard') }}" class="app-item">
+              <i class="fas fa-tachometer-alt app-icon" style="color:#3B82F6;"></i>
+              <span class="app-name">Secrétariat</span>
+            </a>
+            @endif
+            @if(auth()->user()->hasRoleForActiveEntreprise('accountant'))
+            <a href="{{ route('gel-accountant.dashboard') }}" class="app-item">
+              <i class="fas fa-chart-pie app-icon" style="color:#F59E0B;"></i>
+              <span class="app-name">Comptabilité</span>
+            </a>
+            @endif
+            @if(auth()->user()->hasRoleForActiveEntreprise('rh'))
+            <a href="{{ route('gel-rh.dashboard') }}" class="app-item">
+              <i class="fas fa-user-friends app-icon" style="color:#7C3AED;"></i>
+              <span class="app-name">Ressources Humaines</span>
+            </a>
+            @endif
+            @if(auth()->user()->hasRoleForActiveEntreprise('legal'))
+            <a href="{{ route('gel-legal.dashboard') }}" class="app-item">
+              <i class="fas fa-balance-scale app-icon" style="color:#E11D48;"></i>
+              <span class="app-name">Juridique</span>
+            </a>
+            @endif
+          </div>
+        </div>
+      </div>
+
       <a href="{{ route('gel-accountant.settings') }}" class="topbar-btn" title="Paramètres"><i class="fas fa-cog"></i></a>
 
       <div style="position:relative;">
@@ -1039,13 +1025,13 @@
           @if(auth()->user()?->photo)
             <img src="{{ asset('storage/' . auth()->user()->photo) }}" style="width:100%;height:100%;object-fit:cover;">
           @else
-            {{ strtoupper(substr(auth()->user()?->name ?? auth()->user()?->email ?? 'U', 0, 2)) }}
+            {{ strtoupper(substr(auth()->user()?->nom ?? auth()->user()?->email ?? 'U', 0, 2)) }}
           @endif
         </div>
         <div class="nested-dropdown" id="userDropdown"
              style="position:absolute;right:0;left:auto;top:calc(100% + 6px);min-width:220px;">
           <div style="padding:12px 14px;border-bottom:1px solid var(--gel-border);">
-            <div style="font-weight:600;">{{ auth()->user()?->name ?? 'Utilisateur' }}</div>
+            <div style="font-weight:600;">{{ auth()->user()?->nom ?? 'Utilisateur' }}</div>
             <div style="font-size:12px;color:rgba(255,255,255,0.5);">{{ auth()->user()?->email }}</div>
             <div style="font-size:11px;color:var(--gel-primary);font-weight:500;margin-top:2px;">Comptable</div>
           </div>
@@ -1059,9 +1045,6 @@
       </div>
     </div>
   </header>
-
-  {{-- ════════════════════════════════════════════ BANNIÈRE ESSAI ═══════════════ --}}
-  @include('gel-accountant.independant.subscription.trial-banner')
 
   {{-- ════════════════════════════════════════════ SIDEBAR ═══════════════ --}}
   <aside class="gel-sidebar">
@@ -1088,11 +1071,13 @@
         
         <!-- DÉPENSES & ACHATS -->
         <div class="mega-col">
-          <div class="mega-header">DÉPENSES & ACHATS</div>
-          <a href="{{ route('gel-accountant.expenses.create') }}" class="mega-item"><i class="fas fa-wallet mega-icon"></i> Dépenses & Achats</a>
-          <a href="{{ route('gel-accountant.purchase-orders.create') }}" class="mega-item"><i class="fas fa-file-signature mega-icon"></i> Bons de commande</a>
-          <a href="{{ route('gel-accountant.vendors.create') }}" class="mega-item"><i class="fas fa-industry mega-icon"></i> Fournisseurs</a>
-          <a href="{{ route('gel-accountant.check.create') }}" class="mega-item"><i class="fas fa-receipt mega-icon"></i> Notes de frais</a>
+          <div class="mega-header">FOURNISSEURS</div>
+          <a href="{{ route('gel-accountant.expenses.index') }}" class="mega-item"><i class="fas fa-wallet mega-icon"></i> Dépenses</a>
+          <a href="{{ route('gel-accountant.check.create') }}" class="mega-item"><i class="fas fa-money-check mega-icon"></i> Chèque</a>
+          <a href="{{ route('gel-accountant.bills.create') }}" class="mega-item"><i class="fas fa-file-invoice mega-icon"></i> Bill</a>
+          <a href="{{ route('gel-accountant.pay-bills') }}" class="mega-item"><i class="fas fa-credit-card mega-icon"></i> Payer les factures</a>
+          <a href="{{ route('gel-accountant.purchase-orders.create') }}" class="mega-item"><i class="fas fa-file-signature mega-icon"></i> Bon de commande</a>
+          <a href="{{ route('gel-accountant.vendors.create') }}" class="mega-item" style="margin-top:8px;"><i class="fas fa-plus mega-icon"></i> Ajouter un fournisseur</a>
         </div>
 
         <!-- ÉQUIPE -->
@@ -1106,8 +1091,6 @@
         <!-- AUTRE -->
         <div class="mega-col">
           <div class="mega-header">AUTRE</div>
-          <a href="{{ route('gel-accountant.ia.feed') }}" class="mega-item" style="color:var(--gel-primary); font-weight:600;"><i class="fas fa-robot mega-icon"></i> Fil d'Activité IA</a>
-          <a href="{{ route('gel-accountant.workflows.pending') }}" class="mega-item"><i class="fas fa-check-double mega-icon"></i> Approbations en attente</a>
           <a href="{{ route('gel-accountant.task.create') }}" class="mega-item"><i class="fas fa-tasks mega-icon"></i> Tâche</a>
           <a href="{{ route('gel-accountant.bank-deposit') }}" class="mega-item"><i class="fas fa-university mega-icon"></i> Dépôt bancaire</a>
           <a href="{{ route('gel-accountant.transfer') }}" class="mega-item"><i class="fas fa-exchange-alt mega-icon"></i> Transfert</a>
@@ -1123,14 +1106,11 @@
       <div class="sidebar-section">Général</div>
       <li class="sidebar-item {{ (isset($currentSection) && $currentSection == 'clients') || request()->routeIs('gel-accountant.clients*') ? 'active' : '' }}" data-page="clients"><i class="fas fa-users-cog me-2"></i> Mes clients</li>
       <li class="sidebar-item {{ (isset($currentSection) && $currentSection == 'dashboard') || request()->routeIs('gel-accountant.dashboard') || request()->routeIs('gel-accountant.home') ? 'active' : '' }}" data-page="dashboard"><i class="fas fa-tachometer-alt me-2"></i> Tableau de bord</li>
-      <li class="sidebar-item {{ (isset($currentSection) && $currentSection == 'messagerie') || request()->routeIs('gel-accountant.messagerie*') ? 'active' : '' }}" onclick="window.location.href='{{ route('gel-accountant.messagerie') }}'" style="display: flex; justify-content: space-between; align-items: center;">
+      <li class="sidebar-item {{ (isset($currentSection) && $currentSection == 'messagerie') || request()->routeIs('gel-accountant.messagerie*') ? 'active' : '' }}" onclick="window.location.href=''#''" style="display: flex; justify-content: space-between; align-items: center;">
         <div><i class="fas fa-comments me-2"></i> Messagerie</div>
         @php
             try {
-                $unreadAcctMsgCount = \App\Models\Gel\GelMessage::where('cabinet_id', auth()->user()->cabinet_id)
-                    ->where('sender_type', 'business')
-                    ->where('est_lu', false)
-                    ->count();
+                $unreadAcctMsgCount = 0;
             } catch(\Exception $e) { $unreadAcctMsgCount = 0; }
         @endphp
         @if($unreadAcctMsgCount > 0)
@@ -1158,7 +1138,7 @@
       <div class="sidebar-section">Analyse & Clôture</div>
       <li class="sidebar-item has-children {{ (isset($currentSection) && $currentSection == 'ia') || request()->routeIs('gel-accountant.ia*') ? 'active' : '' }}" data-dropdown="dd-ia">
           <i class="fas fa-robot me-2 text-primary"></i> Agent IA Expert 
-          @php $pendingIa = \App\Models\AiSuggestion::where('status', 'pending')->count(); @endphp
+          @php $pendingIa = 0; @endphp
           @if($pendingIa > 0)<span class="badge" style="background:#ef4444; color:white; border-radius:12px; padding:2px 6px; font-size:10px; margin-left:6px;">{{ $pendingIa }}</span>@endif
           <span class="arrow">▸</span>
       </li>
@@ -1253,8 +1233,8 @@
   {{-- Banque --}}
   <div id="dd-banque" class="nested-dropdown">
     <div class="dd-header">BANQUE</div>
-    <div class="dd-item" onclick="window.location.href='{{ route('gel-accountant.banque.transactions.index') }}'"><i class="fas fa-university me-2"></i> Transactions bancaires</div>
-    <div class="dd-item" onclick="window.location.href='{{ route('gel-accountant.banque.rapprochement.index') }}'"><i class="fas fa-handshake me-2"></i> Rapprochement</div>
+    <div class="dd-item" data-page="transactions"><i class="fas fa-university me-2"></i> Transactions bancaires</div>
+    <div class="dd-item" data-page="rapprochement"><i class="fas fa-handshake me-2"></i> Rapprochement</div>
     <div class="dd-item has-children" data-dropdown="dd-banque-plus">
       <i class="fas fa-cog me-2"></i> Réglages <span class="arrow">▸</span>
     </div>
@@ -1263,7 +1243,7 @@
   {{-- Banque > Réglages (Niveau 3) --}}
   <div id="dd-banque-plus" class="nested-dropdown">
     <div class="dd-item" data-page="regles-bancaires"><i class="fas fa-list-ul me-2"></i> Règles bancaires</div>
-    <div class="dd-item" onclick="window.location.href='{{ route('gel-accountant.banque.comptes.index') }}'"><i class="fas fa-credit-card me-2"></i> Comptes bancaires</div>
+    <div class="dd-item" data-page="comptes-bancaires"><i class="fas fa-credit-card me-2"></i> Comptes bancaires</div>
     <div class="dd-item" data-page="virements"><i class="fas fa-exchange-alt me-2"></i> Virements</div>
   </div>
  
@@ -1284,6 +1264,7 @@
 
   <div id="dd-fiscalite" class="nested-dropdown">
     <div class="dd-header">FISCALITÉ & CLÔTURE</div>
+    <div class="dd-item" data-page="regles-fiscales"><i class="fas fa-gavel me-2"></i> Règles fiscales</div>
     <div class="dd-item" data-page="tva"><i class="fas fa-calculator me-2"></i> Déclarations de TVA</div>
     <div class="dd-item" data-page="exercices"><i class="fas fa-calendar-check me-2"></i> Exercices fiscaux & Clôture</div>
   </div> 
@@ -1511,7 +1492,7 @@
       window.navigateTo = function(page) {
         if (page && page.indexOf('client-') === 0) {
           var clientId = page.replace('client-', '');
-          window.open("{{ route('gel-business.dashboard') }}?client_id=" + clientId, '_blank');
+          window.open("'#'?client_id=" + clientId, '_blank');
           return;
         }
 
@@ -1562,12 +1543,14 @@
           // ─── Général ───
           'dashboard':                 '{{ route("gel-accountant.dashboard") }}',
           'ia':                        '{{ route("gel-accountant.ia.index") }}',
-          'clients':                   '{{ route("gel.crm.clients.index") }}',
-          'gestion-clients':           '{{ route("gel.crm.clients.index") }}',
+          'clients':                   '{{ route("gel-accountant.clients") }}',
+          'gestion-clients':           '{{ route("gel-accountant.clients") }}',
           'equipe':                    '{{ route("gel-accountant.team") }}',
           'invitations':               '{{ route("gel-accountant.invitations") }}',
           'settings':                  '{{ route("gel-accountant.settings") }}',
           'profile':                   '{{ route("gel-accountant.profile") }}',
+          'coordination':              '{{ route("gel-accountant.coordination.index") }}',
+          'messagerie':                '{{ route("gel-accountant.messagerie") }}',
 
           // ─── Comptabilité ───
           'plan-comptable':            '{{ route("gel-accountant.comptabilite.plan-comptable") }}',
@@ -1576,21 +1559,21 @@
           'balance':                   '{{ route("gel-accountant.comptabilite.balance") }}',
           'journaux':                  '{{ route("gel-accountant.comptabilite.journaux") }}',
           'etats-financiers':          '{{ route("gel-accountant.comptabilite.etats-financiers") }}',
-          'bilan':                     '{{ route("gel-accountant.comptabilite.etats-financiers") }}?type=bilan',
-          'cr':                        '{{ route("gel-accountant.comptabilite.etats-financiers") }}?type=resultat',
-          'sig':                       '{{ route("gel-accountant.comptabilite.etats-financiers") }}?type=sig',
-          'tafire':                    '{{ route("gel-accountant.comptabilite.etats-financiers") }}?type=tafire',
-          'tresorerie':                '{{ route("gel-accountant.comptabilite.etats-financiers") }}?type=tresorerie',
+          'bilan':                     '{{ route("gel-accountant.comptabilite.etats-financiers.bilan") }}',
+          'cr':                        '{{ route("gel-accountant.comptabilite.etats-financiers.resultat") }}',
+          'sig':                       '{{ route("gel-accountant.comptabilite.etats-financiers.sig") }}',
+          'tafire':                    '{{ route("gel-accountant.comptabilite.etats-financiers.tafire") }}',
+          'tresorerie':                '{{ route("gel-accountant.comptabilite.etats-financiers.tresorerie") }}',
           'taches':                    '{{ route("gel-accountant.tasks.index") }}',
           'workflows':                 '{{ route("gel-accountant.workflows.index") }}',
 
           // ─── Facturation ───
-          'factures':                  '{{ route("gel.facturation.factures.index") }}',
+          'factures':                  '{{ route("gel-accountant.factures.index") }}',
           'devis':                     '{{ route("gel-accountant.estimation.create") }}',
           'produits':                  '{{ route("gel-accountant.add-product") }}',
-          'paiements':                 '{{ route("gel-accountant.payments.create") }}',
-          'factures-recurrentes':      '{{ route("gel-accountant.factures.index") }}',
-          'relances':                  '{{ route("gel-accountant.rapports.index") }}',
+          'paiements':                 '{{ route("gel-accountant.payments.index") }}',
+          'factures-recurrentes':      '{{ route("gel-accountant.recurrentes.index") }}',
+          'relances':                  '{{ route("gel-accountant.relances.index") }}',
 
           // ─── Dépenses & Achats ───
           'depenses-achats':           '{{ route("gel-accountant.expenses.index") }}',
@@ -1606,13 +1589,14 @@
           'virements':                 '{{ route("gel-accountant.transfer") }}',
 
           // ─── Fiscalité & Clôture ───
+          'regles-fiscales':           '{{ route("gel-accountant.fiscalite.regles-fiscales.index") }}',
           'tva':                       '{{ route("gel-accountant.fiscalite.tva.index") }}',
           'exercices':                 '{{ route("gel-accountant.fiscalite.exercices.index") }}',
 
           // ─── Rapports ───
           'rapports-standards':        '{{ route("gel-accountant.rapports.index") }}',
           'centre-performance':        '{{ route("gel-accountant.rapports.index") }}',
-          'rapports-personnalises':    '{{ route("gel-accountant.rapports.index") }}',
+          'rapports-personnalises':    '{{ route("gel-accountant.rapports.create") }}',
           'rapports-sauvegardes':      '{{ route("gel-accountant.rapports.index") }}',
         };
 
@@ -2001,7 +1985,7 @@
   <script>
     (function() {
       var searchTimer = null;
-      var searchUrl = '{{ route("gel-accountant.api.search") }}';
+      var searchUrl = ''#'';
 
       window.handleGlobalSearch = function(value) {
         var q = (value || '').trim();

@@ -23,8 +23,7 @@ class BalanceReportService
         ?string $classFilter = null,
         ?array $accountIds = null
     ): array {
-        $query = AccountingAccount::where('client_id', $clientId)
-            ->where('is_active', true);
+        $query = DB::table('gel_account_types');
 
         if ($classFilter) {
             $query->where('code', 'like', $classFilter . '%');
@@ -47,27 +46,27 @@ class BalanceReportService
 
         foreach ($accounts as $account) {
             // Solde d'ouverture (avant startDate)
-            $openingQuery = DB::table('entry_lines')
-                ->join('journal_entries', 'entry_lines.entry_id', '=', 'journal_entries.id')
-                ->where('entry_lines.account_id', $account->id)
-                ->where('journal_entries.client_id', $clientId)
-                ->where('journal_entries.status', 'posted')
-                ->whereDate('journal_entries.entry_date', '<', $startDate);
+            $openingQuery = DB::table('gel_lignes_ecriture as gl')
+                ->join('gel_ecritures as ge', 'gl.ecriture_id', '=', 'ge.id')
+                ->where('gl.compte_id', $account->id)
+                ->where('ge.client_id', $clientId)
+                ->where('ge.valide', true)
+                ->whereDate('ge.date_ecriture', '<', $startDate);
 
-            $openingDebit = (float) $openingQuery->sum('entry_lines.debit');
-            $openingCredit = (float) $openingQuery->sum('entry_lines.credit');
+            $openingDebit = (float) (clone $openingQuery)->where('gl.sens', 'debit')->sum('gl.montant');
+            $openingCredit = (float) (clone $openingQuery)->where('gl.sens', 'credit')->sum('gl.montant');
 
             // Mouvements de la période
-            $movementQuery = DB::table('entry_lines')
-                ->join('journal_entries', 'entry_lines.entry_id', '=', 'journal_entries.id')
-                ->where('entry_lines.account_id', $account->id)
-                ->where('journal_entries.client_id', $clientId)
-                ->where('journal_entries.status', 'posted')
-                ->whereDate('journal_entries.entry_date', '>=', $startDate)
-                ->whereDate('journal_entries.entry_date', '<=', $endDate);
+            $movementQuery = DB::table('gel_lignes_ecriture as gl')
+                ->join('gel_ecritures as ge', 'gl.ecriture_id', '=', 'ge.id')
+                ->where('gl.compte_id', $account->id)
+                ->where('ge.client_id', $clientId)
+                ->where('ge.valide', true)
+                ->whereDate('ge.date_ecriture', '>=', $startDate)
+                ->whereDate('ge.date_ecriture', '<=', $endDate);
 
-            $periodDebit = (float) $movementQuery->sum('entry_lines.debit');
-            $periodCredit = (float) $movementQuery->sum('entry_lines.credit');
+            $periodDebit = (float) (clone $movementQuery)->where('gl.sens', 'debit')->sum('gl.montant');
+            $periodCredit = (float) (clone $movementQuery)->where('gl.sens', 'credit')->sum('gl.montant');
 
             // Cumuls
             $totalDebitAccount = $openingDebit + $periodDebit;
@@ -84,10 +83,10 @@ class BalanceReportService
             $results[] = [
                 'account_id' => $account->id,
                 'account_code' => $account->code,
-                'account_name' => $account->name,
-                'account_class' => $account->syscohada_class ?? substr($account->code, 0, 1),
-                'account_type' => $account->type,
-                'account_nature' => $account->account_nature,
+                'account_name' => $account->libelle,
+                'account_class' => $account->classe ?? substr($account->code, 0, 1),
+                'account_type' => '',
+                'account_nature' => '',
                 'opening_debit' => $openingDebit,
                 'opening_credit' => $openingCredit,
                 'period_debit' => $periodDebit,

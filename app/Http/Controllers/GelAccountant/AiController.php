@@ -11,19 +11,23 @@ class AiController extends Controller
 {
     protected \App\Services\IA\AccountingAiService $accountingAi;
     protected \App\Services\IA\ChatAiService $chatAi;
+    protected \App\Services\IA\FinanceAiService $financeAi;
 
-    public function __construct(\App\Services\IA\AccountingAiService $accountingAi, \App\Services\IA\ChatAiService $chatAi)
-    {
+    public function __construct(
+        \App\Services\IA\AccountingAiService $accountingAi, 
+        \App\Services\IA\ChatAiService $chatAi,
+        \App\Services\IA\FinanceAiService $financeAi
+    ) {
         $this->accountingAi = $accountingAi;
         $this->chatAi = $chatAi;
+        $this->financeAi = $financeAi;
     }
     /**
      * Affiche le tableau de bord de l'assistant IA
      */
     public function index()
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
         
         // Données authentiques venant du service IA
         $anomalies = $this->accountingAi->detectAnomalies($clientId);
@@ -85,8 +89,7 @@ class AiController extends Controller
      */
     public function feed()
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $query = AiSuggestion::query();
 
@@ -121,5 +124,42 @@ class AiController extends Controller
         $agents = AiSuggestion::select('agent')->distinct()->pluck('agent')->filter();
 
         return view('gel-accountant.ia.feed', compact('suggestions', 'counters', 'agents'));
+    }
+
+    public function suggestions()
+    {
+        $clientId = session('active_client_id') ?? session('current_client_id');
+        
+        $suggestions = collect();
+        if ($clientId) {
+            $anomalies = $this->accountingAi->detectAnomalies($clientId);
+            foreach ($anomalies as $anom) {
+                $suggestions->push((object)[
+                    'type' => 'anomaly',
+                    'title' => $anom['title'],
+                    'message' => $anom['message'],
+                    'created_at' => now(),
+                    'priority' => $anom['severity'] === 'critical' ? 'high' : 'normal'
+                ]);
+            }
+        }
+        return view('gel-accountant.ia.suggestions', compact('suggestions'));
+    }
+
+    public function cashflow()
+    {
+        $clientId = session('active_client_id') ?? session('current_client_id');
+        $cashflowData = [];
+        
+        if ($clientId) {
+            $cashflowData = $this->financeAi->predictCashFlow($clientId, 90);
+        }
+        
+        return view('gel-accountant.ia.cashflow', compact('cashflowData'));
+    }
+
+    public function ocr()
+    {
+        return view('gel-accountant.ia.ocr');
     }
 }

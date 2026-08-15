@@ -40,7 +40,7 @@ class HistoriqueController extends Controller
 
         // Filtre événement
         if ($request->filled('event')) {
-            $query->where('event', $request->event);
+            $query->where('action', $request->event);
         }
 
         $logs = $query->paginate(20)->withQueryString();
@@ -51,11 +51,8 @@ class HistoriqueController extends Controller
         // Événements distincts
         $events = AuditLog::where('cabinet_id', $user->cabinet_id)
             ->distinct()
-            ->pluck('event');
+            ->pluck('action');
 
         return view('gel-secretary.historique.index', compact('logs', 'clients', 'events'));
     }
 }
-
-
-

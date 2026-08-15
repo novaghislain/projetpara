@@ -23,15 +23,13 @@ class CoordinationService
     // ── Rôles professionnels (indépendants de l'attachement) ──────────────
     public static function isSecretaire(User $user): bool
     {
-        return in_array($user->role, ['secretaire', 'secretary'], true)
-            || $user->role_secretaire
-            || $user->hasRole(['secretaire', 'secretary']);
+        return in_array($user->role, ['secretaire', 'secretary', 'admin', 'director', 'super_admin'], true)
+            || $user->role_secretaire;
     }
 
     public static function isComptable(User $user): bool
     {
-        return in_array($user->role, ['comptable', 'accountant', 'comptable_senior', 'chef_comptable', 'comptable_junior'], true)
-            || $user->hasRole(['comptable', 'accountant', 'comptable_senior', 'chef_comptable', 'comptable_junior']);
+        return in_array($user->role, ['comptable', 'accountant', 'collaborator', 'pole_responsible', 'director', 'super_admin'], true);
     }
 
     /**
@@ -40,10 +38,14 @@ class CoordinationService
      * Modèle 2 (pool GEL)  : workspace_type=gel_pool + clients_assignes.
      * Cabinet : un membre du cabinet (cabinet_id) sert tous les clients du cabinet.
      */
-    public static function isAttachedToClient(User $user, int $clientId): bool
+    public static function isAttachedToClient(User $user, $clientId): bool
     {
+        if ($user->role === 'admin' || $user->isAutonomousSecretary()) {
+            return true;
+        }
+
         // Rattachement direct (Modèle 1)
-        if ((int) $user->client_id === $clientId) {
+        if ((string) $user->client_id === (string) $clientId) {
             return true;
         }
 
@@ -54,14 +56,11 @@ class CoordinationService
         }
 
         // Modèle 2 — pool GEL : affectation explicite via clients_assignes
-        $assignes = $user->clients_assignes;
-        if (is_array($assignes) && in_array($clientId, array_map('intval', $assignes), true)) {
-            return true;
-        }
+        // Feature removed as clients_assignes does not exist in utilisateurs table.
 
         // Personnel de cabinet : sert tous les clients du cabinet
         $client = Client::find($clientId);
-        if ($client && $user->cabinet_id && (int) $client->cabinet_id === (int) $user->cabinet_id) {
+        if ($client && $user->cabinet_id && (string) $client->cabinet_id === (string) $user->cabinet_id) {
             return true;
         }
 
@@ -71,7 +70,7 @@ class CoordinationService
     /**
      * Le secrétaire rattaché à l'entreprise donnée (le plus précis d'abord).
      */
-    public static function getSecretaireForClient(int $clientId): ?User
+    public static function getSecretaireForClient($clientId): ?User
     {
         return self::staffForClient($clientId, 'secretaire');
     }
@@ -79,7 +78,7 @@ class CoordinationService
     /**
      * Le comptable rattaché à l'entreprise donnée (le plus précis d'abord).
      */
-    public static function getComptableForClient(int $clientId): ?User
+    public static function getComptableForClient($clientId): ?User
     {
         return self::staffForClient($clientId, 'comptable');
     }
@@ -87,7 +86,7 @@ class CoordinationService
     /**
      * Les deux professionnels rattachés en commun à l'entreprise.
      */
-    public static function pairForClient(int $clientId): array
+    public static function pairForClient($clientId): array
     {
         return [
             'secretaire' => self::getSecretaireForClient($clientId),
@@ -95,23 +94,43 @@ class CoordinationService
         ];
     }
 
-    private static function staffForClient(int $clientId, string $role): ?User
+    /**
+     * Trouve un staff GEL (secrétaire ou comptable) rattaché à ce client.
+     */
+    private static function staffForClient($clientId, string $role): ?User
     {
-        $candidates = User::where('is_active', true)
-            ->orderByRaw('FIELD(client_id, ?) DESC', [$clientId]) // le rattachement direct d'abord
-            ->get()
-            ->filter(fn ($u) => $role === 'secretaire' ? self::isSecretaire($u) : self::isComptable($u))
-            ->filter(fn ($u) => self::isAttachedToClient($u, $clientId))
-            ->values();
+        // 1. Chercher par pivot user_clients
+        $userViaPivot = User::whereIn('id', function ($query) use ($clientId) {
+            $query->select('user_id')->from('user_clients')->where('client_id', $clientId);
+        })
+        ->where(function ($q) use ($role) {
+            $q->where('role', $role);
+        })->first();
 
-        return $candidates->first();
+        if ($userViaPivot) {
+            return $userViaPivot;
+        }
+
+        // 2. Chercher dans les assignations explicites (JSON)
+        // Feature removed as the clients_assignes column does not exist in utilisateurs table.
+
+        // 3. Fallback : n'importe quel staff du cabinet qui a ce rôle (s'il y a un cabinet_id)
+        $client = Client::find($clientId);
+        if ($client && $client->cabinet_id) {
+            return User::where('cabinet_id', $client->cabinet_id)
+                ->where(function ($q) use ($role) {
+                    $q->where('role', $role);
+                })->first();
+        }
+
+        return null;
     }
 
     /**
      * Journalise un événement de coordination (en français).
      */
     public static function log(
-        int $clientId,
+        $clientId,
         User $actor,
         ?int $recipientId,
         string $type,
@@ -162,7 +181,7 @@ class CoordinationService
     /**
      * Fil d'activité de coordination d'une entreprise (S4.3 / S1.4).
      */
-    public static function feedForClient(int $clientId, int $limit = 50): \Illuminate\Support\Collection
+    public static function feedForClient($clientId, int $limit = 50): \Illuminate\Support\Collection
     {
         return CoordinationEvent::with(['actor:id,name,role', 'document:id,name'])
             ->where('client_id', $clientId)

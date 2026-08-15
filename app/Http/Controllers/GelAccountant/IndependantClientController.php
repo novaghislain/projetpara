@@ -214,17 +214,68 @@ class IndependantClientController extends Controller
     /**
      * Sélectionne un client pour l'isolation du contexte (bascule).
      */
-    public function selectClient($id)
+    public function selectClient(Request $request, $id)
     {
         $this->ensureIndependantAccountant();
         $user = Auth::user();
         
         $client = ComptableClient::where('comptable_id', $user->id)->findOrFail($id);
-        
+
+        // ─── Création / Récupération du gel_client miroir ────────────────────
+        // Pour réutiliser l'infrastructure comptable (écritures, journaux), on
+        // associe à chaque dossier independant un enregistrement dans gel_clients.
+        // Ce miroir porte le cabinet_id du cabinet solo du comptable.
+        if ($user->tenant_id) {
+            $gelClient = \App\Models\Gel\Client::firstOrCreate(
+                [
+                    'cabinet_id'            => $user->tenant_id,
+                    'independant_client_id' => $client->id,
+                ],
+                [
+                    'nom_entreprise' => $client->nom_entreprise,
+                    'email'          => $client->email,
+                    'telephone'      => $client->telephone,
+                    'ifu'            => $client->ifu,
+                    'rc'             => $client->rccm,
+                    'secteur'        => $client->secteur,
+                    'adresse'        => $client->adresse,
+                    'statut'         => 'actif',
+                    'created_by'     => $user->id,
+                ]
+            );
+
+            // Mettre à jour le nom/infos si elles ont changé depuis la dernière sélection
+            if (!$gelClient->wasRecentlyCreated) {
+                $gelClient->update([
+                    'nom_entreprise' => $client->nom_entreprise,
+                    'email'          => $client->email,
+                    'statut'         => 'actif',
+                ]);
+            }
+        }
+
         $user->update([
             'active_independant_client_id' => $client->id
         ]);
         
-        return redirect()->route('gel-accountant.dashboard')->with('success', "Vous travaillez maintenant sur le dossier : {$client->nom_entreprise}");
+        $redirect = $request->input('redirect', route('gel-accountant.dashboard'));
+
+        return redirect($redirect)->with('success', "Dossier actif : {$client->nom_entreprise}");
+    }
+
+    /**
+     * Désélectionne le client actif (retour vue globale du comptable).
+     */
+    public function deselectClient()
+    {
+        $this->ensureIndependantAccountant();
+        $user = Auth::user();
+        
+        $user->update([
+            'active_independant_client_id' => null
+        ]);
+        
+        return redirect()->route('gel-accountant.independant.clients.index')
+            ->with('info', 'Vous êtes revenu en vue globale. Sélectionnez un dossier pour travailler dessus.');
     }
 }

@@ -18,13 +18,40 @@ class TenantScope implements Scope
     public function apply(Builder $builder, Model $model)
     {
         if (!app()->runningInConsole() && auth()->check()) {
-            $cabinetId = auth()->user()->cabinet_id ?? null;
+            $user = auth()->user();
 
-            if ($cabinetId) {
-                $builder->where($model->getTable() . '.cabinet_id', $cabinetId);
-            } else {
-                // If user doesn't have a cabinet_id, they shouldn't see tenant-scoped data
-                $builder->whereRaw('1 = 0');
+            if ($user->isSuperAdmin && $user->isSuperAdmin()) {
+                return;
+            }
+
+            $table = $model->getTable();
+            $hasCabinet = \Schema::hasColumn($table, 'cabinet_id');
+            $hasClient = \Schema::hasColumn($table, 'client_id');
+
+            // 1. Isolation Cabinet
+            if ($hasCabinet) {
+                $cabinetId = $user->cabinet_id ?? null;
+                if ($cabinetId) {
+                    $builder->where($table . '.cabinet_id', $cabinetId);
+                } else {
+                    $builder->whereRaw('1 = 0');
+                    return;
+                }
+            }
+
+            // 2. Isolation Client / Entreprise
+            if ($hasClient) {
+                $activeEntrepriseId = session('active_entreprise_id');
+                if ($activeEntrepriseId) {
+                    $builder->where($table . '.client_id', $activeEntrepriseId);
+                } else {
+                    $clientIds = $user->affectations ? $user->affectations()->pluck('entreprise_id')->toArray() : [];
+                    if (!empty($clientIds)) {
+                        $builder->whereIn($table . '.client_id', $clientIds);
+                    } else {
+                        $builder->whereRaw('1 = 0');
+                    }
+                }
             }
         }
     }

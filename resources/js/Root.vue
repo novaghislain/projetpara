@@ -283,7 +283,7 @@ const pageComponent = computed(() => {
         'gel-ocr-form': 'gel-ocr-form',
         'gel-ocr-show': 'gel-ocr-show',
 
-        // ─── Paie — Calculateur IRPP/CNSS ───────────────
+        // ─── Paie — Calculateur ITS/CNSS ───────────────
         'gel-paie': 'gel-paie',
 
         // ─── Sécurité — 2FA & Sessions ──────────────────

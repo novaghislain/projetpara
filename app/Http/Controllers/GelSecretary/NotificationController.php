@@ -13,7 +13,8 @@ class NotificationController extends Controller
     {
         $user = Auth::user();
         
-        $notifications = Notification::where('user_id', $user->id)
+        $notifications = Notification::where('notifiable_id', $user->id)
+            ->where('notifiable_type', get_class($user))
             ->orderBy('created_at', 'desc')
             ->paginate(50);
 
@@ -23,7 +24,9 @@ class NotificationController extends Controller
     public function markAsRead($id)
     {
         $user = Auth::user();
-        $notification = Notification::where('user_id', $user->id)->findOrFail($id);
+        $notification = Notification::where('notifiable_id', $user->id)
+            ->where('notifiable_type', get_class($user))
+            ->findOrFail($id);
         
         $notification->update(['read_at' => now()]);
 
@@ -33,7 +36,8 @@ class NotificationController extends Controller
     public function markAllAsRead()
     {
         $user = Auth::user();
-        Notification::where('user_id', $user->id)
+        Notification::where('notifiable_id', $user->id)
+            ->where('notifiable_type', get_class($user))
             ->whereNull('read_at')
             ->update(['read_at' => now()]);
 

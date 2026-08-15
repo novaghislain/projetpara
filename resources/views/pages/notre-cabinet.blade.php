@@ -396,7 +396,7 @@
                     <div class="gel-expertise-card">
                         <div class="gel-expertise-icon"><i class="bi-person-vcard"></i></div>
                         <h4>Social & Paie</h4>
-                        <p>Édition de fiches de paie intégrées aux barèmes IRPP/CNSS du Bénin et suivi des congés.</p>
+                        <p>Édition de fiches de paie intégrées aux barèmes ITS/CNSS du Bénin et suivi des congés.</p>
                     </div>
                 </div>
             </div>

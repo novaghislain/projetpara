@@ -24,15 +24,20 @@ Route::middleware(['web'])->prefix('gel-secretary/register')->name('gel-secretar
     Route::post('/autonomous', [\App\Http\Controllers\GelSecretary\Auth\SecretaryRegisterController::class, 'registerAutonomous'])->name('autonomous.submit');
 });
 
-Route::middleware(['auth', 'verified', 'not_suspended', 'gel.secretaire', \PragmaRX\Google2FALaravel\Middleware::class, \App\Http\Middleware\CheckSecretarySubscription::class, 'check.autonomous'])
+Route::middleware(['auth', 'affectation:secretary'])
     ->prefix('gel-secretary')
     ->name('gel-secretary.')
     ->group(function () {
 
         // ─── Dashboard ──────────────────────────────────────────────────
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::post('/dashboard/generate-report', [DashboardController::class, 'generateReport'])->name('dashboard.generate-report');
         Route::get('/dashboard-notifications', [DashboardController::class, 'notifications'])->name('dashboard.notifications');
         Route::get('/search', [\App\Http\Controllers\GelSecretary\SearchController::class, 'search'])->name('search');
+
+        // ─── AI Assistant ────────────────────────────────────────────────────────
+        Route::get('/ai-assistant', [\App\Http\Controllers\GelSecretary\AiChatController::class, 'index'])->name('ai-assistant');
+        Route::post('/ai-assistant/chat', [\App\Http\Controllers\GelSecretary\AiChatController::class, 'chat'])->name('ai-assistant.chat');
 
         // ─── Entreprise Autonome ────────────────────────────────────────
         Route::get('/autonomous/enterprise/create', [\App\Http\Controllers\GelSecretary\AutonomousEnterpriseController::class, 'create'])->name('autonomous.enterprise.create');
@@ -59,6 +64,21 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'gel.secretaire', \Pragm
 
         // ─── Gestion des entreprises clientes ───────────────────────────
         Route::prefix('clients')->name('clients.')->group(function () {
+            // Facturation (Ventes)
+            Route::get('/ventes', [\App\Http\Controllers\GelSecretary\VentesController::class, 'index'])->name('ventes.index');
+            Route::get('/ventes/create', [\App\Http\Controllers\GelSecretary\VentesController::class, 'create'])->name('ventes.create');
+            Route::post('/ventes', [\App\Http\Controllers\GelSecretary\VentesController::class, 'store'])->name('ventes.store');
+            Route::get('/ventes/{id}', [\App\Http\Controllers\GelSecretary\VentesController::class, 'show'])->name('ventes.show');
+            Route::post('/ventes/{id}/valider', [\App\Http\Controllers\GelSecretary\VentesController::class, 'valider'])->name('ventes.valider');
+
+            // Anc. Facturation (désactivé - InvoiceController manquant)
+            // Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices');
+            // Déclarations Fiscales (TVA, etc.)
+            Route::get('/declarations', [\App\Http\Controllers\GelSecretary\DeclarationFiscaleController::class, 'index'])->name('declarations.index');
+            Route::post('/declarations', [\App\Http\Controllers\GelSecretary\DeclarationFiscaleController::class, 'store'])->name('declarations.store');
+            Route::get('/declarations/{id}', [\App\Http\Controllers\GelSecretary\DeclarationFiscaleController::class, 'show'])->name('declarations.show');
+            Route::put('/declarations/{id}/status', [\App\Http\Controllers\GelSecretary\DeclarationFiscaleController::class, 'updateStatus'])->name('declarations.updateStatus');
+
             Route::get('/', [ClientsController::class, 'index'])->name('index');
             Route::get('/{clientId}', [ClientsController::class, 'show'])->name('show');
             Route::post('/{clientId}/call-log', [ClientsController::class, 'storeCallLog'])->name('call-log.store');
@@ -98,6 +118,14 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'gel.secretaire', \Pragm
             Route::get('/download/{id}', [DocumentsController::class, 'download'])->name('download');
             Route::delete('/{id}', [DocumentsController::class, 'destroy'])->name('destroy');
             Route::delete('/folder/{id}', [DocumentsController::class, 'destroyFolder'])->name('destroy-folder');
+            
+            // Sécurité et Téléchargement de Dossier
+            Route::post('/folder/{id}/secure', [DocumentsController::class, 'secureFolder'])->name('secure-folder');
+            Route::post('/file/{id}/secure', [DocumentsController::class, 'secureDocument'])->name('secure-document');
+            Route::post('/folder/{id}/unlock-reset', [DocumentsController::class, 'resetFolderSecurity'])->name('reset-folder-security');
+            Route::post('/file/{id}/unlock-reset', [DocumentsController::class, 'resetDocumentSecurity'])->name('reset-document-security');
+            Route::post('/verify-password', [DocumentsController::class, 'verifyPassword'])->name('verify-password');
+            Route::get('/folder/{id}/download', [DocumentsController::class, 'downloadFolder'])->name('download-folder');
             
             // Corbeille
             Route::get('/trash', [DocumentsController::class, 'trash'])->name('trash');
@@ -171,10 +199,32 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'gel.secretaire', \Pragm
         // ─── Courriers ──────────────────────────────────────────────────────────
         Route::prefix('courriers')->name('courriers.')->group(function () {
             Route::get('/', [App\Http\Controllers\GelSecretary\Documents\CourrierController::class, 'index'])->name('index');
+            Route::get('/create', [App\Http\Controllers\GelSecretary\Documents\CourrierController::class, 'create'])->name('create');
             Route::post('/', [App\Http\Controllers\GelSecretary\Documents\CourrierController::class, 'store'])->name('store');
             Route::get('/{id}', [App\Http\Controllers\GelSecretary\Documents\CourrierController::class, 'show'])->name('show');
             Route::put('/{id}', [App\Http\Controllers\GelSecretary\Documents\CourrierController::class, 'update'])->name('update');
+            Route::put('/{id}/statut', [App\Http\Controllers\GelSecretary\Documents\CourrierController::class, 'updateStatut'])->name('updateStatut');
             Route::post('/draft-ia', [App\Http\Controllers\GelSecretary\Documents\CourrierController::class, 'generateDraft'])->name('draft-ia');
+        });
+
+        // ─── Appels ─────────────────────────────────────────────────────────────
+        Route::prefix('calls')->name('calls.')->group(function () {
+            Route::get('/', [App\Http\Controllers\GelSecretary\Communication\CallLogController::class, 'index'])->name('index');
+            Route::post('/', [App\Http\Controllers\GelSecretary\Communication\CallLogController::class, 'store'])->name('store');
+            Route::post('/extract-ia', [App\Http\Controllers\GelSecretary\Communication\CallLogController::class, 'extractTask'])->name('extract-ia');
+            Route::put('/{id}', [App\Http\Controllers\GelSecretary\Communication\CallLogController::class, 'update'])->name('update');
+            Route::delete('/{id}', [App\Http\Controllers\GelSecretary\Communication\CallLogController::class, 'destroy'])->name('destroy');
+        });
+
+        // ─── Contrats ───────────────────────────────────────────────────────────
+        Route::prefix('contrats')->name('contrats.')->group(function () {
+            Route::get('/', [App\Http\Controllers\GelSecretary\Documents\ContratsController::class, 'index'])->name('index');
+            Route::get('/create', [App\Http\Controllers\GelSecretary\Documents\ContratsController::class, 'create'])->name('create');
+            Route::post('/', [App\Http\Controllers\GelSecretary\Documents\ContratsController::class, 'store'])->name('store');
+            Route::get('/{id}', [App\Http\Controllers\GelSecretary\Documents\ContratsController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [App\Http\Controllers\GelSecretary\Documents\ContratsController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [App\Http\Controllers\GelSecretary\Documents\ContratsController::class, 'update'])->name('update');
+            Route::delete('/{id}', [App\Http\Controllers\GelSecretary\Documents\ContratsController::class, 'destroy'])->name('destroy');
         });
 
         // ─── S3 : Administration (sous-onglets) ─────────────────────────────────
@@ -219,6 +269,13 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'gel.secretaire', \Pragm
             Route::post('/extract-ia', [App\Http\Controllers\GelSecretary\Tasks\MeetingMinuteController::class, 'extractPv'])->name('extract-ia');
         });
 
+        // ─── Éditeur de Texte / Bloc-Notes ──────────────────────────────────────
+        Route::prefix('notes')->name('notes.')->group(function () {
+            Route::get('/', [App\Http\Controllers\GelSecretary\NotesController::class, 'index'])->name('index');
+            Route::post('/save', [App\Http\Controllers\GelSecretary\NotesController::class, 'store'])->name('store');
+            Route::delete('/{id}', [App\Http\Controllers\GelSecretary\NotesController::class, 'destroy'])->name('destroy');
+        });
+
         // ─── S6 : Module Réunions (hub ODJ / PV / Décisions / Suivi) ─────────────
         Route::prefix('reunions')->name('reunions.')->group(function () {
             Route::get('/', [App\Http\Controllers\GelSecretary\Tasks\ReunionsController::class, 'index'])->name('index');
@@ -242,6 +299,26 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'gel.secretaire', \Pragm
         // ─── Switch de contexte client ──────────────────────────────────────────
         Route::post('/switch-client', [DashboardController::class, 'switchClient'])->name('switch-client');
         Route::post('/switch-client-clear', [DashboardController::class, 'clearClient'])->name('switch-client.clear');
+        // ─── Conformité ─────────────────────────────────────────────────────────
+        Route::prefix('conformite')->name('conformite.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\GelSecretary\ConformiteController::class, 'index'])->name('index');
+            Route::put('/{id}', [\App\Http\Controllers\GelSecretary\ConformiteController::class, 'update'])->name('update');
+            Route::get('/{clientId}/passeport', [\App\Http\Controllers\GelSecretary\ConformiteController::class, 'passeport'])->name('passeport');
+            Route::post('/{id}/action', [\App\Http\Controllers\GelSecretary\ConformiteController::class, 'storeAction'])->name('action.store');
+            Route::post('/action/{id}/complete', [\App\Http\Controllers\GelSecretary\ConformiteController::class, 'completeAction'])->name('action.complete');
+        });
+
+        // ─── Espace Cabinet (Marketplace & Multi-clients) ────────────────────────
+        Route::prefix('cabinet')->name('cabinet.')->group(function () {
+            Route::get('/profil', [\App\Http\Controllers\GelSecretary\MarketplaceProfileController::class, 'index'])->name('profil.index');
+            Route::post('/profil', [\App\Http\Controllers\GelSecretary\MarketplaceProfileController::class, 'store'])->name('profil.store');
+            Route::get('/portefeuille', [\App\Http\Controllers\GelSecretary\CabinetController::class, 'portefeuille'])->name('portefeuille');
+            Route::get('/collaborateurs', [\App\Http\Controllers\GelSecretary\CabinetController::class, 'collaborateurs'])->name('collaborateurs');
+            Route::get('/taches', [\App\Http\Controllers\GelSecretary\CabinetController::class, 'taches'])->name('taches');
+            Route::get('/facturation', [\App\Http\Controllers\GelSecretary\FacturationCabinetController::class, 'index'])->name('facturation.index');
+            Route::post('/facturation', [\App\Http\Controllers\GelSecretary\FacturationCabinetController::class, 'store'])->name('facturation.store');
+        });
+
         // ─── Paramètres & Sécurité ──────────────────────────────────────────
         Route::prefix('settings')->name('settings.')->group(function () {
             Route::get('/', [\App\Http\Controllers\GelSecretary\Settings\SettingsController::class, 'index'])->name('index');

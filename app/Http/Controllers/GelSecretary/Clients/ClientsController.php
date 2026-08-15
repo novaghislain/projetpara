@@ -28,11 +28,23 @@ class ClientsController extends Controller
         
         // Add stats to each client
         foreach ($clients as $client) {
+            try {
+                $tasksCount = \App\Models\Gel\Task::where('client_id', $client->id)->count();
+            } catch (\Exception $e) { $tasksCount = 0; }
+
+            try {
+                $docsCount = \App\Models\Document::where('client_id', $client->id)->count();
+            } catch (\Exception $e) { $docsCount = 0; }
+
+            try {
+                $courriersCount = \App\Models\Dae\DaeCourrier::where('client_id', $client->id)->count();
+            } catch (\Exception $e) { $courriersCount = 0; }
+
             $client->stats = [
-                'tasks_count' => \App\Models\Gel\Task::where('client_id', $client->id)->count(),
-                'documents_count' => \App\Models\Document::where('client_id', $client->id)->count(),
-                'courriers_count' => \App\Models\Document::where('client_id', $client->id)->where('tags', 'like', '%courrier%')->count() ?: (\App\Models\Dae\DaeCourrier::where('client_id', $client->id)->count() ?? 0),
-                'last_activity' => $client->updated_at ? $client->updated_at->diffForHumans() : 'Jamais'
+                'tasks_count'     => $tasksCount,
+                'documents_count' => $docsCount,
+                'courriers_count' => $courriersCount,
+                'last_activity'   => $client->updated_at ? $client->updated_at->diffForHumans() : 'Jamais',
             ];
         }
 
@@ -87,7 +99,7 @@ class ClientsController extends Controller
         // ─── S2 : Équipe affectée (pivot user_clients) ────────────────────────
         $equipe = \App\Models\UserClient::where('client_id', $client->id)
             ->where('is_active', true)
-            ->with(['user:id,name,email,role', 'inviter:id,name'])
+            ->with(['user:id,nom,email', 'inviter:id,nom'])
             ->orderBy('role')->get();
 
         // ─── S2 : Rapports de synthèse ────────────────────────────────────────

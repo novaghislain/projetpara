@@ -16,8 +16,7 @@ class ClientCorrectionController extends Controller
      */
     public function propose(Request $request, $contactId)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
         $client = Client::findOrFail($clientId);
 
         $contact = PortalContact::findOrFail($contactId);

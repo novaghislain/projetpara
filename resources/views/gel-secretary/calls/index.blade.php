@@ -88,6 +88,16 @@
         </div>
         <form action="{{ route('gel-secretary.calls.store') }}" method="POST" style="padding:20px;">
             @csrf
+
+            <div style="background:#F0FDFA; border:1px solid #99F6E4; border-radius:8px; padding:12px; margin-bottom:16px;">
+                <label style="font-size:12px; font-weight:700; color:#0F766E; display:block; margin-bottom:8px;"><i class="fas fa-magic"></i> Analyse IA (Prise de notes rapide)</label>
+                <div style="display:flex; gap:10px;">
+                    <textarea id="aiNotesInput" class="sec-form-control" rows="2" placeholder="Ex: Jean (061234) a appelé. Le rappeler demain matin..."></textarea>
+                    <button type="button" class="sec-btn sec-btn-primary" onclick="extractCallIA()" style="white-space:nowrap;" id="btnExtractCall">
+                        Extraire les infos
+                    </button>
+                </div>
+            </div>
             
             <div class="row g-3" style="display:flex; flex-wrap:wrap; margin:-10px;">
                 <div class="col-md-6" style="padding:10px; width:50%;">
@@ -154,7 +164,7 @@
                 <div class="col-md-12" style="padding:10px; width:100%;">
                     <div style="background:#F8FAFC;padding:12px;border-radius:6px;border:1px solid var(--sec-border);">
                         <label style="display:block; font-weight:600; font-size:13px; color:var(--sec-text); cursor:pointer;">
-                            <input type="checkbox" name="a_rappeler" value="1" onchange="document.getElementById('div_rappel').style.display = this.checked ? 'block' : 'none'" style="margin-right:6px;"> 
+                            <input type="checkbox" id="aRappelerCheckbox" name="a_rappeler" value="1" onchange="document.getElementById('div_rappel').style.display = this.checked ? 'block' : 'none'" style="margin-right:6px;"> 
                             Planifier un rappel automatique
                         </label>
                         <div id="div_rappel" style="display:none;margin-top:12px;">
@@ -173,4 +183,58 @@
         </form>
     </div>
 </div>
+
+@push('scripts')
+<script>
+function extractCallIA() {
+    const text = document.getElementById('aiNotesInput').value;
+    if (!text) {
+        secToast("Veuillez saisir des notes à analyser.", "warn");
+        return;
+    }
+
+    const btn = document.getElementById('btnExtractCall');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyse...';
+    btn.disabled = true;
+
+    fetch('{{ route("gel-secretary.calls.extract-ia") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ text_content: text })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.contact_name) document.querySelector('input[name="contact_name"]').value = data.contact_name;
+        if (data.phone) document.querySelector('input[name="phone"]').value = data.phone;
+        if (data.notes) document.querySelector('textarea[name="notes"]').value = data.notes;
+        
+        if (data.a_rappeler) {
+            document.getElementById('aRappelerCheckbox').checked = true;
+            document.getElementById('div_rappel').style.display = 'block';
+            if (data.date_rappel) {
+                // Convertir YYYY-MM-DD HH:MM en YYYY-MM-DDTHH:MM
+                let dr = data.date_rappel;
+                if(dr.length === 16 && dr.indexOf(' ') === 10) {
+                    dr = dr.replace(' ', 'T');
+                }
+                document.querySelector('input[name="date_rappel"]').value = dr;
+            }
+        }
+        secToast("Informations extraites avec succès.", "success");
+    })
+    .catch(err => {
+        console.error(err);
+        secToast("Erreur lors de l'analyse IA.", "error");
+    })
+    .finally(() => {
+        btn.innerHTML = 'Extraire les infos';
+        btn.disabled = false;
+    });
+}
+</script>
+@endpush
 @endsection

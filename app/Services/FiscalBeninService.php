@@ -261,4 +261,48 @@ class FiscalBeninService
 
         return $declaration;
     }
+    /**
+     * Vérifie la présence et le bon calcul de l'AIB sur les factures émises.
+     * Génère une alerte IA si une anomalie est détectée.
+     */
+    public function checkAIB(int $clientId): int
+    {
+        $alertsCount = 0;
+
+        // Récupérer les factures récentes non payées (ou payées récemment) qui n'ont pas d'AIB
+        $invoicesWithoutAIB = \App\Models\Invoice::where('client_id', $clientId)
+            ->where('date', '>=', now()->subMonths(1))
+            ->where(function ($q) {
+                $q->whereNull('aib_amount')->orWhere('aib_amount', '<=', 0);
+            })
+            ->get();
+
+        foreach ($invoicesWithoutAIB as $invoice) {
+            // Vérifier si le partenaire est assujetti à l'AIB (si le client est une entreprise locale)
+            // L'AIB au Bénin (Acompte sur Impôt Assis sur les Bénéfices) est généralement de 1% (pour les entreprises immatriculées) ou 5% (non immatriculées).
+            // Simplification: On alerte si la facture dépasse un certain montant (ex: 50 000 FCFA)
+            if ($invoice->total_ttc >= 50000) {
+                AiSuggestion::create([
+                    'client_id' => $clientId,
+                    'agent' => 'fiscal',
+                    'type' => 'alert_aib_missing',
+                    'title' => "Absence d'AIB détectée sur la facture {$invoice->number}",
+                    'description' => "La facture {$invoice->number} d'un montant de " . number_format($invoice->total_ttc, 0, ',', ' ') . " FCFA ne comporte pas de retenue AIB. Veuillez vérifier si le partenaire est soumis à l'AIB (1% ou 5%).",
+                    'data' => [
+                        'invoice_id' => $invoice->id,
+                        'invoice_number' => $invoice->number,
+                        'total_ttc' => $invoice->total_ttc,
+                    ],
+                    'metadata' => [
+                        'agent' => 'Fiscal Bénin',
+                        'urgency' => 'warning',
+                    ],
+                    'status' => 'pending',
+                ]);
+                $alertsCount++;
+            }
+        }
+
+        return $alertsCount;
+    }
 }

@@ -1,181 +1,182 @@
-<!--
-  Composant : Employees/Index.vue
-  Description : Liste des employés RH avec filtres, recherche, statistiques et actions CRUD.
-  Utilise : GelLayout, RhStatCard
--->
-<script setup>
-import { ref, computed, onMounted } from 'vue';
-import GelLayout from '../../../../Layouts/GelLayout.vue';
-import RhStatCard from '../../../../Components/Rh/RhStatCard.vue';
-import { authStore } from '../../../../stores/auth';
-
-/* État réactif : données brutes, chargement, erreur, filtres */
-const employees = ref([]);
-const loading = ref(true);
-const error = ref(null);
-const search = ref('');
-const statusFilter = ref('');
-const selectedIds = ref([]);
-
-/* Récupération des employés depuis l'API */
-const fetchEmployees = async () => {
-    loading.value = true;
-    error.value = null;
-    try {
-        const res = await fetch('/rh/employees');
-        if (!res.ok) throw new Error('Erreur de chargement');
-        employees.value = await res.json();
-    } catch (e) {
-        error.value = e.message;
-    } finally {
-        loading.value = false;
-    }
-};
-
-/* Filtrage local : recherche textuelle + filtre par statut */
-const filteredEmployees = computed(() => {
-    let list = employees.value;
-    if (search.value) {
-        const q = search.value.toLowerCase();
-        list = list.filter(e =>
-            (e.matricule && e.matricule.toLowerCase().includes(q)) ||
-            (e.nom && e.nom.toLowerCase().includes(q)) ||
-            (e.prenom && e.prenom.toLowerCase().includes(q)) ||
-            (e.poste && e.poste.toLowerCase().includes(q)) ||
-            (e.departement && e.departement.toLowerCase().includes(q))
-        );
-    }
-    if (statusFilter.value) {
-        list = list.filter(e => e.status === statusFilter.value);
-    }
-    return list;
-});
-
-/* Statistiques globales calculées depuis la liste */
-const stats = computed(() => ({
-    total: employees.value.length,
-    actifs: employees.value.filter(e => e.status === 'actif').length,
-    cdi: employees.value.filter(e => e.type_contrat === 'CDI').length,
-    stagiaires: employees.value.filter(e => e.type_contrat === 'STAGE').length,
-}));
-
-/* Classe CSS pour le badge de statut */
-const statusBadgeClass = (status) => {
-    const map = {
-        actif: 'bg-success',
-        inactif: 'bg-secondary',
-        suspendu: 'bg-warning text-dark',
-        conge: 'bg-info',
-    };
-    return map[status] || 'bg-secondary';
-};
-
-/* Suppression d'un employé avec confirmation */
-const deleteEmployee = async (id) => {
-    if (!confirm('Confirmer la suppression de cet employé ?')) return;
-    try {
-        const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
-        const res = await fetch('/rh/employees/' + id, {
-            method: 'DELETE',
-            headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
-        });
-        if (!res.ok) throw new Error('Erreur de suppression');
-        await fetchEmployees();
-    } catch (e) {
-        alert('Erreur: ' + e.message);
-    }
-};
-
-onMounted(fetchEmployees);
-</script>
-
 <template>
-    <GelLayout page-title="Gestion des Employés">
-        <!-- Stats Cards -->
-        <div class="row g-2 mb-4">
-            <div class="col-6 col-md-3">
-                <RhStatCard icon="bi-people" label="Total" :value="stats.total" color="primary" />
-            </div>
-            <div class="col-6 col-md-3">
-                <RhStatCard icon="bi-person-check" label="Actifs" :value="stats.actifs" color="success" />
-            </div>
-            <div class="col-6 col-md-3">
-                <RhStatCard icon="bi-file-earmark-text" label="CDI" :value="stats.cdi" color="info" />
-            </div>
-            <div class="col-6 col-md-3">
-                <RhStatCard icon="bi-mortarboard" label="Stagiaires" :value="stats.stagiaires" color="warning" />
-            </div>
+  <div class="container-fluid p-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="h4 mb-1 text-gray-800">
+                <i class="bi bi-people text-primary me-2"></i>Employés
+            </h2>
+            <p class="text-muted mb-0">Gérez les dossiers du personnel et les accès</p>
         </div>
+        <div>
+            <button class="btn btn-outline-secondary me-2"><i class="bi bi-download me-2"></i>Exporter</button>
+            <button class="btn btn-primary" @click="showCreateModal = true"><i class="bi bi-person-plus me-2"></i>Ajouter un employé</button>
+        </div>
+    </div>
 
-        <!-- Toolbar -->
-        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-            <div class="d-flex flex-wrap align-items-center gap-2">
-                <div class="input-group input-group-sm" style="max-width:260px;">
-                    <span class="input-group-text bg-white"><i class="bi-search"></i></span>
-                    <input v-model="search" class="form-control form-control-sm" placeholder="Rechercher...">
+    <!-- Filtres -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" class="form-control border-start-0" placeholder="Rechercher par nom, matricule..." v-model="search">
+                    </div>
                 </div>
-                <select v-model="statusFilter" class="form-select form-select-sm" style="width:auto;">
-                    <option value="">Tous statuts</option>
-                    <option value="actif">Actif</option>
-                    <option value="inactif">Inactif</option>
-                    <option value="suspendu">Suspendu</option>
-                    <option value="conge">Congé</option>
-                </select>
+                <div class="col-md-3">
+                    <select class="form-select" v-model="filterStatus">
+                        <option value="">Tous les statuts</option>
+                        <option value="Actif">Actif</option>
+                        <option value="En congé">En congé</option>
+                        <option value="Inactif">Inactif</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" v-model="filterDepartment">
+                        <option value="">Tous les départements</option>
+                        <option value="Direction">Direction</option>
+                        <option value="IT">IT</option>
+                        <option value="Commercial">Commercial</option>
+                    </select>
+                </div>
             </div>
-            <a href="/rh/employees/create" class="btn btn-primary btn-sm">
-                <i class="bi-plus-lg me-1"></i>Nouvel employé
-            </a>
         </div>
+    </div>
 
-        <!-- Loading -->
-        <div v-if="loading" class="d-flex justify-content-center py-5">
-            <div class="spinner-border text-primary"><span class="visually-hidden">Chargement...</span></div>
-        </div>
-        <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
+    <!-- FilterChips (Data Density P0 V2.2) -->
+    <FilterChips :filters="activeFilters" @remove="removeFilter" @clearAll="clearAllFilters" />
 
-        <!-- Table -->
-        <div v-else class="card card-dashboard">
+    <!-- Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="small text-muted">
+                <table class="table table-dense align-middle mb-0">
+                    <thead class="table-light">
                         <tr>
-                            <th style="width:30px;">
-                                <input type="checkbox" class="form-check-input" @change="e => selectedIds = e.target.checked ? employees.map(m => m.id) : []" :checked="selectedIds.length === employees.length && employees.length > 0">
-                            </th>
-                            <th>Matricule</th>
-                            <th>Nom</th>
-                            <th>Prénom</th>
-                            <th>Poste</th>
-                            <th>Département</th>
-                            <th>Type contrat</th>
-                            <th>Statut</th>
-                            <th class="text-end">Actions</th>
+                            <th class="border-0 ps-4">Employé</th>
+                            <th class="border-0">Matricule</th>
+                            <th class="border-0">Département</th>
+                            <th class="border-0">Poste</th>
+                            <th class="border-0">Statut</th>
+                            <th class="border-0 text-end pe-4">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-if="!filteredEmployees.length">
-                            <td colspan="9" class="text-center py-4 text-muted">Aucun employé trouvé.</td>
+                        <tr v-if="!employees || !employees.data || employees.data.length === 0">
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox display-4 d-block mb-3 opacity-25"></i>
+                                Aucun employé trouvé.
+                            </td>
                         </tr>
-                        <tr v-for="emp in filteredEmployees" :key="emp.id">
-                            <td><input type="checkbox" class="form-check-input" :checked="selectedIds.includes(emp.id)" @change="e => e.target.checked ? selectedIds.push(emp.id) : selectedIds = selectedIds.filter(id => id !== emp.id)"></td>
-                            <td class="small fw-medium">{{ emp.matricule || '-' }}</td>
-                            <td class="fw-medium">{{ emp.nom }}</td>
-                            <td>{{ emp.prenom }}</td>
-                            <td class="small">{{ emp.poste || '-' }}</td>
-                            <td class="small">{{ emp.departement || '-' }}</td>
-                            <td><span class="badge bg-secondary">{{ emp.type_contrat || '-' }}</span></td>
-                            <td><span class="badge" :class="statusBadgeClass(emp.status)">{{ emp.status }}</span></td>
-                            <td class="text-end">
-                                <a :href="'/rh/employees/' + emp.id + '/edit'" class="btn btn-sm btn-outline-primary me-1" title="Modifier"><i class="bi-pencil"></i></a>
-                                <button class="btn btn-sm btn-outline-danger" @click="deleteEmployee(emp.id)" title="Supprimer"><i class="bi-trash"></i></button>
+                        <tr v-for="employee in employees?.data" :key="employee.id">
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle bg-primary-subtle text-primary me-3 d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px; border-radius: 50%;">
+                                        {{ getInitials(employee.prenom, employee.nom) }}
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold">{{ employee.prenom }} {{ employee.nom }}</div>
+                                        <div class="text-muted small">{{ employee.email }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="badge bg-light text-dark border">{{ employee.matricule }}</span></td>
+                            <td>{{ employee.departement || '-' }}</td>
+                            <td>{{ employee.poste || '-' }}</td>
+                            <td>
+                                <span class="badge" :class="getStatusClass(employee.status)">
+                                    {{ employee.status || 'Actif' }}
+                                </span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <button class="btn btn-sm btn-light text-primary me-1" title="Voir le profil">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-light text-warning" title="Modifier">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-            <div class="card-footer bg-white small text-muted d-flex justify-content-between align-items-center">
-                <span>{{ filteredEmployees.length }} employé(s) sur {{ employees.length }}</span>
-            </div>
         </div>
-    </GelLayout>
+        <!-- Pagination logic goes here -->
+    </div>
+  </div>
 </template>
+
+<script setup>
+import { ref, computed } from 'vue';
+import FilterChips from '../../../../Components/FilterChips.vue';
+
+const props = defineProps({
+    employees: {
+        type: Object,
+        default: () => ({ data: [] })
+    }
+});
+
+const search = ref('');
+const filterStatus = ref('');
+const filterDepartment = ref('');
+const showCreateModal = ref(false);
+
+const activeFilters = computed(() => {
+    const filters = [];
+    if (search.value) filters.push({ key: 'search', label: 'Recherche', value: search.value });
+    if (filterStatus.value) filters.push({ key: 'status', label: 'Statut', value: filterStatus.value });
+    if (filterDepartment.value) filters.push({ key: 'department', label: 'Département', value: filterDepartment.value });
+    return filters;
+});
+
+const removeFilter = (key) => {
+    if (key === 'search') search.value = '';
+    if (key === 'status') filterStatus.value = '';
+    if (key === 'department') filterDepartment.value = '';
+};
+
+const clearAllFilters = () => {
+    search.value = '';
+    filterStatus.value = '';
+    filterDepartment.value = '';
+};
+
+const getInitials = (prenom, nom) => {
+    let initials = '';
+    if (prenom) initials += prenom.charAt(0);
+    if (nom) initials += nom.charAt(0);
+    return initials.toUpperCase() || '?';
+};
+
+const getStatusClass = (status) => {
+    switch(status?.toLowerCase()) {
+        case 'actif': return 'bg-success-subtle text-success border border-success-subtle';
+        case 'en congé': return 'bg-warning-subtle text-warning border border-warning-subtle';
+        case 'inactif': return 'bg-danger-subtle text-danger border border-danger-subtle';
+        default: return 'bg-success-subtle text-success border border-success-subtle';
+    }
+};
+</script>
+
+<style scoped>
+.avatar-circle {
+    font-size: 1.1rem;
+}
+.shadow-sm {
+    box-shadow: 0 .125rem .25rem rgba(0,0,0,.075)!important;
+}
+.bg-primary-subtle {
+    background-color: #e0e8ff !important;
+}
+.bg-success-subtle {
+    background-color: #d1e7dd !important;
+}
+.bg-warning-subtle {
+    background-color: #fff3cd !important;
+}
+.bg-danger-subtle {
+    background-color: #f8d7da !important;
+}
+</style>

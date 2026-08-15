@@ -108,7 +108,7 @@
                     <div class="service-card">
                         <div class="service-icon" style="background:#FEE2E2;color:#DC2626;"><i class="bi bi-receipt"></i></div>
                         <h3>Fiscal</h3>
-                        <p>Optimisation fiscale, déclarations TVA, IRPP, CNSS, IS. Conformité e-MECeF et factures normalisées DCI. Accompagnement sur mesure.</p>
+                        <p>Optimisation fiscale, déclarations TVA, ITS, CNSS, IS. Conformité e-MECeF et factures normalisées DCI. Accompagnement sur mesure.</p>
                         <a href="/services/fiscal" class="service-link">En savoir plus <i class="bi bi-arrow-right"></i></a>
                     </div>
                 </div>
@@ -124,7 +124,7 @@
                     <div class="service-card">
                         <div class="service-icon" style="background:#D1FAE5;color:#059669;"><i class="bi bi-people"></i></div>
                         <h3>Social & Paie</h3>
-                        <p>Gestion des employés, contrats, paie avec barèmes IRPP/CNSS Bénin intégrés, congés, absences et déclarations sociales.</p>
+                        <p>Gestion des employés, contrats, paie avec barèmes ITS/CNSS Bénin intégrés, congés, absences et déclarations sociales.</p>
                         <a href="/services/social-paie" class="service-link">En savoir plus <i class="bi bi-arrow-right"></i></a>
                     </div>
                 </div>

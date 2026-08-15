@@ -29,22 +29,16 @@ class InvoicePdfController extends Controller
         $invoice = ErpInvoice::with(['client', 'lineItems'])->findOrFail($id);
         $company = auth()->check() ? (auth()->user()->activeClient ?? auth()->user()->client) : null;
 
-        // Génération du QR code en Base64 (SVG) à partir de la chaîne e-MECeF
+        // Génération du QR code en Base64 (SVG) à partir de la chaîne e-MECeF.
+        // Uniquement si la facture a VRAIMENT été émise (statut 'emise') — jamais
+        // de certification factice : un QR n'apparaît que pour une émission DGI
+        // réelle ou une simulation explicite (portée par emecef_is_simulation).
         $qrCodeBase64 = null;
 
-        // Certification e-MECeF si le QR code n'a pas encore été généré
-        if (empty($invoice->emecef_qr)) {
-            \App\Services\EmecefService::certifyInvoice($invoice);
-            $invoice->refresh(); // Rechargement des attributs après certification
-        }
-
-        // Génération du QR code à partir des données certifiées
-        if (!empty($invoice->emecef_qr)) {
+        if ($invoice->emecef_statut === 'emise' && !empty($invoice->emecef_qr)) {
             $options = new QROptions;
             $options->scale = 5;
-
             $qrcode = new QRCode($options);
-            // La méthode render() retourne "data:image/svg+xml;base64,..." par défaut (outputBase64=true)
             $qrCodeBase64 = $qrcode->render($invoice->emecef_qr);
         }
 

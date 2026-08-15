@@ -144,41 +144,40 @@ class IncomeStatementService
 
     private function getClassBalance(int $clientId, string $codePrefix, string $startDate, string $endDate, string $side): float
     {
-        return (float) DB::table('entry_lines')
-            ->join('journal_entries', 'entry_lines.entry_id', '=', 'journal_entries.id')
-            ->join('accounting_accounts', 'entry_lines.account_id', '=', 'accounting_accounts.id')
-            ->where('accounting_accounts.client_id', $clientId)
-            ->where('accounting_accounts.code', 'like', $codePrefix . '%')
-            ->where('journal_entries.client_id', $clientId)
-            ->where('journal_entries.status', 'posted')
-            ->whereDate('journal_entries.entry_date', '>=', $startDate)
-            ->whereDate('journal_entries.entry_date', '<=', $endDate)
-            ->sum('entry_lines.' . $side);
+        return (float) DB::table('gel_lignes_ecriture as gl')
+            ->join('gel_ecritures as ge', 'gl.ecriture_id', '=', 'ge.id')
+            ->join('gel_account_types as gat', 'gl.compte_id', '=', 'gat.id')
+            ->where('ge.client_id', $clientId)
+            ->where('gat.code', 'like', $codePrefix . '%')
+            ->where('ge.valide', true)
+            ->whereDate('ge.date_ecriture', '>=', $startDate)
+            ->whereDate('ge.date_ecriture', '<=', $endDate)
+            ->where('gl.sens', $side)
+            ->sum('gl.montant');
     }
 
     private function getAccountDetails(int $clientId, string $classPrefix, string $startDate, string $endDate, string $side): array
     {
-        return DB::table('accounting_accounts')
-            ->leftJoin('entry_lines', 'accounting_accounts.id', '=', 'entry_lines.account_id')
-            ->leftJoin('journal_entries', function ($join) use ($clientId, $startDate, $endDate) {
-                $join->on('entry_lines.entry_id', '=', 'journal_entries.id')
-                    ->where('journal_entries.client_id', '=', $clientId)
-                    ->where('journal_entries.status', '=', 'posted')
-                    ->whereDate('journal_entries.entry_date', '>=', $startDate)
-                    ->whereDate('journal_entries.entry_date', '<=', $endDate);
+        return DB::table('gel_account_types as gat')
+            ->join('gel_lignes_ecriture as gl', 'gat.id', '=', 'gl.compte_id')
+            ->join('gel_ecritures as ge', function ($join) use ($clientId, $startDate, $endDate) {
+                $join->on('gl.ecriture_id', '=', 'ge.id')
+                    ->where('ge.client_id', '=', $clientId)
+                    ->where('ge.valide', '=', true)
+                    ->whereDate('ge.date_ecriture', '>=', $startDate)
+                    ->whereDate('ge.date_ecriture', '<=', $endDate);
             })
-            ->where('accounting_accounts.client_id', $clientId)
-            ->where('accounting_accounts.code', 'like', $classPrefix . '%')
-            ->where('accounting_accounts.is_active', true)
-            ->groupBy('accounting_accounts.id', 'accounting_accounts.code', 'accounting_accounts.name')
+            ->where('gat.code', 'like', $classPrefix . '%')
+            ->where('gl.sens', $side)
+            ->groupBy('gat.id', 'gat.code', 'gat.libelle')
             ->select([
-                'accounting_accounts.id',
-                'accounting_accounts.code',
-                'accounting_accounts.name',
-                DB::raw('COALESCE(SUM(entry_lines.' . $side . '), 0) as amount'),
+                'gat.id',
+                'gat.code',
+                'gat.libelle as name',
+                DB::raw('COALESCE(SUM(gl.montant), 0) as amount'),
             ])
             ->having('amount', '>', 0)
-            ->orderBy('accounting_accounts.code')
+            ->orderBy('gat.code')
             ->get()
             ->toArray();
     }

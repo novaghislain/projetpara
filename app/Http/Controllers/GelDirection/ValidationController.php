@@ -4,50 +4,69 @@ namespace App\Http\Controllers\GelDirection;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class ValidationController extends Controller
 {
     public function index()
     {
-        // Fake data for validations pending direction approval
-        $validations = [
+        // 1. Tâches critiques nécessitant approbation (Mock ou réel si existant)
+        $tasksToApprove = \DB::table('gel_tasks')
+            ->where('statut', 'en_attente_validation')
+            ->get();
+
+        // 2. Déclarations fiscales à valider
+        $declarationsToApprove = collect([
             (object)[
                 'id' => 1,
-                'type' => 'Demande de Congés',
-                'requester' => 'Sarah (Comptable)',
-                'details' => 'Du 15/07 au 30/07',
-                'date' => now()->subDays(1)->format('d/m/Y'),
-                'status' => 'pending'
+                'client_nom' => 'TechInnov SARL',
+                'type' => 'TVA',
+                'periode' => 'Juillet ' . date('Y'),
+                'montant' => 450000,
+                'created_at' => now()->subDays(2),
             ],
             (object)[
                 'id' => 2,
-                'type' => 'Validation Recrutement',
-                'requester' => 'Service RH',
-                'details' => 'Embauche d\'un nouveau consultant',
-                'date' => now()->subDays(2)->format('d/m/Y'),
-                'status' => 'pending'
-            ],
-            (object)[
-                'id' => 3,
-                'type' => 'Contrat Client Exceptionnel',
-                'requester' => 'Commercial',
-                'details' => 'Remise de 20% accordée',
-                'date' => now()->format('d/m/Y'),
-                'status' => 'pending'
-            ],
-        ];
+                'client_nom' => 'Africa Logistics',
+                'type' => 'AIB',
+                'periode' => 'Juillet ' . date('Y'),
+                'montant' => 125000,
+                'created_at' => now()->subDay(),
+            ]
+        ]);
 
-        return view('gel-direction.validations.index', compact('validations'));
+        // 3. Demandes de congés (RH)
+        $leaveRequests = \DB::table('rh_leave_requests')
+            ->join('gel_salaries', 'rh_leave_requests.employee_id', '=', 'gel_salaries.id')
+            ->select('rh_leave_requests.*', 'gel_salaries.nom', 'gel_salaries.prenom')
+            ->where('rh_leave_requests.statut', 'pending')
+            ->get();
+
+        return view('gel-direction.validations.index', compact('tasksToApprove', 'declarationsToApprove', 'leaveRequests'));
     }
-    
+
     public function approve(Request $request, $id)
     {
-        return back()->with('success', 'La demande a été approuvée avec succès.');
+        $type = $request->input('type');
+        
+        if ($type === 'conge') {
+            \DB::table('rh_leave_requests')->where('id', $id)->update(['statut' => 'approved']);
+        } elseif ($type === 'tache') {
+            \DB::table('gel_tasks')->where('id', $id)->update(['statut' => 'termine']);
+        }
+        
+        return redirect()->back()->with('success', 'Élément validé avec succès.');
     }
-    
+
     public function reject(Request $request, $id)
     {
-        return back()->with('error', 'La demande a été rejetée.');
+        $type = $request->input('type');
+        
+        if ($type === 'conge') {
+            \DB::table('rh_leave_requests')->where('id', $id)->update(['statut' => 'rejected']);
+        } elseif ($type === 'tache') {
+            \DB::table('gel_tasks')->where('id', $id)->update(['statut' => 'a_faire']);
+        }
+
+        return redirect()->back()->with('success', 'Élément rejeté.');
     }
 }

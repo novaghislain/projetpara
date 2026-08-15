@@ -89,16 +89,16 @@ class CashFlowStatementService
 
     private function getClassBalance(int $clientId, string $codePrefix, string $startDate, string $endDate, string $side): float
     {
-        return (float) DB::table('entry_lines')
-            ->join('journal_entries', 'entry_lines.entry_id', '=', 'journal_entries.id')
-            ->join('accounting_accounts', 'entry_lines.account_id', '=', 'accounting_accounts.id')
-            ->where('accounting_accounts.client_id', $clientId)
-            ->where('accounting_accounts.code', 'like', $codePrefix . '%')
-            ->where('journal_entries.client_id', $clientId)
-            ->where('journal_entries.status', 'posted')
-            ->whereDate('journal_entries.entry_date', '>=', $startDate)
-            ->whereDate('journal_entries.entry_date', '<=', $endDate)
-            ->sum('entry_lines.' . $side);
+        return (float) DB::table('gel_lignes_ecriture as gl')
+            ->join('gel_ecritures as ge', 'gl.ecriture_id', '=', 'ge.id')
+            ->join('gel_account_types as gat', 'gl.compte_id', '=', 'gat.id')
+            ->where('ge.client_id', $clientId)
+            ->where('gat.code', 'like', $codePrefix . '%')
+            ->where('ge.valide', true)
+            ->whereDate('ge.date_ecriture', '>=', $startDate)
+            ->whereDate('ge.date_ecriture', '<=', $endDate)
+            ->where('gl.sens', $side)
+            ->sum('gl.montant');
     }
 
     /**
@@ -106,29 +106,27 @@ class CashFlowStatementService
      */
     private function calculateBFR(int $clientId, string $date): float
     {
-        $actifCirculant = (float) DB::table('entry_lines')
-            ->join('journal_entries', 'entry_lines.entry_id', '=', 'journal_entries.id')
-            ->join('accounting_accounts', 'entry_lines.account_id', '=', 'accounting_accounts.id')
-            ->where('accounting_accounts.client_id', $clientId)
+        $actifCirculant = (float) DB::table('gel_lignes_ecriture as gl')
+            ->join('gel_ecritures as ge', 'gl.ecriture_id', '=', 'ge.id')
+            ->join('gel_account_types as gat', 'gl.compte_id', '=', 'gat.id')
+            ->where('ge.client_id', $clientId)
             ->where(function ($q) {
-                $q->where('accounting_accounts.code', 'like', '3%')
-                  ->orWhere('accounting_accounts.code', 'like', '4%');
+                $q->where('gat.code', 'like', '3%')
+                  ->orWhere('gat.code', 'like', '4%');
             })
-            ->where('journal_entries.client_id', $clientId)
-            ->where('journal_entries.status', 'posted')
-            ->whereDate('journal_entries.entry_date', '<=', $date)
-            ->selectRaw('COALESCE(SUM(entry_lines.debit), 0) - COALESCE(SUM(entry_lines.credit), 0) as balance')
+            ->where('ge.valide', true)
+            ->whereDate('ge.date_ecriture', '<=', $date)
+            ->selectRaw('COALESCE(SUM(CASE WHEN gl.sens = "debit" THEN gl.montant ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN gl.sens = "credit" THEN gl.montant ELSE 0 END), 0) as balance')
             ->value('balance');
 
-        $passifCirculant = (float) DB::table('entry_lines')
-            ->join('journal_entries', 'entry_lines.entry_id', '=', 'journal_entries.id')
-            ->join('accounting_accounts', 'entry_lines.account_id', '=', 'accounting_accounts.id')
-            ->where('accounting_accounts.client_id', $clientId)
-            ->where('accounting_accounts.code', 'like', '40%')
-            ->where('journal_entries.client_id', $clientId)
-            ->where('journal_entries.status', 'posted')
-            ->whereDate('journal_entries.entry_date', '<=', $date)
-            ->selectRaw('COALESCE(SUM(entry_lines.credit), 0) - COALESCE(SUM(entry_lines.debit), 0) as balance')
+        $passifCirculant = (float) DB::table('gel_lignes_ecriture as gl')
+            ->join('gel_ecritures as ge', 'gl.ecriture_id', '=', 'ge.id')
+            ->join('gel_account_types as gat', 'gl.compte_id', '=', 'gat.id')
+            ->where('ge.client_id', $clientId)
+            ->where('gat.code', 'like', '40%')
+            ->where('ge.valide', true)
+            ->whereDate('ge.date_ecriture', '<=', $date)
+            ->selectRaw('COALESCE(SUM(CASE WHEN gl.sens = "credit" THEN gl.montant ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN gl.sens = "debit" THEN gl.montant ELSE 0 END), 0) as balance')
             ->value('balance');
 
         return $actifCirculant - $passifCirculant;
@@ -139,15 +137,14 @@ class CashFlowStatementService
      */
     private function getTresorerieBalance(int $clientId, string $date): float
     {
-        $tresorerie = (float) DB::table('entry_lines')
-            ->join('journal_entries', 'entry_lines.entry_id', '=', 'journal_entries.id')
-            ->join('accounting_accounts', 'entry_lines.account_id', '=', 'accounting_accounts.id')
-            ->where('accounting_accounts.client_id', $clientId)
-            ->where('accounting_accounts.code', 'like', '5%')
-            ->where('journal_entries.client_id', $clientId)
-            ->where('journal_entries.status', 'posted')
-            ->whereDate('journal_entries.entry_date', '<=', $date)
-            ->selectRaw('COALESCE(SUM(entry_lines.debit), 0) - COALESCE(SUM(entry_lines.credit), 0) as balance')
+        $tresorerie = (float) DB::table('gel_lignes_ecriture as gl')
+            ->join('gel_ecritures as ge', 'gl.ecriture_id', '=', 'ge.id')
+            ->join('gel_account_types as gat', 'gl.compte_id', '=', 'gat.id')
+            ->where('ge.client_id', $clientId)
+            ->where('gat.code', 'like', '5%')
+            ->where('ge.valide', true)
+            ->whereDate('ge.date_ecriture', '<=', $date)
+            ->selectRaw('COALESCE(SUM(CASE WHEN gl.sens = "debit" THEN gl.montant ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN gl.sens = "credit" THEN gl.montant ELSE 0 END), 0) as balance')
             ->value('balance');
 
         return (float) $tresorerie;

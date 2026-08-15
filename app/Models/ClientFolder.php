@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 /**
  * Modèle représentant un dossier de documents pour un client.
@@ -32,7 +33,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class ClientFolder extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, HasUuids;
 
     protected $fillable = [
         'client_id',
@@ -44,6 +45,12 @@ class ClientFolder extends Model
         'parent_id',
         'sort_order',
         'is_system',
+        'is_secured',
+        'secure_password',
+    ];
+
+    protected $hidden = [
+        'secure_password',
     ];
 
     protected function casts(): array
@@ -99,7 +106,7 @@ class ClientFolder extends Model
     }
 
     // Scope isolé : client (entreprise) OU user (secrétaire autonome sans entreprise)
-    public function scopeForClientOrUser($query, ?int $clientId, ?int $userId)
+    public function scopeForClientOrUser($query, ?string $clientId, ?string $userId)
     {
         if ($clientId !== null && $clientId !== 0) {
             return $query->where('client_id', $clientId);

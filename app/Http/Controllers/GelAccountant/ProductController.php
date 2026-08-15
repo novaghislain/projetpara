@@ -18,8 +18,7 @@ class ProductController extends Controller
             'import_file' => 'required|file|mimes:csv,txt'
         ]);
 
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $path = $request->file('import_file')->getRealPath();
         

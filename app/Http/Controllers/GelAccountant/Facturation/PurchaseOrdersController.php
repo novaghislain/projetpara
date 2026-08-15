@@ -18,8 +18,7 @@ class PurchaseOrdersController extends Controller
      */
     public function index(Request $request)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $query = Invoice::where('client_id', $clientId)
             ->where('type', 'purchase_order')
@@ -46,8 +45,7 @@ class PurchaseOrdersController extends Controller
      */
     public function create()
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $partners = Partner::where('client_id', $clientId)
             ->whereIn('type', ['fournisseur', 'mixte'])
@@ -61,8 +59,7 @@ class PurchaseOrdersController extends Controller
      */
     public function store(Request $request)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $validated = $request->validate([
             'partner_id' => 'required|exists:partners,id',
@@ -141,8 +138,7 @@ class PurchaseOrdersController extends Controller
      */
     public function show(Request $request, $id)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $po = Invoice::where('client_id', $clientId)
             ->where('type', 'purchase_order')
@@ -162,8 +158,7 @@ class PurchaseOrdersController extends Controller
      */
     public function send($id)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $po = Invoice::where('client_id', $clientId)
             ->where('type', 'purchase_order')

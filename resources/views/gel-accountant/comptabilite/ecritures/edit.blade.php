@@ -59,7 +59,7 @@
             {{-- Lignes d'écriture --}}
             <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
                 <h4 style="font-size: 15px; font-weight: 700; color: #0f172a; margin: 0;">
-                    <i class="bi bi-list-columns-reverse me-2" style="color: #059669;"></i>Lignes comptables
+                    <i class="bi bi-list-columns-reverse me-2" style="color: var(--gel-primary);"></i>Lignes comptables
                 </h4>
                 <button type="button" onclick="ajouterLigne()" class="gel-btn gel-btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; font-size: 13px;">
                     <i class="bi bi-plus-lg"></i> Ajouter une ligne
@@ -111,7 +111,7 @@
             <div id="totauxDisplay" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 16px; padding: 12px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
                 <div style="text-align: center;">
                     <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Total Débit</div>
-                    <div id="totalDebit" style="font-size: 18px; font-weight: 700; color: #059669;">0 FCFA</div>
+                    <div id="totalDebit" style="font-size: 18px; font-weight: 700; color: var(--gel-primary);">0 FCFA</div>
                 </div>
                 <div style="text-align: center;">
                     <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Total Crédit</div>

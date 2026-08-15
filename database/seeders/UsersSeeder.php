@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Client;
-use App\Models\Role;
+use Spatie\Permission\Models\Role;
 use App\Models\User;
 use App\Models\UserClient;
 use Carbon\Carbon;
@@ -36,12 +36,25 @@ class UsersSeeder extends Seeder
             $servicesPro?->id,
         ]);
 
-        // ─── Récupération des rôles système ────────────────────────────
-        $roles = Role::whereIn('slug', [
-            'super_admin', 'comptable', 'company_admin', 'company_manager',
-            'company_employee', 'client', 'caissier', 'juriste', 'rh',
-            'gestionnaire_projet', 'secretaire',
-        ])->get()->keyBy('slug');
+        // Map des anciens slugs vers les noms Spatie
+        $roleMap = [
+            'super_admin'        => 'super_admin',
+            'comptable'          => 'comptable_senior',
+            'company_admin'      => 'entreprise_admin',
+            'company_manager'    => 'gestionnaire_cabinet',
+            'company_employee'   => 'entreprise_comptable',
+            'client'             => 'cpa_particulier',
+            'caissier'           => 'agent_paie',
+            'juriste'            => 'auditeur',
+            'rh'                 => 'agent_paie',
+            'gestionnaire_projet'=> 'gestionnaire_cabinet',
+            'secretaire'         => 'agent_client',
+        ];
+        $spatieRoles = Role::all()->keyBy('name');
+        // Crée un tableau indexé par ancien slug pointant vers le modèle Role Spatie
+        $roles = collect($roleMap)->mapWithKeys(function ($spatieSlug, $oldSlug) use ($spatieRoles) {
+            return [$oldSlug => $spatieRoles->get($spatieSlug)];
+        });
 
         // ════════════════════════════════════════════════════════════════
         // 1. SUPER ADMIN – Accès total à la plateforme
@@ -69,7 +82,7 @@ class UsersSeeder extends Seeder
         $cabinetUsers = [
             [
                 'name' => 'Alice Comptabilité',
-                'email' => 'alice@gel.cabinet',
+                'email' => 'comptable@gel.cabinet',
                 'role' => 'comptable',
                 'role_model' => 'comptable',
                 'fonction' => 'Chef de mission comptable',

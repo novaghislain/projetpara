@@ -1,98 +1,35 @@
 <template>
-    <GelLayout>
-        <div class="p-4" style="background:#f8f9fa;min-height:100vh">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h4 class="fw-bold mb-0">📋 Assemblées Générales</h4>
-                <a href="/juridique/assemblees/create" class="btn btn-primary btn-sm">
-                    <i class="bi bi-plus-lg me-1"></i> Planifier une AG
-                </a>
-            </div>
-
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Type</th>
-                                    <th>Date</th>
-                                    <th>Lieu</th>
-                                    <th>Statut</th>
-                                    <th>PV</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="ag in assemblees" :key="ag.id">
-                                    <td><strong>{{ ag.type }}</strong></td>
-                                    <td>{{ formatDate(ag.date_tenue) }}</td>
-                                    <td>{{ ag.lieu }}</td>
-                                    <td><ContratStatusBadge :statut="ag.statut" :label="ag.statut" /></td>
-                                    <td>
-                                        <span v-if="ag.pv_path" class="text-success"><i class="bi bi-check-circle"></i> Disponible</span>
-                                        <span v-else class="text-muted">—</span>
-                                    </td>
-                                    <td>
-                                        <a :href="'/juridique/assemblees/' + ag.id" class="btn btn-sm btn-outline-primary me-1">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                        <button class="btn btn-sm btn-outline-danger" @click="deleteAG(ag.id)">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr v-if="!assemblees.length">
-                                    <td colspan="6" class="text-center text-muted py-4">
-                                        Aucune assemblée générale
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </GelLayout>
+  <div>
+    <div class="sec-page-header">
+      <h1 class="sec-page-title">Assemblées</h1>
+    </div>
+    <div class="sec-card">
+      <div class="sec-card-body p-0">
+        <table class="sec-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Date</th>
+              <th>Lieu</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="assembly in assemblies.data" :key="assembly.id">
+              <td>{{ assembly.type }}</td>
+              <td>{{ assembly.date_assemblee }}</td>
+              <td>{{ assembly.lieu }}</td>
+              <td><span class="sec-badge sec-badge-warning">{{ assembly.statut }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
-/*
- * Composant : LegalAssembleesIndex
- * Role : Page listant les assemblees generales.
- * Affiche le type, la date, le lieu, le statut et la disponibilite du PV.
- * Permet la consultation et la suppression d'une AG.
- * Props : aucune
- */
-
-import { ref, onMounted } from 'vue';
-import GelLayout from '../../../../Layouts/GelLayout.vue';
-import ContratStatusBadge from '../../../../Components/Legal/ContratStatusBadge.vue';
-
-// Liste des assemblees chargees depuis l'API
-const assemblees = ref([]);
-
-/* Formate une date au format francais court */
-function formatDate(date) {
-    if (!date) return '—';
-    return new Date(date + 'T00:00:00').toLocaleDateString('fr-FR');
-}
-
-/* Charge la liste des assemblees depuis l'API */
-async function loadAG() {
-    try {
-        const res = await fetch('/juridique/assemblees');
-        assemblees.value = await res.json();
-    } catch (e) { console.error(e); }
-}
-
-/* Supprime une assemblee apres confirmation utilisateur */
-async function deleteAG(id) {
-    if (!confirm('Supprimer cette AG ?')) return;
-    try {
-        await fetch(`/juridique/assemblees/${id}`, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content } });
-        assemblees.value = assemblees.value.filter(a => a.id !== id);
-    } catch (e) { console.error(e); }
-}
-
-onMounted(loadAG);
+defineProps({
+  assemblies: Object
+});
 </script>

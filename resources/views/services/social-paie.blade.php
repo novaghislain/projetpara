@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Social &amp; Paie | GEL Cabinet</title>
-    <meta name="description" content="Module Social &amp; Paie GEL Cabinet : édition de fiches de paie intégrées aux barèmes IRPP/CNSS du Bénin et suivi des congés.">
+    <meta name="description" content="Module Social &amp; Paie GEL Cabinet : édition de fiches de paie intégrées aux barèmes ITS/CNSS du Bénin et suivi des congés.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -210,7 +210,7 @@
                 <div class="col-lg-8">
                     <div class="gel-page-header-badge"><i class="bi-people-fill"></i> Service</div>
                     <h1>Social &amp; Paie</h1>
-                    <p>Édition de fiches de paie intégrées aux barèmes IRPP/CNSS du Bénin et suivi des congés.</p>
+                    <p>Édition de fiches de paie intégrées aux barèmes ITS/CNSS du Bénin et suivi des congés.</p>
                 </div>
             </div>
         </div>
@@ -222,15 +222,15 @@
             <div class="row justify-content-center mb-5">
                 <div class="col-lg-7 text-center">
                     <h2 class="gel-section-title anim-fade-up">Paie conforme et sociale</h2>
-                    <p class="gel-section-sub mx-auto anim-fade-up delay-1">Des fiches de paie conformes aux barèmes IRPP/CNSS du Bénin, avec suivi des congés et déclarations sociales automatisées.</p>
+                    <p class="gel-section-sub mx-auto anim-fade-up delay-1">Des fiches de paie conformes aux barèmes ITS/CNSS du Bénin, avec suivi des congés et déclarations sociales automatisées.</p>
                 </div>
             </div>
             <div class="row g-4">
                 <div class="col-md-4 anim-fade-up delay-1">
                     <div class="gel-feature-card">
                         <div class="gel-feature-icon"><i class="bi-file-earmark-text"></i></div>
-                        <h5>Fiches de paie IRPP/CNSS</h5>
-                        <p>Édition de bulletins de salaire intégrant les barèmes IRPP et CNSS du Bénin. Calcul automatique des cotisations.</p>
+                        <h5>Fiches de paie ITS/CNSS</h5>
+                        <p>Édition de bulletins de salaire intégrant les barèmes ITS et CNSS du Bénin. Calcul automatique des cotisations.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-2">
@@ -265,7 +265,7 @@
                     <div class="gel-feature-card">
                         <div class="gel-feature-icon"><i class="bi-shield-check"></i></div>
                         <h5>Conformité sociale</h5>
-                        <p>Archivage électronique des documents sociaux, conformité IRPP/CNSS et veille réglementaire automatique.</p>
+                        <p>Archivage électronique des documents sociaux, conformité ITS/CNSS et veille réglementaire automatique.</p>
                     </div>
                 </div>
             </div>
@@ -286,7 +286,7 @@
                     <div class="gel-process-step">
                         <div class="gel-process-num">1</div>
                         <h5>Saisie &amp; Calcul</h5>
-                        <p>Saisissez les éléments variables de paie, le module calcule automatiquement les cotisations IRPP/CNSS.</p>
+                        <p>Saisissez les éléments variables de paie, le module calcule automatiquement les cotisations ITS/CNSS.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-2">

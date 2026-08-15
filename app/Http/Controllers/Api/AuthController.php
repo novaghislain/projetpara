@@ -328,7 +328,6 @@ class AuthController extends Controller
             'role' => $user->role,
             'role_name' => $user->roleModel?->name,
             'is_active' => $user->is_active,
-            'is_admin' => $user->is_admin,
             'is_company_admin' => $user->is_company_admin,
             'two_factor_enabled' => $user->two_factor_confirmed_at !== null,
             'has_active_client' => $user->active_client_id !== null,

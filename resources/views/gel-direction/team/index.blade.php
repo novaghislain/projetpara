@@ -1,91 +1,139 @@
 @extends('layouts.gel-direction')
 
-@section('title', 'Supervision RH — Direction')
-
-@section('page_title', 'Équipe & Ressources')
+@section('title', 'Équipe & Invitations')
+@section('page_title', 'Équipe & Collaborateurs')
 
 @section('content')
-<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:24px;">
-    <div>
-        <h1 style="font-size:24px; font-weight:700; color:var(--dir-primary); margin:0;">Supervision des Équipes</h1>
-        <p style="color:var(--dir-text-muted); font-size:14px; margin:4px 0 0 0;">Visualisez l'état des ressources humaines, la charge de travail et la productivité.</p>
-    </div>
-    <form method="GET" action="{{ route('gel-direction.team.index') }}" style="display:flex; gap:10px;">
-        <input type="text" name="search" value="{{ request('search') }}" placeholder="Rechercher un collaborateur..." class="form-control" style="width:250px; border-radius:8px;">
-        <button type="submit" class="btn btn-primary" style="background:var(--dir-primary); border:none; border-radius:8px;">
-            <i class="fas fa-search"></i>
-        </button>
-    </form>
-</div>
 
-<div style="background:white; border-radius:12px; border:1px solid var(--dir-border); box-shadow:0 2px 4px rgba(0,0,0,0.02); overflow:hidden;">
-    <table style="width:100%; border-collapse:collapse;">
-        <thead>
-            <tr style="background:#F8FAFC; border-bottom:1px solid var(--dir-border); text-align:left;">
-                <th style="padding:16px 20px; font-size:12px; font-weight:600; color:var(--dir-text-muted); text-transform:uppercase; letter-spacing:0.5px;">Collaborateur</th>
-                <th style="padding:16px 20px; font-size:12px; font-weight:600; color:var(--dir-text-muted); text-transform:uppercase; letter-spacing:0.5px;">Pôle / Rôle</th>
-                <th style="padding:16px 20px; font-size:12px; font-weight:600; color:var(--dir-text-muted); text-transform:uppercase; letter-spacing:0.5px; text-align:center;">Tâches en cours</th>
-                <th style="padding:16px 20px; font-size:12px; font-weight:600; color:var(--dir-text-muted); text-transform:uppercase; letter-spacing:0.5px; text-align:center;">Productivité (Mois)</th>
-                <th style="padding:16px 20px;"></th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse($team as $member)
-            <tr style="border-bottom:1px solid #F1F5F9; transition:background 0.2s;">
-                <td style="padding:16px 20px;">
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <div style="width:36px; height:36px; border-radius:50%; background:#EFF6FF; color:#3B82F6; display:flex; align-items:center; justify-content:center; font-weight:700;">
-                            {{ substr($member->name, 0, 1) }}
-                        </div>
-                        <div>
-                            <div style="font-weight:600; color:var(--dir-text); font-size:14px;">{{ $member->name }}</div>
-                            <div style="font-size:12px; color:var(--dir-text-muted); margin-top:2px;"><i class="fas fa-envelope text-muted"></i> {{ $member->email }}</div>
-                        </div>
+@if(session('success'))
+    <div class="alert alert-success">{{ session('success') }}</div>
+@endif
+@if(session('error'))
+    <div class="alert alert-danger">{{ session('error') }}</div>
+@endif
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <!-- Liste de l'équipe active -->
+        <div class="sec-card shadow-sm border-0 mb-4" style="border-radius: 8px;">
+            <div class="sec-card-header bg-white border-bottom-0 pt-4 pb-0">
+                <h5 class="mb-0">Membres de l'équipe</h5>
+            </div>
+            <div class="sec-card-body">
+                @if(isset($team) && $team->count() > 0)
+                    <div class="table-responsive">
+                        <table class="sec-table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Nom</th>
+                                    <th>Email</th>
+                                    <th>Rôle</th>
+                                    <th>Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($team as $member)
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background:var(--sec-primary);">
+                                                {{ strtoupper(substr($member->utilisateur->nom ?? 'U', 0, 1)) }}
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold">{{ $member->utilisateur->nom ?? 'Utilisateur' }} {{ $member->utilisateur->prenom ?? '' }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ $member->utilisateur->email }}</td>
+                                    <td><span class="sec-badge sec-badge-info">{{ $member->role->name ?? $member->role->code ?? 'N/A' }}</span></td>
+                                    <td><span class="sec-badge sec-badge-success">Actif</span></td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
-                </td>
-                <td style="padding:16px 20px; font-size:13px; color:var(--dir-text);">
-                    @if($member->is_accountant)
-                        <span style="background:#EEF2FF; color:#4F46E5; font-size:11px; font-weight:600; padding:4px 8px; border-radius:12px;">Comptabilité</span>
-                    @elseif($member->is_secretary)
-                        <span style="background:#FDF4FF; color:#C026D3; font-size:11px; font-weight:600; padding:4px 8px; border-radius:12px;">Secrétariat</span>
-                    @elseif($member->is_informaticien)
-                        <span style="background:#ECFEFF; color:#0891B2; font-size:11px; font-weight:600; padding:4px 8px; border-radius:12px;">IT / Support</span>
-                    @elseif($member->is_consultant)
-                        <span style="background:#FFFBEB; color:#D97706; font-size:11px; font-weight:600; padding:4px 8px; border-radius:12px;">Consulting</span>
-                    @else
-                        <span style="background:#F1F5F9; color:#475569; font-size:11px; font-weight:600; padding:4px 8px; border-radius:12px;">Standard</span>
-                    @endif
-                </td>
-                <td style="padding:16px 20px; text-align:center;">
-                    <span style="font-size:16px; font-weight:700; color:var(--dir-text);">
-                        {{ rand(2, 15) }}
-                    </span>
-                    <div style="font-size:11px; color:var(--dir-text-muted);">dossiers/tâches</div>
-                </td>
-                <td style="padding:16px 20px; text-align:center;">
-                    <span style="font-size:16px; font-weight:700; color:#10B981;">
-                        {{ rand(30, 95) }}%
-                    </span>
-                </td>
-                <td style="padding:16px 20px; text-align:right;">
-                    <a href="{{ route('gel-direction.team.show', $member->id) }}" class="btn btn-sm" style="background:#EFF6FF; color:#3B82F6; font-weight:600; border-radius:6px; font-size:12px;">
-                        Profil & KPI <i class="fas fa-arrow-right ms-1"></i>
-                    </a>
-                </td>
-            </tr>
-            @empty
-            <tr>
-                <td colspan="5" style="padding:40px; text-align:center; color:var(--dir-text-muted);">
-                    <i class="fas fa-users fa-2x mb-3" style="opacity:0.5;"></i>
-                    <p>Aucun collaborateur trouvé.</p>
-                </td>
-            </tr>
-            @endforelse
-        </tbody>
-    </table>
-    
-    <div style="padding:16px 20px; border-top:1px solid var(--dir-border);">
-        {{ $team->links('pagination::bootstrap-5') }}
+                @else
+                    <div class="text-center py-4">
+                        <p class="text-muted">Aucun membre dans votre équipe pour le moment.</p>
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        <!-- Liste des invitations en attente -->
+        <div class="sec-card shadow-sm border-0" style="border-radius: 8px;">
+            <div class="sec-card-header bg-white border-bottom-0 pt-4 pb-0">
+                <h5 class="mb-0">Invitations en attente</h5>
+            </div>
+            <div class="sec-card-body">
+                @if(isset($invitations) && $invitations->count() > 0)
+                    <div class="table-responsive">
+                        <table class="sec-table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Email invité</th>
+                                    <th>Rôle proposé</th>
+                                    <th>Date d'invitation</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($invitations as $invitation)
+                                <tr>
+                                    <td>{{ $invitation->email }}</td>
+                                    <td><span class="sec-badge sec-badge-muted">{{ $invitation->role_invite }}</span></td>
+                                    <td>{{ $invitation->created_at->format('d/m/Y H:i') }}</td>
+                                    <td>
+                                        <form action="{{ route('gel-direction.team.invitations.cancel', $invitation->id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="sec-btn sec-btn-sm" style="color:var(--sec-danger); background:transparent;" onclick="return confirm('Annuler cette invitation ?')">
+                                                <i class="fas fa-times"></i> Annuler
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="text-center py-4">
+                        <p class="text-muted mb-0">Aucune invitation en attente.</p>
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Formulaire d'invitation -->
+        <div class="sec-card shadow-sm border-0" style="border-radius: 8px;">
+            <div class="sec-card-header bg-white border-bottom-0 pt-4 pb-0">
+                <h5 class="mb-0">Inviter un collaborateur</h5>
+            </div>
+            <div class="sec-card-body">
+                <form action="{{ route('gel-direction.team.invite') }}" method="POST">
+                    @csrf
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Adresse Email <span class="text-danger">*</span></label>
+                        <input type="email" name="email" class="form-control" required placeholder="email@exemple.com">
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label text-muted small fw-bold">Rôle assigné <span class="text-danger">*</span></label>
+                        <select name="role_invite" class="form-select" required>
+                            <option value="">-- Choisir un rôle --</option>
+                            <option value="comptable">Expert-Comptable</option>
+                            <option value="secretaire">Secrétaire</option>
+                            <option value="rh">Ressources Humaines</option>
+                            <option value="legal">Juridique</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="sec-btn sec-btn-primary w-100">
+                        <i class="fas fa-paper-plane me-2"></i> Envoyer l'invitation
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 @endsection

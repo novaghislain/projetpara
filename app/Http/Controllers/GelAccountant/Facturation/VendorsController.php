@@ -14,8 +14,7 @@ class VendorsController extends Controller
      */
     public function index()
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $vendors = Partner::where('client_id', $clientId)
             ->whereIn('type', ['fournisseur', 'supplier', 'mixte'])

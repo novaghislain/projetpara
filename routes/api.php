@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\FiscalYearController;
 use App\Http\Controllers\Api\FiscalPeriodController;
 use App\Http\Controllers\Gel\Ia\CustomerAiController;
 use App\Http\Controllers\Gel\Ia\FinanceAiController;
+use App\Http\Controllers\Gel\Ia\FiscalAiController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -54,6 +55,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // ─── Profil & Authentification ────────────────────────────────────
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
+
+    // ─── Omnisearch (Recherche globale) ───────────────────────────────
+    Route::get('/search', [\App\Http\Controllers\Api\SearchController::class, 'search']);
 
     // ─── 2FA ──────────────────────────────────────────────────────────
     Route::post('/auth/2fa/enable', [AuthController::class, 'enableTwoFactor']);
@@ -195,18 +199,19 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ─── Ai Suggestions ──────────────────────────────────────────────
-    Route::prefix('ia/suggestions')->group(function () {
+    Route::prefix('ai/suggestions')->group(function () {
         Route::get('/', [\App\Http\Controllers\Gel\Ia\AccountingAiController::class, 'suggestions']);
         Route::post('/{suggestion}/approve', [\App\Http\Controllers\Gel\Ia\AccountingAiController::class, 'approve']);
         Route::post('/{suggestion}/reject', [\App\Http\Controllers\Gel\Ia\AccountingAiController::class, 'reject']);
+        Route::post('/{suggestion}/modify', [\App\Http\Controllers\Gel\Ia\AccountingAiController::class, 'modify']);
         Route::post('/{suggestion}/execute', [\App\Http\Controllers\Gel\Ia\AccountingAiController::class, 'execute']);
     });
 
     // ─── Ai Feedback (apprentissage continu) ──────────────────────────
-    Route::post('/ia/feedback', [\App\Http\Controllers\Gel\Ia\AccountingAiController::class, 'feedback']);
+    Route::post('/ai/feedback', [\App\Http\Controllers\Gel\Ia\AccountingAiController::class, 'feedback']);
 
     // ─── Agent Customer : CRM & Lead Management ──────────────────────
-    Route::prefix('ia/customer')->group(function () {
+    Route::prefix('ai/customer')->group(function () {
         Route::get('/score/{client}', [CustomerAiController::class, 'score']);
         Route::get('/follow-up/{client}', [CustomerAiController::class, 'followUp']);
         Route::get('/cross-sell/{client}', [CustomerAiController::class, 'crossSell']);
@@ -214,8 +219,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/full-analysis/{client}', [CustomerAiController::class, 'fullAnalysis']);
     });
 
+    // ─── Agent Fiscal Bénin ──────────────────────────────────────────
+    Route::prefix('ai/fiscal')->group(function () {
+        Route::post('/generate', [FiscalAiController::class, 'generateSuggestions']);
+    });
+
     // ─── Agent Finance : Ratios, Trésorerie, Alertes ─────────────────
-    Route::prefix('ia/finance')->group(function () {
+    Route::prefix('ai/finance')->group(function () {
         Route::get('/ratios/{client}', [FinanceAiController::class, 'ratios']);
         Route::get('/analysis/{client}', [FinanceAiController::class, 'analysis']);
         Route::get('/cash-flow/{client}', [FinanceAiController::class, 'cashFlow']);
@@ -224,16 +234,188 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ─── Activity Feed : Fil d'activité intelligent ──────────────
-    Route::prefix('ia/feed')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Gel\Ia\ActivityFeedController::class, 'index']);
-        Route::get('/unread-count', [\App\Http\Controllers\Gel\Ia\ActivityFeedController::class, 'unreadCount']);
-        Route::post('/read-all', [\App\Http\Controllers\Gel\Ia\ActivityFeedController::class, 'markAllAsRead']);
-        Route::get('/stats', [\App\Http\Controllers\Gel\Ia\ActivityFeedController::class, 'stats']);
-        Route::post('/{suggestion}/read', [\App\Http\Controllers\Gel\Ia\ActivityFeedController::class, 'markAsRead']);
-        Route::post('/{suggestion}/approve', [\App\Http\Controllers\Gel\Ia\ActivityFeedController::class, 'approve']);
-        Route::post('/{suggestion}/reject', [\App\Http\Controllers\Gel\Ia\ActivityFeedController::class, 'reject']);
-        Route::post('/{suggestion}/execute', [\App\Http\Controllers\Gel\Ia\ActivityFeedController::class, 'execute']);
-        Route::delete('/{suggestion}', [\App\Http\Controllers\Gel\Ia\ActivityFeedController::class, 'destroy']);
+    Route::prefix('ai/feed')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Gel\Ia\AiFeedController::class, 'index']);
+        Route::get('/unread-count', [\App\Http\Controllers\Gel\Ia\AiFeedController::class, 'unreadCount']);
+        Route::post('/read-all', [\App\Http\Controllers\Gel\Ia\AiFeedController::class, 'markAllAsRead']);
+        Route::get('/stats', [\App\Http\Controllers\Gel\Ia\AiFeedController::class, 'stats']);
+        Route::post('/{suggestion}/read', [\App\Http\Controllers\Gel\Ia\AiFeedController::class, 'markAsRead']);
+        Route::post('/{suggestion}/approve', [\App\Http\Controllers\Gel\Ia\AiFeedController::class, 'approve']);
+        Route::post('/{suggestion}/reject', [\App\Http\Controllers\Gel\Ia\AiFeedController::class, 'reject']);
+        Route::post('/{suggestion}/modify', [\App\Http\Controllers\Gel\Ia\AiFeedController::class, 'modify']);
+        Route::post('/{suggestion}/execute', [\App\Http\Controllers\Gel\Ia\AiFeedController::class, 'execute']);
+        Route::delete('/{suggestion}', [\App\Http\Controllers\Gel\Ia\AiFeedController::class, 'destroy']);
+    });
+
+    // ─── Module DAE : Guichet Unique Institutionnel ──────────────
+    Route::prefix('dae/dossiers')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Gel\Legal\DaeController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\Gel\Legal\DaeController::class, 'store']);
+        Route::post('/{id}/check-status', [\App\Http\Controllers\Gel\Legal\DaeController::class, 'checkStatus']);
+    });
+
+    // ─── Module RH : Moteur de Paie Béninois ──────────────
+    Route::prefix('rh/payroll')->group(function () {
+        Route::post('/simulate', [\App\Http\Controllers\Gel\Rh\PayrollController::class, 'simulatePayslip']);
+    });
+
+    // ─── Module Compta : Immobilisations et Amortissements ──────────────
+    Route::prefix('accounting/assets')->group(function () {
+        Route::post('/depreciation', [\App\Http\Controllers\Gel\Accountant\AssetController::class, 'generateDepreciationTable']);
+    });
+
+    // ─── Module Compta : Rapprochement Bancaire ──────────────
+    Route::prefix('accounting/bank-statements')->group(function () {
+        Route::post('/{id}/auto-reconcile', [\App\Http\Controllers\Gel\Accountant\BankStatementController::class, 'autoReconcile']);
+    });
+
+    // ─── Module Compta : Liasse Fiscale & Clôture ──────────────
+    Route::prefix('accounting/reports')->group(function () {
+        Route::get('/income-statement', [\App\Http\Controllers\Gel\Accountant\YearEndClosingController::class, 'getIncomeStatement']);
+        Route::get('/balance-sheet', [\App\Http\Controllers\Gel\Accountant\YearEndClosingController::class, 'getBalanceSheet']);
+    });
+
+    // ─── Module Compta : Facturation Récurrente (Abonnements) ──────────────
+    Route::prefix('accounting/recurring-invoices')->group(function () {
+        Route::post('/', [\App\Http\Controllers\Gel\Accountant\RecurringInvoiceController::class, 'store']);
+        Route::post('/{id}/toggle', [\App\Http\Controllers\Gel\Accountant\RecurringInvoiceController::class, 'toggleStatus']);
+    });
+
+    // ─── Module Compta : Gestion de Trésorerie (Prévisions) ──────────────
+    Route::prefix('accounting/cash-flow')->group(function () {
+        Route::post('/forecast', [\App\Http\Controllers\Gel\Accountant\CashFlowController::class, 'addForecast']);
+        Route::get('/client/{clientId}/forecasts', [\App\Http\Controllers\Gel\Accountant\CashFlowController::class, 'getForecasts']);
+    });
+
+    // ─── Module Direction : Consolidation Financière ──────────────
+    Route::prefix('direction/consolidation')->group(function () {
+        Route::post('/income-statement', [\App\Http\Controllers\Gel\Direction\ConsolidationController::class, 'getConsolidatedIncomeStatement']);
+        Route::post('/balance-sheet', [\App\Http\Controllers\Gel\Direction\ConsolidationController::class, 'getConsolidatedBalanceSheet']);
+    });
+
+    // ─── Module Facturation : OCR par IA ──────────────
+    Route::prefix('invoicing/ocr')->group(function () {
+        Route::post('/extract', [\App\Http\Controllers\Api\Invoicing\OcrController::class, 'extract']);
+    });
+
+    // ─── Module Gestion Commerciale : Inventaire ──────────────
+    Route::prefix('inventory')->group(function () {
+        Route::get('/product/{id}/status', [\App\Http\Controllers\Gel\Client\InventoryController::class, 'getStockStatus']);
+        Route::post('/movement', [\App\Http\Controllers\Gel\Client\InventoryController::class, 'addMovement']);
+    });
+
+    // ─── Module CRM : Prospects & Opportunités ──────────────
+    Route::prefix('crm')->group(function () {
+        Route::post('/leads', [\App\Http\Controllers\Gel\Client\CrmController::class, 'createLead']);
+        Route::post('/leads/{id}/convert', [\App\Http\Controllers\Gel\Client\CrmController::class, 'convertToOpportunity']);
+        Route::post('/opportunities/{id}/advance', [\App\Http\Controllers\Gel\Client\CrmController::class, 'advanceOpportunity']);
+    });
+
+    // ─── Module Gestion de Projet & Temps ──────────────
+    Route::prefix('projects')->group(function () {
+        Route::post('/', [\App\Http\Controllers\Gel\Client\ProjectController::class, 'createProject']);
+        Route::post('/{id}/tasks', [\App\Http\Controllers\Gel\Client\ProjectController::class, 'createTask']);
+        Route::post('/tasks/{id}/timesheets', [\App\Http\Controllers\Gel\Client\ProjectController::class, 'logTime']);
+    });
+
+    // ─── Module Gestion de Flotte (Véhicules) ──────────────
+    Route::prefix('fleet')->group(function () {
+        Route::post('/vehicles', [\App\Http\Controllers\Gel\Client\FleetController::class, 'addVehicle']);
+        Route::post('/vehicles/{id}/maintenance', [\App\Http\Controllers\Gel\Client\FleetController::class, 'logMaintenance']);
+    });
+
+    // ─── Module Notes de Frais & OCR ──────────────
+    Route::prefix('expenses')->group(function () {
+        Route::post('/reports', [\App\Http\Controllers\Gel\Client\ExpenseReportController::class, 'createReport']);
+        Route::post('/reports/{id}/lines/ocr', [\App\Http\Controllers\Gel\Client\ExpenseReportController::class, 'addLineWithOcr']);
+    });
+
+    // ─── Module Helpdesk (Support Client) ──────────────
+    Route::prefix('helpdesk')->group(function () {
+        Route::post('/tickets', [\App\Http\Controllers\Gel\Client\HelpdeskController::class, 'createTicket']);
+        Route::post('/tickets/{id}/reply', [\App\Http\Controllers\Gel\Client\HelpdeskController::class, 'replyToTicket']);
+    });
+
+    // ─── Module RH : Contrats Dynamiques ──────────────
+    Route::prefix('rh/contracts')->group(function () {
+        Route::post('/', [\App\Http\Controllers\Gel\Rh\EmploymentContractController::class, 'createContract']);
+        Route::post('/{id}/sign', [\App\Http\Controllers\Gel\Rh\EmploymentContractController::class, 'signContract']);
+    });
+
+    // ─── Module RH : Formation (LMS) ──────────────
+    Route::prefix('rh/lms')->group(function () {
+        Route::post('/courses', [\App\Http\Controllers\Gel\Rh\LmsController::class, 'createCourse']);
+        Route::post('/enroll', [\App\Http\Controllers\Gel\Rh\LmsController::class, 'enrollEmployee']);
+        Route::post('/enrollments/{id}/progress', [\App\Http\Controllers\Gel\Rh\LmsController::class, 'updateProgress']);
+    });
+
+    // ─── Module API Publique & Webhooks ──────────────
+    Route::prefix('developer')->group(function () {
+        Route::post('/api-keys', [\App\Http\Controllers\Gel\Client\ApiController::class, 'generateApiKey']);
+        Route::post('/webhooks', [\App\Http\Controllers\Gel\Client\ApiController::class, 'registerWebhook']);
+    });
+
+    // ─── Module Fournisseurs (B2B) ──────────────
+    Route::prefix('b2b')->group(function () {
+        Route::post('/suppliers', [\App\Http\Controllers\Gel\Client\SupplierController::class, 'createSupplier']);
+        Route::post('/orders', [\App\Http\Controllers\Gel\Client\SupplierController::class, 'createPurchaseOrder']);
+    });
+
+    // ─── Module Analytics & Rapports ──────────────
+    Route::prefix('analytics')->group(function () {
+        Route::post('/reports/financial', [\App\Http\Controllers\Gel\Client\AnalyticsController::class, 'generateFinancialReport']);
+    });
+
+    // ─── Module Sondages (CRM) ──────────────
+    Route::prefix('surveys')->group(function () {
+        Route::post('/', [\App\Http\Controllers\Gel\Client\SurveyController::class, 'createSurvey']);
+        Route::post('/{id}/respond', [\App\Http\Controllers\Gel\Client\SurveyController::class, 'submitResponse']);
+    });
+
+    // ─── Module Agenda & Événements ──────────────
+    Route::prefix('calendar')->group(function () {
+        Route::post('/events', [\App\Http\Controllers\Gel\Client\CalendarController::class, 'createEvent']);
+        Route::post('/events/{id}/attendees', [\App\Http\Controllers\Gel\Client\CalendarController::class, 'updateAttendeeStatus']);
+    });
+
+    // ─── Module Portail Collaborateur (RH) ──────────────
+    Route::prefix('rh/portal')->group(function () {
+        Route::post('/leaves', [\App\Http\Controllers\Gel\Rh\EmployeePortalController::class, 'requestLeave']);
+        Route::post('/leaves/{id}/process', [\App\Http\Controllers\Gel\Rh\EmployeePortalController::class, 'processLeaveRequest']);
+    });
+
+    // ─── Module Système (SaaS & Notifications) ──────────────
+    Route::prefix('system')->group(function () {
+        Route::post('/industries', [\App\Http\Controllers\System\TenantSubscriptionController::class, 'createIndustry']);
+        Route::post('/tenants/{clientId}/industry', [\App\Http\Controllers\System\TenantSubscriptionController::class, 'assignIndustryToTenant']);
+        Route::post('/tenants/{clientId}/modules', [\App\Http\Controllers\System\TenantSubscriptionController::class, 'toggleTenantModule']);
+
+        Route::get('/notifications', [\App\Http\Controllers\System\NotificationController::class, 'getMyNotifications']);
+        Route::post('/notifications/read-all', [\App\Http\Controllers\System\NotificationController::class, 'markAllAsRead']);
+        Route::patch('/notifications/{id}/read', [\App\Http\Controllers\System\NotificationController::class, 'markAsRead']);
+    });
+
+    // ─── Module Messagerie & Chat Interne ──────────────
+    Route::prefix('chat')->group(function () {
+        Route::get('/{userId}', [\App\Http\Controllers\Communication\ChatController::class, 'getConversation']);
+        Route::post('/send', [\App\Http\Controllers\Communication\ChatController::class, 'sendMessage']);
+    });
+
+    // ─── Module Conformité RGPD ──────────────
+    Route::prefix('gdpr')->group(function () {
+        Route::get('/consents', [\App\Http\Controllers\Compliance\GdprController::class, 'getConsents']);
+        Route::post('/consents', [\App\Http\Controllers\Compliance\GdprController::class, 'updateConsent']);
+    });
+
+    // ─── Module Témoignages & Avis (Public/CRM) ──────────────
+    Route::prefix('testimonials')->group(function () {
+        Route::post('/', [\App\Http\Controllers\Gel\Client\TestimonialController::class, 'submitTestimonial']);
+        Route::get('/client/{clientId}', [\App\Http\Controllers\Gel\Client\TestimonialController::class, 'getPublicTestimonials']);
+    });
+
+    // ─── Module Data Portability (Export) ──────────────
+    Route::prefix('data-export')->group(function () {
+        Route::post('/request', [\App\Http\Controllers\System\DataExportController::class, 'requestExport']);
     });
 });
 
@@ -258,3 +440,11 @@ Route::middleware(['auth:sanctum', 'tenant'])->prefix('gel/admin')->name('api.ge
 
 // ─── Chat IA (public — suggestions uniquement) ──────────────────────
 Route::get('/chat/suggestions', [\App\Http\Controllers\Api\ChatController::class, 'suggestions']);
+
+// ─── Paiements Mobile Money (MTN MoMo) ──────────────────────────────
+Route::post('/payments/momo/initiate', [\App\Http\Controllers\PaymentController::class, 'initiateMomoPayment']);
+Route::post('/payments/momo/webhook', [\App\Http\Controllers\PaymentController::class, 'momoWebhook']);
+
+// ─── Paiements FedaPay (UEMOA / Cartes) ─────────────────────────────
+Route::post('/payments/fedapay/initiate', [\App\Http\Controllers\PaymentController::class, 'initiateFedaPayPayment']);
+Route::post('/payments/fedapay/webhook', [\App\Http\Controllers\PaymentController::class, 'fedapayWebhook'])->name('fedapay.callback');

@@ -3,8 +3,6 @@
 namespace App\Http\Controllers\GelAccountant\Clients;
 
 use App\Http\Controllers\Controller;
-use App\Models\Gel\Client;
-use App\Models\Gel\ClientInvitation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -32,45 +30,21 @@ class ClientSelectionController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
+        $entrepriseId = $user->entreprises->first()->id ?? null;
 
-        // Le client doit appartenir au cabinet du comptable ou être assigné
-        $client = Client::where('id', $clientId)
-            ->where(function($q) use ($user) {
-                if ($user->cabinet_id) {
-                    $q->where('cabinet_id', $user->cabinet_id);
-                }
-                $q->orWhereIn('id', function($sub) use ($user) {
-                    $sub->select('client_id')->from('user_clients')->where('user_id', $user->id);
-                });
-            })
+        // Le client doit appartenir au cabinet du comptable
+        $client = \App\Models\Client::where('id', $clientId)
+            ->where('entreprise_id', $entrepriseId)
             ->firstOrFail();
 
-        // Si le client n'a pas été créé par ce cabinet, vérifier l'invitation
-        if ($client->cabinet_id !== $user->cabinet_id) {
-            $invitation = ClientInvitation::where('cabinet_id', $user->cabinet_id)
-                ->where('client_id', $clientId)
-                ->where('statut', 'acceptee')
-                ->first();
-
-            if (!$invitation) {
-                return redirect()->route('gel-accountant.clients')
-                    ->with('error', 'Impossible d\'accéder à ce client : aucune invitation acceptée.');
-            }
-        }
-
         // Mettre à jour active_client_id sur l'utilisateur
-        $user->active_client_id = $client->id;
-        $user->save();
-
-        // Stocker aussi en session pour rétrocompatibilité
+        // $user->active_client_id n'existe plus dans la nouvelle architecture, 
+        // on se fie uniquement à la session
+        
         session([
             'current_client_id'   => $client->id,
             'current_client_name' => $client->nom_entreprise,
-        ]);
-
-        \App\Services\AuditLogService::log('client.select', $client, null, [
-            'client_id'   => $client->id,
-            'client_name' => $client->nom_entreprise,
+            'active_client_id'    => $client->id,
         ]);
 
         return redirect()->route('gel-accountant.dashboard')
@@ -84,7 +58,7 @@ class ClientSelectionController extends Controller
      */
     public function deselect()
     {
-        session()->forget(['current_client_id', 'current_client_name']);
+        session()->forget(['current_client_id', 'current_client_name', 'active_client_id']);
 
         return redirect()->route('gel-accountant.dashboard')
             ->with('info', 'Contexte client désactivé.');

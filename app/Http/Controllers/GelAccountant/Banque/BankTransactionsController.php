@@ -15,8 +15,7 @@ class BankTransactionsController extends Controller
      */
     public function index(Request $request)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $comptes = BankAccount::where('client_id', $clientId)->get();
         $selectedAccountId = $request->query('account_id');
@@ -48,8 +47,7 @@ class BankTransactionsController extends Controller
      */
     public function store(Request $request)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $validated = $request->validate([
             'bank_account_id' => 'required|exists:bank_accounts,id',
@@ -96,8 +94,7 @@ class BankTransactionsController extends Controller
      */
     public function import(Request $request)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $request->validate([
             'bank_account_id' => 'required|exists:bank_accounts,id',

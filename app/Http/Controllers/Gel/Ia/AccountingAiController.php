@@ -179,6 +179,63 @@ class AccountingAiController extends Controller
     }
 
     /**
+     * Modifie puis approuve une suggestion IA.
+     *
+     * POST /api/ia/suggestions/{id}/modify
+     *
+     * L'utilisateur ajuste le contenu proposé (titre, description, données)
+     * avant de l'approuver. Les modifications sont enregistrées puis la
+     * suggestion passe au statut « approved » (§4.23 CDC : ✏️ Modifier puis approuver).
+     *
+     * @param AiSuggestion $suggestion La suggestion à modifier puis approuver
+     * @param Request $request La requête HTTP avec les champs ajustés
+     * @return \Illuminate\Http\JsonResponse Message de confirmation
+     */
+    public function modify(AiSuggestion $suggestion, Request $request)
+    {
+        // Vérification que la suggestion est en attente
+        if ($suggestion->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'La suggestion a déjà été traitée.',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'title'       => 'nullable|string|max:500',
+            'description' => 'nullable|string|max:2000',
+            'data'        => 'nullable|array',
+        ]);
+
+        // Mise à jour des champs fournis (uniquement ceux transmis)
+        $suggestion->update([
+            'title'       => $validated['title'] ?? $suggestion->title,
+            'description' => $validated['description'] ?? $suggestion->description,
+            'data'        => $validated['data'] ?? $suggestion->data,
+            'status'      => 'approved',
+            'approved_by' => $request->user()->id,
+            'approved_at' => now(),
+        ]);
+
+        // Journal d'apprentissage : la correction de l'utilisateur nourrit l'IA
+        $this->accountingAi->logLearning(
+            'modify',
+            ['suggestion_id' => $suggestion->id],
+            $suggestion->data ?? [],
+            $validated['data'] ?? null,
+            null,
+            $suggestion->client_id,
+            $request->user()->id
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Suggestion modifiée puis approuvée.',
+            'suggestion' => $suggestion,
+        ]);
+    }
+
+    /**
      * Rejette une suggestion IA avec motif.
      *
      * POST /api/ia/suggestions/{id}/reject

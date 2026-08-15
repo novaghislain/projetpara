@@ -143,7 +143,24 @@ onMounted(async () => {
             console.error('Error fetching clients for layout:', e);
         }
     }
+
+    fetchAiBadgeCount();
+    setInterval(fetchAiBadgeCount, 30000); // Polling toutes les 30 secondes
 });
+
+const aiBadgeCount = ref(0);
+
+async function fetchAiBadgeCount() {
+    if (typeof window === 'undefined' || !window.axios) return;
+    try {
+        const resp = await window.axios.get('/api/ai/feed/unread-count');
+        if (resp.data && typeof resp.data.count !== 'undefined') {
+            aiBadgeCount.value = resp.data.count;
+        }
+    } catch (e) {
+        // Silencieux
+    }
+}
 
 const getBaseUrl = () => {
     if (typeof document === 'undefined') return '';
@@ -732,11 +749,39 @@ const logout = async () => {
                     </div>
                 </div>
 
-                <!-- Navigation principale — regroupée par sections -->
-                <nav class="dp-nav">
-                    <div class="dp-nav-label">Navigation</div>
+                  <!-- Navigation principale — regroupée par sections -->
+                  <nav class="dp-nav">
+                      <div class="dp-nav-label">Navigation</div>
 
-                    <template v-for="(items, groupKey) in groupedNavItems" :key="groupKey">
+                      <!-- Section Favoris / Signets (P2) -->
+                      <div class="dp-section-header"
+                           :class="{ 'dp-section-header--collapsed': isSectionCollapsed('favoris') }"
+                           @click="toggleSection('favoris')"
+                           role="button"
+                           tabindex="0"
+                           @keydown.enter.prevent="toggleSection('favoris')">
+                          <div class="dp-section-header-left">
+                              <i class="bi-star-fill dp-section-icon" style="color: #FCD34D;"></i>
+                              <span>Favoris</span>
+                          </div>
+                          <div class="dp-section-actions">
+                              <i class="bi-chevron-down dp-section-chevron"
+                                 :style="{ transform: isSectionCollapsed('favoris') ? 'rotate(-90deg)' : 'rotate(0)' }"></i>
+                          </div>
+                      </div>
+                      <template v-if="!isSectionCollapsed('favoris')">
+                          <!-- Exemple de favoris statiques / dynamiques pour la v2.2 -->
+                          <a href="#" class="dp-nav-item">
+                              <i class="bi-journal-check dp-nav-icon"></i>
+                              <span class="dp-nav-name">Saisie Rapide</span>
+                          </a>
+                          <a href="#" class="dp-nav-item">
+                              <i class="bi-graph-up-arrow dp-nav-icon"></i>
+                              <span class="dp-nav-name">Reporting Mensuel</span>
+                          </a>
+                      </template>
+
+                      <template v-for="(items, groupKey) in groupedNavItems" :key="groupKey">
                         <!-- Section header (sauf Accueil qui est seul) — cliquable pour replier/déplier -->
                         <div v-if="groupKey !== '_ungrouped'"
                              class="dp-section-header"
@@ -784,7 +829,10 @@ const logout = async () => {
                                 <span class="dp-ai-pulse"></span>
                             </div>
                             <div class="dp-ai-widget-text">
-                                <span class="dp-ai-widget-title">GEL Intelligence</span>
+                                <span class="dp-ai-widget-title">
+                                    GEL Intelligence
+                                    <span v-if="aiBadgeCount > 0" class="badge bg-danger ms-2 rounded-pill" style="font-size: 10px; padding: 2px 6px;">{{ aiBadgeCount }}</span>
+                                </span>
                                 <span class="dp-ai-widget-sub">Agents IA actifs</span>
                             </div>
                         </div>

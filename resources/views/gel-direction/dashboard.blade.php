@@ -1,187 +1,209 @@
 @extends('layouts.gel-direction')
 
-@section('title', 'Tableau de bord — Direction')
+@section('title', 'Tableau de bord')
+@section('page_title', 'Vue d\'ensemble - ' . ($entreprise->raison_sociale ?? 'Entreprise'))
 
-@section('page_title', 'Vue d\'ensemble du Cabinet')
+@section('page_actions')
+    <a href="{{ route('gel-direction.clients.index') }}" class="sec-btn sec-btn-secondary">
+        <i class="fas fa-users"></i> Voir les clients
+    </a>
+    <a href="{{ route('gel-direction.finance.index') }}" class="sec-btn sec-btn-primary" style="margin-left: 8px;">
+        <i class="fas fa-plus"></i> Nouvelle Facture
+    </a>
+@endsection
 
 @section('content')
-<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:24px;">
-    <div>
-        <h1 style="font-size:24px; font-weight:700; color:var(--dir-primary); margin:0;">Tableau de Bord Exécutif</h1>
-        <p style="color:var(--dir-text-muted); font-size:14px; margin:4px 0 0 0;">Analyse globale de l'activité, des finances et des équipes.</p>
-    </div>
-    <div>
-        <button class="btn btn-primary" style="background:var(--dir-primary); border:none; padding:8px 16px; font-weight:600; border-radius:8px;">
-            <i class="fas fa-download"></i> Rapport Mensuel
-        </button>
-    </div>
-</div>
 
-<!-- KPI Cards -->
-<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:20px; margin-bottom:30px;">
-    <!-- MRR -->
-    <div style="background:white; padding:20px; border-radius:12px; border:1px solid var(--dir-border); box-shadow:0 2px 4px rgba(0,0,0,0.02); display:flex; flex-direction:column; gap:12px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:13px; font-weight:600; color:var(--dir-text-muted); text-transform:uppercase; letter-spacing:0.5px;">Revenus Récurrents (MRR)</span>
-            <div style="width:32px; height:32px; border-radius:8px; background:#EFF6FF; color:#3B82F6; display:flex; align-items:center; justify-content:center;">
-                <i class="fas fa-euro-sign"></i>
+<!-- KPIs -->
+<div class="sec-kpi-grid">
+    <div class="sec-kpi">
+        <div class="sec-kpi-icon teal">
+            <i class="fas fa-building"></i>
+        </div>
+        <div>
+            <div class="sec-kpi-val">{{ number_format($totalClients, 0, ',', ' ') }}</div>
+            <div class="sec-kpi-label">Total Clients</div>
+        </div>
+    </div>
+
+    <div class="sec-kpi">
+        <div class="sec-kpi-icon blue">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <div>
+            <div class="sec-kpi-val">{{ number_format($chiffreAffaires, 0, ',', ' ') }}</div>
+            <div class="sec-kpi-label">CA Réalisé (FCFA)</div>
+        </div>
+    </div>
+
+    <div class="sec-kpi">
+        <div class="sec-kpi-icon amber">
+            <i class="fas fa-file-invoice-dollar"></i>
+        </div>
+        <div>
+            <div class="sec-kpi-val">{{ number_format($facturesEnAttente, 0, ',', ' ') }}</div>
+            <div class="sec-kpi-label">Créances (FCFA)</div>
+        </div>
+    </div>
+
+    <div class="sec-kpi">
+        <div class="sec-kpi-icon violet">
+            <i class="fas fa-users-cog"></i>
+        </div>
+        <div>
+            <div class="sec-kpi-val">{{ number_format($totalTeam, 0, ',', ' ') }}</div>
+            <div class="sec-kpi-label">Membres Équipe</div>
+        </div>
+    </div>
+
+    <a href="{{ route('gel-direction.validations.index') }}" style="text-decoration: none; color: inherit;">
+        <div class="sec-kpi" style="transition: transform 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+            <div class="sec-kpi-icon rose">
+                <i class="fas fa-check-double"></i>
+            </div>
+            <div>
+                <div class="sec-kpi-val text-danger">{{ number_format($totalValidations, 0, ',', ' ') }}</div>
+                <div class="sec-kpi-label">Approbations requises</div>
             </div>
         </div>
-        <div style="font-size:28px; font-weight:700; color:var(--dir-text);">
-            {{ number_format($mrr, 0, ',', ' ') }} €
+    </a>
+</div>
+
+<h3 class="sec-page-title" style="margin-bottom: 16px; font-size:16px;">Mes Départements</h3>
+<div class="sec-kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin-bottom: 30px;">
+    <a href="{{ route('gel-secretary.dashboard') }}" class="sec-kpi" style="text-decoration:none; cursor:pointer; transition:all 0.2s; align-items:flex-start;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 20px rgba(0,0,0,0.05)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+        <div class="sec-kpi-icon blue" style="width:48px; height:48px; font-size:22px;">
+            <i class="fas fa-tachometer-alt"></i>
         </div>
-        <div style="font-size:12px; font-weight:600; color:#10B981; display:flex; align-items:center; gap:4px;">
-            <i class="fas fa-arrow-up"></i> +{{ $croissance }}% vs mois dernier
+        <div>
+            <div class="sec-kpi-val" style="font-size:17px; margin-bottom:4px;">Secrétariat</div>
+            <div class="sec-kpi-label" style="white-space:normal; line-height:1.4;">Courriers, dossiers, agenda et contacts.</div>
+        </div>
+    </a>
+
+    <a href="{{ route('gel-accountant.dashboard') }}" class="sec-kpi" style="text-decoration:none; cursor:pointer; transition:all 0.2s; align-items:flex-start;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 20px rgba(0,0,0,0.05)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+        <div class="sec-kpi-icon amber" style="width:48px; height:48px; font-size:22px;">
+            <i class="fas fa-chart-pie"></i>
+        </div>
+        <div>
+            <div class="sec-kpi-val" style="font-size:17px; margin-bottom:4px;">Comptabilité</div>
+            <div class="sec-kpi-label" style="white-space:normal; line-height:1.4;">Saisie, facturation, états et déclarations.</div>
+        </div>
+    </a>
+
+    <a href="{{ route('gel-rh.dashboard') }}" class="sec-kpi" style="text-decoration:none; cursor:pointer; transition:all 0.2s; align-items:flex-start;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 20px rgba(0,0,0,0.05)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+        <div class="sec-kpi-icon violet" style="width:48px; height:48px; font-size:22px;">
+            <i class="fas fa-user-friends"></i>
+        </div>
+        <div>
+            <div class="sec-kpi-val" style="font-size:17px; margin-bottom:4px;">Ressources Hum.</div>
+            <div class="sec-kpi-label" style="white-space:normal; line-height:1.4;">Paie, employés, congés et contrats.</div>
+        </div>
+    </a>
+
+    <a href="{{ route('gel-legal.dashboard') }}" class="sec-kpi" style="text-decoration:none; cursor:pointer; transition:all 0.2s; align-items:flex-start;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 20px rgba(0,0,0,0.05)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+        <div class="sec-kpi-icon rose" style="width:48px; height:48px; font-size:22px;">
+            <i class="fas fa-balance-scale"></i>
+        </div>
+        <div>
+            <div class="sec-kpi-val" style="font-size:17px; margin-bottom:4px;">Juridique</div>
+            <div class="sec-kpi-label" style="white-space:normal; line-height:1.4;">Assemblées générales, statuts et contrats.</div>
+        </div>
+    </a>
+</div>
+
+<div class="row">
+    <!-- Dernières factures -->
+    <div class="col-lg-7 mb-4">
+        <div class="sec-card h-100">
+            <div class="sec-card-header">
+                <h3 class="sec-card-title">Dernières factures émises</h3>
+                <a href="{{ route('gel-direction.finance.index') }}" class="sec-btn sec-btn-sm sec-btn-secondary">Voir tout</a>
+            </div>
+            <div class="sec-card-body p-0">
+                <div class="table-responsive">
+                    <table class="sec-table">
+                        <thead>
+                            <tr>
+                                <th>Facture</th>
+                                <th>Client</th>
+                                <th>Montant TTC</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($recentFactures as $facture)
+                                <tr>
+                                    <td><strong>{{ $facture->numero }}</strong></td>
+                                    <td>{{ $facture->client->nom_entreprise }}</td>
+                                    <td>{{ number_format($facture->montant_ttc, 0, ',', ' ') }} F</td>
+                                    <td>
+                                        @if($facture->statut == 'payee')
+                                            <span class="sec-badge sec-badge-success">Payée</span>
+                                        @elseif($facture->statut == 'envoyee')
+                                            <span class="sec-badge sec-badge-info">Envoyée</span>
+                                        @elseif($facture->statut == 'brouillon')
+                                            <span class="sec-badge sec-badge-muted">Brouillon</span>
+                                        @elseif($facture->statut == 'en_retard')
+                                            <span class="sec-badge sec-badge-danger">En retard</span>
+                                        @else
+                                            <span class="sec-badge sec-badge-muted">{{ ucfirst($facture->statut) }}</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">
+                                        <i class="fas fa-inbox mb-2" style="font-size: 24px; opacity: 0.5;"></i>
+                                        <br>Aucune facture récente
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Nouveaux Clients -->
-    <div style="background:white; padding:20px; border-radius:12px; border:1px solid var(--dir-border); box-shadow:0 2px 4px rgba(0,0,0,0.02); display:flex; flex-direction:column; gap:12px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:13px; font-weight:600; color:var(--dir-text-muted); text-transform:uppercase; letter-spacing:0.5px;">Nouveaux Clients</span>
-            <div style="width:32px; height:32px; border-radius:8px; background:#ECFDF5; color:#10B981; display:flex; align-items:center; justify-content:center;">
-                <i class="fas fa-handshake"></i>
+    <div class="col-lg-5 mb-4">
+        <div class="sec-card h-100">
+            <div class="sec-card-header">
+                <h3 class="sec-card-title">Nouveaux Clients</h3>
+                <a href="{{ route('gel-direction.clients.index') }}" class="sec-btn sec-btn-sm sec-btn-secondary">Gérer</a>
             </div>
-        </div>
-        <div style="font-size:28px; font-weight:700; color:var(--dir-text);">
-            +{{ $nouveauxClientsMois }}
-        </div>
-        <div style="font-size:12px; font-weight:500; color:var(--dir-text-muted);">
-            Total actifs : <strong>{{ $totalClients }}</strong> clients
-        </div>
-    </div>
-
-    <!-- Productivité -->
-    <div style="background:white; padding:20px; border-radius:12px; border:1px solid var(--dir-border); box-shadow:0 2px 4px rgba(0,0,0,0.02); display:flex; flex-direction:column; gap:12px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:13px; font-weight:600; color:var(--dir-text-muted); text-transform:uppercase; letter-spacing:0.5px;">Tâches Terminées</span>
-            <div style="width:32px; height:32px; border-radius:8px; background:#F5F3FF; color:#8B5CF6; display:flex; align-items:center; justify-content:center;">
-                <i class="fas fa-check-double"></i>
+            <div class="sec-card-body p-0">
+                <div class="table-responsive">
+                    <table class="sec-table">
+                        <thead>
+                            <tr>
+                                <th>Entreprise</th>
+                                <th>Email</th>
+                                <th>Ajouté le</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($recentClients as $client)
+                                <tr>
+                                    <td><strong>{{ $client->nom_entreprise }}</strong></td>
+                                    <td>{{ $client->email ?? '-' }}</td>
+                                    <td>{{ $client->created_at->format('d/m/Y') }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="3" class="text-center py-4 text-muted">
+                                        <i class="fas fa-users mb-2" style="font-size: 24px; opacity: 0.5;"></i>
+                                        <br>Aucun client enregistré
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
-        <div style="font-size:28px; font-weight:700; color:var(--dir-text);">
-            {{ $completedTasksCount }}
-        </div>
-        <div style="font-size:12px; font-weight:500; color:var(--dir-text-muted);">
-            Sur l'ensemble des équipes du cabinet.
-        </div>
-    </div>
-
-    <!-- Validations -->
-    <div style="background:white; padding:20px; border-radius:12px; border:1px solid var(--dir-border); box-shadow:0 2px 4px rgba(0,0,0,0.02); display:flex; flex-direction:column; gap:12px; position:relative; overflow:hidden;">
-        @if($validationsCount > 0)
-        <div style="position:absolute; top:0; left:0; width:4px; height:100%; background:#EF4444;"></div>
-        @endif
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:13px; font-weight:600; color:var(--dir-text-muted); text-transform:uppercase; letter-spacing:0.5px;">À Valider</span>
-            <div style="width:32px; height:32px; border-radius:8px; background:#FEF2F2; color:#EF4444; display:flex; align-items:center; justify-content:center;">
-                <i class="fas fa-file-signature"></i>
-            </div>
-        </div>
-        <div style="font-size:28px; font-weight:700; color:{{ $validationsCount > 0 ? '#EF4444' : 'var(--dir-text)' }};">
-            {{ $validationsCount }}
-        </div>
-        <div style="font-size:12px; font-weight:500; color:var(--dir-text-muted);">
-            @if($validationsCount > 0)
-                <a href="{{ route('gel-direction.validations.index') }}" style="color:#EF4444; font-weight:600; text-decoration:none;">Action requise <i class="fas fa-arrow-right"></i></a>
-            @else
-                Aucune validation en attente.
-            @endif
         </div>
     </div>
 </div>
 
-<!-- Charts Section -->
-<div style="display:grid; grid-template-columns:2fr 1fr; gap:20px; margin-bottom:30px;">
-    
-    <!-- Graphique Financier -->
-    <div style="background:white; padding:24px; border-radius:12px; border:1px solid var(--dir-border); box-shadow:0 2px 4px rgba(0,0,0,0.02);">
-        <h3 style="font-size:16px; font-weight:600; color:var(--dir-text); margin-bottom:20px;">Évolution Financière (6 derniers mois)</h3>
-        <canvas id="financeChart" height="100"></canvas>
-    </div>
-
-    <!-- Activité Récente ou Répartition -->
-    <div style="background:white; padding:24px; border-radius:12px; border:1px solid var(--dir-border); box-shadow:0 2px 4px rgba(0,0,0,0.02);">
-        <h3 style="font-size:16px; font-weight:600; color:var(--dir-text); margin-bottom:20px;">Répartition des Revenus</h3>
-        <canvas id="revenuePieChart" height="200"></canvas>
-    </div>
-
-</div>
-
-<!-- Scripts pour Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // 1. Line Chart (Évolution Financière)
-    const ctx = document.getElementById('financeChart').getContext('2d');
-    
-    // Data from Controller
-    const labels = {!! json_encode($chartData['labels']) !!};
-    const revenus = {!! json_encode($chartData['revenus']) !!};
-    const depenses = {!! json_encode($chartData['depenses']) !!};
-
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: 'Revenus (€)',
-                    data: revenus,
-                    borderColor: '#3B82F6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    borderWidth: 2,
-                    tension: 0.4,
-                    fill: true
-                },
-                {
-                    label: 'Dépenses (€)',
-                    data: depenses,
-                    borderColor: '#EF4444',
-                    backgroundColor: 'transparent',
-                    borderWidth: 2,
-                    borderDash: [5, 5],
-                    tension: 0.4,
-                    fill: false
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { position: 'top', align: 'end' }
-            },
-            scales: {
-                y: { beginAtZero: true }
-            }
-        }
-    });
-
-    // 2. Doughnut Chart (Répartition)
-    const ctxPie = document.getElementById('revenuePieChart').getContext('2d');
-    new Chart(ctxPie, {
-        type: 'doughnut',
-        data: {
-            labels: ['Comptabilité', 'Secrétariat', 'Digitalisation', 'Conseil'],
-            datasets: [{
-                data: [45, 25, 20, 10],
-                backgroundColor: [
-                    '#3B82F6', // Blue
-                    '#10B981', // Green
-                    '#8B5CF6', // Purple
-                    '#F59E0B'  // Yellow
-                ],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            cutout: '75%',
-            plugins: {
-                legend: { position: 'bottom' }
-            }
-        }
-    });
-});
-</script>
 @endsection

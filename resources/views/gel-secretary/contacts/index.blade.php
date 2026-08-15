@@ -1,139 +1,246 @@
 @extends('layouts.gel-secretary')
+@section('title', 'Carnet d\'Adresses')
 
-@section('title', 'Annuaire Contacts — Secrétariat')
+@push('styles')
+<style>
+/* ==========================================================================
+   CONTACTS - BENTO GRID DESIGN
+   ========================================================================== */
+.bento-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    grid-auto-rows: minmax(100px, auto);
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+.bento-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.bento-header { grid-column: span 12; grid-row: span 1; display:flex; align-items:center; justify-content:space-between; }
+.bento-kpi { grid-column: span 4; grid-row: span 1; display:flex; flex-direction:column; justify-content:center;}
+.bento-list { grid-column: span 12; grid-row: span 5; padding:0; overflow:hidden;}
+
+/* Header Elements */
+.hc-title { font-size: 24px; font-weight: 800; font-family: 'Inter', sans-serif;}
+.hc-sub { font-size: 13px; opacity: 0.8; margin-top: 4px; color:#64748B;}
+.btn-new { background: #0D9488; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; display:flex; align-items:center; gap:8px;}
+.btn-new:hover { background: #0F766E; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(13, 148, 136, 0.3);}
+
+/* KPIs */
+.kpi-value { font-size: 28px; font-weight: 800; color: #1E293B; line-height: 1; margin-bottom: 8px;}
+.kpi-label { font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;}
+
+/* Search & Filters */
+.cl-header { display:flex; align-items:center; justify-content:space-between; padding:20px 24px; border-bottom:1px solid #E2E8F0; background:rgba(255,255,255,0.5);}
+.cl-title { font-size:18px; font-weight:800; color:#1E293B;}
+.cl-search { position:relative; }
+.cl-search i { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#94A3B8; }
+.cl-search input { background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:10px 12px 10px 36px; outline:none; font-size:13px; width:280px; transition:all 0.2s; font-family:inherit;}
+.cl-search input:focus { background:white; border-color:#0D9488; box-shadow:0 0 0 3px rgba(13,148,136,0.1); width:320px;}
+
+/* Table Styles */
+.table-wrapper { width: 100%; overflow-x: auto; flex:1;}
+.f-table { width: 100%; border-collapse: collapse; text-align: left; }
+.f-table th { padding: 16px 24px; font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; border-bottom: 1px solid #E2E8F0; background: #F8FAFC; }
+.f-table td { padding: 16px 24px; font-size: 13.5px; color: #334155; border-bottom: 1px solid #F1F5F9; font-weight: 500;}
+.f-table tbody tr { transition: all 0.2s; cursor:pointer;}
+.f-table tbody tr:hover { background: #F8FAFC; transform:scale(1.002); }
+
+/* Avatar & Info */
+.contact-cell { display:flex; align-items:center; gap:12px; }
+.contact-avatar { width:40px; height:40px; border-radius:50%; background:#E0F2FE; color:#0369A1; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; flex-shrink:0;}
+.contact-info { display:flex; flex-direction:column; }
+.contact-name { font-weight:700; color:#1E293B; font-size:14px;}
+.contact-role { font-size:12px; color:#64748B; margin-top:2px;}
+
+/* Badges */
+.badge-type { padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; }
+.bt-internal { background: #EFF6FF; color: #3B82F6; }
+.bt-portal { background: #F5F3FF; color: #7C3AED; }
+
+.action-btn { color:#94A3B8; padding:8px; border-radius:8px; transition:all 0.2s; border:none; background:none; cursor:pointer;}
+.action-btn:hover { color:#EF4444; background:#FEF2F2; }
+
+/* Animations */
+.stagger-1 { animation: fadeUp 0.4s ease-out forwards; opacity: 0; animation-delay: 0.1s;}
+.stagger-2 { animation: fadeUp 0.4s ease-out forwards; opacity: 0; animation-delay: 0.2s;}
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+@endpush
 
 @section('content')
-<div class="sec-page-header">
-  <div>
-    <h1 class="sec-page-title">
-      <i class="fas fa-address-book" style="color:var(--sec-primary); margin-right:8px;"></i>Annuaire des Contacts
-    </h1>
-    <p class="sec-page-sub">
-      @if($activeClient)
-        Contacts de l'entreprise : <strong>{{ $activeClient->nom_entreprise }}</strong>
-      @else
-        Veuillez sélectionner une entreprise active dans la barre supérieure.
-      @endif
-    </p>
-  </div>
-  @if($activeClient)
-  <button class="sec-btn sec-btn-primary" onclick="document.getElementById('contactModal').style.display='flex'">
-    <i class="fas fa-plus"></i> Nouveau contact
-  </button>
-  @endif
-</div>
 
-@if($activeClient)
-<div class="sec-card" style="border-radius:12px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.04);">
-  <div class="sec-card-header">
-    <div class="sec-card-title"><i class="fas fa-users" style="color:var(--sec-primary);margin-right:6px;"></i>Liste des contacts de l'entreprise ({{ $contacts->count() }})</div>
-  </div>
+@php
+    $nbTotal = $contacts->count();
+    $nbInternal = $contacts->where('type', 'internal')->count();
+    $nbPortal = $contacts->where('type', 'portal')->count();
+@endphp
 
-  <div style="overflow-x:auto;">
-    <table class="sec-table">
-        <thead>
-            <tr style="background:#f9fafb;">
-                <th style="padding:14px 18px;">Nom & Prénom</th>
-                <th style="padding:14px 18px;">Poste / Fonction</th>
-                <th style="padding:14px 18px;">Téléphone</th>
-                <th style="padding:14px 18px;">Email</th>
-                <th style="padding:14px 18px; text-align:right;">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse($contacts as $contact)
-                <tr style="border-bottom:1px solid #f3f4f6;">
-                    <td style="padding:14px 18px; font-weight:700; color:#1e293b;">
-                        {{ $contact->name }}
-                        @if(isset($contact->type) && $contact->type === 'portal')
-                            <span style="margin-left: 8px; font-size: 10px; background: var(--sec-primary); color: white; padding: 2px 6px; border-radius: 4px; vertical-align: middle;">PORTAIL</span>
-                        @endif
-                    </td>
-                    <td style="padding:14px 18px; color:#475569;">
-                        {{ $contact->position ?: '—' }}
-                    </td>
-                    <td style="padding:14px 18px; font-family:monospace; color:#334155;">
-                        {{ $contact->phone ?: '—' }}
-                    </td>
-                    <td style="padding:14px 18px; color:#64748b; font-family:monospace;">
-                        {{ $contact->email ?: '—' }}
-                    </td>
-                    <td style="padding:14px 18px; text-align:right;">
-                        <form action="{{ isset($contact->type) && $contact->type === 'portal' ? '#' : route('gel-secretary.contacts.destroy', $contact->id) }}" method="POST" onsubmit="return confirm('Supprimer ce contact ?');" style="display:flex; gap:8px; justify-content:flex-end;">
-                            <a href="{{ isset($contact->type) && $contact->type === 'portal' ? '#' : route('gel-secretary.contacts.show', $contact->id) }}" class="sec-btn sec-btn-sm" style="background:#F0FDFA; color:var(--sec-primary); border:1px solid #CCFBF1; text-decoration:none;" title="Voir Fiche 360°">
-                                <i class="fas fa-eye"></i> Voir Fiche
-                            </a>
-                            @csrf
-                            @if(!isset($contact->type) || $contact->type !== 'portal')
-                                @method('DELETE')
-                            @endif
-                            @if(!isset($contact->type) || $contact->type !== 'portal')
-                                <button type="submit" class="sec-btn sec-btn-sm" style="background:#fef2f2; color:#ef4444; border:1px solid #fca5a5;" title="Supprimer">
-                                    <i class="fas fa-trash-alt"></i> Supprimer
-                                </button>
-                            @else
-                                <button type="button" class="sec-btn sec-btn-sm" style="background:#f1f5f9; color:#94a3b8; border:1px solid #e2e8f0; cursor:not-allowed;" title="Non modifiable ici">
-                                    <i class="fas fa-lock"></i>
-                                </button>
-                            @endif
-                        </form>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="5" style="padding:40px; text-align:center; color:#94a3b8; font-weight:600;">
-                        <i class="fas fa-address-book" style="font-size:32px; display:block; margin-bottom:8px; color:#cbd5e1;"></i>
-                        Aucun contact enregistré pour cette entreprise.
-                    </td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
-  </div>
-</div>
+<div class="bento-grid">
 
-{{-- ─── MODAL NOUVEAU CONTACT ─── --}}
-<div id="contactModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.4); backdrop-filter:blur(4px); z-index:9999; align-items:center; justify-content:center;">
-    <div style="background:#fff; border-radius:14px; width:460px; max-width:90%; border:1px solid var(--sec-border); box-shadow:var(--sec-shadow); overflow:hidden;">
-        <div style="padding:16px 20px; background:#f9fafb; border-bottom:1px solid var(--sec-border); display:flex; justify-content:space-between; align-items:center;">
-            <h3 style="font-size:14px; font-weight:700; color:var(--sec-text); margin:0;">Nouveau contact</h3>
-            <button type="button" onclick="document.getElementById('contactModal').style.display='none'" style="background:none; border:none; font-size:18px; color:var(--sec-text-muted); cursor:pointer;">&times;</button>
+    <!-- HEADER -->
+    <div class="bento-card bento-header stagger-1">
+        <div>
+            <div class="hc-title">Carnet d'Adresses</div>
+            <div class="hc-sub">{{ $activeClient ? $activeClient->nom_entreprise : 'Tous les contacts' }}</div>
         </div>
-        <form action="{{ route('gel-secretary.contacts.store') }}" method="POST" style="padding:20px; display:flex; flex-direction:column; gap:14px;">
+        <div>
+            <button class="btn-new" onclick="document.getElementById('modalContact').style.display='flex'">
+                <i class="fas fa-user-plus"></i> Nouveau Contact
+            </button>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="bento-card bento-kpi stagger-2">
+        <div class="kpi-value">{{ $nbTotal }}</div>
+        <div class="kpi-label"><i class="fas fa-users" style="color:#0D9488;"></i> Total Contacts</div>
+    </div>
+    <div class="bento-card bento-kpi stagger-2" style="animation-delay:0.3s;">
+        <div class="kpi-value" style="color:#3B82F6;">{{ $nbInternal }}</div>
+        <div class="kpi-label"><i class="fas fa-address-card" style="color:#3B82F6;"></i> Contacts Internes</div>
+    </div>
+    <div class="bento-card bento-kpi stagger-2" style="animation-delay:0.4s;">
+        <div class="kpi-value" style="color:#7C3AED;">{{ $nbPortal }}</div>
+        <div class="kpi-label"><i class="fas fa-globe" style="color:#7C3AED;"></i> Accès Portail</div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="bento-card bento-list stagger-2">
+        <div class="cl-header">
+            <div class="cl-title">Répertoire</div>
+            <div class="cl-search">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchContact" placeholder="Rechercher par nom, email, téléphone...">
+            </div>
+        </div>
+        
+        <div class="table-wrapper">
+            <table class="f-table" id="contactsTable">
+                <thead>
+                    <tr>
+                        <th>Contact</th>
+                        <th>Email</th>
+                        <th>Téléphone</th>
+                        <th>Type</th>
+                        <th style="text-align:right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($contacts as $c)
+                        @php
+                            $badge = $c->type == 'portal' ? 'bt-portal' : 'bt-internal';
+                            $typeName = $c->type == 'portal' ? 'Portail' : 'Interne';
+                            $initials = strtoupper(substr($c->name, 0, 2));
+                        @endphp
+                        <tr onclick="if(!event.target.closest('button') && !event.target.closest('form')) window.location.href='{{ route('gel-secretary.contacts.show', $c->id) }}'">
+                            <td>
+                                <div class="contact-cell">
+                                    <div class="contact-avatar">{{ $initials }}</div>
+                                    <div class="contact-info">
+                                        <div class="contact-name">{{ $c->name }}</div>
+                                        <div class="contact-role">{{ $c->position ?? '—' }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ $c->email ?? '—' }}</td>
+                            <td>{{ $c->phone ?? '—' }}</td>
+                            <td><span class="badge-type {{ $badge }}">{{ $typeName }}</span></td>
+                            <td style="text-align:right;">
+                                @if($c->type == 'internal')
+                                <form action="{{ route('gel-secretary.contacts.destroy', $c->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Confirmer la suppression ?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="action-btn" title="Supprimer"><i class="fas fa-trash"></i></button>
+                                </form>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" style="text-align:center; padding:40px; color:#94A3B8;">
+                                <i class="fas fa-address-book" style="font-size:32px; margin-bottom:12px; opacity:0.5;"></i>
+                                <div>Aucun contact trouvé dans le carnet d'adresses.</div>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- MODAL ADD CONTACT -->
+<div id="modalContact" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+    <div style="background:white; width:450px; border-radius:20px; padding:32px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+            <h3 style="margin:0; font-size:20px; font-weight:800; color:#1E293B;">Nouveau Contact</h3>
+            <button onclick="document.getElementById('modalContact').style.display='none'" style="background:none; border:none; font-size:20px; color:#94A3B8; cursor:pointer;"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <form action="{{ route('gel-secretary.contacts.store') }}" method="POST">
             @csrf
-
-            <div class="sec-form-group">
-                <label>Nom & Prénom *</label>
-                <input type="text" name="name" required placeholder="Ex: Jean Dupont" class="sec-form-control">
+            
+            <div style="margin-bottom:16px;">
+                <label style="display:block; font-size:12px; font-weight:700; color:#64748B; margin-bottom:8px;">Nom complet <span style="color:#EF4444;">*</span></label>
+                <input type="text" name="name" required style="width:100%; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:10px 12px; outline:none; font-family:inherit;">
             </div>
-
-            <div class="sec-form-group">
-                <label>Poste / Fonction</label>
-                <input type="text" name="position" placeholder="Ex: Directeur Général, Comptable" class="sec-form-control">
+            
+            <div style="margin-bottom:16px;">
+                <label style="display:block; font-size:12px; font-weight:700; color:#64748B; margin-bottom:8px;">Fonction / Rôle</label>
+                <input type="text" name="position" style="width:100%; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:10px 12px; outline:none; font-family:inherit;">
             </div>
-
-            <div class="sec-form-group">
-                <label>Téléphone</label>
-                <input type="text" name="phone" placeholder="Ex: +225 07070707" class="sec-form-control">
+            
+            <div style="margin-bottom:16px;">
+                <label style="display:block; font-size:12px; font-weight:700; color:#64748B; margin-bottom:8px;">Email</label>
+                <input type="email" name="email" style="width:100%; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:10px 12px; outline:none; font-family:inherit;">
             </div>
-
-            <div class="sec-form-group">
-                <label>Adresse email</label>
-                <input type="email" name="email" placeholder="Ex: jean.dupont@entreprise.com" class="sec-form-control">
+            
+            <div style="margin-bottom:24px;">
+                <label style="display:block; font-size:12px; font-weight:700; color:#64748B; margin-bottom:8px;">Téléphone</label>
+                <input type="text" name="phone" style="width:100%; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:10px 12px; outline:none; font-family:inherit;">
             </div>
-
-            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:8px;">
-                <button type="button" class="sec-btn sec-btn-secondary" onclick="document.getElementById('contactModal').style.display='none'">Annuler</button>
-                <button type="submit" class="sec-btn sec-btn-primary">Ajouter le contact</button>
+            
+            <div style="text-align:right;">
+                <button type="button" onclick="document.getElementById('modalContact').style.display='none'" style="background:white; border:1px solid #E2E8F0; padding:10px 20px; border-radius:10px; font-weight:600; cursor:pointer; margin-right:12px;">Annuler</button>
+                <button type="submit" style="background:#0D9488; color:white; border:none; padding:10px 20px; border-radius:10px; font-weight:600; cursor:pointer;">Enregistrer</button>
             </div>
         </form>
     </div>
 </div>
-@else
-<div class="sec-card" style="padding:40px; text-align:center; color:var(--sec-text-muted);">
-  <i class="fas fa-building" style="font-size:48px; margin-bottom:12px; color:#cbd5e1;"></i>
-  <p style="font-size:14px; font-weight:600;">Aucune entreprise active n'est actuellement sélectionnée.</p>
-  <p style="font-size:12px;">Veuillez utiliser le sélecteur situé dans l'en-tête pour choisir l'entreprise dont vous souhaitez gérer les contacts.</p>
-</div>
-@endif
+
+@push('scripts')
+<script>
+    // Live Search
+    document.getElementById('searchContact').addEventListener('keyup', function(e) {
+        let term = e.target.value.toLowerCase();
+        let rows = document.querySelectorAll('#contactsTable tbody tr');
+        rows.forEach(row => {
+            if(row.innerText.toLowerCase().includes(term)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+</script>
+@endpush
+
 @endsection

@@ -13,7 +13,12 @@ class BusinessTripController extends Controller
     public function index(Request $request)
     {
         $user   = Auth::user();
-        $query  = BusinessTrip::with('client')->orderBy('start_date', 'desc');
+        $query  = BusinessTrip::with('client')->orderBy('date_depart', 'desc');
+
+        $activeClientId = $request->query('client_id') ?? session('active_client_id') ?? $user->active_client_id ?? $user->client_id;
+        if ($activeClientId) {
+            $query->where('client_id', $activeClientId);
+        }
 
         // Filtre par statut
         if ($request->filled('status')) {
@@ -22,12 +27,13 @@ class BusinessTripController extends Controller
 
         $trips   = $query->get();
         $clients = Client::orderBy('nom_entreprise')->get();
+        $activeClient = $activeClientId ? Client::find($activeClientId) : null;
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json($trips);
         }
 
-        return view('gel-secretary.services.business-trips', compact('trips', 'clients'));
+        return view('gel-secretary.services.business-trips', compact('trips', 'clients', 'activeClient'));
     }
 
     public function create()
@@ -41,8 +47,8 @@ class BusinessTripController extends Controller
             'traveler_name'         => 'required|string|max:120',
             'client_id'             => 'required|exists:clients,id',
             'destination'           => 'required|string|max:200',
-            'start_date'            => 'required|date',
-            'end_date'              => 'required|date|after_or_equal:start_date',
+            'date_depart'            => 'required|date',
+            'date_retour'              => 'required|date|after_or_equal:date_depart',
             'status'                => 'required|in:planifie,en_cours,termine,annule',
             'budget'                => 'nullable|numeric|min:0',
             'purpose'               => 'nullable|string|max:300',
@@ -69,7 +75,7 @@ class BusinessTripController extends Controller
     public function edit(BusinessTrip $businessTrip)
     {
         $clients = Client::orderBy('nom_entreprise')->get();
-        $trips   = BusinessTrip::with('client')->orderBy('start_date', 'desc')->get();
+        $trips   = BusinessTrip::with('client')->orderBy('date_depart', 'desc')->get();
         return view('gel-secretary.services.business-trips', compact('trips', 'clients', 'businessTrip'));
     }
 
@@ -79,8 +85,8 @@ class BusinessTripController extends Controller
             'traveler_name'         => 'required|string|max:120',
             'client_id'             => 'required|exists:clients,id',
             'destination'           => 'required|string|max:200',
-            'start_date'            => 'required|date',
-            'end_date'              => 'required|date|after_or_equal:start_date',
+            'date_depart'            => 'required|date',
+            'date_retour'              => 'required|date|after_or_equal:date_depart',
             'status'                => 'required|in:planifie,en_cours,termine,annule',
             'budget'                => 'nullable|numeric|min:0',
             'purpose'               => 'nullable|string|max:300',

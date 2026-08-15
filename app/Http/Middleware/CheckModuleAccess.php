@@ -1,72 +1,58 @@
 <?php
-// =============================================================================
-// FICHIER : CheckModuleAccess.php
-// RÔLE    : Middleware — Vérifie l'accès à un module spécifique
-// ÉQUIPE  : GEL Cabinet — Équipe Dev Backend
-// =============================================================================
-// Middleware paramétrable utilisé sur les routes protégées par module.
-//
-// Utilisation dans les routes :
-//   Route::middleware('module:comptabilite')
-//   Route::middleware('module:comptabilite,creer')
-//
-// Paramètres :
-//   1. module (obligatoire) : le slug du module (ex: comptabilite, caisse, rh)
-//   2. action (optionnelle) : permission spécifique (ex: creer, modifier, supprimer)
-//
-// Comportement :
-//   - Super admin : toujours autorisé (bypass)
-//   - Utilisateur normal : vérifié via User::hasModuleAccess() + User::canModule()
-// =============================================================================
 
 namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class CheckModuleAccess
 {
     /**
-     * Vérifie que l'utilisateur a accès au module spécifié.
+     * Handle an incoming request.
      *
-     * Paramètres : module (obligatoire), action (optionnelle)
-     * Utilisation : Route::middleware('module:comptabilite')
-     *               Route::middleware('module:comptabilite,creer')
+     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  string  $module
+     * @param  string  $action
      */
-    public function handle(Request $request, Closure $next, string $module, ?string $action = null): Response
+    public function handle(Request $request, Closure $next, string $module, string $action = 'consulter'): Response
     {
-        if (!Auth::check()) {
-            return response()->json(['message' => 'Non authentifié.'], 401);
+        $user = $request->user();
+
+        if (!$user) {
+            abort(401, 'Non authentifié.');
         }
 
-        $user = Auth::user();
+        // Dans le portail expert (gel-accountant), le clientId peut être nul ou ne pas
+        // correspondre à l'entreprise du cabinet. On va chercher l'entreprise (cabinet)
+        // dans les affectations si le hasPermissionTo classique échoue.
+        $clientId = session('active_client_id') ?? session('current_client_id');
+        $entrepriseId = session('active_entreprise_id');
 
-        // Super Admin a toujours accès
-        if ($user->isSuperAdmin()) {
-            return $next($request);
+        // Tenter de vérifier avec entrepriseId, ou clientId
+        $contextId = $entrepriseId ?? $clientId;
+
+        \Log::info("CheckModuleAccess Debug", [
+            'user' => $user->id,
+            'email' => $user->email,
+            'module' => $module,
+            'action' => $action,
+            'clientId' => $clientId,
+            'entrepriseId' => $entrepriseId,
+            'contextId' => $contextId,
+        ]);
+
+        if (!$user->hasPermissionTo($module, $action, $contextId)) {
+            // Tentative sur l'entreprise du cabinet (la première affectation active)
+            $cabinetId = $user->affectations()->whereIn('statut', ['actif', 'active'])->first()?->entreprise_id;
+            
+            \Log::info("Fallback cabinetId", ['cabinetId' => $cabinetId]);
+
+            if (!$cabinetId || !$user->hasPermissionTo($module, $action, $cabinetId)) {
+                abort(403, "Vous n'avez pas la permission '{$action}' sur le module '{$module}'.");
+            }
         }
-
-        // Vérifier l'accès au module
-        if (!$user->hasModuleAccess($module)) {
-            return response()->json([
-                'message' => 'Vous n\'avez pas accès au module « ' . $module . ' ».',
-                'error' => 'module_forbidden',
-                'module' => $module,
-            ], 403);
-        }
-
-        // Si une action spécifique est demandée, vérifier aussi
-        if ($action && !$user->canModule($module, $action)) {
-            return response()->json([
-                'message' => 'Vous n\'avez pas la permission « ' . $action . ' » dans le module « ' . $module . ' ».',
-                'error' => 'action_forbidden',
-                'module' => $module,
-                'action' => $action,
-            ], 403);
-        }
-
+        
         return $next($request);
     }
 }

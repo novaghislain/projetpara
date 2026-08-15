@@ -119,6 +119,7 @@
                             <td>
                                 <span class="badge-sm" style="background:#F1F5F9; color:#475569;">{{ ucfirst(str_replace('_', ' ', $task->statut)) }}</span>
                             </td>
+                            <td style="text-align:right;">
                                 <div class="dropdown" style="display:inline-block;">
                                     <button class="sec-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="background:#FEF2F2; color:#DC2626; border:1px solid #FECACA;">
                                         <i class="fas fa-bell"></i>

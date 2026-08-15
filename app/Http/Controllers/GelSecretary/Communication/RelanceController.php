@@ -50,11 +50,8 @@ class RelanceController extends Controller
             ->where('created_at', '<', now()->subDays(7))
             ->get();
             
-        // Contrats à relancer (< 30j)
-        $expiringContracts = Client::whereIn('id', $clientIds)
-            ->whereNotNull('contract_end')
-            ->whereDate('contract_end', '<', now()->addDays(30))
-            ->get();
+        // Contrats à relancer (< 30j) - Désactivé car 'contract_end' n'existe pas dans gel_clients
+        $expiringContracts = collect();
             
         // Clients inactifs (> 6 mois)
         $inactiveClients = Client::whereIn('id', $clientIds)

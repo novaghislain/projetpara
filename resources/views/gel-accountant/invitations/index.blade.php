@@ -31,7 +31,7 @@
                     <tbody>
                         @foreach($invitations as $invitation)
                             <tr>
-                                <td>{{ $invitation->client->company_name ?? 'Entreprise' }}</td>
+                                <td>{{ $invitation->entreprise->nom ?? 'Entreprise' }}</td>
                                 <td>{{ $invitation->email }}</td>
                                 <td><span class="gel-badge gel-badge-info">{{ ucfirst($invitation->role_invite) }}</span></td>
                                 <td>{{ $invitation->message ?? '-' }}</td>

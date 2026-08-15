@@ -1,28 +1,30 @@
-import docx
+import zipfile
+import xml.etree.ElementTree as ET
 import sys
-import os
 
-def extract_text_from_docx(file_path):
+def extract_text_from_docx(docx_path, out_path):
     try:
-        doc = docx.Document(file_path)
-        full_text = []
-        for para in doc.paragraphs:
-            if para.text.strip() != "":
-                full_text.append(para.text)
-        return '\n'.join(full_text)
+        with zipfile.ZipFile(docx_path) as docx:
+            xml_content = docx.read('word/document.xml')
+            tree = ET.XML(xml_content)
+            
+            # define namespaces
+            namespaces = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+            
+            texts = []
+            for paragraph in tree.findall('.//w:p', namespaces):
+                para_text = []
+                for run in paragraph.findall('.//w:t', namespaces):
+                    if run.text:
+                        para_text.append(run.text)
+                if para_text:
+                    texts.append(''.join(para_text))
+                    
+            with open(out_path, 'w', encoding='utf-8') as f:
+                f.write('\n'.join(texts))
+        print("Success")
     except Exception as e:
-        return f"Error reading {file_path}: {e}"
+        print(f"Error: {e}")
 
 if __name__ == '__main__':
-    global_docx = r"c:\xampp\htdocs\Para\GEL_Cahier_des_Charges_Global.docx"
-    detail_docx = r"c:\xampp\htdocs\Para\GEL_Cahier_Detaille_Developpement.docx"
-    
-    with open(r"c:\xampp\htdocs\Para\Cahier_Global.md", "w", encoding="utf-8") as f:
-        f.write("# Cahier des Charges Global\n\n")
-        f.write(extract_text_from_docx(global_docx))
-        
-    with open(r"c:\xampp\htdocs\Para\Cahier_Detaille.md", "w", encoding="utf-8") as f:
-        f.write("# Cahier Détaillé de Développement\n\n")
-        f.write(extract_text_from_docx(detail_docx))
-        
-    print("Extraction complete. Check Cahier_Global.md and Cahier_Detaille.md")
+    extract_text_from_docx('GEL_Cahier_des_Charges_Maitre_Unifie b.docx', 'cahier_des_charges.txt')

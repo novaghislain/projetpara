@@ -79,7 +79,7 @@ class FolderStructureService
      * niveau 1. Aucune dépendance à une action manuelle : `folders:calendar`
      * l'appelle toutes les 6 h.
      */
-    public function ensureCanonical(?int $clientId, ?int $userId = null, ?Carbon $now = null): ClientFolder
+    public function ensureCanonical(?string $clientId, ?string $userId = null, ?Carbon $now = null): ClientFolder
     {
         $now = $now ?? Carbon::now();
         $this->ensurePermanentsRoot($clientId, $userId);
@@ -92,12 +92,12 @@ class FolderStructureService
     /**
      * Racine des Documents courants = « Courant / Annuel », racine de niveau 1.
      */
-    public function rootFolder(?int $clientId, ?int $userId): ClientFolder
+    public function rootFolder(?string $clientId, ?string $userId): ClientFolder
     {
         return $this->ensureCourantsRoot($clientId, $userId);
     }
 
-    public function ensurePermanentsRoot(?int $clientId, ?int $userId, ?ClientFolder $root = null): ClientFolder
+    public function ensurePermanentsRoot(?string $clientId, ?string $userId, ?ClientFolder $root = null): ClientFolder
     {
         $perm = $this->createFolder(
             $clientId,
@@ -115,7 +115,7 @@ class FolderStructureService
         return $perm;
     }
 
-    public function ensureCourantsRoot(?int $clientId, ?int $userId, ?ClientFolder $root = null): ClientFolder
+    public function ensureCourantsRoot(?string $clientId, ?string $userId, ?ClientFolder $root = null): ClientFolder
     {
         return $this->createFolder(
             $clientId,
@@ -130,7 +130,7 @@ class FolderStructureService
     /**
      * Garantit une période (année → mois → 6 sous-dossiers) sous « Courant / Annuel ».
      */
-    public function ensurePeriod(?int $clientId, ?int $userId, int $year, int $month, ?ClientFolder $courant = null): ClientFolder
+    public function ensurePeriod(?string $clientId, ?string $userId, int $year, int $month, ?ClientFolder $courant = null): ClientFolder
     {
         if (!$courant) {
             $courant = $this->ensureCourantsRoot($clientId, $userId);
@@ -245,7 +245,7 @@ class FolderStructureService
      * métier…). Nœuds : id, name, level, url, doc_count (cumulé descendants),
      * kind, is_current_month, is_closed, children.
      */
-    public function buildTree(?int $clientId, ?int $userId, ?Carbon $now = null): array
+    public function buildTree(?string $clientId, ?string $userId, ?Carbon $now = null): array
     {
         $now = $now ?? Carbon::now();
 
@@ -404,7 +404,7 @@ class FolderStructureService
     }
 
     /** Racines conventionnelles d'un périmètre, hors la racine canonique `Documents`. */
-    public function legacyRootFolders(?int $clientId, ?int $userId): Collection
+    public function legacyRootFolders(?string $clientId, ?string $userId): Collection
     {
         return ClientFolder::forClientOrUser($clientId, $userId)
             ->whereNull('parent_id')

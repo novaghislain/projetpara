@@ -7,7 +7,7 @@
             <h1 class="text-2xl font-bold text-gray-800">Factures & Devis</h1>
             <p class="text-sm text-gray-500">Gérez la facturation de vos clients et suivez les paiements.</p>
         </div>
-        <a href="{{ url('/gel/facturation/factures/create') }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-all flex items-center gap-2">
+        <a href="{{ url('/gel/facturation/factures/create') }}" id="btn-create-facture" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-all flex items-center gap-2">
             <i class="fas fa-file-invoice"></i> Nouvelle Facture
         </a>
     </div>
@@ -51,26 +51,45 @@
         loadFactures();
     });
 
+    function getClientIdParam() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const clientId = urlParams.get('client_id');
+        return clientId ? `?client_id=${clientId}` : '';
+    }
+
+    // Update create link with client_id
+    document.addEventListener('DOMContentLoaded', () => {
+        const createBtn = document.getElementById('btn-create-facture');
+        if (createBtn) {
+            createBtn.href = createBtn.href + getClientIdParam();
+        }
+    });
+
     function loadFactures() {
-        fetch('/api/gel/facturation/factures')
+        fetch('/api/gel/facturation/factures' + getClientIdParam())
             .then(res => res.json())
             .then(data => {
+                if (data.error) {
+                    console.error(data.error);
+                    return;
+                }
                 const tbody = document.getElementById('factures-tbody');
                 tbody.innerHTML = '';
                 data.forEach(facture => {
                     let badgeClass = 'bg-gray-100 text-gray-700';
-                    if (facture.statut === 'Validée') badgeClass = 'bg-blue-100 text-blue-700';
-                    if (facture.statut === 'Payée') badgeClass = 'bg-green-100 text-green-700';
+                    if (facture.statut === 'validee') badgeClass = 'bg-blue-100 text-blue-700';
+                    if (facture.statut === 'payee') badgeClass = 'bg-green-100 text-green-700';
 
+                    const clientNom = facture.contact ? (facture.contact.company || (facture.contact.first_name + ' ' + facture.contact.last_name)) : 'Client inconnu';
                     const tr = document.createElement('tr');
                     tr.className = 'hover:bg-blue-50 transition-colors group cursor-pointer';
                     tr.innerHTML = `
                         <td class="p-4 font-semibold text-gray-800">${facture.numero}</td>
-                        <td class="p-4">${facture.client_nom}</td>
+                        <td class="p-4">${clientNom}</td>
                         <td class="p-4">${new Date(facture.date_facture).toLocaleDateString()}</td>
-                        <td class="p-4 text-right font-bold text-gray-900">${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF' }).format(facture.total_ttc)}</td>
+                        <td class="p-4 text-right font-bold text-gray-900">${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF' }).format(facture.montant_ttc)}</td>
                         <td class="p-4">
-                            <span class="px-3 py-1 rounded-full text-xs font-semibold ${badgeClass}">
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase ${badgeClass}">
                                 ${facture.statut}
                             </span>
                         </td>
@@ -92,7 +111,7 @@
 
     function validerFacture(id) {
         if (confirm("Valider cette facture générera les écritures comptables. Continuer ?")) {
-            fetch(`/api/gel/facturation/factures/${id}/valider`, {
+            fetch(`/api/gel/facturation/factures/${id}/valider` + getClientIdParam(), {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -109,7 +128,7 @@
 
     function deleteFacture(id) {
         if (confirm("Êtes-vous sûr de vouloir supprimer cette facture ?")) {
-            fetch(`/api/gel/facturation/factures/${id}`, {
+            fetch(`/api/gel/facturation/factures/${id}` + getClientIdParam(), {
                 method: 'DELETE',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content

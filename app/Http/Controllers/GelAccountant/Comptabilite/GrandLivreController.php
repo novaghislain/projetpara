@@ -33,7 +33,7 @@ class GrandLivreController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        $cabinetId = $user->cabinet_id;
+        $cabinetId = $user->cabinet_id ?? session('cabinet_id');
 
         // Seules les lignes des écritures validées sont visibles dans le Grand Livre
         $query = LigneEcriture::whereHas('ecriture', function ($q) use ($cabinetId) {
@@ -90,7 +90,7 @@ class GrandLivreController extends Controller
     public function export(Request $request)
     {
         $user = Auth::user();
-        $cabinetId = $user->cabinet_id;
+        $cabinetId = $user->cabinet_id ?? session('cabinet_id');
         $compteId = $request->input('compte_id');
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');

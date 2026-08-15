@@ -12,9 +12,13 @@ class CrmClientController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $contacts = CompanyCrmContact::orderBy('created_at', 'desc')->get();
+        $query = CompanyCrmContact::query();
+        if ($request->has('client_id')) {
+            $query->where('client_id', $request->query('client_id'));
+        }
+        $contacts = $query->orderBy('created_at', 'desc')->get();
         return response()->json($contacts);
     }
 

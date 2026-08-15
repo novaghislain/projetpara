@@ -106,7 +106,7 @@ Route::middleware(['auth', 'not_suspended'])->group(function () {
     Route::post('/commande/soumettre', [OrderController::class, 'submit'])->name('commande.submit');
 });
 
-Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client'])->group(function () {
+Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client', 'auditeur.readonly'])->group(function () {
     // Tableau de bord
     
     
@@ -281,10 +281,13 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client']
             ->name('rapprochement');
 
         // ── Fiscalité ────────────────────────────────────────────
+        // Accès contrôlé par le module de permission fiscalite (CDC §6.3 / §22.1).
+        // Middleware 'module:' = CheckModuleAccess → bypass super admin + vérifie
+        // canModule() (Spatie si assigné, sinon rôle legacy).
         Route::get('/fiscalite', fn() => view('app', ['page' => 'gel-fiscalite']))
-            ->name('fiscalite');
+            ->middleware('module:fiscalite,consulter')->name('fiscalite');
         Route::get('/declarations', fn() => view('app', ['page' => 'gel-declarations']))
-            ->name('declarations');
+            ->middleware('module:fiscalite,consulter')->name('declarations');
 
         // ── GED / Documents ──────────────────────────────────────
         Route::get('/documents', fn() => view('app', ['page' => 'gel-documents']))
@@ -424,6 +427,7 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client']
         })->name('documents.index.all');
         Route::get('/documents/{clientId}', [DocumentController::class, 'index'])->name('documents.index');
         Route::post('/documents/upload', [DocumentController::class, 'upload'])->name('documents.upload');
+        Route::post('/documents/analyze', [DocumentController::class, 'analyze'])->name('documents.analyze');
         Route::get('/documents/download/{id}', [DocumentController::class, 'download'])->name('documents.download');
         Route::delete('/documents/{id}', [DocumentController::class, 'destroy'])->name('documents.destroy');
 
@@ -581,15 +585,27 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client']
         Route::delete('/api/accounting/budgets/{clientId}/{id}', [BudgetController::class, 'destroy']);
 
         // Comptabilité — API Déclarations Fiscales
-        Route::get('/api/accounting/tax-declarations/{clientId}', [TaxDeclarationController::class, 'listAll']);
-        Route::get('/api/accounting/tax-declarations/{clientId}/{id}', [TaxDeclarationController::class, 'show']);
-        Route::post('/api/accounting/tax-declarations/tva', [TaxDeclarationController::class, 'calculerTva']);
-        Route::post('/api/accounting/tax-declarations/is', [TaxDeclarationController::class, 'calculerIs']);
-        Route::post('/api/accounting/tax-declarations/its', [TaxDeclarationController::class, 'calculerIts']);
-        Route::post('/api/accounting/tax-declarations/cnss', [TaxDeclarationController::class, 'calculerCnss']);
-        Route::post('/api/accounting/tax-declarations/vps', [TaxDeclarationController::class, 'calculerVps']);
-        Route::patch('/api/accounting/tax-declarations/{clientId}/{id}/status', [TaxDeclarationController::class, 'updateStatus']);
-        Route::delete('/api/accounting/tax-declarations/{clientId}/{id}', [TaxDeclarationController::class, 'destroy']);
+        // Gating fin par le module fiscalite (CDC §6.3 / FD2 §22.1 Action 3) :
+        //   lire → consulter, préparer/calculer → preparer_declaration,
+        //   valider/déposer → valider_declaration.
+        Route::get('/api/accounting/tax-declarations/{clientId}', [TaxDeclarationController::class, 'listAll'])
+            ->middleware('module:fiscalite,consulter');
+        Route::get('/api/accounting/tax-declarations/{clientId}/{id}', [TaxDeclarationController::class, 'show'])
+            ->middleware('module:fiscalite,consulter');
+        Route::post('/api/accounting/tax-declarations/tva', [TaxDeclarationController::class, 'calculerTva'])
+            ->middleware('module:fiscalite,preparer_declaration');
+        Route::post('/api/accounting/tax-declarations/is', [TaxDeclarationController::class, 'calculerIs'])
+            ->middleware('module:fiscalite,preparer_declaration');
+        Route::post('/api/accounting/tax-declarations/its', [TaxDeclarationController::class, 'calculerIts'])
+            ->middleware('module:fiscalite,preparer_declaration');
+        Route::post('/api/accounting/tax-declarations/cnss', [TaxDeclarationController::class, 'calculerCnss'])
+            ->middleware('module:fiscalite,preparer_declaration');
+        Route::post('/api/accounting/tax-declarations/vps', [TaxDeclarationController::class, 'calculerVps'])
+            ->middleware('module:fiscalite,preparer_declaration');
+        Route::patch('/api/accounting/tax-declarations/{clientId}/{id}/status', [TaxDeclarationController::class, 'updateStatus'])
+            ->middleware('module:fiscalite,valider_declaration');
+        Route::delete('/api/accounting/tax-declarations/{clientId}/{id}', [TaxDeclarationController::class, 'destroy'])
+            ->middleware('module:fiscalite,preparer_declaration');
 
         // Comptabilité — API Clôture
         Route::get('/api/accounting/closing/stats/{clientId}', [ClosingController::class, 'stats']);
@@ -670,13 +686,20 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client']
     });
 
     // ─── Télé-déclaration ─────────────────────────────────────────────────
+    // Gating fin par le module fiscalite (CDC §6.3 / FD2 §22.1 Action 3).
     Route::prefix('tele-declarations')->name('gel.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Gel\TeleDeclController::class, 'index'])->name('tele-declarations.index');
-        Route::get('/create', [\App\Http\Controllers\Gel\TeleDeclController::class, 'create'])->name('tele-declarations.create');
-        Route::post('/', [\App\Http\Controllers\Gel\TeleDeclController::class, 'store'])->name('tele-declarations.store');
-        Route::get('/{declaration}', [\App\Http\Controllers\Gel\TeleDeclController::class, 'show'])->name('tele-declarations.show');
-        Route::post('/{declaration}/submit', [\App\Http\Controllers\Gel\TeleDeclController::class, 'submit'])->name('tele-declarations.submit');
-        Route::delete('/{declaration}', [\App\Http\Controllers\Gel\TeleDeclController::class, 'destroy'])->name('tele-declarations.destroy');
+        Route::get('/', [\App\Http\Controllers\Gel\TeleDeclController::class, 'index'])->name('tele-declarations.index')
+            ->middleware('module:fiscalite,consulter');
+        Route::get('/create', [\App\Http\Controllers\Gel\TeleDeclController::class, 'create'])->name('tele-declarations.create')
+            ->middleware('module:fiscalite,consulter');
+        Route::post('/', [\App\Http\Controllers\Gel\TeleDeclController::class, 'store'])->name('tele-declarations.store')
+            ->middleware('module:fiscalite,preparer_declaration');
+        Route::get('/{declaration}', [\App\Http\Controllers\Gel\TeleDeclController::class, 'show'])->name('tele-declarations.show')
+            ->middleware('module:fiscalite,consulter');
+        Route::post('/{declaration}/submit', [\App\Http\Controllers\Gel\TeleDeclController::class, 'submit'])->name('tele-declarations.submit')
+            ->middleware('module:fiscalite,televerser_declaration');
+        Route::delete('/{declaration}', [\App\Http\Controllers\Gel\TeleDeclController::class, 'destroy'])->name('tele-declarations.destroy')
+            ->middleware('module:fiscalite,preparer_declaration');
     });
 
     // ─── Signatures électroniques ────────────────────────────────────────
@@ -1194,7 +1217,7 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client']
         Route::post('/api/alerts/generate', [\App\Http\Controllers\Modules\Rh\RhAlertsController::class, 'generate'])->name('api.alerts.generate');
     });
 
-    // ─── Paie — Calculateur IRPP/CNSS ──────────────────────────────────
+    // ─── Paie — Calculateur ITS/CNSS ──────────────────────────────────
     // Paie - module:rh
     Route::middleware('module:rh')->group(function () {
         Route::get('/paie/calculateur', fn() => view('app', ['page' => 'gel-paie']))->name('paie.calculateur');

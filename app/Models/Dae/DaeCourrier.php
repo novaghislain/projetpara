@@ -24,6 +24,9 @@ class DaeCourrier extends DaeBaseModel
         'type', 'mode', 'objet', 'contenu', 'urgence', 'statut',
         'date_courrier', 'date_reception', 'date_envoi', 'date_traitement', 'reponse',
         'traite_par', 'assigned_to', 'fichier_joint', 'tags', 'created_by', 'updated_by',
+        // Nouveaux champs Registres
+        'numero_ordre', 'nombre_pieces', 'date_reponse', 'numero_reponse',
+        'numero_archives', 'observations', 'signature_destinataire', 'noms_adresses',
         // Workflow
         'workflow_step', 'workflow_notes',
         'visa_par', 'visa_at', 'signe_par', 'signe_at', 'envoye_at', 'archive_at',
@@ -47,6 +50,7 @@ class DaeCourrier extends DaeBaseModel
             'date_reception' => 'datetime',
             'date_envoi' => 'datetime',
             'date_traitement' => 'datetime',
+            'date_reponse' => 'datetime',
             'visa_at' => 'datetime',
             'signe_at' => 'datetime',
             'envoye_at' => 'datetime',

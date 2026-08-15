@@ -15,8 +15,7 @@ class ClientPortalController extends Controller
      */
     public function index()
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
         $client = Client::findOrFail($clientId);
 
         // Si le slug est vide, le générer
@@ -44,8 +43,7 @@ class ClientPortalController extends Controller
      */
     public function regenerateSlug(Request $request)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
         $client = Client::findOrFail($clientId);
 
         // On regénère en s'assurant qu'on ne retombe pas sur le même
@@ -60,8 +58,7 @@ class ClientPortalController extends Controller
      */
     public function toggleStatus(Request $request)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
         $client = Client::findOrFail($clientId);
 
         $client->portal_active = !$client->portal_active;

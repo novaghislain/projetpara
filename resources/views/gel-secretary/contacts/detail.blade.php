@@ -1,177 +1,220 @@
 @extends('layouts.gel-secretary')
-@section('title', ($contact->name ?? 'Contact') . ' — Fiche 360°')
+@section('title', 'Fiche Contact 360°')
+
+@push('styles')
+<style>
+/* ==========================================================================
+   CONTACT DETAIL 360 - BENTO GRID DESIGN
+   ========================================================================== */
+.contact-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    grid-auto-rows: minmax(100px, auto);
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+.cd-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Sections */
+.cd-header { grid-column: span 12; display: flex; align-items: center; justify-content: space-between; padding:32px 40px;}
+.cd-profile { grid-column: span 4; grid-row: span 3; align-items: center; text-align: center; }
+.cd-activity { grid-column: span 8; grid-row: span 3; }
+
+/* Profile Card */
+.cd-avatar-large {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0EA5E9, #2563EB);
+    color: white;
+    font-size: 32px;
+    font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px auto;
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
+}
+.cd-name { font-size: 22px; font-weight: 800; color: #1E293B; margin-bottom: 4px; }
+.cd-role { font-size: 14px; font-weight: 600; color: #64748B; margin-bottom: 16px; }
+.cd-badge { display:inline-block; padding: 6px 12px; border-radius: 12px; font-size: 11px; font-weight: 700; background: #EFF6FF; color: #3B82F6; margin-bottom:24px;}
+.cd-badge.portal { background: #F5F3FF; color: #7C3AED; }
+
+.cd-info-list { width: 100%; text-align: left; }
+.cd-info-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #E2E8F0; }
+.cd-info-item:last-child { border-bottom: none; }
+.cd-info-icon { width: 32px; height: 32px; border-radius: 10px; background: #F8FAFC; color: #64748B; display: flex; align-items: center; justify-content: center; }
+.cd-info-text { font-size: 14px; font-weight: 500; color: #334155; }
+.cd-info-label { font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; margin-bottom: 2px;}
+
+/* Activity Card */
+.activity-header { font-size:18px; font-weight:800; color:#1E293B; margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid #E2E8F0; display:flex; align-items:center; gap:12px;}
+.activity-tabs { display:flex; gap:16px; margin-bottom:24px; border-bottom:2px solid #E2E8F0; }
+.activity-tab { padding:8px 16px; font-size:14px; font-weight:700; color:#64748B; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; transition:all 0.2s;}
+.activity-tab.active { color:#0D9488; border-bottom-color:#0D9488; }
+.activity-tab:hover:not(.active) { color:#1E293B; }
+
+.timeline { position:relative; padding-left:24px; }
+.timeline::before { content:''; position:absolute; left:7px; top:0; bottom:0; width:2px; background:#E2E8F0; }
+.timeline-item { position:relative; margin-bottom:24px; }
+.timeline-item::before { content:''; position:absolute; left:-24px; top:4px; width:16px; height:16px; border-radius:50%; background:#0D9488; border:3px solid white; box-shadow:0 0 0 1px #E2E8F0; }
+.timeline-date { font-size:12px; font-weight:700; color:#64748B; margin-bottom:4px; }
+.timeline-title { font-size:14px; font-weight:700; color:#1E293B; }
+.timeline-desc { font-size:13px; color:#475569; margin-top:4px; line-height:1.5; }
+
+/* Buttons */
+.btn-back { background: white; color: #1E293B; border: 1px solid #E2E8F0; padding: 10px 20px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration:none; display:inline-flex; align-items:center; gap:8px;}
+.btn-back:hover { background: #F8FAFC; }
+.btn-action { background: #0D9488; color: white; border: none; padding: 10px 20px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; display:inline-flex; align-items:center; gap:8px;}
+.btn-action:hover { background: #0F766E; }
+
+/* Animations */
+.stagger-1 { animation: fadeUp 0.4s ease-out forwards; opacity: 0; animation-delay: 0.1s;}
+.stagger-2 { animation: fadeUp 0.4s ease-out forwards; opacity: 0; animation-delay: 0.2s;}
+.stagger-3 { animation: fadeUp 0.4s ease-out forwards; opacity: 0; animation-delay: 0.3s;}
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+@endpush
 
 @section('content')
-<style>
-  .pro-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--sec-border); }
-  .pro-title { font-size: 18px; font-weight: 700; color: var(--sec-text); margin-bottom: 4px; }
-  .pro-subtitle { font-size: 12px; color: var(--sec-text-muted); }
-  
-  .pro-btn {
-    background: white; border: 1px solid var(--sec-border); color: var(--sec-text);
-    padding: 7px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;
-    cursor: pointer; transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
-  }
-  .pro-btn:hover { background: #F8FAFC; border-color: #CBD5E1; }
-  
-  .pro-panel { background: white; border-radius: 8px; border: 1px solid var(--sec-border); box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; flex-direction: column; overflow: hidden; margin-bottom: 24px; }
-  .panel-header { padding: 14px 16px; border-bottom: 1px solid var(--sec-border); display: flex; justify-content: space-between; align-items: center; background: #FAFAFA; }
-  .panel-title { font-size: 13px; font-weight: 700; color: var(--sec-text); display: flex; align-items: center; gap: 8px; }
-  .panel-body { padding: 16px; }
 
-  .timeline { position: relative; padding-left: 24px; margin-top: 16px; }
-  .timeline::before { content: ''; position: absolute; left: 6px; top: 0; bottom: 0; width: 2px; background: #E2E8F0; }
-  .timeline-item { position: relative; margin-bottom: 20px; }
-  .timeline-item:last-child { margin-bottom: 0; }
-  .timeline-icon { position: absolute; left: -24px; top: 0; width: 14px; height: 14px; border-radius: 50%; background: var(--sec-primary); border: 2px solid white; box-shadow: 0 0 0 2px #E2E8F0; }
-  .timeline-content { background: #F8FAFC; padding: 12px; border-radius: 6px; border: 1px solid var(--sec-border); }
-  .timeline-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
-  .timeline-meta { font-size: 11px; color: var(--sec-text-muted); }
+@php
+    $initials = strtoupper(substr($contact->name, 0, 2));
+    $badgeType = isset($contact->type) && $contact->type == 'portal' ? 'portal' : 'internal';
+    $badgeLabel = $badgeType == 'portal' ? 'Accès Portail' : 'Contact Interne';
+@endphp
 
-  .contact-info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-  .info-group { margin-bottom: 12px; }
-  .info-label { font-size: 11px; color: var(--sec-text-muted); font-weight: 600; text-transform: uppercase; margin-bottom: 4px; }
-  .info-value { font-size: 14px; font-weight: 500; color: var(--sec-text); }
-</style>
+<div class="contact-detail-grid">
 
-<div class="pro-header">
-  <div>
-    <div class="pro-title">
-      <a href="{{ route('gel-secretary.contacts.index') }}" style="color:var(--sec-text-muted); text-decoration:none;"><i class="fas fa-arrow-left" style="font-size:14px; margin-right:8px;"></i></a>
-      {{ $contact->name }}
+    <!-- HEADER -->
+    <div class="cd-card cd-header stagger-1">
+        <div>
+            <a href="{{ route('gel-secretary.contacts.index') }}" class="btn-back"><i class="fas fa-arrow-left"></i> Retour au carnet</a>
+        </div>
+        <div style="display:flex; gap:12px;">
+            <button class="btn-back"><i class="fas fa-edit"></i> Modifier</button>
+            <button class="btn-action"><i class="fas fa-paper-plane"></i> Envoyer un message</button>
+        </div>
     </div>
-    <div class="pro-subtitle">Contact chez {{ $activeClient->nom_entreprise }}</div>
-  </div>
-  <div class="pro-actions">
-    <a href="mailto:{{ $contact->email }}" class="pro-btn"><i class="fas fa-envelope"></i> Envoyer un email</a>
-    <a href="tel:{{ $contact->phone }}" class="pro-btn"><i class="fas fa-phone"></i> Appeler</a>
-  </div>
-</div>
 
-<div class="row">
-  <!-- COLONNE GAUCHE : IDENTITÉ -->
-  <div class="col-md-4">
-    <div class="pro-panel" style="position: sticky; top: 80px;">
-      <div class="panel-header">
-        <div class="panel-title"><i class="fas fa-id-card text-primary"></i> Fiche d'identité</div>
-      </div>
-      <div class="panel-body">
-        <div style="text-align:center; margin-bottom: 24px;">
-          <div style="width: 80px; height: 80px; border-radius: 50%; background: #E2E8F0; color: #475569; font-size: 32px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;">
-            {{ strtoupper(substr($contact->name, 0, 1)) }}
-          </div>
-          <div style="font-size: 16px; font-weight: 700;">{{ $contact->name }}</div>
-          <div style="font-size: 13px; color: var(--sec-text-muted);">{{ $contact->position ?? 'Fonction non précisée' }}</div>
-        </div>
+    <!-- PROFILE CARD -->
+    <div class="cd-card cd-profile stagger-2">
+        <div class="cd-avatar-large">{{ $initials }}</div>
+        <div class="cd-name">{{ $contact->name }}</div>
+        <div class="cd-role">{{ $contact->position ?? 'Fonction non renseignée' }}</div>
+        <div class="cd-badge {{ $badgeType }}">{{ $badgeLabel }}</div>
 
-        <div class="contact-info-grid">
-          <div class="info-group">
-            <div class="info-label">Email</div>
-            <div class="info-value">{{ $contact->email ?? '—' }}</div>
-          </div>
-          <div class="info-group">
-            <div class="info-label">Téléphone</div>
-            <div class="info-value">{{ $contact->phone ?? '—' }}</div>
-          </div>
-          <div class="info-group" style="grid-column: span 2;">
-            <div class="info-label">Entreprise liée</div>
-            <div class="info-value">{{ $activeClient->nom_entreprise }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- COLONNE DROITE : HISTORIQUE 360 -->
-  <div class="col-md-8">
-    
-    <ul class="nav nav-tabs" id="myTab" role="tablist" style="border-bottom:1px solid var(--sec-border); margin-bottom:20px;">
-      <li class="nav-item" role="presentation">
-        <button class="nav-link active" style="font-size:13px; font-weight:600; padding:10px 16px; border:none; background:transparent; border-bottom:2px solid var(--sec-primary); color:var(--sec-primary);" id="activite-tab" data-bs-toggle="tab" data-bs-target="#activite" type="button" role="tab">Activité Récente</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" style="font-size:13px; font-weight:600; padding:10px 16px; border:none; background:transparent; color:var(--sec-text-muted);" id="taches-tab" data-bs-toggle="tab" data-bs-target="#taches" type="button" role="tab">Tâches</button>
-      </li>
-    </ul>
-
-    <div class="tab-content">
-      <!-- ACTIVITÉ RÉCENTE -->
-      <div class="tab-pane fade show active" id="activite" role="tabpanel">
-        <div class="pro-panel">
-          <div class="panel-header">
-            <div class="panel-title"><i class="fas fa-history text-muted"></i> Chronologie (Appels & RDV)</div>
-          </div>
-          <div class="panel-body">
-            @if($calls->count() == 0 && $events->count() == 0)
-              <div style="text-align:center; padding:32px; color:var(--sec-text-muted); font-size:13px;">Aucune activité récente pour ce contact ou cette entreprise.</div>
-            @else
-              <div class="timeline">
-                @foreach($calls as $call)
-                  <div class="timeline-item">
-                    <div class="timeline-icon" style="background: #3B82F6;"></div>
-                    <div class="timeline-content">
-                      <div class="timeline-title"><i class="fas fa-phone" style="font-size:10px; margin-right:4px;"></i> Appel téléphonique ({{ $call->direction }})</div>
-                      <div class="timeline-meta">{{ \Carbon\Carbon::parse($call->called_at)->format('d/m/Y H:i') }} • Résumé: {{ $call->summary ?? '—' }}</div>
-                    </div>
-                  </div>
-                @endforeach
-                
-                @foreach($events as $event)
-                  <div class="timeline-item">
-                    <div class="timeline-icon" style="background: #10B981;"></div>
-                    <div class="timeline-content">
-                      <div class="timeline-title"><i class="fas fa-calendar" style="font-size:10px; margin-right:4px;"></i> Rendez-vous</div>
-                      <div class="timeline-meta">{{ \Carbon\Carbon::parse($event->start_at)->format('d/m/Y H:i') }} • {{ $event->title }}</div>
-                    </div>
-                  </div>
-                @endforeach
-              </div>
-            @endif
-          </div>
-        </div>
-      </div>
-
-      <!-- TÂCHES -->
-      <div class="tab-pane fade" id="taches" role="tabpanel">
-        <div class="pro-panel">
-          <div class="panel-header">
-            <div class="panel-title"><i class="fas fa-check-square text-success"></i> Tâches liées</div>
-          </div>
-          <div class="panel-body p-0">
-            @forelse($tasks as $task)
-              <div style="padding:12px 16px; border-bottom:1px solid var(--sec-border); display:flex; justify-content:space-between; align-items:center;">
+        <div class="cd-info-list">
+            <div class="cd-info-item">
+                <div class="cd-info-icon"><i class="fas fa-envelope"></i></div>
                 <div>
-                  <div style="font-size:13px; font-weight:600;">{{ $task->titre }}</div>
-                  <div style="font-size:11px; color:var(--sec-text-muted);">{{ \Illuminate\Support\Str::limit($task->description, 50) }}</div>
+                    <div class="cd-info-label">Email</div>
+                    <div class="cd-info-text">{{ $contact->email ?? 'Non renseigné' }}</div>
                 </div>
-                <div style="font-size:10px; font-weight:700; padding:4px 8px; border-radius:4px; background:#F1F5F9;">
-                  {{ str_replace('_', ' ', strtoupper($task->statut)) }}
+            </div>
+            <div class="cd-info-item">
+                <div class="cd-info-icon"><i class="fas fa-phone"></i></div>
+                <div>
+                    <div class="cd-info-label">Téléphone</div>
+                    <div class="cd-info-text">{{ $contact->phone ?? 'Non renseigné' }}</div>
                 </div>
-              </div>
-            @empty
-              <div style="text-align:center; padding:32px; color:var(--sec-text-muted); font-size:13px;">Aucune tâche liée.</div>
-            @endforelse
-          </div>
+            </div>
+            <div class="cd-info-item">
+                <div class="cd-info-icon"><i class="fas fa-building"></i></div>
+                <div>
+                    <div class="cd-info-label">Entreprise</div>
+                    <div class="cd-info-text">{{ $activeClient ? $activeClient->nom_entreprise : 'Autonome' }}</div>
+                </div>
+            </div>
         </div>
-      </div>
-
     </div>
 
-  </div>
+    <!-- ACTIVITY & 360 VIEW -->
+    <div class="cd-card cd-activity stagger-3">
+        <div class="activity-header">
+            <i class="fas fa-history" style="color:#0D9488;"></i> Activité & Historique 360°
+        </div>
+        
+        <div class="activity-tabs">
+            <div class="activity-tab active" onclick="switchTab('tasks')">Tâches Associées</div>
+            <div class="activity-tab" onclick="switchTab('calls')">Appels & Échanges</div>
+            <div class="activity-tab" onclick="switchTab('events')">Événements</div>
+        </div>
+
+        <!-- Tâches -->
+        <div id="tab-tasks" class="tab-content timeline">
+            @forelse($tasks as $task)
+                <div class="timeline-item">
+                    <div class="timeline-date">{{ $task->created_at->format('d/m/Y H:i') }}</div>
+                    <div class="timeline-title">{{ $task->titre }}</div>
+                    <div class="timeline-desc">{{ Str::limit($task->description, 100) }}</div>
+                </div>
+            @empty
+                <div style="padding:20px; color:#94A3B8; text-align:center;">
+                    <i class="fas fa-tasks" style="font-size:24px; margin-bottom:12px; opacity:0.5;"></i>
+                    <br>Aucune tâche associée.
+                </div>
+            @endforelse
+        </div>
+
+        <!-- Appels -->
+        <div id="tab-calls" class="tab-content timeline" style="display:none;">
+            @forelse($calls as $call)
+                <div class="timeline-item">
+                    <div class="timeline-date">{{ $call->created_at->format('d/m/Y H:i') }}</div>
+                    <div class="timeline-title">{{ $call->subject ?? 'Appel téléphonique' }}</div>
+                    <div class="timeline-desc">{{ $call->notes ?? '' }}</div>
+                </div>
+            @empty
+                <div style="padding:20px; color:#94A3B8; text-align:center;">
+                    <i class="fas fa-phone-alt" style="font-size:24px; margin-bottom:12px; opacity:0.5;"></i>
+                    <br>Aucun appel logué.
+                </div>
+            @endforelse
+        </div>
+
+        <!-- Événements -->
+        <div id="tab-events" class="tab-content timeline" style="display:none;">
+            @forelse($events as $event)
+                <div class="timeline-item">
+                    <div class="timeline-date">{{ \Carbon\Carbon::parse($event->date_debut)->format('d/m/Y H:i') }}</div>
+                    <div class="timeline-title">{{ $event->titre }}</div>
+                    <div class="timeline-desc">{{ $event->lieu ?? 'Aucun lieu spécifié' }}</div>
+                </div>
+            @empty
+                <div style="padding:20px; color:#94A3B8; text-align:center;">
+                    <i class="fas fa-calendar-alt" style="font-size:24px; margin-bottom:12px; opacity:0.5;"></i>
+                    <br>Aucun événement lié.
+                </div>
+            @endforelse
+        </div>
+    </div>
+
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+@push('scripts')
 <script>
-  // Simple tab styling sync
-  document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(btn => {
-    btn.addEventListener('shown.bs.tab', e => {
-      document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(b => {
-        b.style.borderBottom = 'none';
-        b.style.color = 'var(--sec-text-muted)';
-      });
-      e.target.style.borderBottom = '2px solid var(--sec-primary)';
-      e.target.style.color = 'var(--sec-primary)';
-    });
-  });
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.activity-tab').forEach(el => el.classList.remove('active'));
+        
+        document.getElementById('tab-' + tabId).style.display = 'block';
+        event.currentTarget.classList.add('active');
+    }
 </script>
+@endpush
+
 @endsection

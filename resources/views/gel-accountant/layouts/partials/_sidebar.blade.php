@@ -136,6 +136,14 @@ $currentPage = $currentPage ?? '';
         <i class="fas fa-chevron-right nav-arrow"></i>
     </button>
 
+    {{-- Secrétariat --}}
+    <button class="gel-nav-item" data-nav="secMenu"
+        onmouseenter="openNested('secMenu', this)"
+        onclick="toggleNested('secMenu', this)">
+        <i class="fas fa-folder-open"></i> Secrétariat
+        <i class="fas fa-chevron-right nav-arrow"></i>
+    </button>
+
     <a href="{{ route('gel-accountant.tasks.index') }}" class="gel-nav-item" onclick="closeAllNested()">
         <i class="fas fa-tasks"></i> Tâches
     </a>
@@ -148,6 +156,26 @@ $currentPage = $currentPage ?? '';
 </nav>
 
 {{-- ═══════════ NESTED DROPDOWNS (Level 2) ═══════════ --}}
+
+{{-- Secrétariat --}}
+<div class="gel-nested-dropdown" id="secMenu" onmouseleave="closeNestedDelayed('secMenu')">
+    <div class="dropdown-header">Secrétariat</div>
+    <a href="{{ route('gel-accountant.secretariat.courriers.index') }}" class="gel-nav-item" onclick="closeAllNested()">
+        <i class="fas fa-envelope-open-text"></i> Registre Courriers
+    </a>
+    <a href="{{ route('gel-accountant.secretariat.documents.index') }}" class="gel-nav-item" onclick="closeAllNested()">
+        <i class="fas fa-file-alt"></i> Gestion Documentaire (GED)
+    </a>
+    <a href="{{ route('gel-accountant.secretariat.contacts.index') }}" class="gel-nav-item" onclick="closeAllNested()">
+        <i class="fas fa-address-book"></i> Annuaire Contacts
+    </a>
+    <a href="{{ route('gel-accountant.secretariat.events.index') }}" class="gel-nav-item" onclick="closeAllNested()">
+        <i class="fas fa-calendar-alt"></i> Agenda & Réunions
+    </a>
+    <a href="{{ route('gel-accountant.secretariat.pvs.index') }}" class="gel-nav-item" onclick="closeAllNested()">
+        <i class="fas fa-file-signature"></i> Comptes-Rendus (PV)
+    </a>
+</div>
 
 {{-- Work --}}
 <div class="gel-nested-dropdown" id="workMenu" onmouseleave="closeNestedDelayed('workMenu')">

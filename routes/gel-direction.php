@@ -6,16 +6,21 @@ use App\Http\Controllers\GelDirection\ClientSupervisionController;
 use App\Http\Controllers\GelDirection\TeamSupervisionController;
 use App\Http\Controllers\GelDirection\FinancialReportController;
 use App\Http\Controllers\GelDirection\ValidationController;
+use App\Http\Controllers\GelDirection\ProfileCompletionController;
 
-Route::middleware(['auth', 'verified'])->prefix('gel-direction')->name('gel-direction.')->group(function () {
+Route::middleware(['auth'])->prefix('gel-direction')->name('gel-direction.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/profile/complete', [ProfileCompletionController::class, 'store'])->name('profile.complete');
     
     // Supervision Clients
     Route::get('/clients', [ClientSupervisionController::class, 'index'])->name('clients.index');
+    Route::post('/clients', [ClientSupervisionController::class, 'store'])->name('clients.store');
     Route::get('/clients/{client}', [ClientSupervisionController::class, 'show'])->name('clients.show');
     
-    // Supervision Équipes (RH)
+    // Équipe & Collaborateurs
     Route::get('/team', [TeamSupervisionController::class, 'index'])->name('team.index');
+    Route::post('/team/invite', [TeamSupervisionController::class, 'invite'])->name('team.invite');
+    Route::post('/team/invitations/{id}/cancel', [TeamSupervisionController::class, 'cancelInvitation'])->name('team.invitations.cancel');
     Route::get('/team/{user}', [TeamSupervisionController::class, 'show'])->name('team.show');
     
     // Rapports Financiers

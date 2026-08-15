@@ -16,8 +16,7 @@ class BankReconciliationController extends Controller
      */
     public function index()
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $comptes = BankAccount::where('client_id', $clientId)->get();
         $rapprochements = BankReconciliation::where('client_id', $clientId)
@@ -33,8 +32,7 @@ class BankReconciliationController extends Controller
      */
     public function store(Request $request)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $validated = $request->validate([
             'bank_account_id' => 'required|exists:bank_accounts,id',
@@ -72,8 +70,7 @@ class BankReconciliationController extends Controller
      */
     public function show($id)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $reconciliation = BankReconciliation::where('client_id', $clientId)->findOrFail($id);
         $compte = $reconciliation->bankAccount;
@@ -93,8 +90,7 @@ class BankReconciliationController extends Controller
      */
     public function process(Request $request, $id)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $reconciliation = BankReconciliation::where('client_id', $clientId)->findOrFail($id);
 
@@ -154,8 +150,7 @@ class BankReconciliationController extends Controller
      */
     public function autoMatch(Request $request, $id)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $reconciliation = BankReconciliation::where('client_id', $clientId)->findOrFail($id);
 

@@ -450,11 +450,13 @@
                 </button>
             </form>
 
+            @if (Route::has('register'))
             <div class="gel-divider"><span>Nouveau ?</span></div>
 
             <div class="gel-link">
                 <a href="{{ route('register') }}">Créer un compte</a>
             </div>
+            @endif
         </div>
     </div>
 

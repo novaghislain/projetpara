@@ -52,97 +52,19 @@ class AuthenticatedSessionController extends Controller
 
         $user = Auth::user();
 
-        // ─── 2. Vérification suspension ─────────────────────────────────
-        if ($user->isSuspended()) {
+        // ─── 2. Vérification statut ─────────────────────────────────
+        if ($user->statut !== 'actif') {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
             return redirect()->route('login')->withErrors([
-                'email' => 'Votre compte a été suspendu. Veuillez contacter l\'administrateur.',
+                'email' => 'Votre compte a été suspendu ou est inactif. Veuillez contacter l\'administrateur.',
             ]);
         }
 
-        // ─── 3. Vérification email (sauf super admin) ───────────────────
-        if (!$user->isSuperAdmin() && !$user->email_verified_at) {
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-
-            return redirect()->route('login')->withErrors([
-                'email' => 'Veuillez vérifier votre adresse email avant de vous connecter.',
-            ]);
-        }
-
-        // ─── 4. must_change_password ────────────────────────────────────
-        if ($user->must_change_password) {
-            session(['must_change_password' => true]);
-        }
-
-        // ─── 5. 2FA ────────────────────────────────────────────────────
-        if ($user->two_factor_confirmed_at) {
-            session(['2fa_pending' => true, '2fa_user_id' => $user->id]);
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-            return redirect()->route('2fa.challenge');
-        }
-
-        // ─── 6. Metadata de connexion ──────────────────────────────────
-        $user->update([
-            'last_login_at' => now(),
-            'last_login_ip' => $request->ip(),
-        ]);
-
-        // ─── 7. Audit trail ────────────────────────────────────────────
-        AuditTrail::create([
-            'user_id'       => $user->id,
-            'client_id'     => $user->active_client_id ?? $user->client_id,
-            'event'         => 'login',
-            'auditable_type' => get_class($user),
-            'auditable_id'   => $user->id,
-            'description'    => 'Connexion utilisateur',
-            'ip_address'     => $request->ip(),
-            'user_agent'     => $request->userAgent(),
-        ]);
-
-        // ─── 8. Onboarding incomplet ? Redirection vers le profil ───
-        if (!$user->hasCompletedOnboarding() && $user->onboarding_token && $user->account_type) {
-            return redirect()->route('onboarding.profil', ['token' => $user->onboarding_token]);
-        }
-
-        // ─── 9. Redirection selon le rôle ──────────────────────────────
-        // Commande en cours ? Priorité absolue
-        if (session('order_service_id')) {
-            return redirect()->route('commande.step', [
-                'service' => session('order_service_id'),
-            ]);
-        }
-
-        return match (true) {
-            $user->role === 'super_admin' || $user->isSuperAdmin()
-                => redirect('/gel-super-admin'),
-
-            $user->role === 'comptable' || $user->account_type === 'comptable'
-                => redirect('/gel-accountant/dashboard'),
-
-            in_array($user->role, ['secretaire', 'secretary']) || $user->role_secretaire
-                => redirect('/gel-secretary/dashboard'),
-
-            $user->role === 'informaticien' || $user->account_type === 'informaticien'
-                => redirect('/gel-informaticien/dashboard'),
-
-            $user->role === 'client'
-                => redirect('/mes-commandes'),
-
-            $user->role === 'company_admin'
-                => redirect()->route('company.dashboard'),
-
-            in_array($user->role, ['company_manager', 'company_employee'])
-                => $this->redirectBusinessUser($user),
-
-            default => redirect('/login'),
-        };
+        // Redirection vers le tableau de bord unique
+        return redirect()->route('dashboard');
     }
 
     /**
@@ -282,6 +204,28 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('commande.step', [
                 'service' => session('order_service_id'),
             ]);
+        }
+
+        // Vérification RBAC : Si l'utilisateur est un indépendant (autonome), il a une affectation principale
+        if ($user->is_autonomous) {
+            $affectation = \App\Models\Affectation::where('utilisateur_id', $user->id)
+                            ->where('statut', 'active')
+                            ->with('role')
+                            ->first();
+
+            if ($affectation && $affectation->role) {
+                // Définir l'entreprise active pour son espace
+                session(['active_entreprise_id' => $affectation->entreprise_id]);
+
+                $roleCode = $affectation->role->code;
+                return match ($roleCode) {
+                    'accountant' => redirect('/gel-accountant/dashboard'),
+                    'secretary'  => redirect('/gel-secretary/dashboard'),
+                    'rh'         => redirect('/gel-rh/dashboard'),
+                    'legal'      => redirect('/gel-legal/dashboard'),
+                    default      => redirect('/dashboard'),
+                };
+            }
         }
 
         return match (true) {

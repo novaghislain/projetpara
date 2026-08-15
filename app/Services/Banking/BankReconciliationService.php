@@ -6,12 +6,19 @@ use App\Models\BankAccount;
 use App\Models\BankReconciliation;
 use App\Models\BankReconciliationItem;
 use App\Models\BankTransaction;
+use App\Services\IA\BankReconciliationAiService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class BankReconciliationService
 {
+    protected BankReconciliationAiService $aiService;
+
+    public function __construct(BankReconciliationAiService $aiService)
+    {
+        $this->aiService = $aiService;
+    }
     protected function getClientId(): int
     {
         return (int) (Auth::user()->active_client_id ?? Auth::user()->client_id);
@@ -188,12 +195,11 @@ class BankReconciliationService
         $suggestions = [];
         $matchedIds = [];
 
-        // Stratégie : matcher par montant exact
+        // Stratégie 1 : Transactions miroir exactes
         foreach ($pendingTransactions as $txn) {
             $amount = max($txn->debit, $txn->credit);
             if ($amount <= 0 || in_array($txn->id, $matchedIds)) continue;
 
-            // Chercher une transaction miroir (même montant, signe opposé)
             $mirror = $pendingTransactions->first(function ($t) use ($amount, $matchedIds, $txn) {
                 $tAmount = max($t->debit, $t->credit);
                 return $t->id !== $txn->id
@@ -203,13 +209,35 @@ class BankReconciliationService
 
             if ($mirror) {
                 $suggestions[] = [
+                    'type' => 'mirror',
                     'debit_transaction_id' => $txn->debit > 0 ? $txn->id : $mirror->id,
                     'credit_transaction_id' => $txn->credit > 0 ? $txn->id : $mirror->id,
                     'amount' => $amount,
-                    'confidence' => 'high',
+                    'confidence_score' => 100,
+                    'reason' => 'Transactions miroir exactes trouvées dans le relevé.'
                 ];
                 $matchedIds[] = $txn->id;
                 $matchedIds[] = $mirror->id;
+            }
+        }
+
+        // Stratégie 2 : Intelligence Artificielle (Fuzzy Matching avec factures ouvertes)
+        foreach ($pendingTransactions as $txn) {
+            if (in_array($txn->id, $matchedIds)) continue;
+            
+            $aiMatches = $this->aiService->suggestMatchesForTransaction($txn);
+            if (!empty($aiMatches)) {
+                $bestMatch = $aiMatches[0];
+                $suggestions[] = [
+                    'type' => 'invoice',
+                    'transaction_id' => $txn->id,
+                    'invoice_id' => $bestMatch['invoice_id'],
+                    'invoice_number' => $bestMatch['invoice_number'],
+                    'amount' => $bestMatch['invoice_amount'],
+                    'confidence_score' => $bestMatch['confidence_score'],
+                    'reason' => $bestMatch['reason']
+                ];
+                $matchedIds[] = $txn->id;
             }
         }
 

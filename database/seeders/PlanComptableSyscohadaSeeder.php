@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Cabinet;
+use App\Models\Gel\Cabinet;
 use App\Models\Gel\Comptabilite\CompteComptable;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -109,24 +109,23 @@ class PlanComptableSyscohadaSeeder extends Seeder
         ['code' => '416',     'intitule' => 'Clients, avances et acomptes',      'classe' => '4', 'niveau' => 3, 'solde_debiteur' => true],
         ['code' => '418',     'intitule' => 'Clients — factures à établir',      'classe' => '4', 'niveau' => 3, 'solde_debiteur' => true],
         ['code' => '419',     'intitule' => 'Clients créditeurs',                'classe' => '4', 'niveau' => 3, 'solde_debiteur' => false],
-        ['code' => '421',     'intitule' => 'Personnel — rémunérations dues',    'classe' => '4', 'niveau' => 2, 'solde_debiteur' => false],
-        ['code' => '422',     'intitule' => 'Personnel — avances et acomptes',   'classe' => '4', 'niveau' => 2, 'solde_debiteur' => true],
-        ['code' => '423',     'intitule' => 'Personnel — oppositions',           'classe' => '4', 'niveau' => 2, 'solde_debiteur' => false],
-        ['code' => '424',     'intitule' => 'Organismes sociaux',                'classe' => '4', 'niveau' => 2, 'solde_debiteur' => false],
-        ['code' => '425',     'intitule' => 'Autres organismes sociaux',         'classe' => '4', 'niveau' => 2, 'solde_debiteur' => false],
-        ['code' => '43',      'intitule' => 'État et collectivités publiques',   'classe' => '4', 'niveau' => 2, 'solde_debiteur' => true],
-        ['code' => '431',     'intitule' => 'État — Impôts sur les bénéfices',   'classe' => '4', 'niveau' => 3, 'solde_debiteur' => false],
-        ['code' => '432',     'intitule' => 'État — TVA collectée',              'classe' => '4', 'niveau' => 3, 'solde_debiteur' => false],
-        ['code' => '433',     'intitule' => 'État — TVA récupérable',            'classe' => '4', 'niveau' => 3, 'solde_debiteur' => true],
-        ['code' => '434',     'intitule' => 'État — Impôts et taxes',            'classe' => '4', 'niveau' => 3, 'solde_debiteur' => false],
-        ['code' => '435',     'intitule' => 'État — Autres impôts',              'classe' => '4', 'niveau' => 3, 'solde_debiteur' => false],
-        ['code' => '437',     'intitule' => 'État — Subventions à recevoir',     'classe' => '4', 'niveau' => 3, 'solde_debiteur' => true],
-        ['code' => '438',     'intitule' => 'État — Charges à payer',            'classe' => '4', 'niveau' => 3, 'solde_debiteur' => false],
-        ['code' => '44',      'intitule' => 'Associés et groupes',               'classe' => '4', 'niveau' => 2, 'solde_debiteur' => true],
-        ['code' => '441',     'intitule' => 'Associés — comptes courants',       'classe' => '4', 'niveau' => 3, 'solde_debiteur' => false],
-        ['code' => '442',     'intitule' => 'Associés — apports',                'classe' => '4', 'niveau' => 3, 'solde_debiteur' => true],
-        ['code' => '443',     'intitule' => 'Associés — dividendes à payer',     'classe' => '4', 'niveau' => 3, 'solde_debiteur' => false],
-        ['code' => '444',     'intitule' => 'Associés — opérations faites en commun', 'classe' => '4', 'niveau' => 3, 'solde_debiteur' => true],
+        ['code' => '42',      'intitule' => 'Personnel',                         'classe' => '4', 'niveau' => 2, 'solde_debiteur' => false],
+        ['code' => '421',     'intitule' => 'Personnel — rémunérations dues',    'classe' => '4', 'niveau' => 3, 'solde_debiteur' => false],
+        ['code' => '422',     'intitule' => 'Personnel — avances et acomptes',   'classe' => '4', 'niveau' => 3, 'solde_debiteur' => true],
+        ['code' => '423',     'intitule' => 'Personnel — oppositions',           'classe' => '4', 'niveau' => 3, 'solde_debiteur' => false],
+        ['code' => '43',      'intitule' => 'Organismes sociaux',                'classe' => '4', 'niveau' => 2, 'solde_debiteur' => false],
+        ['code' => '431',     'intitule' => 'Sécurité sociale',                  'classe' => '4', 'niveau' => 3, 'solde_debiteur' => false],
+        ['code' => '432',     'intitule' => 'Autres organismes sociaux',         'classe' => '4', 'niveau' => 3, 'solde_debiteur' => false],
+        ['code' => '44',      'intitule' => 'État et collectivités publiques',   'classe' => '4', 'niveau' => 2, 'solde_debiteur' => true],
+        ['code' => '441',     'intitule' => 'État — Impôts sur les bénéfices',   'classe' => '4', 'niveau' => 3, 'solde_debiteur' => false],
+        ['code' => '442',     'intitule' => 'État — Autres impôts et taxes',     'classe' => '4', 'niveau' => 3, 'solde_debiteur' => false],
+        ['code' => '443',     'intitule' => 'État — TVA facturée',               'classe' => '4', 'niveau' => 3, 'solde_debiteur' => false],
+        ['code' => '444',     'intitule' => 'État — TVA due ou crédit de TVA',   'classe' => '4', 'niveau' => 3, 'solde_debiteur' => true],
+        ['code' => '445',     'intitule' => 'État — TVA récupérable',            'classe' => '4', 'niveau' => 3, 'solde_debiteur' => true],
+        ['code' => '446',     'intitule' => 'État — Impôts et taxes sur rémunérations', 'classe' => '4', 'niveau' => 3, 'solde_debiteur' => false],
+        ['code' => '447',     'intitule' => 'État — Impôts et taxes retenus à la source', 'classe' => '4', 'niveau' => 3, 'solde_debiteur' => false],
+        ['code' => '448',     'intitule' => 'État — Charges à payer et produits à recevoir', 'classe' => '4', 'niveau' => 3, 'solde_debiteur' => false],
+
         ['code' => '45',      'intitule' => 'Débiteurs et créditeurs divers',    'classe' => '4', 'niveau' => 2, 'solde_debiteur' => true],
         ['code' => '451',     'intitule' => 'Débiteurs divers',                  'classe' => '4', 'niveau' => 3, 'solde_debiteur' => true],
         ['code' => '452',     'intitule' => 'Créditeurs divers',                 'classe' => '4', 'niveau' => 3, 'solde_debiteur' => false],
@@ -250,7 +249,15 @@ class PlanComptableSyscohadaSeeder extends Seeder
      */
     public function run(): void
     {
-        $cabinet = Cabinet::first();
+        $cabinet = Cabinet::firstOrCreate(
+            ['slug' => 'gel-cabinet'],
+            [
+                'nom' => 'GEL Cabinet',
+                'email' => 'contact@gel.cabinet',
+                'telephone' => '+229 00000000',
+                'actif' => true
+            ]
+        );
         $now = now();
 
         if (!$cabinet) {
@@ -266,9 +273,8 @@ class PlanComptableSyscohadaSeeder extends Seeder
                 'intitule' => $compte['intitule'],
                 'classe' => $compte['classe'],
                 'niveau' => $compte['niveau'],
-                'compte_parent_id' => null,
+                'code_parent' => null,
                 'actif' => true,
-                'solde_debiteur' => $compte['solde_debiteur'],
                 'created_at' => $now,
                 'updated_at' => $now,
             ];
@@ -301,10 +307,7 @@ class PlanComptableSyscohadaSeeder extends Seeder
         foreach ($comptes as $compte) {
             $codeParent = $this->findParentCode($compte->code);
             if ($codeParent) {
-                $parent = $comptes->firstWhere('code', $codeParent);
-                if ($parent && $parent->id !== $compte->id) {
-                    $compte->update(['compte_parent_id' => $parent->id]);
-                }
+                $compte->update(['code_parent' => $codeParent]);
             }
         }
     }

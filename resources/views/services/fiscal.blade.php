@@ -244,7 +244,7 @@
                     <div class="gel-feature-card">
                         <div class="gel-feature-icon"><i class="bi-send"></i></div>
                         <h5>Télédéclarations</h5>
-                        <p>Déclarations fiscales automatisées : TVA, BIC, IS, IRPP. Transmission électronique avec accusé de réception.</p>
+                        <p>Déclarations fiscales automatisées : TVA, BIC, IS, ITS. Transmission électronique avec accusé de réception.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-1">

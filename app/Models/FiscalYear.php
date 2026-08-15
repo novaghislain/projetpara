@@ -42,6 +42,7 @@ class FiscalYear extends Model
         'client_id', 'year', 'date_start', 'date_end', 'status',
         'closed_at', 'closed_by', 'check_balance', 'check_tva',
         'check_cnss', 'check_reconciliation', 'check_inventory', 'notes',
+        'unlocked_by', 'unlock_reason', 'unlocked_at',
     ];
 
     protected function casts(): array
@@ -66,6 +67,19 @@ class FiscalYear extends Model
     public function closedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'closed_by');
+    }
+
+    /**
+     * Le super admin qui a déverrouillé l'exercice (si applicable).
+     */
+    public function unlockedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'unlocked_by');
+    }
+
+    public function isUnlocked(): bool
+    {
+        return $this->status === 'open' && $this->unlocked_at !== null;
     }
 
     public function periods(): HasMany

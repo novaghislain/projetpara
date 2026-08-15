@@ -15,8 +15,7 @@ class ExpensesController extends Controller
      */
     public function index()
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $expenses = Invoice::where('client_id', $clientId)
             ->where('type', 'supplier_invoice')
@@ -29,8 +28,7 @@ class ExpensesController extends Controller
 
     public function store(Request $request)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $validated = $request->validate([
             'partner_id' => 'required|exists:partners,id',
@@ -131,8 +129,7 @@ class ExpensesController extends Controller
      */
     public function show($id)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $expense = Invoice::where('client_id', $clientId)
             ->where('type', 'supplier_invoice')

@@ -1,395 +1,343 @@
 @extends('layouts.gel-accountant')
-@section('title', 'Coordination Comptable ↔ Secrétaire')
 
-@section('content')
-@php $user = auth()->user(); @endphp
+@section('title', 'Coordination Secrétariat - Comptabilité')
 
+@push('styles')
 <style>
-  .coord-card { background:#fff; border:1px solid #E2E8F0; border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
-  .coord-card .card-head { padding:16px 20px; border-bottom:1px solid #F1F5F9; font-weight:700; font-size:14px; color:#0F172A; display:flex; align-items:center; gap:10px; }
-  .coord-card .card-body { padding:18px 20px; }
-  .accordion-icon { cursor:pointer; transition:transform .2s; }
-  .accordion-icon.open { transform:rotate(90deg); }
-  
-  .activity-timeline {
-    position: relative;
-    padding-left: 20px;
-    margin-top: 10px;
-  }
-  .activity-timeline::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 7px;
-    width: 2px;
-    background: #E2E8F0;
-  }
-  .timeline-item {
-    position: relative;
-    margin-bottom: 24px;
-  }
-  .timeline-item:last-child {
-    margin-bottom: 0;
-  }
-  .timeline-icon {
-    position: absolute;
-    left: -20px;
-    top: 0;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
+/* ==========================================================================
+   COORDINATION ACCOUNTANT - BENTO GRID DESIGN
+   ========================================================================== */
+.coordination-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 24px;
+}
+
+.bento-card {
     background: white;
-    border: 2px solid #0D9488;
-    color: #0D9488;
+    border: 1px solid var(--gel-border);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    height: 100%;
+}
+
+.bento-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #E2E8F0;
+    padding-bottom: 12px;
+}
+
+.bento-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--gel-text-primary);
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    z-index: 2;
-  }
-  .timeline-content {
-    background: #F8FAFC;
-    border: 1px solid #E2E8F0;
-    border-radius: 12px;
-    padding: 16px;
-    margin-left: 24px;
-    position: relative;
-    transition: all 0.2s ease;
-  }
-  .timeline-content:hover {
-    border-color: #cbd5e1;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-  }
+    gap: 10px;
+}
+.bento-title i { color: var(--gel-primary); font-size: 18px; }
+
+/* Timeline Activity (S4.3) */
+.timeline { position: relative; margin-top: 10px; }
+.timeline::before {
+    content: ''; position: absolute; left: 16px; top: 0;
+    bottom: 0; width: 2px; background: #E2E8F0;
+}
+.timeline-item { position: relative; padding-left: 48px; margin-bottom: 24px; }
+.timeline-icon {
+    position: absolute; left: 0; top: 0;
+    width: 34px; height: 34px; border-radius: 50%;
+    background: white; border: 2px solid var(--gel-primary);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--gel-primary); font-size: 14px; z-index: 1;
+}
+.timeline-content {
+    background: #F8FAFC; border-radius: 8px; padding: 12px 16px;
+    border: 1px solid #E2E8F0; position: relative;
+}
+.timeline-content::before {
+    content: ''; position: absolute; left: -6px; top: 12px;
+    width: 10px; height: 10px; background: #F8FAFC;
+    border-left: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0;
+    transform: rotate(45deg);
+}
+.timeline-time { font-size: 11px; color: #64748B; font-weight: 600; margin-bottom: 4px; display:block; }
+.timeline-title { font-size: 13px; font-weight: 700; color: #1E293B; margin-bottom: 4px; }
+.timeline-desc { font-size: 13px; color: #475569; margin: 0; }
+
+/* Documents Area */
+.doc-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px; border: 1px solid #E2E8F0; border-radius: 8px;
+    margin-bottom: 12px; background: #F8FAFC; transition: all 0.2s;
+}
+.doc-item:hover { background: white; border-color: var(--gel-primary); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+.doc-info { display: flex; align-items: center; gap: 12px; }
+.doc-icon { font-size: 24px; color: #EF4444; }
+.doc-name { font-size: 14px; font-weight: 600; color: #1E293B; }
+.doc-meta { font-size: 12px; color: #64748B; }
+
+/* Chat Area */
+.chat-container { display: flex; flex-direction: column; height: 400px; }
+.chat-messages { flex: 1; overflow-y: auto; padding: 16px; background: #F8FAFC; border-radius: 8px; margin-bottom: 16px; border: 1px solid #E2E8F0; }
+.chat-message { margin-bottom: 16px; display: flex; flex-direction: column; max-width: 85%; }
+.chat-message.sent { align-self: flex-end; align-items: flex-end; }
+.chat-message.received { align-self: flex-start; align-items: flex-start; }
+.chat-bubble { padding: 12px 16px; border-radius: 12px; font-size: 13px; position: relative; }
+.chat-message.sent .chat-bubble { background: var(--gel-primary); color: white; border-bottom-right-radius: 4px; }
+.chat-message.received .chat-bubble { background: white; border: 1px solid #E2E8F0; color: #1E293B; border-bottom-left-radius: 4px; }
+.chat-meta { font-size: 11px; color: #64748B; margin-top: 4px; }
+.chat-input-area { display: flex; gap: 12px; align-items: flex-end; }
+.chat-input { flex: 1; resize: none; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 14px; font-size: 13px; font-family: inherit; outline: none; }
+.chat-input:focus { border-color: var(--gel-primary); }
+.btn-send { background: var(--gel-primary); color: white; border: none; width: 42px; height: 42px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+.btn-send:hover { background: var(--gel-primary-hover); transform: translateY(-2px); }
+
+/* Buttons & Inputs for Modals */
+.form-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #475569; }
+.form-control { width: 100%; padding: 10px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; margin-bottom: 16px; }
 </style>
+@endpush
 
-<div class="animate-fade">
-  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+@section('content')
+
+<div class="gel-page-header">
     <div>
-      <div style="font-size:20px; font-weight:800; color:#0F172A;">Coordination — {{ $client->nom_entreprise }}</div>
-      <div style="font-size:13px; color:#64748B;">Espace dédié Comptable ↔ Secrétaire (S4.1). Actions journalisées dans l'Historique.</div>
+        <h1 class="gel-page-title">Coordination Secrétariat</h1>
+        <div class="gel-page-subtitle">Dossier : <strong>{{ $client->nom_entreprise }}</strong> | Secrétaire rattaché(e) : {{ $secretaire ? $secretaire->name : 'Non assigné' }}</div>
     </div>
-    @if($secretaire)
-      <div style="background:#fff; border:1px solid #E2E8F0; border-radius:12px; padding:8px 16px; display:flex; align-items:center; gap:10px;">
-        <div style="width:38px;height:38px;border-radius:50%;background:#0D9488;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;">{{ strtoupper(substr($secretaire->name ?? 'S', 0, 2)) }}</div>
-        <div>
-          <div style="font-weight:700; font-size:13px; color:#0F172A;">{{ $secretaire->name }}</div>
-          <div style="font-size:11px; color:#059669;"><i class="fas fa-circle" style="font-size:7px;"></i> Secrétaire rattachée</div>
-        </div>
-      </div>
-    @else
-      <div style="background:#FEF3C7; border:1px solid #F59E0B; border-radius:12px; padding:8px 14px; font-size:12px; color:#92400E;">
-        <i class="fas fa-triangle-exclamation me-1"></i> Aucune secrétaire rattachée à cette entreprise.
-      </div>
-    @endif
-  </div>
+    <div style="display:flex; gap:12px;">
+        <button class="gel-btn gel-btn-secondary" data-bs-toggle="modal" data-bs-target="#modalAlerte">
+            <i class="fas fa-exclamation-triangle text-danger"></i> Envoyer une Alerte
+        </button>
+        <button class="gel-btn gel-btn-primary" data-bs-toggle="modal" data-bs-target="#modalDemande">
+            <i class="fas fa-file-export"></i> Demander un Document
+        </button>
+    </div>
 </div>
 
-<div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-top:20px;" class="animate-fade delay-1">
-
-  {{-- ─── S2.1 — Accusé de réception des documents transmis ───────────────── --}}
-  <div class="coord-card">
-    <div class="card-head"><i class="fas fa-paper-plane" style="color:#0D9488;"></i> Documents transmis par le secrétariat</div>
-    <div class="card-body">
-      @forelse($documentsTransmis as $doc)
-        <div style="display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #F1F5F9;">
-          <div style="width:38px;height:38px;border-radius:8px;background:rgba(13,148,136,.1);color:#0D9488;display:flex;align-items:center;justify-content:center;"><i class="fas fa-file-lines"></i></div>
-          <div style="flex:1; min-width:0;">
-            <div style="font-weight:600; font-size:13px; color:#0F172A;">{{ $doc->name }}</div>
-            <div style="font-size:11px; color:#94A3B8;">Transmis le {{ optional($doc->transmitted_at)->format('d/m/Y H:i') }}</div>
-          </div>
-          @if($doc->workflow_step === 'en_traitement_comptable')
-            <span style="background:#D1FAE5; color:#059669; font-weight:700; font-size:11px; padding:4px 10px; border-radius:20px;"><i class="fas fa-check-circle me-1"></i>Pris en charge</span>
-          @elseif($doc->workflow_step === 'valide')
-            <span style="background:#DBEAFE; color:#2563EB; font-weight:700; font-size:11px; padding:4px 10px; border-radius:20px;"><i class="fas fa-check-double me-1"></i>Validé</span>
-          @else
-            <form method="POST" action="{{ route('gel-accountant.coordination.accuser-reception') }}" style="margin:0;">
-              @csrf
-              <input type="hidden" name="document_id" value="{{ $doc->id }}">
-              <button type="submit" class="btn btn-sm" style="background:#0D9488; color:#fff; border-radius:20px; font-size:11px; padding:4px 12px;"><i class="fas fa-check me-1"></i> Accuser réception</button>
-            </form>
-          @endif
-        </div>
-      @empty
-        <div style="padding:40px; text-align:center; color:#94A3B8;">
-          <i class="fas fa-inbox" style="font-size:30px; color:#CBD5E1;"></i>
-          <div style="margin-top:8px;">Aucun document transmis en attente.</div>
-        </div>
-      @endforelse
-    </div>
-  </div>
-
-  {{-- ─── S3.1 — Demande au secrétariat + S3.3 — Alerte ───────────────────── --}}
-  <div class="coord-card">
-    <div class="card-head"><i class="fas fa-hand-holding-heart" style="color:#0D9488;"></i> Demander une information au secrétariat</div>
-    <div class="card-body">
-      <form method="POST" action="{{ route('gel-accountant.coordination.request-document') }}">
-        @csrf
-        <input type="hidden" name="client_id" value="{{ $client->id }}">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-          <div>
-            <label style="font-size:11px; color:#64748B; font-weight:600;">Intitulé de la demande *</label>
-            <input type="text" name="intitule" required class="form-control form-control-sm" placeholder="Ex : Attestation fiscale">
-          </div>
-          <div>
-            <label style="font-size:11px; color:#64748B; font-weight:600;">Échéance</label>
-            <input type="date" name="date_echeance" class="form-control form-control-sm">
-          </div>
-        </div>
-        <div style="margin-top:10px;">
-          <label style="font-size:11px; color:#64748B; font-weight:600;">Détails *</label>
-          <textarea name="description" required rows="2" class="form-control form-control-sm" placeholder="Ce que vous attendez de la secrétaire..."></textarea>
-        </div>
-        <div style="margin-top:10px;">
-          <label style="font-size:11px; color:#64748B; font-weight:600;">Priorité</label>
-          <select name="priorite" class="form-control form-control-sm">
-            <option value="moyenne">Moyenne</option>
-            <option value="basse">Basse</option>
-            <option value="haute">Haute</option>
-            <option value="critique">Critique</option>
-          </select>
-        </div>
-        <button type="submit" class="btn btn-sm mt-2" style="background:#0D9488; color:#fff; border-radius:8px;"><i class="fas fa-paper-plane me-1"></i> Transmettre au secrétariat (Kanban)</button>
-      </form>
-
-      <hr style="border-top:1px dashed #E2E8F0; margin:18px 0;">
-      <div style="font-weight:700; font-size:12px; color:#DC2626;"><i class="fas fa-triangle-exclamation me-1"></i> Alerte réglementaire (échéance administrative)</div>
-      <form method="POST" action="{{ route('gel-accountant.coordination.send-alert') }}" style="margin-top:10px;">
-        @csrf
-        <input type="hidden" name="client_id" value="{{ $client->id }}">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-          <div>
-            <label style="font-size:11px; color:#64748B; font-weight:600;">Titre de l'alerte *</label>
-            <input type="text" name="titre" required class="form-control form-control-sm" placeholder="Ex : Dépôt déclaration CNSS">
-          </div>
-          <div>
-            <label style="font-size:11px; color:#64748B; font-weight:600;">Date limite *</label>
-            <input type="date" name="date_echeance" required class="form-control form-control-sm">
-          </div>
-        </div>
-        <div style="margin-top:10px;">
-          <textarea name="description" required rows="2" class="form-control form-control-sm" placeholder="Détails de l'échéance à traiter..."></textarea>
-        </div>
-        <button type="submit" class="btn btn-sm mt-2" style="background:#DC2626; color:#fff; border-radius:8px;"><i class="fas fa-bell me-1"></i> Créer l'alerte (Agenda + tâche)</button>
-      </form>
-    </div>
-  </div>
-</div>
-
-<div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-top:20px;" class="animate-fade delay-2">
-
-  {{-- ─── S4.1 — Messagerie de coordination ───────────────────────────────── --}}
-  <div class="coord-card" style="display:flex; flex-direction:column; height:450px;">
-    <div class="card-head" style="display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #E2E8F0;">
-        <div><i class="fas fa-comments" style="color:#0D9488; margin-right:8px;"></i> Messagerie de coordination</div>
-        <div style="font-size:11px; color:#94A3B8; font-weight:500;">Canal sécurisé avec le secrétariat</div>
-    </div>
-    <div id="chat-messages" class="card-body" style="flex:1; padding:20px; overflow-y:auto; display:flex; flex-direction:column; gap:16px; background:#F8FAFC;">
-        @forelse($messages as $m)
-          <div style="max-width:85%; padding:12px 16px; border-radius:14px; font-size:13.5px; line-height:1.5; align-self:{{ $m->sender_id === $user->id ? 'flex-end' : 'flex-start' }}; background:{{ $m->sender_id === $user->id ? '#0D9488' : '#fff' }}; color:{{ $m->sender_id === $user->id ? '#fff' : '#1E293B' }}; box-shadow:0 2px 4px rgba(0,0,0,0.04); border:{{ $m->sender_id === $user->id ? 'none' : '1px solid #E2E8F0' }}; border-bottom-{{ $m->sender_id === $user->id ? 'right' : 'left' }}-radius: 2px;">
-            <div style="font-weight:700; font-size:11px; margin-bottom:6px; color:{{ $m->sender_id === $user->id ? 'rgba(255,255,255,.9)' : '#64748B' }}; display:flex; justify-content:space-between; gap:12px;">
-                <span>{{ $m->sender->name ?? 'Vous' }}</span>
-                <span style="font-weight:400; font-size:10px;">{{ $m->created_at->format('H:i') }}</span>
-            </div>
-            @if($m->message)
-                <div style="margin-bottom:{{ $m->piece_jointe ? '8px' : '0' }};">{{ $m->message }}</div>
-            @endif
-            @if($m->piece_jointe)
-                <a href="{{ asset('storage/' . $m->piece_jointe) }}" target="_blank" style="display:inline-flex; align-items:center; gap:8px; background:{{ $m->sender_id === $user->id ? 'rgba(0,0,0,0.15)' : '#F1F5F9' }}; padding:6px 12px; border-radius:6px; color:inherit; text-decoration:none; font-size:12px; font-weight:600; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
-                    <i class="fa-solid fa-paperclip"></i>
-                    Pièce jointe
-                </a>
-            @endif
-          </div>
-        @empty
-          <div id="no-messages" style="color:#94A3B8; font-size:13px; text-align:center; margin:auto;">Commencez la discussion...</div>
-        @endforelse
-    </div>
+<div class="coordination-grid">
     
-    <div style="padding:16px; border-top:1px solid #E2E8F0; background:white; border-bottom-left-radius:12px; border-bottom-right-radius:12px;">
-        <form id="chat-form" style="display:flex; gap:10px; align-items:center;">
-            <input type="hidden" name="client_id" id="chat-client-id" value="{{ $client->id }}">
-            
-            <label for="chat-attachment" style="cursor:pointer; padding:10px; background:#F1F5F9; border-radius:50%; color:#64748B; transition:all 0.2s;" onmouseover="this.style.background='#E2E8F0'; this.style.color='#0D9488'" onmouseout="this.style.background='#F1F5F9'; this.style.color='#64748B'">
-                <i class="fa-solid fa-paperclip"></i>
-            </label>
-            <input type="file" id="chat-attachment" name="attachment" style="display:none;" onchange="updateFileName(this)">
-            
-            <div style="flex:1; display:flex; flex-direction:column; position:relative;">
-                <div id="file-preview" style="display:none; font-size:11px; font-weight:600; color:#0D9488; margin-bottom:4px; padding:2px 8px; background:#F0FDF4; border-radius:4px; width:fit-content; border:1px solid #CCFBF1;">
-                    <i class="fa-solid fa-file-lines me-1"></i> <span id="file-name-text">fichier</span>
-                    <i class="fa-solid fa-times ms-2" style="cursor:pointer;" onclick="removeAttachment()"></i>
-                </div>
-                <input type="text" id="chat-message" name="message" placeholder="Écrivez votre message..." class="form-control" style="border-radius:20px; border:1px solid #E2E8F0; padding:10px 16px; background:#F8FAFC;" autocomplete="off">
+    <!-- Colonne de gauche : Documents transmis & Activité -->
+    <div style="grid-column: span 7; display:flex; flex-direction:column; gap:24px;">
+        
+        <!-- Documents Transmis à réceptionner -->
+        <div class="bento-card">
+            <div class="bento-header">
+                <div class="bento-title"><i class="fas fa-inbox"></i> Documents transmis par le Secrétariat</div>
+                <span class="badge bg-danger rounded-pill">{{ count($documentsTransmis) }}</span>
             </div>
             
-            <button type="submit" id="chat-submit" class="btn btn-primary" style="background-color:#0D9488; border-color:#0D9488; border-radius:20px; padding:10px 20px; font-weight:600;">
-                <span id="btn-text">Envoyer</span>
-                <i class="fa-solid fa-paper-plane ms-1"></i>
-            </button>
-        </form>
-    </div>
-  </div>
+            <div class="documents-list">
+                @forelse($documentsTransmis as $doc)
+                <div class="doc-item">
+                    <div class="doc-info">
+                        <i class="fas fa-file-pdf doc-icon"></i>
+                        <div>
+                            <div class="doc-name">{{ $doc->name }}</div>
+                            <div class="doc-meta">Transmis le {{ \Carbon\Carbon::parse($doc->transmitted_at)->format('d/m/Y à H:i') }} • Réf: {{ $doc->reference }}</div>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <a href="{{ route('gel-accountant.secretariat.documents.download', $doc->id) }}" class="gel-btn gel-btn-secondary gel-btn-sm" title="Télécharger">
+                            <i class="fas fa-download"></i>
+                        </a>
+                        <form action="{{ route('gel-accountant.coordination.accuser-reception') }}" method="POST" style="margin:0;">
+                            @csrf
+                            <input type="hidden" name="document_id" value="{{ $doc->id }}">
+                            <button type="submit" class="gel-btn gel-btn-primary gel-btn-sm" title="Accuser réception et prendre en charge">
+                                <i class="fas fa-check"></i> Accuser réception
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                @empty
+                <div class="gel-empty" style="padding: 20px;">
+                    <i class="fas fa-check-circle" style="font-size:32px; color:#10B981; margin-bottom:12px;"></i>
+                    <p>Aucun document en attente de réception pour ce dossier.</p>
+                </div>
+                @endforelse
+            </div>
+        </div>
 
-  {{-- ─── S4.3 — Fil d'activité commun ───────────────────────────────────── --}}
-  <div class="coord-card">
-    <div class="card-head"><i class="fas fa-timeline" style="color:#0D9488;"></i> Historique des actions & Échanges ({{ $client->nom_entreprise }})</div>
-    <div class="card-body" style="max-height:420px; overflow-y:auto;">
-      @if(count($activity) > 0)
-        <div class="activity-timeline">
-            @foreach($activity as $evt)
+        <!-- Fil d'activité Commun -->
+        <div class="bento-card">
+            <div class="bento-header">
+                <div class="bento-title"><i class="fas fa-stream"></i> Fil d'Activité Commun</div>
+            </div>
+            <div class="timeline" style="max-height: 400px; overflow-y:auto; padding-right:10px;">
+                @forelse($activity as $event)
                 <div class="timeline-item">
-                    <div class="timeline-icon" style="{{ str_contains($evt->icon, 'check') ? 'color:#10B981; border-color:#10B981;' : (str_contains($evt->icon, 'paper-plane') ? 'color:#3B82F6; border-color:#3B82F6;' : (str_contains($evt->icon, 'exclamation') ? 'color:#EF4444; border-color:#EF4444;' : 'color:#0D9488; border-color:#0D9488;')) }}">
-                        <i class="{{ $evt->icon ?? 'fas fa-bolt' }}"></i>
+                    <div class="timeline-icon">
+                        <i class="{{ $event->icon ?? 'fas fa-info' }}"></i>
                     </div>
                     <div class="timeline-content">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
-                            <div style="font-size:14px; font-weight:700; color:#1E293B;">{{ $evt->subject }}</div>
-                            <div style="font-size:11px; color:#64748B; font-weight:600; background:#F1F5F9; padding:4px 8px; border-radius:20px; white-space:nowrap; border:1px solid #E2E8F0;">
-                                <i class="far fa-clock me-1"></i> {{ $evt->created_at->diffForHumans() }}
-                            </div>
-                        </div>
-                        @if($evt->body)
-                        <div style="font-size:13px; color:#475569; line-height:1.5; margin-bottom:12px; background:#fff; padding:10px 12px; border-radius:8px; border-left:3px solid #cbd5e1;">
-                            {{ $evt->body }}
-                        </div>
+                        <span class="timeline-time">{{ $event->created_at->format('d/m/Y H:i') }} • {{ $event->user?->name ?? 'Système' }}</span>
+                        <div class="timeline-title">{{ $event->titre }}</div>
+                        @if($event->description)
+                            <p class="timeline-desc">{{ $event->description }}</p>
                         @endif
-                        <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:#94A3B8;">
-                            <div style="width:24px; height:24px; border-radius:50%; background:#E2E8F0; color:#475569; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700;">
-                                {{ strtoupper(substr($evt->actor_name ?? $evt->actor?->name ?? 'S', 0, 1)) }}
-                            </div>
-                            <span>Par <strong style="color:#64748B;">{{ $evt->actor_name ?? $evt->actor?->name ?? 'Système' }}</strong></span>
-                        </div>
                     </div>
                 </div>
-            @endforeach
+                @empty
+                <p class="text-muted">Aucune activité récente.</p>
+                @endforelse
+            </div>
         </div>
-      @else
-        <div style="padding:48px 20px; text-align:center; color:#94A3B8;">
-            <div style="font-size:40px; color:#E2E8F0; margin-bottom:16px;"><i class="fas fa-ghost"></i></div>
-            <div style="font-size:15px; font-weight:600; color:#475569; margin-bottom:4px;">Aucune activité enregistrée</div>
-            <div style="font-size:13px;">Les échanges et actions apparaîtront ici.</div>
+
+    </div>
+
+    <!-- Colonne de droite : Messagerie Directe & Demandes envoyées -->
+    <div style="grid-column: span 5; display:flex; flex-direction:column; gap:24px;">
+        
+        <!-- Messagerie Directe -->
+        <div class="bento-card">
+            <div class="bento-header">
+                <div class="bento-title"><i class="fas fa-comments"></i> Chat Secrétariat</div>
+            </div>
+            
+            <div class="chat-container">
+                <div class="chat-messages" id="chatBox">
+                    @foreach($messages as $msg)
+                        <div class="chat-message {{ $msg->sender_id === auth()->id() ? 'sent' : 'received' }}">
+                            <div class="chat-bubble">
+                                {{ $msg->message }}
+                                @if($msg->piece_jointe)
+                                    <div style="margin-top:8px;">
+                                        <a href="{{ Storage::url($msg->piece_jointe) }}" target="_blank" style="color:inherit; text-decoration:underline; font-size:12px;">
+                                            <i class="fas fa-paperclip"></i> Pièce jointe
+                                        </a>
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="chat-meta">{{ $msg->created_at->format('H:i') }} • {{ $msg->sender->name }}</div>
+                        </div>
+                    @endforeach
+                </div>
+                
+                <form action="{{ route('gel-accountant.coordination.send-message') }}" method="POST" enctype="multipart/form-data" class="chat-input-area">
+                    @csrf
+                    <input type="hidden" name="client_id" value="{{ $client->id }}">
+                    <label class="gel-btn gel-btn-secondary" style="margin:0; padding:10px 14px; cursor:pointer;" title="Joindre un fichier">
+                        <i class="fas fa-paperclip"></i>
+                        <input type="file" name="attachment" style="display:none;">
+                    </label>
+                    <textarea name="message" class="chat-input" rows="1" placeholder="Écrivez un message..."></textarea>
+                    <button type="submit" class="btn-send"><i class="fas fa-paper-plane"></i></button>
+                </form>
+            </div>
         </div>
-      @endif
+
+        <!-- Demandes / Tâches en cours -->
+        <div class="bento-card">
+            <div class="bento-header">
+                <div class="bento-title"><i class="fas fa-tasks"></i> Demandes en cours</div>
+            </div>
+            <div>
+                @forelse($demandesEnvoyees as $demande)
+                    <div style="padding:12px; border:1px solid #E2E8F0; border-radius:8px; margin-bottom:12px; border-left:4px solid {{ $demande->statut == 'termine' ? '#10B981' : '#F59E0B' }};">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                            <strong style="font-size:13px;">{{ $demande->titre }}</strong>
+                            <span class="badge bg-{{ $demande->statut == 'termine' ? 'success' : 'warning' }}">{{ strtoupper(str_replace('_', ' ', $demande->statut)) }}</span>
+                        </div>
+                        <div style="font-size:12px; color:#64748B;">Échéance : {{ \Carbon\Carbon::parse($demande->date_echeance)->format('d/m/Y') }}</div>
+                    </div>
+                @empty
+                    <p class="text-muted" style="font-size:13px;">Aucune demande en cours.</p>
+                @endforelse
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal : Demander Document -->
+<div class="modal fade" id="modalDemande" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content" style="border-radius:16px;">
+      <div class="modal-header" style="border-bottom:1px solid #E2E8F0; padding:20px;">
+        <h5 class="modal-title" style="font-weight:700;"><i class="fas fa-file-export text-primary me-2"></i> Demander un Document</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{{ route('gel-accountant.coordination.request-document') }}" method="POST">
+          @csrf
+          <input type="hidden" name="client_id" value="{{ $client->id }}">
+          <div class="modal-body" style="padding:20px;">
+              <label class="form-label">Titre du document demandé <span class="text-danger">*</span></label>
+              <input type="text" name="intitule" class="form-control" required placeholder="Ex: Relevé bancaire BICI CI de Mars">
+              
+              <label class="form-label">Description / Instructions <span class="text-danger">*</span></label>
+              <textarea name="description" class="form-control" rows="3" required placeholder="Précisez ce dont vous avez besoin..."></textarea>
+              
+              <div class="row">
+                  <div class="col-md-6">
+                      <label class="form-label">Date limite</label>
+                      <input type="date" name="date_echeance" class="form-control">
+                  </div>
+                  <div class="col-md-6">
+                      <label class="form-label">Priorité</label>
+                      <select name="priorite" class="form-control">
+                          <option value="basse">Basse</option>
+                          <option value="moyenne" selected>Moyenne</option>
+                          <option value="haute">Haute</option>
+                          <option value="critique">Critique</option>
+                      </select>
+                  </div>
+              </div>
+          </div>
+          <div class="modal-footer" style="border-top:none; padding:20px;">
+            <button type="button" class="gel-btn gel-btn-secondary" data-bs-dismiss="modal">Annuler</button>
+            <button type="submit" class="gel-btn gel-btn-primary">Envoyer la demande</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal : Envoyer Alerte -->
+<div class="modal fade" id="modalAlerte" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content" style="border-radius:16px;">
+      <div class="modal-header" style="border-bottom:1px solid #E2E8F0; padding:20px;">
+        <h5 class="modal-title" style="font-weight:700;"><i class="fas fa-exclamation-triangle text-danger me-2"></i> Alerte Réglementaire</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{{ route('gel-accountant.coordination.send-alert') }}" method="POST">
+          @csrf
+          <input type="hidden" name="client_id" value="{{ $client->id }}">
+          <div class="modal-body" style="padding:20px;">
+              <p class="text-muted" style="font-size:13px; margin-bottom:16px;">Utilisez cette alerte pour informer le secrétariat d'une échéance réglementaire critique (TVA, Impôts) qui nécessite leur action urgente.</p>
+              
+              <label class="form-label">Titre de l'alerte <span class="text-danger">*</span></label>
+              <input type="text" name="titre" class="form-control" required placeholder="Ex: Retard Déclaration TVA">
+              
+              <label class="form-label">Message <span class="text-danger">*</span></label>
+              <textarea name="description" class="form-control" rows="3" required placeholder="Expliquez l'urgence..."></textarea>
+              
+              <label class="form-label">Date butoir <span class="text-danger">*</span></label>
+              <input type="date" name="date_echeance" class="form-control" required>
+          </div>
+          <div class="modal-footer" style="border-top:none; padding:20px;">
+            <button type="button" class="gel-btn gel-btn-secondary" data-bs-dismiss="modal">Annuler</button>
+            <button type="submit" class="gel-btn gel-btn-primary" style="background:#EF4444;">Envoyer l'alerte</button>
+          </div>
+      </form>
     </div>
   </div>
 </div>
 
 @push('scripts')
-  <script>
-    function updateFileName(input) {
-        if(input.files && input.files.length > 0) {
-            document.getElementById('file-preview').style.display = 'inline-block';
-            document.getElementById('file-name-text').innerText = input.files[0].name;
-            document.getElementById('chat-message').placeholder = "Ajouter un commentaire (optionnel)...";
-        } else {
-            removeAttachment();
-        }
+<script>
+    // Scroll chat to bottom
+    const chatBox = document.getElementById('chatBox');
+    if(chatBox) {
+        chatBox.scrollTop = chatBox.scrollHeight;
     }
-    function removeAttachment() {
-        let input = document.getElementById('chat-attachment');
-        input.value = "";
-        document.getElementById('file-preview').style.display = 'none';
-        document.getElementById('chat-message').placeholder = "Écrivez votre message...";
-    }
-    
-    const chatContainer = document.getElementById('chat-messages');
-    if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
-
-    document.getElementById('chat-form').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const messageInput = document.getElementById('chat-message');
-        const attachmentInput = document.getElementById('chat-attachment');
-        const submitBtn = document.getElementById('chat-submit');
-        const btnText = document.getElementById('btn-text');
-        
-        if(!messageInput.value.trim() && (!attachmentInput.files || attachmentInput.files.length === 0)) return;
-        
-        const formData = new FormData(this);
-        
-        const noMessages = document.getElementById('no-messages');
-        if (noMessages) noMessages.remove();
-        
-        submitBtn.disabled = true;
-        btnText.innerText = 'Envoi...';
-        
-        try {
-            const res = await fetch("{{ route('gel-accountant.coordination.send-message') }}", {
-                method: 'POST',
-                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
-                body: formData
-            });
-            const data = await res.json();
-            
-            if(data.success && data.message) {
-                appendMessage(data.message, true);
-                messageInput.value = '';
-                removeAttachment();
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-            } else {
-                alert(data.error || 'Erreur lors de l\'envoi');
-            }
-        } catch(err) {
-            console.error(err);
-            alert('Erreur réseau');
-        } finally {
-            submitBtn.disabled = false;
-            btnText.innerText = 'Envoyer';
-        }
-    });
-    
-    function appendMessage(m, isMe) {
-        const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        const align = isMe ? 'flex-end' : 'flex-start';
-        const bg = isMe ? '#0D9488' : '#fff';
-        const color = isMe ? '#fff' : '#1E293B';
-        const borderColor = isMe ? 'none' : '1px solid #E2E8F0';
-        const radiusStyle = isMe ? 'border-bottom-right-radius:2px;' : 'border-bottom-left-radius:2px;';
-        const senderName = isMe ? 'Vous' : (m.sender ? m.sender.name : 'Secrétariat');
-        const headerColor = isMe ? 'rgba(255,255,255,.9)' : '#64748B';
-        const linkBg = isMe ? 'rgba(0,0,0,0.15)' : '#F1F5F9';
-        
-        let attachmentHtml = '';
-        if (m.piece_jointe) {
-            attachmentHtml = `<a href="/storage/${m.piece_jointe}" target="_blank" style="display:inline-flex; align-items:center; gap:8px; background:${linkBg}; padding:6px 12px; border-radius:6px; color:inherit; text-decoration:none; font-size:12px; font-weight:600; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
-                                <i class="fa-solid fa-paperclip"></i> Pièce jointe
-                              </a>`;
-        }
-        let messageHtml = m.message ? `<div style="margin-bottom:${m.piece_jointe ? '8px' : '0'};">${m.message}</div>` : '';
-        
-        const html = `
-          <div style="max-width:85%; padding:12px 16px; border-radius:14px; font-size:13.5px; line-height:1.5; align-self:${align}; background:${bg}; color:${color}; box-shadow:0 2px 4px rgba(0,0,0,0.04); border:${borderColor}; ${radiusStyle}">
-              <div style="font-weight:700; font-size:11px; margin-bottom:6px; color:${headerColor}; display:flex; justify-content:space-between; gap:12px;">
-                  <span>${senderName}</span>
-                  <span style="font-weight:400; font-size:10px;">${time}</span>
-              </div>
-              ${messageHtml}
-              ${attachmentHtml}
-          </div>
-        `;
-        chatContainer.insertAdjacentHTML('beforeend', html);
-    }
-
-    (function () {
-      if (!window.Echo) return;
-      try {
-        window.Echo.private('chat.coordination.{{ $client->id }}')
-          .listen('.CoordinationActivityEvent', function (e) {
-            if (typeof showToast === 'function' && e && e.activity && e.activity.subject) {
-              showToast(e.activity.subject, 'info');
-            }
-          })
-          .listen('.MessageEnvoyeEvent', function (e) {
-            if (e.message && e.message.sender_id !== {{ $user->id }}) {
-                if (typeof showToast === 'function') showToast('Nouveau message du secrétariat', 'info');
-                const noMessages = document.getElementById('no-messages');
-                if (noMessages) noMessages.remove();
-                appendMessage(e.message, false);
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-            }
-          });
-      } catch (err) { console.warn('coordination echo', err); }
-    })();
-  </script>
+</script>
 @endpush
+
 @endsection

@@ -65,6 +65,9 @@ class EcritureComptable extends Model
         'valide_par',
         'createur_id',
         'notes',
+        // Lien retour vers l'élément d'origine (facture, dépense…) — §2.2
+        'source_type',
+        'source_id',
     ];
 
     protected $casts = [

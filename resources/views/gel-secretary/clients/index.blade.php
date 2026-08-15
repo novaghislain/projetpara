@@ -49,6 +49,7 @@
           <th>Téléphone</th>
           <th>Ville</th>
           <th>Statut</th>
+          <th style="text-align:center;">Score GEL®</th>
           <th style="text-align:center;">Actions</th>
         </tr>
       </thead>
@@ -84,6 +85,20 @@
                 </ul>
               </div>
             @endif
+          </td>
+          <td style="text-align:center;">
+            @php
+              $scoreConf = $c->score_conformite ?? 0;
+              $scoreBg = $scoreConf >= 80 ? '#dcfce7' : ($scoreConf >= 50 ? '#fef9c3' : '#fee2e2');
+              $scoreColor = $scoreConf >= 80 ? '#059669' : ($scoreConf >= 50 ? '#d97706' : '#dc2626');
+            @endphp
+            <a href="{{ route('gel-secretary.conformite.index', ['client_id' => $c->id]) }}" 
+               style="display:inline-flex; flex-direction:column; align-items:center; gap:2px; text-decoration:none;">
+              <div style="background:{{ $scoreBg }}; color:{{ $scoreColor }}; border-radius:50%; width:42px; height:42px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; border:2px solid {{ $scoreColor }};">
+                {{ $scoreConf }}
+              </div>
+              <span style="font-size:10px; color:{{ $scoreColor }}; font-weight:600;">{{ $scoreConf >= 80 ? 'OK' : ($scoreConf >= 50 ? 'Partiel' : 'KO') }}</span>
+            </a>
           </td>
           <td style="text-align:center;">
             <a href="{{ route('gel-secretary.clients.show', $c->id) }}"

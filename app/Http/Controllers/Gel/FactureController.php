@@ -3,36 +3,58 @@
 namespace App\Http\Controllers\Gel;
 
 use App\Http\Controllers\Controller;
-use App\Models\Gel\GelFacture;
-use App\Models\Gel\GelFactureLigne;
+use App\Models\Gel\Facture;
+use App\Models\Gel\FactureLigne;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class FactureController extends Controller
 {
-    public function index()
+    /**
+     * Get the client ID from navigation/session context.
+     * Gel users (Accountant/Cabinet) manage multiple clients.
+     */
+    protected function getClientId(Request $request)
     {
-        $factures = GelFacture::with('lignes')->orderBy('date_facture', 'desc')->get();
+        return $request->query('client_id');
+    }
+
+    public function index(Request $request)
+    {
+        $clientId = $this->getClientId($request);
+        if (!$clientId) {
+            return response()->json(['error' => 'client_id missing'], 400);
+        }
+
+        $factures = Facture::with(['contact', 'lignes'])
+            ->where('client_id', $clientId)
+            ->orderBy('date_facture', 'desc')
+            ->get();
+            
         return response()->json($factures);
     }
 
     public function store(Request $request)
     {
+        $clientId = $this->getClientId($request);
+        if (!$clientId) {
+            return response()->json(['error' => 'client_id missing'], 400);
+        }
+
         $validated = $request->validate([
-            'entreprise_id' => 'required|uuid',
-            'client_id' => 'required|integer',
-            'type' => 'required|string',
+            'contact_id' => 'required|integer',
             'numero' => 'nullable|string',
-            'client_nom' => 'required|string',
             'date_facture' => 'required|date',
+            'date_echeance' => 'nullable|date',
             'statut' => 'required|string',
+            'notes' => 'nullable|string',
             'lignes' => 'required|array|min:1',
-            'lignes.*.designation' => 'required|string',
-            'lignes.*.description' => 'nullable|string',
+            'lignes.*.produit_id' => 'nullable|integer',
+            'lignes.*.description' => 'required|string',
             'lignes.*.quantite' => 'required|numeric|min:0.01',
             'lignes.*.prix_unitaire' => 'required|numeric|min:0',
             'lignes.*.taux_tva' => 'required|numeric|min:0',
-            'lignes.*.compte_produit_id' => 'nullable|uuid',
         ]);
 
         DB::beginTransaction();
@@ -50,18 +72,17 @@ class FactureController extends Controller
 
             $total_ttc = $total_ht + $total_tva;
 
-            $facture = GelFacture::create([
-                'entreprise_id' => $validated['entreprise_id'],
-                'client_id' => $validated['client_id'],
-                'type' => $validated['type'],
+            $facture = Facture::create([
+                'client_id' => $clientId,
+                'contact_id' => $validated['contact_id'],
                 'numero' => $validated['numero'] ?? 'FACT-' . time(),
-                'client_nom' => $validated['client_nom'],
-                'montant' => $total_ttc,
-                'total_ht' => $total_ht,
-                'total_tva' => $total_tva,
-                'total_ttc' => $total_ttc,
                 'date_facture' => $validated['date_facture'],
+                'date_echeance' => $validated['date_echeance'] ?? null,
+                'montant_ht' => $total_ht,
+                'montant_tva' => $total_tva,
+                'montant_ttc' => $total_ttc,
                 'statut' => $validated['statut'],
+                'notes' => $validated['notes'] ?? null,
             ]);
 
             foreach ($validated['lignes'] as $ligne) {
@@ -69,16 +90,15 @@ class FactureController extends Controller
                 $ligne_tva = $ligne_ht * ($ligne['taux_tva'] / 100);
                 $ligne_ttc = $ligne_ht + $ligne_tva;
 
-                GelFactureLigne::create([
+                FactureLigne::create([
                     'facture_id' => $facture->id,
-                    'designation' => $ligne['designation'],
-                    'description' => $ligne['description'] ?? null,
+                    'produit_id' => $ligne['produit_id'] ?? null,
+                    'description' => $ligne['description'],
                     'quantite' => $ligne['quantite'],
                     'prix_unitaire' => $ligne['prix_unitaire'],
                     'taux_tva' => $ligne['taux_tva'],
                     'total_ht' => $ligne_ht,
                     'total_ttc' => $ligne_ttc,
-                    'compte_produit_id' => $ligne['compte_produit_id'] ?? null,
                 ]);
             }
 
@@ -91,15 +111,17 @@ class FactureController extends Controller
         }
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        $facture = GelFacture::with('lignes')->findOrFail($id);
+        $clientId = $this->getClientId($request);
+        $facture = Facture::with(['contact', 'lignes'])->where('client_id', $clientId)->findOrFail($id);
         return response()->json($facture);
     }
 
     public function update(Request $request, $id)
     {
-        $facture = GelFacture::findOrFail($id);
+        $clientId = $this->getClientId($request);
+        $facture = Facture::where('client_id', $clientId)->findOrFail($id);
         
         $validated = $request->validate([
             'statut' => 'required|string',
@@ -111,9 +133,10 @@ class FactureController extends Controller
         return response()->json($facture);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        $facture = GelFacture::findOrFail($id);
+        $clientId = $this->getClientId($request);
+        $facture = Facture::where('client_id', $clientId)->findOrFail($id);
         $facture->delete();
         return response()->json(null, 204);
     }
@@ -121,12 +144,19 @@ class FactureController extends Controller
     /**
      * Valider la facture et générer l'écriture comptable correspondante
      */
-    public function validerFacture($id)
+    public function validerFacture(Request $request, $id)
     {
-        $facture = GelFacture::with('lignes')->findOrFail($id);
+        $clientId = $this->getClientId($request);
+        $facture = Facture::with('lignes')->where('client_id', $clientId)->findOrFail($id);
 
-        if ($facture->statut !== 'Brouillon') {
+        if ($facture->statut !== 'brouillon') {
             return response()->json(['error' => 'La facture est déjà validée'], 400);
+        }
+
+        // Garde anti-doublon (§2.2) : une écriture comptable existe déjà pour
+        // cette facture → ne pas en créer une seconde (risque de doublon).
+        if ($facture->ecriture_id) {
+            return response()->json(['error' => 'Une écriture comptable existe déjà pour cette facture.'], 400);
         }
 
         DB::beginTransaction();
@@ -140,53 +170,69 @@ class FactureController extends Controller
             $exercice_id = DB::table('gel_exercices')->where('cloture', false)->value('id');
 
             if (!$journal_ventes_id || !$exercice_id) {
-                throw new \Exception("Journal des ventes ou exercice ouvert introuvable.");
+                // Créer un journal des ventes par défaut si non trouvé
+                $journal_ventes_id = DB::table('gel_journaux')->insertGetId([
+                    'cabinet_id' => Auth::user()->tenant_id ?? 1,
+                    'code' => 'VT',
+                    'nom' => 'Ventes',
+                    'type' => 'Ventes',
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+            }
+            if (!$exercice_id) {
+                 // Si aucun exercice, fallback
+                 throw new \Exception("Aucun exercice comptable ouvert trouvé.");
             }
 
             $ecriture = \App\Models\Gel\EcritureComptable::create([
-                'cabinet_id' => \Illuminate\Support\Facades\Auth::user()->cabinet_id,
+                'cabinet_id' => Auth::user()->tenant_id ?? 1,
                 'client_id' => $facture->client_id,
                 'journal_id' => $journal_ventes_id,
                 'exercice_id' => $exercice_id,
                 'date_ecriture' => $facture->date_facture,
-                'libelle' => 'Facture ' . $facture->numero . ' - ' . $facture->client_nom,
+                'libelle' => 'Facture ' . $facture->numero,
                 'statut' => 'brouillon',
-                'source_type' => GelFacture::class,
+                'source_type' => Facture::class,
                 'source_id' => $facture->id,
             ]);
 
             // Ligne 411 - Client (TTC)
-            \App\Models\Gel\LigneEcriture::create([
-                'ecriture_id' => $ecriture->id,
-                'compte_id' => $compteClient,
-                'libelle_ligne' => 'Créance client',
-                'sens' => 'debit',
-                'montant' => $facture->total_ttc,
-            ]);
+            if ($compteClient) {
+                \App\Models\Gel\LigneEcriture::create([
+                    'ecriture_id' => $ecriture->id,
+                    'compte_id' => $compteClient,
+                    'libelle_ligne' => 'Créance client',
+                    'sens' => 'debit',
+                    'montant' => $facture->montant_ttc,
+                ]);
+            }
 
-            // Ligne 701 - Ventes (HT) (On pourrait boucler sur les lignes pour répartir si divers produits)
-            \App\Models\Gel\LigneEcriture::create([
-                'ecriture_id' => $ecriture->id,
-                'compte_id' => $compteVente,
-                'libelle_ligne' => 'Vente de marchandises',
-                'sens' => 'credit',
-                'montant' => $facture->total_ht,
-            ]);
+            // Ligne 701 - Ventes (HT)
+            if ($compteVente) {
+                \App\Models\Gel\LigneEcriture::create([
+                    'ecriture_id' => $ecriture->id,
+                    'compte_id' => $compteVente,
+                    'libelle_ligne' => 'Vente de marchandises',
+                    'sens' => 'credit',
+                    'montant' => $facture->montant_ht,
+                ]);
+            }
 
             // Ligne 4431 - TVA facturée
-            if ($facture->total_tva > 0) {
+            if ($facture->montant_tva > 0 && $compteTVA) {
                 \App\Models\Gel\LigneEcriture::create([
                     'ecriture_id' => $ecriture->id,
                     'compte_id' => $compteTVA,
                     'libelle_ligne' => 'TVA collectée',
                     'sens' => 'credit',
-                    'montant' => $facture->total_tva,
+                    'montant' => $facture->montant_tva,
                 ]);
             }
 
             $facture->update([
-                'statut' => 'Validée',
-                'ecriture_comptable_id' => $ecriture->id,
+                'statut' => 'validee',
+                'ecriture_id' => $ecriture->id,
             ]);
 
             DB::commit();

@@ -181,7 +181,7 @@ class ChatController extends BaseApiController
                    '✅ Balance générale et auxiliaire' . "\n" .
                    '✅ Grand livre' . "\n" .
                    '✅ Bilan et Compte de Résultat' . "\n" .
-                   '✅ Déclarations fiscales intégrées (TVA, IRPP, CNSS, IS)' . "\n" .
+                   '✅ Déclarations fiscales intégrées (TVA, ITS, CNSS, IS)' . "\n" .
                    '✅ Conformité e-MECeF DGI' . "\n\n" .
                    'Souhaitez-vous en savoir plus sur un aspect particulier ?';
         }

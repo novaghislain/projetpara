@@ -12,11 +12,22 @@ class TrialBalanceService
     public function generate(int $clientId, ?string $date = null): array
     {
         $date = $date ?? date('Y-m-d');
-        $startDate = date('Y-01-01', strtotime($date));
-
-        $accounts = AccountingAccount::where('client_id', $clientId)
-            ->where('is_active', true)
-            ->orderBy('code')
+        $accounts = DB::table('gel_account_types as gat')
+            ->join('gel_lignes_ecriture as gl', 'gat.id', '=', 'gl.compte_id')
+            ->join('gel_ecritures as ge', 'gl.ecriture_id', '=', 'ge.id')
+            ->where('ge.client_id', $clientId)
+            ->where('ge.valide', true)
+            ->whereDate('ge.date_ecriture', '<=', $date)
+            ->select([
+                'gat.id as account_id',
+                'gat.code',
+                'gat.libelle as name',
+                'gat.classe',
+                DB::raw('COALESCE(SUM(CASE WHEN gl.sens = "debit" THEN gl.montant ELSE 0 END), 0) as debit'),
+                DB::raw('COALESCE(SUM(CASE WHEN gl.sens = "credit" THEN gl.montant ELSE 0 END), 0) as credit')
+            ])
+            ->groupBy('gat.id', 'gat.code', 'gat.libelle', 'gat.classe')
+            ->orderBy('gat.code')
             ->get();
 
         $lines = [];
@@ -24,25 +35,16 @@ class TrialBalanceService
         $totalCredit = 0;
 
         foreach ($accounts as $account) {
-            $totals = DB::table('entry_lines')
-                ->join('journal_entries', 'entry_lines.entry_id', '=', 'journal_entries.id')
-                ->where('entry_lines.account_id', $account->id)
-                ->where('journal_entries.client_id', $clientId)
-                ->where('journal_entries.status', 'posted')
-                ->whereDate('journal_entries.entry_date', '<=', $date)
-                ->selectRaw('COALESCE(SUM(debit), 0) as debit, COALESCE(SUM(credit), 0) as credit')
-                ->first();
-
-            $debit = (float) $totals->debit;
-            $credit = (float) $totals->credit;
+            $debit = (float) $account->debit;
+            $credit = (float) $account->credit;
 
             if ($debit == 0 && $credit == 0) continue;
 
             $lines[] = [
-                'account_id' => $account->id,
+                'account_id' => $account->account_id,
                 'account_code' => $account->code,
                 'account_name' => $account->name,
-                'class' => $account->syscohada_class ?? substr($account->code, 0, 1),
+                'class' => $account->classe ?? substr($account->code, 0, 1),
                 'total_debit' => $debit,
                 'total_credit' => $credit,
                 'balance' => round($debit - $credit, 2),
@@ -83,28 +85,30 @@ class TrialBalanceService
         // Comptes clients (41) ou fournisseurs (40)
         $prefix = $type === 'customer' ? '41' : '40';
 
-        $accounts = AccountingAccount::where('client_id', $clientId)
+        $accounts = DB::table('gel_account_types')
             ->where('code', 'like', $prefix . '%')
-            ->where('is_active', true)
-            ->orderBy('code')
             ->get();
 
         $result = [];
 
         foreach ($accounts as $account) {
-            $entries = DB::table('entry_lines')
-                ->join('journal_entries', 'entry_lines.entry_id', '=', 'journal_entries.id')
-                ->where('entry_lines.account_id', $account->id)
-                ->where('journal_entries.client_id', $clientId)
-                ->where('journal_entries.status', 'posted')
-                ->whereDate('journal_entries.entry_date', '<=', $asOfDate)
-                ->select('journal_entries.entry_date', 'journal_entries.reference', 'entry_lines.debit', 'entry_lines.credit')
-                ->orderBy('journal_entries.entry_date')
+            $entries = DB::table('gel_lignes_ecriture as gl')
+                ->join('gel_ecritures as ge', 'gl.ecriture_id', '=', 'ge.id')
+                ->where('gl.compte_id', $account->id)
+                ->where('ge.client_id', $clientId)
+                ->where('ge.valide', true)
+                ->whereDate('ge.date_ecriture', '<=', $asOfDate)
+                ->select('ge.date_ecriture as entry_date', 'ge.reference', 'gl.sens', 'gl.montant')
+                ->orderBy('ge.date_ecriture')
                 ->get();
 
             $solde = 0;
             foreach ($entries as $entry) {
-                $solde += (float) $entry->debit - (float) $entry->credit;
+                if ($entry->sens === 'debit') {
+                    $solde += (float) $entry->montant;
+                } else {
+                    $solde -= (float) $entry->montant;
+                }
             }
 
             if (abs($solde) < 0.01) continue;
@@ -114,7 +118,10 @@ class TrialBalanceService
 
             foreach ($entries as $entry) {
                 $days = (int) ((strtotime($asOfDate) - strtotime($entry->entry_date)) / 86400);
-                $amount = (float) ($type === 'customer' ? $entry->debit : $entry->credit);
+                $amount = (float) $entry->montant;
+                
+                if ($type === 'customer' && $entry->sens !== 'debit') continue;
+                if ($type !== 'customer' && $entry->sens !== 'credit') continue;
 
                 if ($days <= 30) $agingBuckets['0_30'] += $amount;
                 elseif ($days <= 60) $agingBuckets['31_60'] += $amount;
@@ -124,7 +131,7 @@ class TrialBalanceService
 
             $result[] = [
                 'account_code' => $account->code,
-                'account_name' => $account->name,
+                'account_name' => $account->libelle,
                 'balance' => round($solde, 2),
                 'aging' => [
                     '0_30' => round($agingBuckets['0_30'], 2),

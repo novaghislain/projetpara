@@ -66,7 +66,7 @@
           <div>
             <div style="font-size:13px;font-weight:700;color:var(--sec-text);">
               {{ $event->title }}
-              @if($currentView === 'online' && $event->statut === 'a_venir')
+              @if($currentView === 'online' && is_null($event->created_by))
                 <span style="font-size:10px; background:#FEF3C7; color:#D97706; padding:2px 6px; border-radius:4px; margin-left:8px;">Nouvelle demande</span>
               @endif
               @if($event->invitation_sent)
@@ -94,9 +94,11 @@
         </div>
         
         <div style="display:flex; gap:8px;">
-          @if($currentView === 'online' && $event->statut === 'a_venir')
-            <!-- Optionnel: Ajouter une route pour "Accepter" le RDV qui changerait le statut -->
-            <button class="sec-btn" style="background:#F0FDF4; color:#16A34A; border:1px solid #BBF7D0; padding:6px 12px; font-size:12px;" onclick="secToast('Fonctionnalité de validation à venir', 'info')"><i class="fas fa-check"></i> Valider</button>
+          @if($currentView === 'online' && is_null($event->created_by))
+            <form action="{{ route('gel-secretary.agenda.accept', $event->id) }}" method="POST">
+              @csrf
+              <button type="submit" class="sec-btn" style="background:#F0FDF4; color:#16A34A; border:1px solid #BBF7D0; padding:6px 12px; font-size:12px; cursor:pointer;" onclick="return confirm('Accepter et planifier ce rendez-vous ?');"><i class="fas fa-check"></i> Valider</button>
+            </form>
           @endif
           <form action="{{ route('gel-secretary.agenda.destroy', $event->id) }}" method="POST" onsubmit="return confirm('Supprimer ce rendez-vous ?');">
             @csrf
@@ -243,6 +245,119 @@
     white-space: normal;
     line-height: 1.1;
 }
+
+/* Premium Modal Styles */
+.premium-modal-backdrop {
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+.premium-modal-content {
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0,0,0,0.05);
+    overflow: hidden;
+    animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes modalPop {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.premium-modal-header {
+    padding: 20px 24px;
+    background: linear-gradient(to right, #f8fafc, #ffffff);
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.premium-modal-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.premium-modal-body {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    background: #ffffff;
+}
+.premium-input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    font-size: 13px;
+    color: #334155;
+    transition: all 0.2s;
+}
+.premium-input:focus {
+    background: #ffffff;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    outline: none;
+}
+.premium-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 6px;
+    display: block;
+}
+.premium-btn-primary {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+}
+.premium-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 8px -1px rgba(37, 99, 235, 0.3);
+}
+.premium-btn-secondary {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.premium-btn-secondary:hover {
+    background: #e2e8f0;
+}
+.premium-close-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+}
+.premium-close-btn:hover {
+    background: #f1f5f9;
+    color: #475569;
+}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
@@ -256,13 +371,18 @@ document.addEventListener('DOMContentLoaded', function() {
         id: e.id,
         title: e.title,
         start: e.start_at,
+        end: e.end_at,
         backgroundColor: e.couleur || 'var(--sec-primary)',
         borderColor: e.couleur || 'var(--sec-primary)',
         textColor: '#fff',
+        editable: true,
         extendedProps: {
             description: e.description,
             location: e.location,
-            visio_link: e.visio_link
+            visio_link: e.visio_link,
+            proces_verbal: e.proces_verbal,
+            guest_name: e.guest_name,
+            guest_email: e.guest_email
         }
     }));
 
@@ -306,8 +426,28 @@ document.addEventListener('DOMContentLoaded', function() {
         height: 'auto',
         events: allEvents,
         eventClick: function(info) {
-            // Optionnel : Afficher les détails au clic
-            // alert('Rendez-vous : ' + info.event.title);
+            // Ouvrir la modale d'édition
+            openEditModal(info.event);
+        },
+        eventDrop: function(info) {
+            // Mise à jour de la date après drag & drop
+            const eventId = info.event.id;
+            const newStart = info.event.start.toISOString().slice(0, 16);
+            const newEnd = info.event.end ? info.event.end.toISOString().slice(0, 16) : null;
+            
+            fetch(`/gel-secretary/agenda/${eventId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({ start_at: newStart, end_at: newEnd })
+            }).then(response => response.json())
+              .then(data => {
+                  if(data.success) {
+                      secToast('Rendez-vous déplacé avec succès', 'success');
+                  }
+              });
         },
         dateClick: function(info) {
             // Pré-remplir la date dans la modale d'ajout
@@ -334,93 +474,185 @@ function updateVisioPlaceholder() {
 </script>
 
 {{-- ─── MODAL NOUVEAU RDV ─── --}}
-<div id="rdvModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.6); backdrop-filter:blur(4px); z-index:999999; align-items:center; justify-content:center;">
-    <div style="background:#fff; border-radius:14px; width:500px; max-width:95%; max-height:90vh; overflow-y:auto; border:1px solid var(--sec-border); box-shadow:0 25px 50px -12px rgba(0, 0, 0, 0.25);">
-        <div style="padding:16px 20px; background:#f9fafb; border-bottom:1px solid var(--sec-border); display:flex; justify-content:space-between; align-items:center;">
-            <h3 style="font-size:14px; font-weight:700; color:var(--sec-text); margin:0;">Nouveau rendez-vous</h3>
-            <button type="button" onclick="document.getElementById('rdvModal').style.display='none'" style="background:none; border:none; font-size:18px; color:var(--sec-text-muted); cursor:pointer;">&times;</button>
+<div id="rdvModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; z-index:999999; align-items:center; justify-content:center;" class="premium-modal-backdrop">
+    <div class="premium-modal-content" style="width:500px; max-width:95%; max-height:90vh; display:flex; flex-direction:column;">
+        <div class="premium-modal-header">
+            <h3 class="premium-modal-title"><i class="fas fa-calendar-plus" style="color:#3b82f6;"></i> Nouveau rendez-vous</h3>
+            <button type="button" onclick="document.getElementById('rdvModal').style.display='none'" class="premium-close-btn">&times;</button>
         </div>
-        <form action="{{ route('gel-secretary.agenda.store') }}" method="POST" style="padding:20px; display:flex; flex-direction:column; gap:14px;">
-            @csrf
+        <div style="overflow-y:auto;">
+            <form action="{{ route('gel-secretary.agenda.store') }}" method="POST" class="premium-modal-body">
+                @csrf
 
-            <div class="sec-form-group">
-                <label>Objet du rendez-vous *</label>
-                <input type="text" name="title" required placeholder="Ex: Réunion préparation bilan" class="sec-form-control">
-            </div>
+                <div>
+                    <label class="premium-label">Objet du rendez-vous *</label>
+                    <input type="text" name="title" required placeholder="Ex: Réunion préparation bilan" class="premium-input">
+                </div>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                <div class="sec-form-group">
-                    <label>Type d'événement *</label>
-                    <select name="type" required class="sec-form-select">
-                        <option value="rdv_client">RDV Client (Bleu)</option>
-                        <option value="reunion_interne">Réunion interne (Vert)</option>
-                        <option value="audience">Audience / Tribunal (Rouge)</option>
-                        <option value="administratif">Administratif (Gris)</option>
-                        <option value="echeance_fiscale">Échéance Fiscale (Violet)</option>
-                        <option value="echeance_cnss">Échéance CNSS (Rose)</option>
-                        <option value="renouvellement">Renouvellement (Cyan)</option>
-                        <option value="visite">Visite (Citron vert)</option>
-                        <option value="autre">Autre</option>
-                    </select>
-                </div>
-                <div class="sec-form-group">
-                    <label>Date et heure *</label>
-                    <input type="datetime-local" name="start_at" required class="sec-form-control">
-                </div>
-            </div>
-
-            <div class="sec-form-group">
-                <label>Lieu physique</label>
-                <input type="text" name="location" placeholder="Ex: Bureau 204, Salle de réunion..." class="sec-form-control">
-            </div>
-
-            {{-- Visio --}}
-            <div style="background:#F0F9FF; border:1px solid #BAE6FD; border-radius:10px; padding:14px;">
-                <div style="font-size:12px; font-weight:700; color:#0369A1; margin-bottom:10px;">
-                    <i class="fas fa-video" style="margin-right:6px;"></i> Visioconférence (optionnel)
-                </div>
-                <div style="display:grid; grid-template-columns:140px 1fr; gap:10px; align-items:center;">
-                    <select name="visio_type" id="visio_type_select" class="sec-form-select" style="font-size:12px;" onchange="updateVisioPlaceholder()">
-                        <option value="">-- Plateforme --</option>
-                        <option value="zoom">&#127909; Zoom</option>
-                        <option value="teams">&#128187; Microsoft Teams</option>
-                        <option value="meet">&#127744; Google Meet</option>
-                        <option value="autre">Autre</option>
-                    </select>
-                    <input type="url" name="visio_link" id="visio_link_input" placeholder="https://zoom.us/j/..." class="sec-form-control" style="font-size:12px;">
-                </div>
-            </div>
-
-            {{-- Invitation --}}
-            <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:10px; padding:14px;">
-                <div style="font-size:12px; font-weight:700; color:#15803D; margin-bottom:10px;">
-                    <i class="fas fa-envelope" style="margin-right:6px;"></i> Invitation email (optionnel)
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                     <div>
-                        <label style="font-size:11px; color:#64748b; display:block; margin-bottom:4px;">Nom de l'invité</label>
-                        <input type="text" name="guest_name" placeholder="Ex: Jean Dupont" class="sec-form-control" style="font-size:12px;">
+                        <label class="premium-label">Type d'événement *</label>
+                        <select name="type" required class="premium-input">
+                            <option value="rdv_client">RDV Client (Bleu)</option>
+                            <option value="reunion_interne">Réunion interne (Vert)</option>
+                            <option value="audience">Audience / Tribunal (Rouge)</option>
+                            <option value="administratif">Administratif (Gris)</option>
+                            <option value="echeance_fiscale">Échéance Fiscale (Violet)</option>
+                            <option value="echeance_cnss">Échéance CNSS (Rose)</option>
+                            <option value="renouvellement">Renouvellement (Cyan)</option>
+                            <option value="visite">Visite (Citron vert)</option>
+                            <option value="autre">Autre</option>
+                        </select>
                     </div>
                     <div>
-                        <label style="font-size:11px; color:#64748b; display:block; margin-bottom:4px;">Email de l'invité</label>
-                        <input type="email" name="guest_email" placeholder="jean@exemple.com" class="sec-form-control" style="font-size:12px;">
+                        <label class="premium-label">Date et heure *</label>
+                        <input type="datetime-local" name="start_at" required class="premium-input">
                     </div>
                 </div>
-                <p style="font-size:10px; color:#64748b; margin:8px 0 0;">Si renseigné, un email de convocation sera envoyé automatiquement avec les détails du rendez-vous.</p>
-            </div>
 
-            <div class="sec-form-group">
-                <label>Description / Notes</label>
-                <textarea name="description" placeholder="Description du rendez-vous..." class="sec-form-control" rows="2" style="resize:none;"></textarea>
-            </div>
+                <div>
+                    <label class="premium-label">Lieu physique</label>
+                    <input type="text" name="location" placeholder="Ex: Bureau 204, Salle de réunion..." class="premium-input">
+                </div>
 
-            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:4px;">
-                <button type="button" class="sec-btn sec-btn-secondary" onclick="document.getElementById('rdvModal').style.display='none'">Annuler</button>
-                <button type="submit" class="sec-btn sec-btn-primary"><i class="fas fa-calendar-check me-1"></i> Enregistrer le rendez-vous</button>
-            </div>
-        </form>
+                {{-- Visio --}}
+                <div style="background:#F0F9FF; border:1px solid #BAE6FD; border-radius:12px; padding:16px;">
+                    <div style="font-size:12px; font-weight:700; color:#0369A1; margin-bottom:12px;">
+                        <i class="fas fa-video" style="margin-right:6px;"></i> Visioconférence (optionnel)
+                    </div>
+                    <div style="display:grid; grid-template-columns:140px 1fr; gap:12px; align-items:center;">
+                        <select name="visio_type" id="visio_type_select" class="premium-input" onchange="updateVisioPlaceholder()">
+                            <option value="">-- Plateforme --</option>
+                            <option value="zoom">&#127909; Zoom</option>
+                            <option value="teams">&#128187; Microsoft Teams</option>
+                            <option value="meet">&#127744; Google Meet</option>
+                            <option value="autre">Autre</option>
+                        </select>
+                        <input type="url" name="visio_link" id="visio_link_input" placeholder="https://zoom.us/j/..." class="premium-input">
+                    </div>
+                </div>
+
+                {{-- Invitation --}}
+                <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:12px; padding:16px;">
+                    <div style="font-size:12px; font-weight:700; color:#15803D; margin-bottom:12px;">
+                        <i class="fas fa-envelope" style="margin-right:6px;"></i> Invitation email (optionnel)
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <div>
+                            <label class="premium-label">Nom de l'invité</label>
+                            <input type="text" name="guest_name" placeholder="Ex: Jean Dupont" class="premium-input">
+                        </div>
+                        <div>
+                            <label class="premium-label">Email de l'invité</label>
+                            <input type="email" name="guest_email" placeholder="jean@exemple.com" class="premium-input">
+                        </div>
+                    </div>
+                    <p style="font-size:11px; color:#64748b; margin:10px 0 0;"><i class="fas fa-info-circle me-1"></i> Si renseigné, un email de convocation sera envoyé automatiquement.</p>
+                </div>
+
+                <div>
+                    <label class="premium-label">Description / Notes</label>
+                    <textarea name="description" placeholder="Description du rendez-vous..." class="premium-input" rows="2" style="resize:none;"></textarea>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:8px;">
+                    <button type="button" class="premium-btn-secondary" onclick="document.getElementById('rdvModal').style.display='none'">Annuler</button>
+                    <button type="submit" class="premium-btn-primary"><i class="fas fa-calendar-check me-1"></i> Enregistrer</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
+
+{{-- ─── MODAL EDITION RDV / PV ─── --}}
+<div id="editRdvModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; z-index:999999; align-items:center; justify-content:center;" class="premium-modal-backdrop">
+    <div class="premium-modal-content" style="width:700px; max-width:95%; max-height:90vh; display:flex; flex-direction:column;">
+        <div class="premium-modal-header">
+            <h3 class="premium-modal-title"><i class="fas fa-edit" style="color:#3b82f6;"></i> Détails & Procès Verbal</h3>
+            <button type="button" onclick="document.getElementById('editRdvModal').style.display='none'" class="premium-close-btn">&times;</button>
+        </div>
+        <div style="overflow-y:auto;">
+            <form id="editRdvForm" action="" method="POST" class="premium-modal-body">
+                @csrf
+                @method('PUT')
+
+                <input type="hidden" name="id" id="edit_id">
+
+                <div>
+                    <label class="premium-label">Objet du rendez-vous *</label>
+                    <input type="text" name="title" id="edit_title" required class="premium-input">
+                </div>
+
+                <div>
+                    <label class="premium-label">Date et heure de début</label>
+                    <input type="datetime-local" name="start_at" id="edit_start_at" class="premium-input">
+                </div>
+
+                <div>
+                    <label class="premium-label">Procès-verbal (Brouillon ou Compte-rendu) 
+                        <button type="button" id="btnSummarizePv" class="premium-btn-secondary" style="padding:4px 10px; font-size:11px; margin-left:10px;" onclick="summarizePv()">
+                            <i class="fas fa-magic" style="color:#8B5CF6;"></i> Résumer avec l'IA
+                        </button>
+                    </label>
+                    <textarea name="proces_verbal" id="edit_proces_verbal" class="premium-input" rows="8" placeholder="Prenez vos notes de réunion ici..."></textarea>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:8px;">
+                    <button type="button" class="premium-btn-secondary" onclick="document.getElementById('editRdvModal').style.display='none'">Annuler</button>
+                    <button type="submit" class="premium-btn-primary"><i class="fas fa-save me-1"></i> Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openEditModal(event) {
+    const modal = document.getElementById('editRdvModal');
+    const form = document.getElementById('editRdvForm');
+    
+    // Remplir les champs
+    document.getElementById('edit_id').value = event.id;
+    document.getElementById('edit_title').value = event.title;
+    
+    // Convert YYYY-MM-DDTHH:mm:ssZ to YYYY-MM-DDTHH:mm
+    if(event.start) {
+        document.getElementById('edit_start_at').value = event.start.toISOString().slice(0, 16);
+    }
+    
+    document.getElementById('edit_proces_verbal').value = event.extendedProps.proces_verbal || '';
+
+    // Définir l'action du form
+    form.action = `/gel-secretary/agenda/${event.id}`;
+    
+    modal.style.display = 'flex';
+}
+
+function summarizePv() {
+    const eventId = document.getElementById('edit_id').value;
+    const btn = document.getElementById('btnSummarizePv');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Génération...';
+    
+    fetch(`/gel-secretary/agenda/${eventId}/summarize-pv`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    }).then(r => r.json()).then(data => {
+        if(data.success) {
+            document.getElementById('edit_proces_verbal').value = data.summary;
+            secToast('PV résumé par l\'IA avec succès', 'success');
+        } else {
+            secToast(data.message || 'Erreur', 'error');
+        }
+        btn.innerHTML = '<i class="fas fa-magic"></i> Résumer avec l\'IA';
+    }).catch(err => {
+        secToast('Erreur serveur', 'error');
+        btn.innerHTML = '<i class="fas fa-magic"></i> Résumer avec l\'IA';
+    });
+}
+</script>
 @else
 <div class="sec-card" style="padding:40px; text-align:center; color:var(--sec-text-muted);">
   <i class="fas fa-building" style="font-size:48px; margin-bottom:12px; color:#cbd5e1;"></i>

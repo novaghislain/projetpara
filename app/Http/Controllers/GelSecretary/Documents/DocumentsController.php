@@ -42,10 +42,22 @@ class DocumentsController extends Controller
             $clientId = $activeClient?->id ?? null;
             $userId = $activeClient ? null : $user->id;
         } else {
-            $clients = Client::orderBy('nom_entreprise')->get();
-            $activeClientId = session('active_client_id') ?? $user->active_client_id ?? ($clients->first()?->id);
-            $activeClient = Client::find($activeClientId);
-            $clientId = $activeClient?->id ?? null;
+            $clientIds = $user->userClients()->pluck('client_id')->toArray();
+            $query = \App\Models\Client::query();
+            if ($user->cabinet_id) {
+                $query->where('created_by', $user->cabinet_id)->orWhereIn('id', $clientIds);
+            } else {
+                $query->whereIn('id', $clientIds);
+            }
+            $clients = $query->orderBy('nom_entreprise')->get();
+            $activeClientId = session('active_client_id') ?? $user->active_client_id ?? ($clients->first()?->id) ?? \App\Models\Client::first()?->id;
+            $activeClient = \App\Models\Client::find($activeClientId);
+            $clientId = $activeClient?->id ?? \App\Models\Client::first()?->id;
+        }
+
+        if (!$clientId && \App\Models\Client::first()) {
+            $clientId = \App\Models\Client::first()->id;
+            $activeClient = \App\Models\Client::find($clientId);
         }
 
         // Arbre canonique unique (Documents → Permanents/Courants → Année → Mois).
@@ -128,13 +140,18 @@ class DocumentsController extends Controller
     public function showFolder($folderId)
     {
         $user = Auth::user();
-        $clients = Client::orderBy('nom_entreprise')->get();
+        $clients = $this->getAuthorizedClients($user);
         $structure = new FolderStructureService();
 
         $folder = ClientFolder::findOrFail($folderId);
 
         // Isolation stricte par entreprise / secrétaire autonome.
         $this->assertScopeAccess($folder, $user);
+
+        // --- BACKEND SECURITY CHECK ---
+        if ($folder->is_secured && !session('unlocked_folder_' . $folder->id)) {
+            return back()->with('error', 'Ce dossier est sécurisé. Vous devez le déverrouiller pour y accéder.');
+        }
 
         $activeClient = $folder->client;
         if ($activeClient) {
@@ -428,8 +445,20 @@ class DocumentsController extends Controller
             return back()->with('error', 'Le fichier physique n\'existe pas sur le serveur.');
         }
 
+        // --- BACKEND SECURITY CHECK ---
+        if ($document->is_secured && !session('unlocked_document_' . $document->id)) {
+            return back()->with('error', 'Ce document est sécurisé. Vous devez le déverrouiller d\'abord.');
+        }
+        if ($document->folder && $document->folder->is_secured && !session('unlocked_folder_' . $document->folder->id)) {
+            return back()->with('error', 'Le dossier contenant ce document est sécurisé. Vous devez le déverrouiller d\'abord.');
+        }
+
         // Traçabilité stricte
         AuditLogService::log('document.download', $document, null, null);
+
+        if ($document->is_secured && !session('unlocked_document_' . $document->id) && !session('unlocked_folder_' . $document->folder_id)) {
+            return back()->with('error', 'Ce document est sécurisé. Vous devez le déverrouiller d\'abord.');
+        }
 
         return Storage::disk('public')->download($document->file_path, $document->name);
     }
@@ -445,8 +474,20 @@ class DocumentsController extends Controller
             return back()->with('error', 'Le fichier physique n\'existe pas sur le serveur.');
         }
 
+        // --- BACKEND SECURITY CHECK ---
+        if ($document->is_secured && !session('unlocked_document_' . $document->id)) {
+            return back()->with('error', 'Ce document est sécurisé. Vous devez le déverrouiller d\'abord.');
+        }
+        if ($document->folder && $document->folder->is_secured && !session('unlocked_folder_' . $document->folder->id)) {
+            return back()->with('error', 'Le dossier contenant ce document est sécurisé. Vous devez le déverrouiller d\'abord.');
+        }
+
         // Traçabilité stricte
         AuditLogService::log('document.read', $document, null, null);
+
+        if ($document->is_secured && !session('unlocked_document_' . $document->id) && !session('unlocked_folder_' . $document->folder_id)) {
+            return back()->with('error', 'Ce document est sécurisé. Vous devez le déverrouiller d\'abord.');
+        }
 
         return response()->file(Storage::disk('public')->path($document->file_path));
     }
@@ -491,7 +532,7 @@ class DocumentsController extends Controller
     public function searchFolders(Request $request)
     {
         $user = Auth::user();
-        $clients = Client::orderBy('nom_entreprise')->get();
+        $clients = $this->getAuthorizedClients($user);
         $clientId = session('active_client_id') ?? $user->active_client_id ?? ($clients->first()?->id);
         
         $q = $request->input('q');
@@ -843,7 +884,7 @@ class DocumentsController extends Controller
         if (!$user->isAutonomousSecretary()) {
             $activeClientId = session('active_client_id') ?? $user->active_client_id;
             if ($activeClientId) {
-                $activeClient = Client::find($activeClientId);
+                $activeClient = \App\Models\Client::find($activeClientId);
             }
         }
 
@@ -1100,6 +1141,18 @@ class DocumentsController extends Controller
      * ════════════════════════════════════════════════════════════════════ */
 
     /** Périmètre courant : [client_id, user_id] pour la secrétaire. */
+    protected function getAuthorizedClients($user)
+    {
+        $clientIds = $user->userClients()->pluck('client_id')->toArray();
+        $query = \App\Models\Client::query();
+        if ($user->cabinet_id) {
+            $query->where('created_by', $user->cabinet_id)->orWhereIn('id', $clientIds);
+        } else {
+            $query->whereIn('id', $clientIds);
+        }
+        return $query->orderBy('nom_entreprise')->get();
+    }
+
     protected function currentScope($user): array
     {
         if ($user->isAutonomousSecretary()) {
@@ -1112,7 +1165,7 @@ class DocumentsController extends Controller
             return [null, $user->id];
         }
 
-        $clients = Client::orderBy('nom_entreprise')->get();
+        $clients = $this->getAuthorizedClients($user);
         $activeClientId = session('active_client_id') ?? $user->active_client_id ?? ($clients->first()?->id);
 
         return [$activeClientId, null];
@@ -1156,6 +1209,133 @@ class DocumentsController extends Controller
         }
 
         return $chain;
+    }
+
+    // ─── Sécurité et Téléchargements de Dossiers ──────────────────────────
+
+    public function secureFolder(Request $request, $id)
+    {
+        $request->validate(['password' => 'required|min:4']);
+        $folder = ClientFolder::findOrFail($id);
+        $folder->is_secured = true;
+        $folder->secure_password = \Hash::make($request->password);
+        $folder->save();
+        return response()->json(['success' => true]);
+    }
+
+    public function secureDocument(Request $request, $id)
+    {
+        $request->validate(['password' => 'required|min:4']);
+        $document = Document::findOrFail($id);
+        $document->is_secured = true;
+        $document->secure_password = \Hash::make($request->password);
+        $document->save();
+        return response()->json(['success' => true]);
+    }
+
+    public function resetFolderSecurity(Request $request, $id)
+    {
+        $user = Auth::user();
+        if (!$user->isSuperAdmin()) {
+            return response()->json(['success' => false, 'message' => 'Non autorisé.'], 403);
+        }
+        $folder = ClientFolder::findOrFail($id);
+        $folder->is_secured = false;
+        $folder->secure_password = null;
+        $folder->save();
+        return response()->json(['success' => true]);
+    }
+
+    public function resetDocumentSecurity(Request $request, $id)
+    {
+        $user = Auth::user();
+        if (!$user->isSuperAdmin()) {
+            return response()->json(['success' => false, 'message' => 'Non autorisé.'], 403);
+        }
+        $document = Document::findOrFail($id);
+        $document->is_secured = false;
+        $document->secure_password = null;
+        $document->save();
+        return response()->json(['success' => true]);
+    }
+
+    public function verifyPassword(Request $request)
+    {
+        $type = $request->input('type'); // 'folder' or 'document'
+        $id = $request->input('id');
+        $password = $request->input('password');
+
+        if ($type === 'folder') {
+            $item = ClientFolder::findOrFail($id);
+            if (\Hash::check($password, $item->secure_password)) {
+                session(['unlocked_folder_' . $id => true]);
+                return response()->json(['success' => true]);
+            }
+        } else {
+            $item = Document::findOrFail($id);
+            if (\Hash::check($password, $item->secure_password)) {
+                session(['unlocked_document_' . $id => true]);
+                return response()->json(['success' => true]);
+            }
+        }
+        return response()->json(['success' => false, 'message' => 'Mot de passe incorrect.'], 401);
+    }
+
+    public function downloadFolder($id)
+    {
+        $folder = ClientFolder::findOrFail($id);
+        
+        if ($folder->is_secured && !session('unlocked_folder_' . $folder->id)) {
+            return back()->with('error', 'Ce dossier est sécurisé. Vous devez le déverrouiller d\'abord.');
+        }
+
+        $zipFileName = 'Dossier_' . preg_replace('/[^a-zA-Z0-9_\-]/', '_', $folder->name) . '_' . time() . '.zip';
+        $zipFilePath = storage_path('app/public/temp/' . $zipFileName);
+
+        if (!\File::exists(storage_path('app/public/temp'))) {
+            \File::makeDirectory(storage_path('app/public/temp'), 0755, true);
+        }
+
+        $zip = new \ZipArchive();
+        if ($zip->open($zipFilePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+            $this->addFolderToZip($folder, $zip, $folder->name);
+            // Add a placeholder if folder is empty so the zip is valid
+            if ($zip->numFiles === 0) {
+                $zip->addFromString($folder->name . '/.keep', '');
+            }
+            $zip->close();
+        } else {
+            return back()->with('error', 'Erreur lors de la création du fichier ZIP.');
+        }
+
+        if (!file_exists($zipFilePath) || filesize($zipFilePath) === 0) {
+            return back()->with('error', 'Le dossier est vide ou ne contient aucun fichier téléchargeable.');
+        }
+
+        AuditLogService::log('folder.download', $folder, null, ['folder_id' => $folder->id, 'folder_name' => $folder->name]);
+
+        return response()->download($zipFilePath)->deleteFileAfterSend(true);
+    }
+
+    private function addFolderToZip($folder, $zip, $pathInZip)
+    {
+        $documents = Document::where('folder_id', $folder->id)->get();
+        foreach ($documents as $document) {
+            // Check if document exists and is not secured individually (or is unlocked)
+            $isUnlocked = !$document->is_secured || session('unlocked_document_' . $document->id) || session('unlocked_folder_' . $folder->id);
+            if ($isUnlocked && Storage::disk('public')->exists($document->file_path)) {
+                $zip->addFile(Storage::disk('public')->path($document->file_path), $pathInZip . '/' . $document->name);
+            }
+        }
+
+        $subFolders = ClientFolder::where('parent_id', $folder->id)->get();
+        foreach ($subFolders as $subFolder) {
+            $isUnlocked = !$subFolder->is_secured || session('unlocked_folder_' . $subFolder->id);
+            if ($isUnlocked) {
+                $zip->addEmptyDir($pathInZip . '/' . $subFolder->name);
+                $this->addFolderToZip($subFolder, $zip, $pathInZip . '/' . $subFolder->name);
+            }
+        }
     }
 }
 

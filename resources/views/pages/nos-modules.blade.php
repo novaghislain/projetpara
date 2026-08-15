@@ -139,10 +139,10 @@
                     <div class="pole-card">
                         <div class="pole-icon" style="background:#FEE2E2;color:#DC2626;"><i class="bi bi-receipt"></i></div>
                         <h3>Pôle Fiscal</h3>
-                        <p>Déclarations fiscales intégrées, calcul automatique TVA/IRPP/IS/CNSS, échéancier avec alertes J-15, J-7, J-1.</p>
+                        <p>Déclarations fiscales intégrées, calcul automatique TVA/ITS/IS/CNSS, échéancier avec alertes J-15, J-7, J-1.</p>
                         <div class="pole-modules">
                             <span class="pole-module-tag"><i class="bi bi-check"></i> TVA</span>
-                            <span class="pole-module-tag"><i class="bi bi-check"></i> IRPP</span>
+                            <span class="pole-module-tag"><i class="bi bi-check"></i> ITS</span>
                             <span class="pole-module-tag"><i class="bi bi-check"></i> CNSS</span>
                             <span class="pole-module-tag"><i class="bi bi-check"></i> IS</span>
                             <span class="pole-module-tag"><i class="bi bi-check"></i> e-MECeF</span>

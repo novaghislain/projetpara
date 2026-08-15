@@ -1,425 +1,258 @@
 @extends('layouts.gel-accountant')
 
-@section('title', 'Facture ' . $invoice->invoice_number)
+@section('title', 'Détail de la Facture ' . $invoice->invoice_number)
+
+@push('styles')
+<style>
+/* ==========================================================================
+   FACTURE SHOW - DESIGN
+   ========================================================================== */
+.invoice-wrapper {
+    display: flex; gap: 24px; margin-bottom: 24px;
+}
+.invoice-document {
+    flex: 1; background: white; padding: 40px; border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid var(--gel-border);
+}
+.invoice-sidebar {
+    width: 320px; display: flex; flex-direction: column; gap: 20px;
+}
+.sidebar-box {
+    background: white; border: 1px solid var(--gel-border);
+    border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+}
+.sidebar-title {
+    font-size: 14px; font-weight: 700; color: #1E293B; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #E2E8F0; padding-bottom: 12px;
+}
+
+.invoice-header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
+.invoice-logo { font-size: 24px; font-weight: 800; color: var(--gel-primary); }
+.invoice-title { font-size: 28px; font-weight: 300; color: #64748B; margin: 0; text-transform: uppercase; letter-spacing: 2px; }
+.invoice-num { font-size: 16px; font-weight: 700; color: #1E293B; margin-top: 4px; }
+
+.invoice-addresses { display: flex; justify-content: space-between; margin-bottom: 40px; }
+.address-box { width: 45%; }
+.address-title { font-size: 12px; font-weight: 700; color: #94A3B8; text-transform: uppercase; margin-bottom: 8px; }
+.address-content { font-size: 14px; color: #334155; line-height: 1.6; }
+.address-content strong { color: #1E293B; font-size: 16px; }
+
+.invoice-meta { display: flex; gap: 40px; margin-bottom: 40px; padding: 16px 20px; background: #F8FAFC; border-radius: 8px; border: 1px solid #E2E8F0; }
+.meta-item { display: flex; flex-direction: column; }
+.meta-label { font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; margin-bottom: 4px; }
+.meta-value { font-size: 14px; font-weight: 600; color: #1E293B; }
+
+.lines-table { width: 100%; border-collapse: collapse; margin-bottom: 40px; }
+.lines-table th { background: #F1F5F9; font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; padding: 12px; text-align: left; border-bottom: 2px solid #E2E8F0; }
+.lines-table td { padding: 12px; border-bottom: 1px solid #E2E8F0; vertical-align: middle; font-size: 13px; color: #334155; }
+.lines-table th.right, .lines-table td.right { text-align: right; }
+.lines-table th.center, .lines-table td.center { text-align: center; }
+
+.totals-area { display: flex; justify-content: flex-end; }
+.totals-box { width: 320px; }
+.total-line { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: #475569; }
+.total-line.grand { border-top: 2px solid #E2E8F0; padding-top: 12px; margin-top: 4px; font-size: 18px; font-weight: 700; color: var(--gel-primary); }
+
+.status-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; text-align: center; width: 100%; margin-bottom: 16px; }
+.status-draft { background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1; }
+.status-sent { background: #DBEAFE; color: #2563EB; border: 1px solid #BFDBFE; }
+.status-paid { background: #ECFDF5; color: #10B981; border: 1px solid #A7F3D0; }
+.status-overdue { background: #FEF2F2; color: #EF4444; border: 1px solid #FECACA; }
+
+.action-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; transition: all 0.2s; border: none; cursor: pointer; margin-bottom: 10px; }
+.action-primary { background: var(--gel-primary); color: white; }
+.action-primary:hover { background: var(--gel-primary-hover); color: white; }
+.action-secondary { background: white; border: 1px solid #E2E8F0; color: #475569; }
+.action-secondary:hover { background: #F8FAFC; border-color: #CBD5E1; }
+.action-danger { background: white; border: 1px solid #FECACA; color: #EF4444; }
+.action-danger:hover { background: #FEF2F2; }
+
+.emecef-box { background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 8px; padding: 16px; text-align: center; }
+.emecef-title { font-size: 12px; font-weight: 700; color: #64748B; margin-bottom: 8px; text-transform: uppercase; }
+</style>
+@endpush
 
 @section('content')
-
-{{-- â•â•â•â•â•â•â•â•â•â•â• EN-TÀŠTE â•â•â•â•â•â•â•â•â•â•â• --}}
 <div class="gel-page-header">
     <div>
-        <h1 class="gel-page-title">
-            <i class="fas fa-file-invoice-dollar" style="color:var(--gel-primary);"></i>
-            {{ $invoice->invoice_number }}
-        </h1>
-        <p class="gel-page-subtitle">
-            Créée le {{ $invoice->created_at->format('d/m/Y À  H:i') }}
-            — Statut :
-            @php
-                $statusColors = [
-                    'draft' => 'background:rgba(107, 114, 128, 0.1); color:var(--gel-text-secondary);',
-                    'sent' => 'background:rgba(59, 130, 246, 0.1); color:var(--gel-info);',
-                    'paid' => 'background:rgba(16, 185, 129, 0.1); color:var(--gel-success);',
-                    'overdue' => 'background:rgba(239, 68, 68, 0.1); color:var(--gel-danger);',
-                    'cancelled' => 'background:rgba(107, 114, 128, 0.1); color:var(--gel-text-muted);',
-                ];
-                $color = $statusColors[$invoice->status] ?? 'background:rgba(107, 114, 128, 0.1); color:var(--gel-text-secondary);';
-            @endphp
-            <span class="gel-badge" style="{{ $color }}">{{ \App\Models\Invoice::STATUS[$invoice->status] ?? $invoice->status }}</span>
-        </p>
-    </div>
-    <div style="display:flex; gap:8px;">
-        <a href="{{ route('gel-accountant.factures.index') }}" class="gel-btn gel-btn-secondary">
-            <i class="fas fa-arrow-left"></i> Retour
-        </a>
-        <a href="{{ route('gel-accountant.factures.pdf', $invoice->id) }}" target="_blank" class="gel-btn gel-btn-primary">
-            <i class="fas fa-download"></i> Télécharger PDF
-        </a>
+        <a href="{{ route('gel-accountant.factures.index') }}" style="font-size:13px; color:#64748B; text-decoration:none; margin-bottom:8px; display:inline-block;"><i class="fas fa-arrow-left"></i> Retour aux factures</a>
+        <h1 class="gel-page-title">Facture {{ $invoice->invoice_number }}</h1>
     </div>
 </div>
 
-{{-- â•â•â•â•â•â•â•â•â•â•â• CONTENU PRINCIPAL â•â•â•â•â•â•â•â•â•â•â• --}}
-<div class="invoice-show-grid">
-    {{-- Colonne principale : Facture --}}
-    <div class="invoice-show-left">
-        <div class="invoice-paper">
+@if(session('success'))
+<div class="alert alert-success" style="background: #ECFDF5; border: 1px solid #A7F3D0; color: #065F46; border-radius: 8px; padding:12px 16px; margin-bottom:20px;">
+    <i class="fas fa-check-circle me-2"></i> {{ session('success') }}
+</div>
+@endif
 
-            {{-- En-tête de la facture --}}
-            <div class="invoice-paper-header">
-                <div>
-                    <div class="invoice-paper-company">{{ auth()->user()->name ?? 'Mon Cabinet' }}</div>
-                    <div class="invoice-paper-detail">Cabinet Comptable</div>
-                </div>
-                <div style="text-align:right;">
-                    <div class="invoice-paper-title">FACTURE</div>
-                    <div class="invoice-paper-number">{{ $invoice->invoice_number }}</div>
+@if(session('error'))
+<div class="alert alert-danger" style="background: #FEF2F2; border: 1px solid #FECACA; color: #991B1B; border-radius: 8px; padding:12px 16px; margin-bottom:20px;">
+    <i class="fas fa-exclamation-circle me-2"></i> {{ session('error') }}
+</div>
+@endif
+
+<div class="invoice-wrapper">
+    <div class="invoice-document">
+        
+        <div class="invoice-header-top">
+            <div>
+                <div class="invoice-logo">MON CABINET COMPTABLE</div>
+                <div style="font-size:13px; color:#64748B; margin-top:8px;">
+                    Adresse du cabinet<br>
+                    Téléphone : +225 00 00 00 00<br>
+                    Email : contact@cabinet.com
                 </div>
             </div>
-
-            {{-- Infos Client / Dates --}}
-            <div class="invoice-paper-meta">
-                <div class="invoice-paper-to">
-                    <div class="invoice-paper-label">FACTURÉ À</div>
-                    <div class="invoice-paper-client-name">{{ $invoice->partner_name ?? '—' }}</div>
-                    @if($invoice->partner_address)
-                        <div class="invoice-paper-client-detail">{{ $invoice->partner_address }}</div>
-                    @endif
-                    @if($invoice->partner_tax_id)
-                        <div class="invoice-paper-client-detail">IFU : {{ $invoice->partner_tax_id }}</div>
-                    @endif
-                </div>
-                <div class="invoice-paper-dates">
-                    <div><span class="invoice-paper-label">DATE : </span>{{ $invoice->invoice_date->format('d/m/Y') }}</div>
-                    <div><span class="invoice-paper-label">ÉCHÉANCE : </span>{{ $invoice->due_date->format('d/m/Y') }}</div>
-                    @if($invoice->payment_term)
-                        <div><span class="invoice-paper-label">PAIEMENT : </span>{{ $invoice->payment_term }}</div>
-                    @endif
-                </div>
+            <div style="text-align: right;">
+                <h1 class="invoice-title">FACTURE</h1>
+                <div class="invoice-num">{{ $invoice->invoice_number }}</div>
             </div>
-
-            {{-- Tableau des lignes --}}
-            <table class="invoice-paper-table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Description</th>
-                        <th style="text-align:center;">Qté</th>
-                        <th style="text-align:right;">Prix unit.</th>
-                        <th style="text-align:center;">TVA</th>
-                        <th style="text-align:right;">Total TTC</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($invoice->lines as $line)
-                    <tr>
-                        <td style="color:var(--gel-text-muted);">{{ $line->line_number }}</td>
-                        <td><strong>{{ $line->description }}</strong></td>
-                        <td style="text-align:center;">{{ rtrim(rtrim(number_format($line->quantity, 2, ',', ' '), '0'), ',') }}</td>
-                        <td style="text-align:right;">{{ number_format($line->unit_price, 0, ',', ' ') }} F</td>
-                        <td style="text-align:center;">{{ $line->vat_rate }}%</td>
-                        <td style="text-align:right; font-weight:600;">{{ number_format($line->total, 0, ',', ' ') }} F</td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="6" style="text-align:center; color:var(--gel-text-muted); padding:24px;">Aucune ligne</td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-
-            {{-- Totaux --}}
-            <div class="invoice-paper-totals">
-                <div class="invoice-paper-totals-row">
-                    <span>Sous-total HT</span>
-                    <span>{{ number_format($invoice->subtotal, 0, ',', ' ') }} FCFA</span>
-                </div>
-                @if($invoice->discount > 0)
-                <div class="invoice-paper-totals-row">
-                    <span>Remise</span>
-                    <span style="color:var(--gel-danger);">-{{ number_format($invoice->discount, 0, ',', ' ') }} FCFA</span>
-                </div>
-                @endif
-                <div class="invoice-paper-totals-row">
-                    <span>TVA</span>
-                    <span>{{ number_format($invoice->vat_total, 0, ',', ' ') }} FCFA</span>
-                </div>
-                <div class="invoice-paper-totals-divider"></div>
-                <div class="invoice-paper-totals-row invoice-paper-totals-grand">
-                    <span>Total TTC</span>
-                    <span>{{ number_format($invoice->total, 0, ',', ' ') }} FCFA</span>
-                </div>
-                @if($invoice->paid_amount > 0)
-                <div class="invoice-paper-totals-row" style="color:var(--gel-success);">
-                    <span>Montant payé</span>
-                    <span>-{{ number_format($invoice->paid_amount, 0, ',', ' ') }} FCFA</span>
-                </div>
-                <div class="invoice-paper-totals-row" style="font-weight:700; font-size:15px; color:var(--gel-danger);">
-                    <span>Solde dû</span>
-                    <span>{{ number_format($invoice->balance_due, 0, ',', ' ') }} FCFA</span>
-                </div>
-                @endif
-            </div>
-
-            {{-- Notes --}}
-            @if($invoice->notes)
-            <div class="invoice-paper-notes">
-                <div class="invoice-paper-label">NOTES</div>
-                <p>{{ $invoice->notes }}</p>
-            </div>
-            @endif
-            @if($invoice->terms_conditions)
-            <div class="invoice-paper-notes" style="margin-top:12px;">
-                <div class="invoice-paper-label">CONDITIONS GÉNÉRALES</div>
-                <p style="font-size:11px;">{{ $invoice->terms_conditions }}</p>
-            </div>
-            @endif
-
-            {{-- Bloc e-MECeF au bas de la facture --}}
-            @if($invoice->emecef_statut === 'emise' && !empty($invoice->emecef_qr))
-            <div style="margin-top:40px; padding:16px; border:1px solid #e5e7eb; border-radius:8px; display:flex; gap:16px; align-items:center;">
-                <div style="width:100px; height:100px;">
-                    <img src="{{ $qrCodeBase64 }}" alt="QR Code" style="width:100%; height:100%;" />
-                </div>
-                <div>
-                    <div style="font-weight:700; color:var(--gel-text);">FACTURE NORMALISÉE (e-MECeF)</div>
-                    <div style="font-size:12px; color:var(--gel-text-secondary); margin-top:4px;">
-                        <strong>NIM :</strong> {{ $invoice->emecef_nim }}<br>
-                        <strong>Compteur :</strong> {{ $invoice->emecef_compteur }}<br>
-                        <strong>Date e-MECeF :</strong> {{ $invoice->emecef_datetime ? $invoice->emecef_datetime->format('d/m/Y H:i:s') : '' }}
-                    </div>
-                </div>
-            </div>
-            @endif
-
         </div>
+
+        <div class="invoice-addresses">
+            <div class="address-box">
+                <div class="address-title">Facturé à :</div>
+                <div class="address-content">
+                    <strong>{{ $invoice->partner_name }}</strong><br>
+                    @if($invoice->partner_address) {{ $invoice->partner_address }}<br> @endif
+                    @if($invoice->partner_tax_id) NIF : {{ $invoice->partner_tax_id }}<br> @endif
+                    @if($invoice->partner && $invoice->partner->email) Email : {{ $invoice->partner->email }} @endif
+                </div>
+            </div>
+        </div>
+
+        <div class="invoice-meta">
+            <div class="meta-item">
+                <span class="meta-label">Date de facturation</span>
+                <span class="meta-value">{{ \Carbon\Carbon::parse($invoice->invoice_date)->format('d/m/Y') }}</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Date d'échéance</span>
+                <span class="meta-value">{{ \Carbon\Carbon::parse($invoice->due_date)->format('d/m/Y') }}</span>
+            </div>
+            @if($invoice->payment_term)
+            <div class="meta-item">
+                <span class="meta-label">Conditions</span>
+                <span class="meta-value">{{ $invoice->payment_term }}</span>
+            </div>
+            @endif
+        </div>
+
+        <table class="lines-table">
+            <thead>
+                <tr>
+                    <th style="width:45%;">Description</th>
+                    <th class="center" style="width:10%;">Qté</th>
+                    <th class="right" style="width:15%;">Prix Unit.</th>
+                    <th class="right" style="width:15%;">TVA</th>
+                    <th class="right" style="width:15%;">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($invoice->lines as $line)
+                <tr>
+                    <td>{{ $line->description }}</td>
+                    <td class="center">{{ $line->quantity }}</td>
+                    <td class="right font-monospace">{{ number_format($line->unit_price, 0, ',', ' ') }} F</td>
+                    <td class="right font-monospace">{{ $line->vat_rate }}%</td>
+                    <td class="right font-monospace">{{ number_format($line->total, 0, ',', ' ') }} F</td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+
+        <div class="totals-area">
+            <div class="totals-box">
+                <div class="total-line">
+                    <span>Sous-total HT</span>
+                    <span class="font-monospace">{{ number_format($invoice->subtotal, 0, ',', ' ') }} F</span>
+                </div>
+                <div class="total-line">
+                    <span>TVA</span>
+                    <span class="font-monospace">{{ number_format($invoice->vat_total, 0, ',', ' ') }} F</span>
+                </div>
+                <div class="total-line grand">
+                    <span>Total TTC</span>
+                    <span class="font-monospace">{{ number_format($invoice->total, 0, ',', ' ') }} F</span>
+                </div>
+                
+                @if($invoice->paid_amount > 0)
+                <div class="total-line" style="margin-top:12px; color:#10B981;">
+                    <span>Montant Payé</span>
+                    <span class="font-monospace">- {{ number_format($invoice->paid_amount, 0, ',', ' ') }} F</span>
+                </div>
+                <div class="total-line" style="font-weight:700; color:#EF4444;">
+                    <span>Reste à payer</span>
+                    <span class="font-monospace">{{ number_format($invoice->balance_due, 0, ',', ' ') }} F</span>
+                </div>
+                @endif
+            </div>
+        </div>
+        
+        @if($invoice->notes)
+        <div style="margin-top: 40px; font-size:13px; color:#64748B;">
+            <strong>Notes :</strong><br>
+            {{ $invoice->notes }}
+        </div>
+        @endif
+        
     </div>
 
-    {{-- Colonne droite : Résumé --}}
-    <div class="invoice-show-right">
-        <div class="gel-card invoice-summary-sidebar p-4 mb-4">
-            <div class="invoice-section-title"><i class="fas fa-info-circle"></i> Résumé</div>
-
-            <div class="invoice-sidebar-item">
-                <span class="invoice-sidebar-label">Statut</span>
-                <span class="gel-badge" style="{{ $color }}">{{ \App\Models\Invoice::STATUS[$invoice->status] ?? $invoice->status }}</span>
-            </div>
-            <div class="invoice-sidebar-item">
-                <span class="invoice-sidebar-label">Total TTC</span>
-                <span class="invoice-sidebar-value">{{ number_format($invoice->total, 0, ',', ' ') }} F</span>
-            </div>
-            <div class="invoice-sidebar-item">
-                <span class="invoice-sidebar-label">Solde dû</span>
-                <span class="invoice-sidebar-value" style="color:{{ $invoice->balance_due > 0 ? 'var(--gel-danger)' : 'var(--gel-success)' }};">
-                    {{ number_format($invoice->balance_due, 0, ',', ' ') }} F
-                </span>
-            </div>
-            <div class="invoice-sidebar-item">
-                <span class="invoice-sidebar-label">Client</span>
-                <span class="invoice-sidebar-value">{{ $invoice->partner_name ?? '—' }}</span>
-            </div>
-            <div class="invoice-sidebar-item">
-                <span class="invoice-sidebar-label">Date</span>
-                <span class="invoice-sidebar-value">{{ $invoice->invoice_date->format('d/m/Y') }}</span>
-            </div>
-            <div class="invoice-sidebar-item">
-                <span class="invoice-sidebar-label">Échéance</span>
-                <span class="invoice-sidebar-value" style="{{ $invoice->isOverdue() ? 'color:var(--gel-danger); font-weight:700;' : '' }}">
-                    {{ $invoice->due_date->format('d/m/Y') }}
-                    @if($invoice->isOverdue()) âš ï¸ @endif
-                </span>
-            </div>
-        </div>
-
-        {{-- Section e-MECeF --}}
-        <div class="gel-card invoice-summary-sidebar p-4 mb-4" style="border-top: 4px solid var(--gel-success);">
-            <div class="invoice-section-title"><i class="fas fa-qrcode"></i> Certification e-MECeF</div>
+    <div class="invoice-sidebar">
+        
+        <div class="sidebar-box">
+            <div class="sidebar-title"><i class="fas fa-info-circle"></i> Statut & Actions</div>
             
-            @if($invoice->emecef_statut === 'emise')
-                <div style="text-align:center; padding:12px 0;">
-                    <div style="color:var(--gel-success); font-size:40px; margin-bottom:8px;"><i class="fas fa-check-circle"></i></div>
-                    <div style="font-weight:600; color:var(--gel-text);">Facture Certifiée</div>
-                    <div style="font-size:12px; color:var(--gel-text-secondary); margin-top:4px;">NIM : {{ $invoice->emecef_nim }}</div>
-                </div>
-            @else
-                <p style="font-size:13px; color:var(--gel-text-secondary); margin-bottom:12px;">Cette facture n'a pas encore été certifiée auprès de la DGI.</p>
-                <form action="{{ route('gel-accountant.factures.certify', $invoice->id) }}" method="POST">
-                    @csrf
-                    <button type="submit" class="gel-btn gel-btn-success" style="width:100%; justify-content:center;">
-                        <i class="fas fa-certificate"></i> Certifier e-MECeF
+            @if($invoice->status == 'draft') <div class="status-badge status-draft">BROUILLON</div>
+            @elseif($invoice->status == 'sent') <div class="status-badge status-sent">ENVOYÉE</div>
+            @elseif($invoice->status == 'paid') <div class="status-badge status-paid">PAYÉE</div>
+            @elseif($invoice->status == 'overdue') <div class="status-badge status-overdue">EN RETARD</div>
+            @endif
+            
+            <a href="{{ route('gel-accountant.factures.show', ['facture' => $invoice->id, 'export' => 'pdf']) }}" class="action-btn action-secondary" target="_blank">
+                <i class="fas fa-file-pdf"></i> Voir le PDF
+            </a>
+            
+            <a href="{{ route('gel-accountant.factures.downloadPdf', $invoice->id) }}" class="action-btn action-primary">
+                <i class="fas fa-download"></i> Télécharger PDF
+            </a>
+
+            @if($invoice->status == 'draft')
+                <form action="{{ route('gel-accountant.factures.destroy', $invoice->id) }}" method="POST" style="margin-top:20px;">
+                    @csrf @method('DELETE')
+                    <button type="submit" class="action-btn action-danger" onclick="return confirm('Supprimer cette facture ?')">
+                        <i class="fas fa-trash"></i> Supprimer le brouillon
                     </button>
                 </form>
             @endif
         </div>
 
-        @if($invoice->status === 'draft')
-        <div style="margin-top:12px;">
-            <form action="{{ route('gel-accountant.factures.destroy', $invoice->id) }}" method="POST" onsubmit="return confirm('Supprimer définitivement cette facture brouillon ?');">
-                @csrf @method('DELETE')
-                <button class="gel-btn gel-btn-danger" style="width:100%; justify-content:center;">
-                    <i class="fas fa-trash"></i> Supprimer ce brouillon
-                </button>
-            </form>
+        <div class="sidebar-box">
+            <div class="sidebar-title"><i class="fas fa-qrcode"></i> Certification e-MECeF</div>
+            
+            @if($invoice->emecef_statut === 'emise')
+                <div class="emecef-box" style="background: #ECFDF5; border-color: #A7F3D0;">
+                    <div class="emecef-title" style="color: #065F46;"><i class="fas fa-check-circle"></i> Facture Certifiée</div>
+                    <div style="font-size:11px; margin-bottom:8px; word-break:break-all;">NIM: {{ $invoice->emecef_nim }}</div>
+                    @if($qrCodeBase64)
+                        <img src="{{ $qrCodeBase64 }}" alt="QR Code" style="width:120px; height:120px; display:block; margin:0 auto;">
+                    @endif
+                </div>
+            @else
+                <div class="emecef-box">
+                    <div class="emecef-title">Non certifiée</div>
+                    <p style="font-size:12px; color:#64748B;">Cette facture n'est pas encore enregistrée sur les serveurs de la DGI.</p>
+                    <form action="{{ route('gel-accountant.factures.certify', $invoice->id) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="action-btn action-secondary" style="border-color:var(--gel-primary); color:var(--gel-primary);">
+                            <i class="fas fa-cloud-upload-alt"></i> Certifier (DGI)
+                        </button>
+                    </form>
+                </div>
+            @endif
         </div>
-        @endif
+
     </div>
 </div>
 @endsection
-
-@push('styles')
-<style>
-    .invoice-show-grid {
-        display: grid;
-        grid-template-columns: 1fr 300px;
-        gap: 20px;
-        align-items: start;
-    }
-
-    /* Paper style */
-    .invoice-paper {
-        background: white;
-        border: 1px solid var(--gel-border);
-        border-radius: 8px;
-        padding: 36px 40px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-    }
-    .invoice-paper-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 28px;
-        padding-bottom: 20px;
-        border-bottom: 2px solid var(--gel-primary);
-    }
-    .invoice-paper-company {
-        font-size: 20px;
-        font-weight: 700;
-        color: var(--gel-primary);
-    }
-    .invoice-paper-detail {
-        font-size: 13px;
-        color: var(--gel-text-secondary);
-    }
-    .invoice-paper-title {
-        font-size: 28px;
-        font-weight: 800;
-        color: var(--gel-primary);
-        letter-spacing: 2px;
-    }
-    .invoice-paper-number {
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--gel-text-secondary);
-    }
-
-    .invoice-paper-meta {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 24px;
-    }
-    .invoice-paper-label {
-        font-size: 10px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: var(--gel-text-muted);
-        margin-bottom: 4px;
-    }
-    .invoice-paper-client-name {
-        font-size: 16px;
-        font-weight: 700;
-        color: var(--gel-text-primary);
-    }
-    .invoice-paper-client-detail {
-        font-size: 13px;
-        color: var(--gel-text-secondary);
-    }
-    .invoice-paper-dates {
-        text-align: right;
-        font-size: 13px;
-        color: var(--gel-text-primary);
-        line-height: 1.8;
-    }
-
-    /* Table */
-    .invoice-paper-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 20px;
-    }
-    .invoice-paper-table thead th {
-        padding: 10px 12px;
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-        color: white;
-        background: var(--gel-primary);
-        border: none;
-    }
-    .invoice-paper-table thead th:first-child { border-radius: 6px 0 0 0; }
-    .invoice-paper-table thead th:last-child { border-radius: 0 6px 0 0; }
-    .invoice-paper-table tbody td {
-        padding: 12px;
-        font-size: 13px;
-        border-bottom: 1px solid var(--gel-border);
-    }
-    .invoice-paper-table tbody tr:last-child td { border-bottom: none; }
-
-    /* Totals */
-    .invoice-paper-totals {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        margin-bottom: 24px;
-    }
-    .invoice-paper-totals-row {
-        display: flex;
-        justify-content: space-between;
-        width: 280px;
-        padding: 6px 0;
-        font-size: 13px;
-        color: var(--gel-text-secondary);
-    }
-    .invoice-paper-totals-divider {
-        width: 280px;
-        height: 1px;
-        background: var(--gel-border);
-        margin: 4px 0;
-    }
-    .invoice-paper-totals-grand {
-        font-size: 18px;
-        font-weight: 700;
-        color: var(--gel-text-primary);
-        padding-top: 8px;
-    }
-
-    .invoice-paper-notes {
-        background: var(--gel-sidebar-bg);
-        border-radius: 6px;
-        padding: 12px 16px;
-    }
-    .invoice-paper-notes p {
-        font-size: 13px;
-        color: var(--gel-text-secondary);
-        margin: 0;
-        line-height: 1.5;
-    }
-
-    /* Sidebar */
-    .invoice-summary-sidebar {
-        background: var(--gel-sidebar-bg);
-    }
-    .invoice-section-title {
-        font-size: 14px;
-        font-weight: 700;
-        color: var(--gel-text-primary);
-        margin-bottom: 16px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .invoice-section-title i { color: var(--gel-primary); }
-    .invoice-sidebar-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 8px 0;
-        border-bottom: 1px solid var(--gel-border);
-        font-size: 13px;
-    }
-    .invoice-sidebar-item:last-child { border-bottom: none; }
-    .invoice-sidebar-label { color: var(--gel-text-secondary); }
-    .invoice-sidebar-value { font-weight: 600; color: var(--gel-text-primary); }
-
-    @media (max-width: 900px) {
-        .invoice-show-grid { grid-template-columns: 1fr; }
-    }
-
-    @media print {
-        .gel-topbar, .gel-sidebar, .gel-page-header, .invoice-show-right { display: none !important; }
-        .gel-content { margin: 0 !important; padding: 0 !important; }
-        .invoice-show-grid { grid-template-columns: 1fr !important; }
-        .invoice-paper { box-shadow: none; border: none; }
-    }
-</style>
-@endpush
-

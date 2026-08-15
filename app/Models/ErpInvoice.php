@@ -25,11 +25,15 @@ class ErpInvoice extends Model {
         'status','created_by',
         'emecef_nim','emecef_compteur','emecef_hash','emecef_qr',
         'emecef_statut','emecef_datetime',
+        'emecef_is_simulation','emecef_uid','emecef_response',
+        'aib_base','aib_rate','aib_amount',
     ];
     protected $casts = [
         'invoice_date'=>'date','due_date'=>'date',
         'total_ht'=>'decimal:2','tax_amount'=>'decimal:2','total_ttc'=>'decimal:2',
         'emecef_compteur'=>'integer','emecef_datetime'=>'datetime',
+        'aib_base'=>'decimal:2','aib_rate'=>'decimal:2','aib_amount'=>'decimal:2',
+        'emecef_is_simulation'=>'boolean','emecef_response'=>'array',
     ];
     public function client()   { return $this->belongsTo(Client::class); }
     public function lineItems(){ return $this->hasMany(ErpInvoiceItem::class); }

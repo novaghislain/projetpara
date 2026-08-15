@@ -135,6 +135,12 @@
 
     @if($qrCodeBase64)
     <div class="qr-code">
+        @if(!empty($invoice->emecef_is_simulation))
+        <div style="font-size:10px; color:#92400e; background:#fffbeb; border:2px solid #f59e0b; border-radius:4px; padding:6px 8px; margin-bottom:8px; max-width:220px; float:right;">
+            <strong>⚠ SIMULATION — MODE TEST</strong><br>
+            Cette facture N'A PAS été transmise à la DGI e-MECeF. Le QR (NIM « SIM-… ») n'est pas vérifiable sur le portail des impôts.
+        </div>
+        @endif
         <img src="{{ $qrCodeBase64 }}" width="120" alt="QR Code e-MECeF">
     </div>
     @endif

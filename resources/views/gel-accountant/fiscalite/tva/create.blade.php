@@ -1,66 +1,120 @@
 @extends('layouts.gel-accountant')
 
-@section('title', 'Nouvelle Déclaration TVA - GEL Accountant')
+@section('title', 'Nouvelle Déclaration TVA')
+
+@push('styles')
+<style>
+/* ==========================================================================
+   TVA CREATE - DESIGN
+   ========================================================================== */
+.form-section {
+    background: white; border: 1px solid var(--gel-border);
+    border-radius: 12px; padding: 24px; margin-bottom: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+.section-title {
+    font-size: 15px; font-weight: 700; color: #1E293B; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #E2E8F0; padding-bottom: 12px;
+}
+.section-title i { color: var(--gel-primary); }
+
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px; }
+.form-control, .form-select {
+    width: 100%; padding: 10px 14px; border: 1px solid #E2E8F0;
+    border-radius: 8px; font-size: 14px; outline: none; transition: all 0.2s;
+    background: #F8FAFC;
+}
+.form-control:focus, .form-select:focus { background: white; border-color: var(--gel-primary); }
+
+.summary-box {
+    background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px;
+}
+.summary-line {
+    display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px dashed #CBD5E1; font-size: 14px; color: #475569;
+}
+.summary-line:last-child { border-bottom: none; }
+.summary-line .amount { font-family: monospace; font-size: 16px; font-weight: 700; color: #1E293B; }
+.summary-line.net { margin-top: 8px; padding-top: 16px; border-top: 2px solid #94A3B8; border-bottom: none; }
+.summary-line.net .amount { font-size: 20px; color: var(--gel-primary); }
+
+.btn-primary-action { background: var(--gel-primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; transition: all 0.2s; }
+.btn-primary-action:hover { background: var(--gel-primary-hover); transform: translateY(-1px); }
+.btn-cancel { background: white; color: #475569; border: 1px solid #E2E8F0; padding: 10px 20px; border-radius: 8px; font-weight: 600; text-decoration: none; }
+
+.empty-state { text-align: center; padding: 40px; color: #64748B; background: #F8FAFC; border-radius: 8px; border: 1px dashed #CBD5E1; }
+.empty-state i { font-size: 48px; color: #94A3B8; margin-bottom: 16px; }
+</style>
+@endpush
 
 @section('content')
-
 <div class="gel-page-header">
     <div>
-        <h1 class="gel-page-title"><i class="fas fa-calculator" style="color:var(--gel-primary); margin-right:8px;"></i> Nouvelle Déclaration TVA</h1>
-        <p class="gel-page-subtitle">Générez la déclaration de TVA pour une période donnée.</p>
-    </div>
-    <div>
-        <a href="{{ route('gel-accountant.fiscalite.tva.index') }}" class="gel-btn gel-btn-secondary">
-            <i class="fas fa-arrow-left"></i> Retour
-        </a>
+        <a href="{{ route('gel-accountant.fiscalite.tva.index') }}" style="font-size:13px; color:#64748B; text-decoration:none; margin-bottom:8px; display:inline-block;"><i class="fas fa-arrow-left"></i> Retour aux déclarations</a>
+        <h1 class="gel-page-title">Nouvelle Déclaration TVA</h1>
     </div>
 </div>
 
-<div class="gel-card p-4 mb-4">
-    <form action="{{ route('gel-accountant.fiscalite.tva.create') }}" method="GET" style="display:flex; gap:12px; align-items:flex-end;">
-        <div style="flex:1; max-width:300px;">
-            <label style="font-weight:600; font-size:12px; margin-bottom:4px; display:block;">Période (YYYY-MM)</label>
-            <input type="month" name="period" value="{{ request('period') }}" class="gel-input" required>
-        </div>
-        <button type="submit" class="gel-btn gel-btn-primary">
-            <i class="fas fa-sync"></i> Calculer
-        </button>
-    </form>
+@if(session('error'))
+<div class="alert alert-danger" style="background: #FEF2F2; border: 1px solid #FECACA; color: #991B1B; border-radius: 8px; padding:12px 16px; margin-bottom:20px;">
+    <i class="fas fa-exclamation-circle me-2"></i> {{ session('error') }}
 </div>
-
-@if($result)
-    <div class="gel-card p-4">
-        <h3 style="font-size:16px; font-weight:700; margin-bottom:20px; padding-bottom:12px; border-bottom:1px solid var(--gel-border);">Résultat du calcul pour {{ $result['period'] }}</h3>
-        
-        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; margin-bottom:30px;">
-            <div style="background:#f3f4f6; padding:20px; border-radius:8px; text-align:center;">
-                <p style="font-size:12px; color:var(--gel-text-secondary); margin-bottom:4px; font-weight:600;">TVA Collectée (Ventes)</p>
-                <h4 style="font-size:24px; font-weight:700; margin:0;">{{ number_format($result['tva_collected'], 2, ',', ' ') }} <span style="font-size:14px; font-weight:normal;">FCFA</span></h4>
-            </div>
-            
-            <div style="background:#f3f4f6; padding:20px; border-radius:8px; text-align:center;">
-                <p style="font-size:12px; color:var(--gel-text-secondary); margin-bottom:4px; font-weight:600;">TVA Déductible (Achats)</p>
-                <h4 style="font-size:24px; font-weight:700; margin:0;">{{ number_format($result['tva_deductible'], 2, ',', ' ') }} <span style="font-size:14px; font-weight:normal;">FCFA</span></h4>
-            </div>
-            
-            <div style="background:var(--gel-primary); color:white; padding:20px; border-radius:8px; text-align:center;">
-                <p style="font-size:12px; margin-bottom:4px; font-weight:600;">TVA Nette à Payer</p>
-                <h4 style="font-size:24px; font-weight:700; margin:0;">{{ number_format($result['tva_net'], 2, ',', ' ') }} <span style="font-size:14px; font-weight:normal;">FCFA</span></h4>
-            </div>
-        </div>
-
-        <form action="{{ route('gel-accountant.fiscalite.tva.store') }}" method="POST" style="text-align:right;">
-            @csrf
-            <input type="hidden" name="period" value="{{ $result['period'] }}">
-            <input type="hidden" name="tva_collected" value="{{ $result['tva_collected'] }}">
-            <input type="hidden" name="tva_deductible" value="{{ $result['tva_deductible'] }}">
-            <input type="hidden" name="tva_net" value="{{ $result['tva_net'] }}">
-            
-            <button type="submit" class="gel-btn gel-btn-primary" style="padding:10px 24px; font-size:14px;">
-                <i class="fas fa-save"></i> Enregistrer la déclaration (Brouillon)
-            </button>
-        </form>
-    </div>
 @endif
 
+<div class="row">
+    <div class="col-md-4">
+        <div class="form-section">
+            <div class="section-title"><i class="fas fa-calendar-alt"></i> Période de déclaration</div>
+            <form action="{{ route('gel-accountant.fiscalite.tva.create') }}" method="GET">
+                <div class="form-group">
+                    <label class="form-label">Mois à déclarer (YYYY-MM)</label>
+                    <input type="month" name="period" class="form-control" value="{{ $period ?? date('Y-m') }}" required>
+                </div>
+                <button type="submit" class="btn-primary-action w-100 justify-content-center"><i class="fas fa-calculator"></i> Calculer la TVA</button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="form-section">
+            <div class="section-title"><i class="fas fa-file-invoice-dollar"></i> Résultat du calcul</div>
+            
+            @if(isset($result))
+                <div class="summary-box mb-4">
+                    <div class="summary-line">
+                        <span>TVA Collectée (Ventes)</span>
+                        <span class="amount text-success">+ {{ number_format($result['tva_collected'], 0, ',', ' ') }} F</span>
+                    </div>
+                    <div class="summary-line">
+                        <span>TVA Déductible (Achats)</span>
+                        <span class="amount text-danger">- {{ number_format($result['tva_deductible'], 0, ',', ' ') }} F</span>
+                    </div>
+                    <div class="summary-line net">
+                        <span>TVA Nette ({{ $result['tva_net'] > 0 ? 'À Payer' : 'Crédit de TVA' }})</span>
+                        <span class="amount" style="color: {{ $result['tva_net'] > 0 ? '#EF4444' : '#10B981' }}">{{ number_format($result['tva_net'], 0, ',', ' ') }} F</span>
+                    </div>
+                </div>
+
+                <form action="{{ route('gel-accountant.fiscalite.tva.store') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="period" value="{{ $period }}">
+                    <input type="hidden" name="tva_collected" value="{{ $result['tva_collected'] }}">
+                    <input type="hidden" name="tva_deductible" value="{{ $result['tva_deductible'] }}">
+                    <input type="hidden" name="tva_net" value="{{ $result['tva_net'] }}">
+                    
+                    <div class="d-flex justify-content-end gap-3">
+                        <a href="{{ route('gel-accountant.fiscalite.tva.index') }}" class="btn-cancel">Annuler</a>
+                        <button type="submit" class="btn-primary-action"><i class="fas fa-save"></i> Enregistrer la déclaration</button>
+                    </div>
+                </form>
+            @else
+                <div class="empty-state">
+                    <i class="fas fa-calculator"></i>
+                    <h4>Aucun calcul effectué</h4>
+                    <p>Sélectionnez une période à gauche et cliquez sur "Calculer la TVA" pour générer les montants basés sur vos écritures comptables (ventes, achats avec codes de taxe TVA).</p>
+                </div>
+            @endif
+        </div>
+    </div>
+</div>
 @endsection

@@ -145,6 +145,16 @@ class RoleAndPermissionSeeder extends Seeder
                 'exporter'         => 'Exporter les données',
                 'gerer_utilisateurs'=> 'Gérer les utilisateurs commerciaux',
             ],
+            // Module fiscalité dédié — exigé par le plan de convergence FD2 §22.1
+            // (Action 3) et cohérent avec les endpoints FIS-* du CDC §6.3.
+            'fiscalite' => [
+                'lire'                => 'Consulter les données et règles fiscales',
+                'parametrer_regle'    => 'Paramétrer les règles fiscales',
+                'valider_regle'       => 'Valider les règles fiscales',
+                'preparer_declaration'=> 'Préparer les déclarations fiscales',
+                'valider_declaration' => 'Valider les déclarations fiscales',
+                'televerser_declaration' => 'Téléverser les déclarations fiscales',
+            ],
         ];
 
         // ─── 2. Création des permissions ─────────────────────────────────
@@ -245,6 +255,24 @@ class RoleAndPermissionSeeder extends Seeder
                 'level' => 20,
                 'is_system' => true,
             ],
+            // Rôles exigés par le plan de convergence FD2 §22.1 (Action 2).
+            // Niveaux hiérarchiques proposés par le cahier : fiscaliste 55
+            // (entre comptable 50 et pole_responsible 60), auditeur 15
+            // (entre client 10 et les rôles opérationnels 20).
+            [
+                'name' => 'Fiscaliste',
+                'slug' => 'fiscaliste',
+                'description' => 'Configure le moteur fiscal et gère les règles fiscales (RegleFiscale). Seul rôle, avec le Super Administrateur, habilité à créer une RegleFiscale — double contrôle : validation finale par le Super Administrateur (CDC §7.5).',
+                'level' => 55,
+                'is_system' => true,
+            ],
+            [
+                'name' => 'Auditeur / Réviseur externe',
+                'slug' => 'auditeur',
+                'description' => 'Lecture seule codée en dur au niveau du guard (403 sur toute écriture, défense en profondeur — CDC §7.9). Accès temporaire avec expiration obligatoire (expire_le).',
+                'level' => 15,
+                'is_system' => true,
+            ],
         ];
 
         foreach ($roles as $roleData) {
@@ -329,6 +357,21 @@ class RoleAndPermissionSeeder extends Seeder
         // Secrétaire → DAE uniquement
         $daePerms = array_values($permissionIds['dae'] ?? []);
         $this->syncPermissions('secretaire', $daePerms);
+
+        // Fiscaliste → module fiscalite sans la validation finale (valider_regle),
+        // réservée au Super Administrateur (double contrôle FIS-MOTEUR-06, CDC §7.5).
+        $fiscalistePerms = array_values(array_filter([
+            $permissionIds['fiscalite']['lire'] ?? null,
+            $permissionIds['fiscalite']['parametrer_regle'] ?? null,
+            $permissionIds['fiscalite']['preparer_declaration'] ?? null,
+            $permissionIds['fiscalite']['valider_declaration'] ?? null,
+            $permissionIds['fiscalite']['televerser_declaration'] ?? null,
+        ]));
+        $this->syncPermissions('fiscaliste', $fiscalistePerms);
+
+        // Auditeur / Réviseur externe → lecture seule du module fiscalité.
+        // La lecture seule est en plus codée en dur au niveau du guard.
+        $this->syncPermissions('auditeur', [$permissionIds['fiscalite']['lire'] ?? null]);
     }
 
     /**

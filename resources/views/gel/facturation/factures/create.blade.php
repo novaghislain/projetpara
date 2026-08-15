@@ -17,6 +17,10 @@
         <h2 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Informations Générales</h2>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
             <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Numéro (Optionnel)</label>
+                <input type="text" id="numero" placeholder="Auto" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+            <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
                 <select id="type" class="w-full border rounded-lg px-3 py-2 bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none">
                     <option value="client">Facture Client</option>
@@ -27,9 +31,9 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">Date Facture</label>
                 <input type="date" id="date_facture" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
-            <div class="col-span-2">
+            <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Client CRM</label>
-                <select id="client_id" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                <select id="contact_id" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
                     <!-- Loaded via JS -->
                 </select>
                 <input type="hidden" id="client_nom">
@@ -89,30 +93,65 @@
 
 <script>
     let lignes = [];
+    let produitsOptions = [];
 
     document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('date_facture').valueAsDate = new Date();
+        // Modify the back link to preserve client_id
+        const backBtn = document.querySelector('a[href$="/gel/facturation/factures"]');
+        if (backBtn) {
+            backBtn.href = backBtn.href + getClientIdParam();
+        }
+
         loadClients();
-        addLigne(); // add first line by default
+        loadProduits();
     });
 
+    function getClientIdParam() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const clientId = urlParams.get('client_id');
+        return clientId ? `?client_id=${clientId}` : '';
+    }
+
     function loadClients() {
-        fetch('/api/gel/crm/clients')
+        fetch('/api/gel/crm/clients' + getClientIdParam())
             .then(res => res.json())
             .then(data => {
-                const select = document.getElementById('client_id');
-                select.innerHTML = '<option value="">Sélectionnez un client...</option>';
+                const select = document.getElementById('contact_id'); // Using contact_id instead of client_id
+                select.innerHTML = '<option value="">Sélectionnez un contact...</option>';
                 data.forEach(c => {
                     select.innerHTML += `<option value="${c.id}" data-name="${c.first_name} ${c.last_name}">${c.company || (c.first_name + ' ' + c.last_name)}</option>`;
                 });
             });
     }
 
+    function loadProduits() {
+        fetch('/api/gel/facturation/produits' + getClientIdParam())
+            .then(res => res.json())
+            .then(data => {
+                if(data.error) return;
+                produitsOptions = data;
+                addLigne(); // add first line after products are loaded
+            });
+    }
+
+    function onProduitChange(ligneId, produitId) {
+        const produit = produitsOptions.find(p => p.id == produitId);
+        if (produit) {
+            updateLigne(ligneId, 'produit_id', produit.id);
+            updateLigne(ligneId, 'description', produit.nom);
+            updateLigne(ligneId, 'prix_unitaire', produit.prix_unitaire);
+        } else {
+            updateLigne(ligneId, 'produit_id', null);
+        }
+    }
+
     function addLigne() {
         const id = Date.now();
         lignes.push({
             id: id,
-            designation: '',
+            produit_id: null,
+            description: '',
             quantite: 1,
             prix_unitaire: 0,
             taux_tva: 18
@@ -140,6 +179,11 @@
         let totalHtGlobal = 0;
         let totalTvaGlobal = 0;
 
+        let optionsHtml = '<option value="">Sélectionner (optionnel)</option>';
+        produitsOptions.forEach(p => {
+            optionsHtml += `<option value="${p.id}">${p.nom}</option>`;
+        });
+
         lignes.forEach(ligne => {
             const totalHt = (ligne.quantite || 0) * (ligne.prix_unitaire || 0);
             const totalTva = totalHt * ((ligne.taux_tva || 0) / 100);
@@ -149,8 +193,11 @@
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td class="p-2">
-                    <input type="text" placeholder="Désignation du produit/service" value="${ligne.designation}" onchange="updateLigne(${ligne.id}, 'designation', this.value)" class="w-full border rounded px-2 py-1 outline-none focus:ring-1 focus:ring-blue-500">
+                <td class="p-2 flex gap-2">
+                    <select onchange="onProduitChange(${ligne.id}, this.value)" class="w-1/3 border rounded px-2 py-1 outline-none focus:ring-1 focus:ring-blue-500">
+                        ${optionsHtml.replace(`value="${ligne.produit_id}"`, `value="${ligne.produit_id}" selected`)}
+                    </select>
+                    <input type="text" placeholder="Désignation" value="${ligne.description}" onchange="updateLigne(${ligne.id}, 'description', this.value)" class="w-2/3 border rounded px-2 py-1 outline-none focus:ring-1 focus:ring-blue-500">
                 </td>
                 <td class="p-2">
                     <input type="number" step="0.01" min="0" value="${ligne.quantite}" onchange="updateLigne(${ligne.id}, 'quantite', parseFloat(this.value))" class="w-full border rounded px-2 py-1 outline-none focus:ring-1 focus:ring-blue-500">
@@ -183,26 +230,24 @@
     }
 
     function saveFacture() {
-        const clientIdSelect = document.getElementById('client_id');
-        const clientId = clientIdSelect.value;
-        const clientNom = clientIdSelect.options[clientIdSelect.selectedIndex]?.dataset.name || '';
+        const contactIdSelect = document.getElementById('contact_id');
+        const contactId = contactIdSelect.value;
         
-        if (!clientId) {
-            alert("Veuillez sélectionner un client.");
+        if (!contactId) {
+            alert("Veuillez sélectionner un client (contact).");
             return;
         }
 
         const data = {
-            entreprise_id: '{{ auth()->user()->entreprise_id ?? "00000000-0000-0000-0000-000000000000" }}', // Temporary for testing
-            client_id: clientId,
+            contact_id: contactId,
+            numero: document.getElementById('numero').value || null,
             type: document.getElementById('type').value,
-            client_nom: clientNom,
             date_facture: document.getElementById('date_facture').value,
-            statut: 'Brouillon',
+            statut: 'brouillon',
             lignes: lignes
         };
 
-        fetch('/api/gel/facturation/factures', {
+        fetch('/api/gel/facturation/factures' + getClientIdParam(), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -210,13 +255,22 @@
             },
             body: JSON.stringify(data)
         })
-        .then(res => res.json())
-        .then(res => {
-            if (res.error) {
-                alert("Erreur: " + res.error);
-            } else {
-                window.location.href = '/gel/facturation/factures';
+        .then(async res => {
+            if (!res.ok) {
+                const errData = await res.json();
+                if (errData.errors) {
+                    const messages = Object.values(errData.errors).flat().join('\n');
+                    throw new Error(messages);
+                }
+                throw new Error(errData.error || errData.message || 'Erreur serveur');
             }
+            return res.json();
+        })
+        .then(res => {
+            window.location.href = '/gel/facturation/factures' + getClientIdParam();
+        })
+        .catch(err => {
+            alert("Erreur: " + err.message);
         });
     }
 </script>

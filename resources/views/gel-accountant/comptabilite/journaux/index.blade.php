@@ -14,9 +14,9 @@
 </div>
 
 {{-- Formulaire Nouveau Journal (Masqué par défaut) --}}
-<div id="newJournalCard" class="gel-card mb-4" style="display: none; border-left: 4px solid var(--gel-primary, #059669); transition: all 0.3s ease;">
+<div id="newJournalCard" class="gel-card mb-4" style="display: none; border-left: 4px solid var(--gel-primary, var(--gel-primary)); transition: all 0.3s ease;">
     <div class="gel-card-header" style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
-        <h3 style="font-size: 16px; font-weight: 600; margin: 0; color: #0f172a;"><i class="bi bi-journal-plus me-2" style="color: var(--gel-primary, #059669);"></i>Créer un nouveau journal</h3>
+        <h3 style="font-size: 16px; font-weight: 600; margin: 0; color: #0f172a;"><i class="bi bi-journal-plus me-2" style="color: var(--gel-primary, var(--gel-primary));"></i>Créer un nouveau journal</h3>
         <button type="button" onclick="toggleNewJournalForm()" style="background: none; border: none; font-size: 18px; color: #94a3b8; cursor: pointer;">&times;</button>
     </div>
     <div class="gel-card-body" style="padding: 20px;">

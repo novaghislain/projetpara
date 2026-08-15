@@ -74,9 +74,11 @@ class Invoice extends Model
         'paid_amount', 'balance_due',
         'notes', 'terms_conditions',
         'journal_entry_id', 'created_by', 'validated_by', 'validated_at',
-        'emecef_nim', 'emecef_compteur', 'emecef_hash', 
+        'emecef_nim', 'emecef_compteur', 'emecef_hash',
         'emecef_qr', 'emecef_statut', 'emecef_datetime',
-        'emecef_uid', 'emecef_response'
+        'emecef_uid', 'emecef_response',
+        'emecef_is_simulation',
+        'aib_base', 'aib_rate', 'aib_amount',
     ];
 
     protected function casts(): array
@@ -95,6 +97,10 @@ class Invoice extends Model
             'balance_due' => 'decimal:2',
             'emecef_datetime' => 'datetime',
             'emecef_response' => 'array',
+            'aib_base' => 'decimal:2',
+            'aib_rate' => 'decimal:2',
+            'aib_amount' => 'decimal:2',
+            'emecef_is_simulation' => 'boolean',
         ];
     }
 

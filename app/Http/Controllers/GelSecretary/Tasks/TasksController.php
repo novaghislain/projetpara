@@ -49,10 +49,10 @@ class TasksController extends Controller
 
         $allTasks = $query->get();
 
-        $tasksTodo = $allTasks->where('statut', 'a_faire');
-        $tasksInProgress = $allTasks->where('statut', 'en_cours');
-        $tasksPending = $allTasks->where('statut', 'en_attente');
-        $tasksDone = $allTasks->where('statut', 'terminee');
+        $aFaire = $allTasks->where('statut', 'a_faire');
+        $enCours = $allTasks->where('statut', 'en_cours');
+        $enAttente = $allTasks->where('statut', 'en_attente');
+        $terminees = $allTasks->where('statut', 'terminee');
 
         // S8 : colonne "En attente" (statut a_valider) + tâches propres à la secrétaire
         if (!$user->isAutonomousSecretary()) {
@@ -66,25 +66,24 @@ class TasksController extends Controller
 
         // Statistiques globales pour les indicateurs du tableau de bord
         $stats = [
-            'a_faire' => $tasksTodo->count(),
-            'en_cours' => $tasksInProgress->count(),
-            'en_attente' => $tasksPending->count(),
-            'terminees' => $tasksDone->count(),
+            'a_faire' => $aFaire->count(),
+            'en_cours' => $enCours->count(),
+            'en_attente' => $enAttente->count(),
+            'terminees' => $terminees->count(),
             // Tâches dont l'échéance est dépassée et qui ne sont pas terminées
             'echues' => $allTasks->whereIn('statut', ['a_faire', 'en_cours', 'en_attente'])
                 ->filter(function($t) { return $t->date_echeance && \Carbon\Carbon::parse($t->date_echeance)->isPast(); })
                 ->count(),
         ];
 
-        // Filtrer les colonnes kanban par "mes tâches" si demandé (query ?mine=1)
         if ($request->boolean('mine')) {
-            $tasksTodo = $myTasks->where('statut', 'a_faire')->values();
-            $tasksInProgress = $myTasks->where('statut', 'en_cours')->values();
-            $tasksPending = $myTasks->where('statut', 'en_attente')->values();
-            $tasksDone = $myTasks->where('statut', 'terminee')->values();
+            $aFaire = $myTasks->where('statut', 'a_faire')->values();
+            $enCours = $myTasks->where('statut', 'en_cours')->values();
+            $enAttente = $myTasks->where('statut', 'en_attente')->values();
+            $terminees = $myTasks->where('statut', 'terminee')->values();
         }
 
-        return view('gel-secretary.tasks.index', compact('tasksTodo', 'tasksInProgress', 'tasksPending', 'tasksDone', 'stats', 'myTasks') + ['currentSection' => 'tasks', 'currentPage' => 'taches']);
+        return view('gel-secretary.tasks.index', compact('aFaire', 'enCours', 'enAttente', 'terminees', 'stats', 'myTasks') + ['currentSection' => 'tasks', 'currentPage' => 'taches']);
     }
 
     public function changeStatus(Request $request, $id, $status)

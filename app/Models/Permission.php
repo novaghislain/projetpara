@@ -2,51 +2,26 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/**
- * Modèle Permission (Permission).
- *
- * Définit les permissions associées aux modules et actions du système.
- * Chaque permission est liée à des rôles via une relation many-to-many
- * (table pivot `role_permission`).
- *
- * @property int $id
- * @property string $module Module concerné
- * @property string $action Action (create, read, update, delete, etc.)
- * @property string $display_name Nom affichable
- * @property string|null $description Description
- *
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Role[] $roles Rôles ayant cette permission
- */
 class Permission extends Model
 {
+    use HasUuids;
+
+    protected $table = 'permissions';
+    public $timestamps = false;
+
     protected $fillable = [
-        'module',
+        'affectation_id',
+        'ressource',
         'action',
-        'display_name',
-        'description',
+        'autorise',
     ];
 
-    public function roles()
+    public function affectation(): BelongsTo
     {
-        return $this->belongsToMany(Role::class, 'role_permission')
-            ->withTimestamps();
-    }
-
-    /**
-     * Scope: permissions pour un module spécifique.
-     */
-    public function scopeModule($query, string $module)
-    {
-        return $query->where('module', $module);
-    }
-
-    /**
-     * Scope: permissions pour plusieurs modules.
-     */
-    public function scopeModules($query, array $modules)
-    {
-        return $query->whereIn('module', $modules);
+        return $this->belongsTo(Affectation::class, 'affectation_id');
     }
 }

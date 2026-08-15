@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\GelAccountant\Clients;
 
 use App\Http\Controllers\Controller;
-use App\Models\Gel\Client;
+use App\Models\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -30,18 +30,16 @@ class ClientsController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        $cabinetId = $user->cabinet_id;
 
-        $query = Client::where(function($q) use ($cabinetId, $user) {
-            if ($cabinetId) {
-                $q->where('cabinet_id', $cabinetId);
-            }
-            $q->orWhereIn('id', function($subQuery) use ($user) {
-                $subQuery->select('client_id')
-                         ->from('user_clients')
-                         ->where('user_id', $user->id);
-            });
-        });
+        // Récupère TOUTES les entreprises où l'utilisateur a une affectation active.
+        // Un comptable invité peut être rattaché à plusieurs cabinets.
+        $entrepriseIds = $user->affectations()
+            ->where('statut', 'active')
+            ->pluck('entreprise_id')
+            ->unique()
+            ->values();
+
+        $query = Client::whereIn('entreprise_id', $entrepriseIds);
 
         // Filtre par statut (actif / inactif) si présent dans la requête
         if ($request->filled('statut')) {
@@ -53,7 +51,7 @@ class ClientsController extends Controller
             $query->where(function ($qry) use ($q) {
                 $qry->where('nom_entreprise', 'like', "%{$q}%")
                     ->orWhere('email', 'like', "%{$q}%")
-                    ->orWhere('ifu', 'like', "%{$q}%");
+                    ->orWhere('nif', 'like', "%{$q}%");
             });
         }
 
@@ -77,23 +75,28 @@ class ClientsController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
+        // Utilise l'entreprise active de la session, ou la première affectation
+        $entrepriseId = session('active_entreprise_id')
+            ?? $user->affectations()->where('statut', 'active')->value('entreprise_id');
+
         $validated = $request->validate([
             'nom_entreprise'   => 'required|string|max:255',
             'sigle'            => 'nullable|string|max:50',
             'email'            => 'nullable|email|max:255',
             'telephone'        => 'nullable|string|max:50',
-            'ifu'              => ['required', 'string', 'size:13', 'regex:/^[0-9]{13}$/'],
+            'ifu'              => ['nullable', 'string', 'size:13', 'regex:/^[0-9]{13}$/'],
             'rc'               => 'nullable|string|max:100',
-            'secteur' => 'nullable|string|max:100',
+            'secteur'          => 'nullable|string|max:100',
             'adresse'          => 'nullable|string|max:500',
             'ville'            => 'nullable|string|max:100',
         ], [
-            'ifu.required' => "L'IFU est obligatoire.",
             'ifu.size'     => "L'IFU doit contenir exactement 13 chiffres.",
             'ifu.regex'    => "L'IFU ne doit contenir que des chiffres (13 au total).",
         ]);
 
-        $validated['cabinet_id'] = $user->cabinet_id;
+        $validated['entreprise_id'] = $entrepriseId;
+        $validated['nif'] = $validated['ifu'] ?? null;
+        unset($validated['ifu']);
         $validated['statut'] = 'actif';
 
         $client = Client::create($validated);
@@ -135,13 +138,17 @@ class ClientsController extends Controller
             'telephone'        => 'nullable|string|max:50',
             'adresse'          => 'nullable|string|max:500',
             'ville'            => 'nullable|string|max:100',
-            'ifu'              => ['required', 'string', 'size:13', 'regex:/^[0-9]{13}$/'],
+            'ifu'              => ['nullable', 'string', 'size:13', 'regex:/^[0-9]{13}$/'],
             'rc'               => 'nullable|string|max:100',
         ], [
-            'ifu.required' => "L'IFU est obligatoire.",
             'ifu.size'     => "L'IFU doit contenir exactement 13 chiffres.",
             'ifu.regex'    => "L'IFU ne doit contenir que des chiffres (13 au total).",
         ]);
+
+        if (isset($validated['ifu'])) {
+            $validated['nif'] = $validated['ifu'];
+            unset($validated['ifu']);
+        }
 
         $client->update($validated);
 

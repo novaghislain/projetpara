@@ -42,6 +42,14 @@
                 <i class="fas fa-ellipsis-h"></i>
             </button>
             <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size: 13px;">
+                @if($task->statut !== 'terminee')
+                <li>
+                    <form action="{{ route('gel-secretary.tasks.change-status', ['id' => $task->id, 'status' => 'terminee']) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="dropdown-item text-success"><i class="fas fa-check me-2"></i> Marquer terminée</button>
+                    </form>
+                </li>
+                @endif
                 <li>
                     <form action="{{ route('gel-secretary.tasks.destroy', $task->id) }}" method="POST" onsubmit="return confirm('Supprimer cette tâche ?');">
                         @csrf

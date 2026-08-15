@@ -188,42 +188,41 @@ class BalanceSheetService
     private function getNetResult(int $clientId, string $startDate, string $endDate): float
     {
         // D'abord via le compte 13 (Résultat)
-        $resultQuery = DB::table('entry_lines')
-            ->join('journal_entries', 'entry_lines.entry_id', '=', 'journal_entries.id')
-            ->join('accounting_accounts', 'entry_lines.account_id', '=', 'accounting_accounts.id')
-            ->where('accounting_accounts.client_id', $clientId)
-            ->where('accounting_accounts.code', 'like', '13%')
-            ->where('journal_entries.client_id', $clientId)
-            ->where('journal_entries.status', 'posted')
-            ->whereDate('journal_entries.entry_date', '<=', $endDate)
-            ->selectRaw('COALESCE(SUM(entry_lines.debit), 0) as total_debit, COALESCE(SUM(entry_lines.credit), 0) as total_credit')
+        $resultQuery = DB::table('gel_lignes_ecriture as gl')
+            ->join('gel_ecritures as ge', 'gl.ecriture_id', '=', 'ge.id')
+            ->join('gel_account_types as gat', 'gl.compte_id', '=', 'gat.id')
+            ->where('gat.code', 'like', '13%')
+            ->where('ge.client_id', $clientId)
+            ->where('ge.valide', true)
+            ->whereDate('ge.date_ecriture', '<=', $endDate)
+            ->selectRaw('COALESCE(SUM(CASE WHEN gl.sens = "debit" THEN gl.montant ELSE 0 END), 0) as total_debit, COALESCE(SUM(CASE WHEN gl.sens = "credit" THEN gl.montant ELSE 0 END), 0) as total_credit')
             ->first();
 
         $resultByAccount = (float) ($resultQuery->total_credit ?? 0) - (float) ($resultQuery->total_debit ?? 0);
 
         if (abs($resultByAccount) < 0.01) {
             // Calcul par différence Produits - Charges
-            $charges = (float) DB::table('entry_lines')
-                ->join('journal_entries', 'entry_lines.entry_id', '=', 'journal_entries.id')
-                ->join('accounting_accounts', 'entry_lines.account_id', '=', 'accounting_accounts.id')
-                ->where('accounting_accounts.client_id', $clientId)
-                ->where('accounting_accounts.code', 'like', '6%')
-                ->where('journal_entries.client_id', $clientId)
-                ->where('journal_entries.status', 'posted')
-                ->whereDate('journal_entries.entry_date', '>=', $startDate)
-                ->whereDate('journal_entries.entry_date', '<=', $endDate)
-                ->sum('entry_lines.debit');
+            $charges = (float) DB::table('gel_lignes_ecriture as gl')
+                ->join('gel_ecritures as ge', 'gl.ecriture_id', '=', 'ge.id')
+                ->join('gel_account_types as gat', 'gl.compte_id', '=', 'gat.id')
+                ->where('gat.code', 'like', '6%')
+                ->where('ge.client_id', $clientId)
+                ->where('ge.valide', true)
+                ->whereDate('ge.date_ecriture', '>=', $startDate)
+                ->whereDate('ge.date_ecriture', '<=', $endDate)
+                ->where('gl.sens', 'debit')
+                ->sum('gl.montant');
 
-            $produits = (float) DB::table('entry_lines')
-                ->join('journal_entries', 'entry_lines.entry_id', '=', 'journal_entries.id')
-                ->join('accounting_accounts', 'entry_lines.account_id', '=', 'accounting_accounts.id')
-                ->where('accounting_accounts.client_id', $clientId)
-                ->where('accounting_accounts.code', 'like', '7%')
-                ->where('journal_entries.client_id', $clientId)
-                ->where('journal_entries.status', 'posted')
-                ->whereDate('journal_entries.entry_date', '>=', $startDate)
-                ->whereDate('journal_entries.entry_date', '<=', $endDate)
-                ->sum('entry_lines.credit');
+            $produits = (float) DB::table('gel_lignes_ecriture as gl')
+                ->join('gel_ecritures as ge', 'gl.ecriture_id', '=', 'ge.id')
+                ->join('gel_account_types as gat', 'gl.compte_id', '=', 'gat.id')
+                ->where('gat.code', 'like', '7%')
+                ->where('ge.client_id', $clientId)
+                ->where('ge.valide', true)
+                ->whereDate('ge.date_ecriture', '>=', $startDate)
+                ->whereDate('ge.date_ecriture', '<=', $endDate)
+                ->where('gl.sens', 'credit')
+                ->sum('gl.montant');
 
             return round($produits - $charges, 2);
         }
@@ -233,27 +232,25 @@ class BalanceSheetService
 
     private function getAccountBalances(int $clientId, string $classPrefix, string $startDate, string $endDate): array
     {
-        return DB::table('accounting_accounts')
-            ->leftJoin('entry_lines', 'accounting_accounts.id', '=', 'entry_lines.account_id')
-            ->leftJoin('journal_entries', function ($join) use ($clientId, $startDate, $endDate) {
-                $join->on('entry_lines.entry_id', '=', 'journal_entries.id')
-                    ->where('journal_entries.client_id', '=', $clientId)
-                    ->where('journal_entries.status', '=', 'posted')
-                    ->whereDate('journal_entries.entry_date', '>=', $startDate)
-                    ->whereDate('journal_entries.entry_date', '<=', $endDate);
+        return DB::table('gel_account_types as gat')
+            ->join('gel_lignes_ecriture as gl', 'gat.id', '=', 'gl.compte_id')
+            ->join('gel_ecritures as ge', function ($join) use ($clientId, $startDate, $endDate) {
+                $join->on('gl.ecriture_id', '=', 'ge.id')
+                    ->where('ge.client_id', '=', $clientId)
+                    ->where('ge.valide', '=', true)
+                    ->whereDate('ge.date_ecriture', '>=', $startDate)
+                    ->whereDate('ge.date_ecriture', '<=', $endDate);
             })
-            ->where('accounting_accounts.client_id', $clientId)
-            ->where('accounting_accounts.code', 'like', $classPrefix . '%')
-            ->where('accounting_accounts.is_active', true)
-            ->groupBy('accounting_accounts.id', 'accounting_accounts.code', 'accounting_accounts.name')
+            ->where('gat.code', 'like', $classPrefix . '%')
+            ->groupBy('gat.id', 'gat.code', 'gat.libelle')
             ->select([
-                'accounting_accounts.id',
-                'accounting_accounts.code',
-                'accounting_accounts.name',
-                DB::raw('COALESCE(SUM(entry_lines.debit), 0) as balance_debit'),
-                DB::raw('COALESCE(SUM(entry_lines.credit), 0) as balance_credit'),
+                'gat.id',
+                'gat.code',
+                'gat.libelle as name',
+                DB::raw('COALESCE(SUM(CASE WHEN gl.sens = "debit" THEN gl.montant ELSE 0 END), 0) as balance_debit'),
+                DB::raw('COALESCE(SUM(CASE WHEN gl.sens = "credit" THEN gl.montant ELSE 0 END), 0) as balance_credit'),
             ])
-            ->orderBy('accounting_accounts.code')
+            ->orderBy('gat.code')
             ->get()
             ->toArray();
     }

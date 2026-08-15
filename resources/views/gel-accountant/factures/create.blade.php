@@ -1,440 +1,186 @@
 @extends('layouts.gel-accountant')
 
-@section('title', 'Nouvelle facture')
+@section('title', 'Nouvelle Facture')
+
+@push('styles')
+<style>
+/* ==========================================================================
+   CREATE FACTURE - BENTO GRID DESIGN
+   ========================================================================== */
+.form-section {
+    background: white; border: 1px solid var(--gel-border);
+    border-radius: 12px; padding: 24px; margin-bottom: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+.section-title {
+    font-size: 15px; font-weight: 700; color: #1E293B; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #E2E8F0; padding-bottom: 12px;
+}
+.section-title i { color: var(--gel-primary); }
+
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px; }
+.form-control, .form-select {
+    width: 100%; padding: 10px 14px; border: 1px solid #E2E8F0;
+    border-radius: 8px; font-size: 14px; outline: none; transition: all 0.2s;
+    background: #F8FAFC;
+}
+.form-control:focus, .form-select:focus { background: white; border-color: var(--gel-primary); }
+
+.lines-table { width: 100%; border-collapse: collapse; }
+.lines-table th { background: #F1F5F9; font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; padding: 12px; text-align: left; border-bottom: 2px solid #E2E8F0; }
+.lines-table td { padding: 12px; border-bottom: 1px solid #E2E8F0; vertical-align: top; }
+.line-input { width: 100%; padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 13px; outline: none; background: white; }
+.line-input:focus { border-color: var(--gel-primary); }
+
+.totals-area { display: flex; flex-direction: column; gap: 12px; width: 300px; margin-left: auto; margin-top: 24px; background: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0; }
+.total-line { display: flex; justify-content: space-between; font-size: 14px; color: #475569; }
+.total-line.grand-total { font-size: 18px; font-weight: 700; color: #1E293B; border-top: 2px solid #E2E8F0; padding-top: 12px; margin-top: 4px; }
+
+.btn-add-line { background: #EFF6FF; color: #3B82F6; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; margin-top: 16px; }
+.btn-add-line:hover { background: #DBEAFE; }
+
+.form-actions { display: flex; justify-content: flex-end; gap: 16px; margin-top: 32px; }
+.btn-cancel { background: white; color: #475569; border: 1px solid #E2E8F0; padding: 12px 24px; border-radius: 8px; font-weight: 600; text-decoration: none; }
+.btn-submit { background: var(--gel-primary); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+.btn-submit:hover { background: var(--gel-primary-hover); }
+</style>
+@endpush
 
 @section('content')
-
-{{-- â•â•â•â•â•â•â•â•â•â•â• EN-TÀŠTE â•â•â•â•â•â•â•â•â•â•â• --}}
 <div class="gel-page-header">
     <div>
-        <h1 class="gel-page-title"><i class="fas fa-file-invoice-dollar" style="color:var(--gel-primary); margin-right:8px;"></i> Nouvelle facture</h1>
-        <p class="gel-page-subtitle">Créez une facture client avec les détails de facturation</p>
-    </div>
-    <div style="display:flex; gap:8px;">
-        <a href="{{ route('gel-accountant.factures.index') }}" class="gel-btn gel-btn-secondary">
-            <i class="fas fa-arrow-left"></i> Retour
-        </a>
+        <a href="{{ route('gel-accountant.factures.index') }}" style="font-size:13px; color:#64748B; text-decoration:none; margin-bottom:8px; display:inline-block;"><i class="fas fa-arrow-left"></i> Retour aux factures</a>
+        <h1 class="gel-page-title">Nouvelle Facture</h1>
     </div>
 </div>
 
 @if($errors->any())
-<div style="background:rgba(239, 68, 68, 0.1); border:1px solid rgba(239, 68, 68, 0.3); border-radius:8px; padding:14px 18px; margin-bottom:20px;">
-    <div style="font-weight:600; color:var(--gel-danger); margin-bottom:6px;"><i class="fas fa-exclamation-circle"></i> Erreurs de validation</div>
-    <ul style="margin:0; padding-left:20px; font-size:13px; color:var(--gel-danger);">
-        @foreach($errors->all() as $error)
-            <li>{{ $error }}</li>
-        @endforeach
-    </ul>
+<div class="alert alert-danger" style="background: #FEF2F2; border: 1px solid #FECACA; color: #991B1B; border-radius: 8px; padding:12px 16px; margin-bottom:20px;">
+    {{ $errors->first() }}
 </div>
 @endif
 
-<form method="POST" action="{{ route('gel-accountant.factures.store') }}" id="invoiceForm">
+<form action="{{ route('gel-accountant.factures.store') }}" method="POST">
     @csrf
 
-    <div class="invoice-form-grid">
-        {{-- â•â•â• Colonne gauche : Infos de la facture â•â•â• --}}
-        <div class="invoice-form-left">
-
-            {{-- Client --}}
-            <div class="gel-card p-4 mb-4">
-                <div class="invoice-section-title"><i class="fas fa-user"></i> Client</div>
-                <div class="gel-form-group">
-                    <label>Client / Tiers *</label>
-                    <select name="partner_id" class="gel-form-select" required id="partnerSelect">
-                        <option value="">— Sélectionner un client —</option>
-                        @foreach($partners as $partner)
-                            <option value="{{ $partner->id }}"
-                                    data-name="{{ $partner->company_name ?? ($partner->last_name.' '.$partner->first_name) }}"
-                                    data-email="{{ $partner->email }}"
-                                    data-address="{{ $partner->address }}"
-                                    data-tax="{{ $partner->tax_id }}"
-                                    {{ old('partner_id') == $partner->id ? 'selected' : '' }}>
-                                {{ $partner->company_name ?? ($partner->last_name.' '.$partner->first_name) }}
-                                @if($partner->tax_id) — IFU: {{ $partner->tax_id }} @endif
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div id="partnerPreview" class="partner-preview" style="display:none;">
-                    <div class="partner-preview-name" id="previewName"></div>
-                    <div class="partner-preview-detail" id="previewEmail"></div>
-                    <div class="partner-preview-detail" id="previewAddress"></div>
-                    <div class="partner-preview-detail" id="previewTax"></div>
-                </div>
+    <div class="form-section">
+        <div class="section-title"><i class="fas fa-user-tie"></i> Client et Dates</div>
+        <div class="grid-3">
+            <div class="form-group">
+                <label class="form-label">Client <span class="text-danger">*</span></label>
+                <select name="partner_id" class="form-select" required>
+                    <option value="">Sélectionnez un client...</option>
+                    @foreach($partners as $partner)
+                        <option value="{{ $partner->id }}" {{ old('partner_id') == $partner->id ? 'selected' : '' }}>
+                            {{ $partner->company_name ?? ($partner->first_name . ' ' . $partner->last_name) }}
+                        </option>
+                    @endforeach
+                </select>
             </div>
-
-            {{-- Lignes de facturation --}}
-            <div class="gel-card p-4 mb-4">
-                <div class="invoice-section-title"><i class="fas fa-list"></i> Lignes de facturation</div>
-
-                <div class="invoice-lines-header">
-                    <div style="flex:3;">Description</div>
-                    <div style="flex:1; text-align:center;">Qté</div>
-                    <div style="flex:1.5; text-align:right;">Prix unit. HT</div>
-                    <div style="flex:1; text-align:center;">TVA %</div>
-                    <div style="flex:1.5; text-align:right;">Total TTC</div>
-                    <div style="width:36px;"></div>
-                </div>
-
-                <div id="invoiceLines">
-                    {{-- La première ligne est ajoutée par JS --}}
-                </div>
-
-                <button type="button" class="invoice-add-line" onclick="addLine()">
-                    <i class="fas fa-plus-circle"></i> Ajouter une ligne
-                </button>
+            <div class="form-group">
+                <label class="form-label">Date de facturation <span class="text-danger">*</span></label>
+                <input type="date" name="invoice_date" class="form-control" value="{{ old('invoice_date', date('Y-m-d')) }}" required>
             </div>
-
-            {{-- Notes --}}
-            <div class="gel-card p-4 mb-4">
-                <div class="invoice-section-title"><i class="fas fa-sticky-note"></i> Notes & Conditions</div>
-                <div class="gel-form-group">
-                    <label>Notes (visibles sur la facture)</label>
-                    <textarea name="notes" class="gel-form-control" rows="3" placeholder="Ex: Merci pour votre confiance...">{{ old('notes') }}</textarea>
-                </div>
-                <div class="gel-form-group">
-                    <label>Conditions générales</label>
-                    <textarea name="terms_conditions" class="gel-form-control" rows="2" placeholder="Ex: Paiement À  30 jours net...">{{ old('terms_conditions', 'Paiement À  Réception de la facture. Pénalités de retard : 1,5% par mois.') }}</textarea>
-                </div>
-            </div>
-        </div>
-
-        {{-- â•â•â• Colonne droite : Résumé â•â•â• --}}
-        <div class="invoice-form-right">
-
-            {{-- Détails de la facture --}}
-            <div class="gel-card p-4 mb-4">
-                <div class="invoice-section-title"><i class="fas fa-calendar-alt"></i> Détails</div>
-                <div class="gel-form-group">
-                    <label>Date de facture *</label>
-                    <input type="date" name="invoice_date" class="gel-form-control" value="{{ old('invoice_date', date('Y-m-d')) }}" required>
-                </div>
-                <div class="gel-form-group">
-                    <label>Date d'échéance *</label>
-                    <input type="date" name="due_date" class="gel-form-control" value="{{ old('due_date', date('Y-m-d', strtotime('+30 days'))) }}" required>
-                </div>
-                <div class="gel-form-group">
-                    <label>Conditions de paiement</label>
-                    <select name="payment_term" class="gel-form-select">
-                        <option value="net_30">Net 30 jours</option>
-                        <option value="net_15">Net 15 jours</option>
-                        <option value="net_60">Net 60 jours</option>
-                        <option value="immediate">À Réception</option>
-                    </select>
-                </div>
-            </div>
-
-            {{-- Résumé des montants --}}
-            <div class="gel-card invoice-summary-card p-4 mb-4">
-                <div class="invoice-section-title"><i class="fas fa-calculator"></i> Résumé</div>
-
-                <div class="invoice-summary-row">
-                    <span>Sous-total HT</span>
-                    <span id="summarySubtotal">0 FCFA</span>
-                </div>
-                <div class="invoice-summary-row">
-                    <span>TVA</span>
-                    <span id="summaryVat">0 FCFA</span>
-                </div>
-                <div class="invoice-summary-divider"></div>
-                <div class="invoice-summary-row invoice-summary-total">
-                    <span>Total TTC</span>
-                    <span id="summaryTotal">0 FCFA</span>
-                </div>
-            </div>
-
-            {{-- Actions --}}
-            <div style="display:flex; flex-direction:column; gap:8px;">
-                <button type="submit" class="gel-btn gel-btn-primary" style="width:100%; justify-content:center; padding:12px;">
-                    <i class="fas fa-save"></i> Enregistrer la facture
-                </button>
-                <a href="{{ route('gel-accountant.factures.index') }}" class="gel-btn gel-btn-secondary" style="width:100%; justify-content:center;">
-                    Annuler
-                </a>
+            <div class="form-group">
+                <label class="form-label">Date d'échéance <span class="text-danger">*</span></label>
+                <input type="date" name="due_date" class="form-control" value="{{ old('due_date', date('Y-m-d', strtotime('+30 days'))) }}" required>
             </div>
         </div>
     </div>
+
+    <div class="form-section">
+        <div class="section-title"><i class="fas fa-list"></i> Lignes de Facture</div>
+        <table class="lines-table" id="linesTable">
+            <thead>
+                <tr>
+                    <th style="width:40%;">Description <span class="text-danger">*</span></th>
+                    <th style="width:15%;">Quantité <span class="text-danger">*</span></th>
+                    <th style="width:15%;">Prix Unitaire <span class="text-danger">*</span></th>
+                    <th style="width:15%;">TVA (%)</th>
+                    <th style="width:10%;">Total</th>
+                    <th style="width:5%;"></th>
+                </tr>
+            </thead>
+            <tbody id="linesContainer">
+                <tr>
+                    <td><input type="text" name="lines[0][description]" class="line-input" required placeholder="Description de l'article"></td>
+                    <td><input type="number" name="lines[0][quantity]" class="line-input qty" value="1" min="0.01" step="0.01" required oninput="calcTotals()"></td>
+                    <td><input type="number" name="lines[0][unit_price]" class="line-input price" value="0" min="0" step="0.01" required oninput="calcTotals()"></td>
+                    <td><input type="number" name="lines[0][vat_rate]" class="line-input vat" value="18" min="0" max="100" step="0.1" oninput="calcTotals()"></td>
+                    <td class="line-total font-monospace text-end" style="padding-top:18px;">0</td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+        <button type="button" class="btn-add-line" onclick="addLine()"><i class="fas fa-plus"></i> Ajouter une ligne</button>
+
+        <div class="totals-area">
+            <div class="total-line">
+                <span>Sous-total HT</span>
+                <span id="subtotalDisplay" class="font-monospace">0 F</span>
+            </div>
+            <div class="total-line">
+                <span>TVA</span>
+                <span id="vatDisplay" class="font-monospace">0 F</span>
+            </div>
+            <div class="total-line grand-total">
+                <span>Total TTC</span>
+                <span id="totalDisplay" class="font-monospace">0 F</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <a href="{{ route('gel-accountant.factures.index') }}" class="btn-cancel">Annuler</a>
+        <button type="submit" class="btn-submit"><i class="fas fa-save"></i> Enregistrer la facture</button>
+    </div>
 </form>
-
-@endsection
-
-@push('styles')
-<style>
-    .invoice-form-grid {
-        display: grid;
-        grid-template-columns: 1fr 340px;
-        gap: 20px;
-        align-items: start;
-    }
-    .invoice-section-title {
-        font-size: 14px;
-        font-weight: 700;
-        color: var(--gel-text-primary);
-        margin-bottom: 16px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .invoice-section-title i {
-        color: var(--gel-primary);
-        font-size: 14px;
-    }
-
-    /* Partner preview */
-    .partner-preview {
-        background: var(--gel-primary-light);
-        border: 1px solid var(--gel-primary);
-        border-radius: 6px;
-        padding: 12px 14px;
-        margin-top: 8px;
-    }
-    .partner-preview-name {
-        font-weight: 600;
-        font-size: 14px;
-        color: var(--gel-text-primary);
-        margin-bottom: 4px;
-    }
-    .partner-preview-detail {
-        font-size: 12px;
-        color: var(--gel-text-secondary);
-        line-height: 1.5;
-    }
-
-    /* Lines header */
-    .invoice-lines-header {
-        display: flex;
-        gap: 10px;
-        padding: 8px 12px;
-        background: var(--gel-sidebar-bg);
-        border-radius: 6px;
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-        color: white;
-        margin-bottom: 8px;
-    }
-
-    /* Line row */
-    .invoice-line {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        padding: 10px 12px;
-        border: 1px solid var(--gel-border);
-        border-radius: 6px;
-        margin-bottom: 8px;
-        background: white;
-        transition: box-shadow 120ms;
-    }
-    .invoice-line:hover {
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    }
-    .invoice-line input {
-        border: 1px solid var(--gel-border);
-        border-radius: 4px;
-        padding: 6px 10px;
-        font-size: 13px;
-        font-family: inherit;
-        outline: none;
-        transition: border-color 120ms;
-        width: 100%;
-    }
-    .invoice-line input:focus {
-        border-color: var(--gel-primary);
-        box-shadow: 0 0 0 2px rgba(0,91,172,0.1);
-    }
-    .invoice-line .line-total {
-        font-weight: 600;
-        font-size: 13px;
-        color: var(--gel-text-primary);
-        text-align: right;
-        white-space: nowrap;
-        min-width: 100px;
-    }
-    .invoice-line-remove {
-        width: 30px; height: 30px;
-        border: none; background: none;
-        color: var(--gel-text-muted);
-        cursor: pointer;
-        border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 14px;
-        transition: all 120ms;
-        flex-shrink: 0;
-    }
-    .invoice-line-remove:hover {
-        background: rgba(239, 68, 68, 0.1);
-        color: var(--gel-danger);
-    }
-
-    /* Add line button */
-    .invoice-add-line {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 10px 16px;
-        border: 2px dashed var(--gel-border);
-        border-radius: 6px;
-        background: none;
-        color: var(--gel-primary);
-        font-size: 13px;
-        font-weight: 600;
-        font-family: inherit;
-        cursor: pointer;
-        width: 100%;
-        justify-content: center;
-        transition: all 150ms;
-        margin-top: 4px;
-    }
-    .invoice-add-line:hover {
-        background: var(--gel-primary-light);
-        border-color: var(--gel-primary);
-    }
-
-    /* Summary card */
-    .invoice-summary-card {
-        background: var(--gel-sidebar-bg);
-        border: 1px solid var(--gel-border);
-    }
-    .invoice-summary-card .invoice-section-title {
-        color: white;
-    }
-    .invoice-summary-card .invoice-section-title i {
-        color: white;
-    }
-    .invoice-summary-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 8px 0;
-        font-size: 13px;
-        color: rgba(255, 255, 255, 0.9);
-    }
-    .invoice-summary-divider {
-        height: 1px;
-        background: rgba(255, 255, 255, 0.2);
-        margin: 4px 0;
-    }
-    .invoice-summary-total {
-        font-size: 16px;
-        font-weight: 700;
-        color: white;
-        padding-top: 12px;
-    }
-
-    @media (max-width: 900px) {
-        .invoice-form-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-</style>
-@endpush
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    let lineIndex = 0;
-
-    // Prévisualisation du client sélectionné
-    const partnerSelect = document.getElementById('partnerSelect');
-    const previewBox = document.getElementById('partnerPreview');
-    
-    if (partnerSelect) {
-        partnerSelect.addEventListener('change', function() {
-            const opt = this.options[this.selectedIndex];
-            if (!opt.value) {
-                previewBox.style.display = 'none';
-                return;
-            }
-            document.getElementById('previewName').textContent = opt.dataset.name || '';
-            document.getElementById('previewEmail').textContent = opt.dataset.email ? 'âœ‰ ' + opt.dataset.email : '';
-            document.getElementById('previewAddress').textContent = opt.dataset.address ? 'ðŸ“ ' + opt.dataset.address : '';
-            document.getElementById('previewTax').textContent = opt.dataset.tax ? 'ðŸ› IFU: ' + opt.dataset.tax : '';
-            previewBox.style.display = 'block';
-        });
-    }
-
-    // Ajouter une ligne de facture
-    window.addLine = function() {
-        const container = document.getElementById('invoiceLines');
-        const html = `
-            <div class="invoice-line" id="line-${lineIndex}">
-                <div style="flex:3;">
-                    <input type="text" name="lines[${lineIndex}][description]" placeholder="Description du produit/service" required>
-                </div>
-                <div style="flex:1;">
-                    <input type="number" name="lines[${lineIndex}][quantity]" placeholder="1" step="0.01" min="0.01" value="1" required class="line-qty" oninput="calcLine(${lineIndex})">
-                </div>
-                <div style="flex:1.5;">
-                    <input type="number" name="lines[${lineIndex}][unit_price]" placeholder="0" step="1" min="0" required class="line-price" oninput="calcLine(${lineIndex})">
-                </div>
-                <div style="flex:1;">
-                    <input type="number" name="lines[${lineIndex}][vat_rate]" placeholder="18" step="0.01" min="0" max="100" value="18" class="line-vat" oninput="calcLine(${lineIndex})">
-                </div>
-                <div style="flex:1.5;">
-                    <div class="line-total" id="lineTotal-${lineIndex}">0 F</div>
-                </div>
-                <button type="button" class="invoice-line-remove" onclick="removeLine(${lineIndex})" title="Supprimer la ligne">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
+    let lineIdx = 1;
+    function addLine() {
+        const container = document.getElementById('linesContainer');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><input type="text" name="lines[${lineIdx}][description]" class="line-input" required placeholder="Description"></td>
+            <td><input type="number" name="lines[${lineIdx}][quantity]" class="line-input qty" value="1" min="0.01" step="0.01" required oninput="calcTotals()"></td>
+            <td><input type="number" name="lines[${lineIdx}][unit_price]" class="line-input price" value="0" min="0" step="0.01" required oninput="calcTotals()"></td>
+            <td><input type="number" name="lines[${lineIdx}][vat_rate]" class="line-input vat" value="18" min="0" max="100" step="0.1" oninput="calcTotals()"></td>
+            <td class="line-total font-monospace text-end" style="padding-top:18px;">0</td>
+            <td><button type="button" class="btn-action delete" onclick="this.closest('tr').remove(); calcTotals();" style="margin-top:8px;"><i class="fas fa-times"></i></button></td>
         `;
-        container.insertAdjacentHTML('beforeend', html);
-        lineIndex++;
-        recalcTotal();
-    };
+        container.appendChild(tr);
+        lineIdx++;
+        calcTotals();
+    }
 
-    // Supprimer une ligne
-    window.removeLine = function(idx) {
-        const line = document.getElementById('line-' + idx);
-        if (line) {
-            line.remove();
-            recalcTotal();
-        }
-    };
-
-    // Calculer une ligne
-    window.calcLine = function(idx) {
-        const line = document.getElementById('line-' + idx);
-        if (!line) return;
-        const qty = parseFloat(line.querySelector('.line-qty').value) || 0;
-        const price = parseFloat(line.querySelector('.line-price').value) || 0;
-        const vat = parseFloat(line.querySelector('.line-vat').value) || 0;
-        const subtotal = qty * price;
-        const vatAmount = subtotal * (vat / 100);
-        const total = subtotal + vatAmount;
-        document.getElementById('lineTotal-' + idx).textContent = formatMoney(total) + ' F';
-        recalcTotal();
-    };
-
-    // Recalculer le résumé
-    function recalcTotal() {
+    function calcTotals() {
         let subtotal = 0;
-        let vatTotal = 0;
+        let totalVat = 0;
 
-        document.querySelectorAll('.invoice-line').forEach(line => {
-            const qty = parseFloat(line.querySelector('.line-qty')?.value) || 0;
-            const price = parseFloat(line.querySelector('.line-price')?.value) || 0;
-            const vat = parseFloat(line.querySelector('.line-vat')?.value) || 0;
+        document.querySelectorAll('#linesContainer tr').forEach(tr => {
+            const qty = parseFloat(tr.querySelector('.qty').value) || 0;
+            const price = parseFloat(tr.querySelector('.price').value) || 0;
+            const vatRate = parseFloat(tr.querySelector('.vat').value) || 0;
+
             const lineSub = qty * price;
+            const lineVat = lineSub * (vatRate / 100);
+            
+            tr.querySelector('.line-total').innerText = new Intl.NumberFormat('fr-FR').format(lineSub + lineVat);
+            
             subtotal += lineSub;
-            vatTotal += lineSub * (vat / 100);
+            totalVat += lineVat;
         });
 
-        const total = subtotal + vatTotal;
-        document.getElementById('summarySubtotal').textContent = formatMoney(subtotal) + ' FCFA';
-        document.getElementById('summaryVat').textContent = formatMoney(vatTotal) + ' FCFA';
-        document.getElementById('summaryTotal').textContent = formatMoney(total) + ' FCFA';
+        document.getElementById('subtotalDisplay').innerText = new Intl.NumberFormat('fr-FR').format(subtotal) + ' F';
+        document.getElementById('vatDisplay').innerText = new Intl.NumberFormat('fr-FR').format(totalVat) + ' F';
+        document.getElementById('totalDisplay').innerText = new Intl.NumberFormat('fr-FR').format(subtotal + totalVat) + ' F';
     }
-
-    function formatMoney(amount) {
-        return Math.round(amount).toLocaleString('fr-FR');
-    }
-
-    // Ajouter la première ligne au chargement
-    addLine();
-});
 </script>
 @endpush
-
+@endsection

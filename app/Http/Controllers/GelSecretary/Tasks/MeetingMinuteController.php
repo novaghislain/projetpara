@@ -12,13 +12,13 @@ use App\Services\AuditLogService;
 
 class MeetingMinuteController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
         
         $query = DaeMeetingMinute::with(['client', 'redacteur']);
             
-        $activeClientId = session('active_client_id') ?? $user->active_client_id ?? $user->client_id;
+        $activeClientId = $request->query('client_id') ?? session('active_client_id') ?? $user->active_client_id ?? $user->client_id;
         if ($activeClientId) {
             $query->where('client_id', $activeClientId);
         }

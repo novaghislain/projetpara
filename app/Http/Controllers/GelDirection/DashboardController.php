@@ -3,50 +3,65 @@
 namespace App\Http\Controllers\GelDirection;
 
 use App\Http\Controllers\Controller;
-use App\Models\Gel\Client;
-use App\Models\Gel\Task;
-use App\Models\Document;
 use Illuminate\Http\Request;
+
+use App\Models\Client;
+use App\Models\Facture;
+use App\Models\Entreprise;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
+        // Get the active enterprise ID from session
+        $entrepriseId = session('active_entreprise_id');
+        
+        if (!$entrepriseId) {
+            return redirect()->route('dashboard')->with('error', 'Aucune entreprise sélectionnée.');
+        }
 
-        // Statistiques globales "Direction"
-        $totalClients = \App\Models\Client::count();
-        $totalUsers = \App\Models\User::count();
+        $entreprise = Entreprise::find($entrepriseId);
+
+        // KPIs
+        $totalClients = Client::where('entreprise_id', $entrepriseId)->count();
+        $chiffreAffaires = Facture::where('entreprise_id', $entrepriseId)
+                                  ->where('statut', 'payee')
+                                  ->sum('montant_ht');
+                                  
+        $facturesEnAttente = Facture::where('entreprise_id', $entrepriseId)
+                                    ->whereIn('statut', ['envoyee', 'en_retard'])
+                                    ->sum('montant_ttc');
+
+        $recentClients = Client::where('entreprise_id', $entrepriseId)
+                               ->orderBy('created_at', 'desc')
+                               ->take(5)
+                               ->get();
+
+        $recentFactures = Facture::where('entreprise_id', $entrepriseId)
+                                 ->with('client')
+                                 ->orderBy('created_at', 'desc')
+                                 ->take(5)
+                                 ->get();
+
+        // Extra metrics for Direction Dashboard
+        $totalTeam = \App\Models\Affectation::where('entreprise_id', $entrepriseId)->whereIn('statut', ['actif', 'active'])->count();
+        $masseSalariale = 0; // À lier avec gel_salaries
         
-        // Chiffres factices pour la démonstration des KPIs
-        $mrr = 45200; // Monthly Recurring Revenue
-        $croissance = 12.5; // %
-        $nouveauxClientsMois = 8;
-        
-        // Tâches assignées au dirigeant (ex: validations)
-        // On simule 3 validations en attente
-        $validationsCount = 3;
-                                
-        // Productivité globale de l'équipe (tâches terminées ce mois)
-        $completedTasksCount = 142;
-        
-        // Données pour le graphique (6 derniers mois)
-        $chartData = [
-            'labels' => ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
-            'revenus' => [38000, 39500, 41000, 40500, 43000, $mrr],
-            'depenses' => [25000, 26000, 25500, 27000, 28000, 28500]
-        ];
+        $congesEnAttente = \DB::table('rh_leave_requests')->where('statut', 'pending')->count();
+        $tachesEnAttente = \DB::table('gel_tasks')->where('statut', 'en_attente_validation')->count();
+        $totalValidations = $congesEnAttente + $tachesEnAttente;
 
         return view('gel-direction.dashboard', compact(
-            'totalClients', 
-            'totalUsers', 
-            'validationsCount', 
-            'completedTasksCount',
-            'mrr',
-            'croissance',
-            'nouveauxClientsMois',
-            'chartData'
+            'entreprise',
+            'totalClients',
+            'chiffreAffaires',
+            'facturesEnAttente',
+            'recentClients',
+            'recentFactures',
+            'totalTeam',
+            'masseSalariale',
+            'totalValidations'
         ));
     }
 }

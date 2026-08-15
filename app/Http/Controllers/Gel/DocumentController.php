@@ -8,6 +8,7 @@ use App\Models\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 /**
  * Contrôleur de gestion des documents clients.
@@ -24,8 +25,7 @@ class DocumentController extends Controller
      */
     public function index($clientId)
     {
-        return view('app', [
-            'page' => 'gel-documents',
+        return Inertia::render('Gel/Documents/Index', [
             'clientId' => $clientId,
         ]);
     }
@@ -45,6 +45,9 @@ class DocumentController extends Controller
             'folder_id' => 'nullable|exists:client_folders,id',
             'file' => 'required|file|max:51200', // 50 Mo max
             'description' => 'nullable|string|max:1000',
+            'category' => 'nullable|string|max:255',
+            'document_date' => 'nullable|date',
+            'tags' => 'nullable|array',
         ]);
 
         $file = $request->file('file');
@@ -60,16 +63,34 @@ class DocumentController extends Controller
             'client_id' => $validated['client_id'],
             'folder_id' => $validated['folder_id'] ?? null,
             'name' => pathinfo($originalName, PATHINFO_FILENAME),
+            'original_name' => $originalName,
             'file_path' => $path,
             'file_type' => $extension,
             'file_size' => $fileSize,
             'mime_type' => $mimeType,
             'description' => $validated['description'] ?? null,
+            'category' => $validated['category'] ?? null,
+            'document_date' => $validated['document_date'] ?? null,
+            'tags' => $validated['tags'] ?? [],
             'version' => 1,
             'uploaded_by' => Auth::id(),
         ]);
 
         return response()->json($document, 201);
+    }
+
+    /**
+     * Analyse un document via l'IA pour suggérer des métadonnées.
+     */
+    public function analyze(Request $request, \App\Services\DocumentAiService $aiService)
+    {
+        $request->validate([
+            'file' => 'required|file|max:51200',
+        ]);
+
+        $metadata = $aiService->analyzeDocument($request->file('file'));
+
+        return response()->json($metadata);
     }
 
     /**

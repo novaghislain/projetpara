@@ -48,7 +48,7 @@ class ItAssetController extends Controller
     public function create(): View
     {
         $clients = Client::where('status', 'actif')->orderBy('company_name')->get(['id', 'company_name']);
-        $technicians = User::where('role', 'super_admin')->orWhere('is_admin', true)->get(['id', 'name']);
+        $technicians = User::where('role', 'super_admin')->get(['id', 'name']);
         return view('app', ['page' => 'gel-it-assets-form', 'props' => compact('clients', 'technicians')]);
     }
 

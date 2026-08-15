@@ -17,10 +17,12 @@ use Illuminate\Validation\ValidationException;
 class InvoiceService
 {
     private JournalEntryService $entryService;
+    private \App\Services\TaxEngineService $taxEngineService;
 
-    public function __construct(JournalEntryService $entryService)
+    public function __construct(JournalEntryService $entryService, \App\Services\TaxEngineService $taxEngineService)
     {
         $this->entryService = $entryService;
+        $this->taxEngineService = $taxEngineService;
     }
 
     protected function getClientId(): int
@@ -125,6 +127,20 @@ class InvoiceService
             $discount += $globalDiscount;
             $total -= $globalDiscount;
 
+            // --- MOTEUR FISCAL AIB ---
+            // On vérifie si l'entreprise a un IFU valide
+            $hasIfu = !empty($partner->tax_id);
+            // Par défaut, on applique l'AIB pour les factures fournisseurs (retenue à la source)
+            $applyAib = ($data['type'] === 'supplier_invoice');
+            
+            $aibAmount = 0;
+            if ($applyAib) {
+                $taxBase = $subtotal - $discount;
+                $aibAmount = $this->taxEngineService->calculateAIB($taxBase, $hasIfu);
+                // Le total à payer diminue car on retient l'AIB à la source
+                $total -= $aibAmount;
+            }
+
             // Créer la facture
             $invoice = Invoice::create([
                 'client_id' => $clientId,
@@ -146,6 +162,7 @@ class InvoiceService
                 'discount_percent' => $globalDiscountPercent,
                 'tax_base' => $subtotal - $discount,
                 'vat_total' => $vatTotal,
+                'aib_amount' => $aibAmount,
                 'total' => $total,
                 'paid_amount' => 0,
                 'balance_due' => $total,

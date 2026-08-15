@@ -19,8 +19,7 @@ class FiscalYearController extends Controller
      */
     public function index(Request $request)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $years = FiscalYear::where('client_id', $clientId)
             ->with('closedBy')
@@ -38,10 +37,10 @@ class FiscalYearController extends Controller
      */
     public function close(Request $request, $id)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $fy = FiscalYear::where('client_id', $clientId)->where('status', 'open')->findOrFail($id);
+        $user = Auth::user();
 
         $request->validate([
             'confirm_close' => 'required|accepted'
@@ -129,5 +128,58 @@ class FiscalYearController extends Controller
         });
 
         return redirect()->route('gel-accountant.fiscalite.exercices.index')->with('success', 'L\'exercice a été clôturé avec succès et les écritures d\'À Nouveaux ont été générées pour l\'année suivante.');
+    }
+
+    /**
+     * Déverrouillage d'une période clôturée (réouverture).
+     *
+     * Seul un super admin peut déverrouiller, avec un motif obligatoire.
+     * L'opération est tracée dans l'audit (auditable = exercice).
+     */
+    public function unlock(Request $request, $id)
+    {
+        $user = Auth::user();
+
+        // ─── Garde-fou : super admin uniquement ────────────────────────
+        if (!$user->isSuperAdmin()) {
+            abort(403, 'Seul un super administrateur peut déverrouiller une période clôturée.');
+        }
+
+        // Le super admin n'a pas de contexte client : il cible l'exercice
+        // directement (accès d'audit de niveau supérieur). Les autres rôles
+        // sont de toute façon bloqués ci-dessus.
+        $fy = FiscalYear::where('status', 'closed')->findOrFail($id);
+
+        // ─── Motif obligatoire ──────────────────────────────────────────
+        $validated = $request->validate([
+            'unlock_reason' => 'required|string|min:5|max:500',
+        ], [
+            'unlock_reason.required' => 'Le motif du déverrouillage est obligatoire.',
+            'unlock_reason.min'       => 'Le motif doit contenir au moins 5 caractères.',
+        ]);
+
+        DB::transaction(function () use ($fy, $user, $validated) {
+            $oldStatus = $fy->status;
+
+            $fy->update([
+                'status'        => 'open',
+                'unlocked_by'   => $user->id,
+                'unlock_reason' => $validated['unlock_reason'],
+                'unlocked_at'   => now(),
+            ]);
+
+            AuditTrailService::log(
+                $fy,
+                'unlock',
+                ['status' => $oldStatus],
+                $fy->toArray(),
+                'Déverrouillage de la période par le super administrateur : ' . $validated['unlock_reason'],
+                $fy->client_id,
+                $user->id
+            );
+        });
+
+        return redirect()->route('gel-accountant.fiscalite.exercices.index')
+            ->with('success', 'L\'exercice a été déverrouillé par le super administrateur. Un motif a été enregistré dans l\'audit.');
     }
 }

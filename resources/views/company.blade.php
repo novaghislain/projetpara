@@ -167,7 +167,6 @@
             'must_change_password' => Auth::user()->must_change_password ?? false,
             'email_verified_at' => Auth::user()->email_verified_at,
             'role_secretaire' => Auth::user()->role_secretaire ?? false,
-            'is_admin' => Auth::user()->is_admin ?? false,
             'is_active' => Auth::user()->is_active ?? true,
         ] : null;
     @endphp

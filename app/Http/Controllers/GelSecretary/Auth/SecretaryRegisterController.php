@@ -39,7 +39,7 @@ class SecretaryRegisterController extends Controller
     {
         $validated = $request->validate([
             'name'                  => 'required|string|max:255',
-            'email'                 => 'required|string|email|max:255|unique:users,email',
+            'email'                 => 'required|string|email|max:255|unique:utilisateurs,email',
             'password'              => 'required|string|min:8|confirmed',
             'personal_company_name' => 'nullable|string|max:255',
             'personal_industry'     => 'nullable|string|max:255',
@@ -48,28 +48,47 @@ class SecretaryRegisterController extends Controller
         ]);
 
         return DB::transaction(function () use ($validated) {
-            // Création de l'utilisateur avec 30 jours d'essai
-            $user = User::create([
-                'name'                  => $validated['name'],
-                'email'                 => $validated['email'],
-                'password'              => Hash::make($validated['password']),
-                'account_type'          => 'secretary',
-                'role'                  => 'secretaire',
-                'workspace_type'        => 'individuel',
-                'trial_ends_at'         => Carbon::now()->addDays(30),
-                'subscription_status'   => 'trial',
-                'personal_company_name' => $validated['personal_company_name'],
-                'personal_industry'     => $validated['personal_industry'],
-                'onboarding_completed'  => true,
-                'is_active'             => true,
-                'role_secretaire'       => true,
+            // Création de l'entreprise "Cabinet" du secrétaire
+            $nomCabinet = $validated['personal_company_name'] ?? 'Secrétariat Indépendant — ' . $validated['name'];
+            $entreprise = \App\Models\Entreprise::create([
+                'raison_sociale' => $nomCabinet,
+                'pays_code'      => 'BJ', // Par défaut
+                'secteur_activite' => 'Services Administratifs',
+                'regime_fiscal'  => 'TPS', // Par défaut
+                'modele_usage'   => 'full',
             ]);
+
+            // Création de l'utilisateur
+            $user = User::create([
+                'nom'                   => $validated['name'],
+                'email'                 => $validated['email'],
+                'mot_de_passe_hash'     => Hash::make($validated['password']),
+                'role'                  => 'secretaire',
+                'is_autonomous'         => true,
+            ]);
+
+            // Récupérer le rôle secretary
+            $role = \App\Models\Role::where('code', 'secretary')->first();
+
+            // Créer l'affectation RBAC
+            if ($role) {
+                \App\Models\Affectation::create([
+                    'utilisateur_id' => $user->id,
+                    'entreprise_id'  => $entreprise->id,
+                    'role_id'        => $role->id,
+                    'modele'         => 'full', // par défaut
+                    'statut'         => 'active',
+                ]);
+            }
 
             // Insertion d'un exemple selon l'intention
             $this->seedIntentExample($user, $validated['primary_intent']);
 
             event(new Registered($user));
             Auth::login($user);
+
+            // Définir l'entreprise active en session
+            session(['active_entreprise_id' => $entreprise->id]);
 
             return redirect()->route('gel-secretary.dashboard')
                 ->with('success', 'Bienvenue dans votre espace personnel ! Votre essai de 30 jours commence aujourd\'hui.');

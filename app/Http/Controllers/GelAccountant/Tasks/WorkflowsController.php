@@ -167,6 +167,15 @@ class WorkflowsController extends Controller
             // Toutes les étapes sont terminées
             $approvalRequest->status = 'approved';
             $approvalRequest->completed_at = now();
+
+            // Si c'est une suggestion IA, on l'exécute automatiquement
+            if ($approvalRequest->model_type === \App\Models\AiSuggestion::class) {
+                $suggestion = \App\Models\AiSuggestion::find($approvalRequest->model_id);
+                if ($suggestion) {
+                    $aiService = app(\App\Services\IA\AccountingAiService::class);
+                    $aiService->executeApprovedAction($suggestion, $user->id);
+                }
+            }
         } else {
             // Passe à l'étape suivante
             $approvalRequest->current_step++;
@@ -202,6 +211,16 @@ class WorkflowsController extends Controller
         $approvalRequest->status = 'rejected';
         $approvalRequest->completed_at = now();
         $approvalRequest->save();
+
+        if ($approvalRequest->model_type === \App\Models\AiSuggestion::class) {
+            $suggestion = \App\Models\AiSuggestion::find($approvalRequest->model_id);
+            if ($suggestion) {
+                $suggestion->update([
+                    'status' => 'rejected',
+                    'rejection_reason' => $request->input('comment')
+                ]);
+            }
+        }
 
         return redirect()->route('gel-accountant.workflows.pending')
             ->with('error', 'Demande rejetée.');

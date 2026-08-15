@@ -12,39 +12,7 @@
  * Règle non-négociable : l'IA propose, n'applique jamais un classement seule.
  * Le formulaire de validation reste 100% humain.
  */
-import jscanify from 'jscanify/client';
-import { jsPDF } from 'jspdf';
-
-// OpenCV.js alimente jscanify (détection des bords). On le charge une seule
-// fois, de façon asynchrone ; tant qu'il n'est pas prêt, on capture la frame
-// brute (repli rectangulaire) — JAMAIS de résultat fictif.
-let openCvReady = new Promise((resolve) => {
-    if (typeof cv !== 'undefined' && cv.Mat) {
-        resolve();
-        return;
-    }
-    const s = document.createElement('script');
-    s.src = 'https://docs.opencv.org/4.7.0/opencv.js';
-    s.async = true;
-    s.onload = () => {
-        if (cv && cv.Mat) {
-            resolve();
-        } else if (cv && cv['onRuntimeInitialized']) {
-            cv['onRuntimeInitialized'] = () => resolve();
-        } else {
-            resolve(); // pas de cv exploitable → repli frame brute
-        }
-    };
-    s.onerror = () => resolve(); // repli frame brute
-    document.head.appendChild(s);
-});
-
-async function waitOpenCv(timeoutMs = 15000) {
-    return Promise.race([
-        openCvReady,
-        new Promise((r) => setTimeout(r, timeoutMs)),
-    ]);
-}
+// OpenCV and jscanify removed as we use direct printer scanning via WIA
 
 const CSS = `
 #secScannerModal{display:none;position:fixed;inset:0;z-index:100000;background:rgba(15,23,42,.6);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:16px}
@@ -114,17 +82,14 @@ function ensureDom() {
             <div class="scan-grid">
               <div>
                 <div class="scan-stage" id="scanStage">
-                  <video id="scanVideo" autoplay playsinline muted></video>
                   <div class="scan-placeholder" id="scanPlaceholder">
-                    <i class="fas fa-video"></i>
-                    Camera disponible — cliquez sur « Démarrer ».<br>
-                    Dans un mois clôturé, le scan est désactivé.
+                    <i class="fas fa-print"></i>
+                    Imprimante locale prête — cliquez sur « Lancer la numérisation ».<br>
+                    Assurez-vous que le document est placé dans le chargeur ou sur la vitre.
                   </div>
                 </div>
                 <div class="scan-toolbar">
-                  <button type="button" class="scan-btn primary" id="btnStart"><i class="fas fa-play"></i> Démarrer</button>
-                  <button type="button" class="scan-btn primary" id="btnCapture" style="display:none"><i class="fas fa-camera"></i> Capturer</button>
-                  <button type="button" class="scan-btn light" id="btnRedo" style="display:none"><i class="fas fa-sync"></i> Recadrer</button>
+                  <button type="button" class="scan-btn primary" id="btnStart"><i class="fas fa-play"></i> Lancer la numérisation</button>
                   <button type="button" class="scan-btn light" id="btnContrast" style="display:none"><i class="fas fa-adjust"></i> Contraste</button>
                   <button type="button" class="scan-btn light" id="btnBW" style="display:none"><i class="fas fa-circle"></i> N&amp;B</button>
                 </div>
@@ -207,8 +172,6 @@ function bind() {
     document.getElementById('scanDocDate').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
 
     document.getElementById('btnStart').addEventListener('click', startCamera);
-    document.getElementById('btnCapture').addEventListener('click', capture);
-    document.getElementById('btnRedo').addEventListener('click', redoCapture);
     document.getElementById('btnContrast').addEventListener('click', enhance);
     document.getElementById('btnBW').addEventListener('click', toBW);
     document.getElementById('btnSave').addEventListener('click', () => save());
@@ -260,58 +223,50 @@ function selectFolder(id, path) {
     refreshSave();
 }
 
-/* ── Caméra ── */
+/* ── Imprimante Locale ── */
 async function startCamera() {
-    const stage = document.getElementById('scanStage');
-    const vid = document.getElementById('scanVideo');
+    const btnStart = document.getElementById('btnStart');
     const placeholder = document.getElementById('scanPlaceholder');
+    
+    btnStart.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Numérisation en cours...';
+    btnStart.disabled = true;
+
     try {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            throw new Error('getUserMedia non supporté — utilisez un navigateur récent (HTTPS requis hors localhost).');
-        }
-        state.stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
-            audio: false,
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content 
+            ?? document.querySelector('input[name="_token"]')?.value ?? '';
+            
+        const res = await fetch('/gel-secretary/scanner/scan', {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
         });
-        vid.srcObject = state.stream;
-        await vid.play();
-        vid.style.display = 'block';
-        placeholder.style.display = 'none';
-        document.getElementById('btnStart').style.display = 'none';
-        document.getElementById('btnCapture').style.display = 'inline-flex';
-        document.getElementById('redoTip')?.remove();
-    } catch (e) {
-        showError('Impossible de démarrer la caméra : ' + e.message);
-    }
-}
 
-/* ── Capture + détection des bords (jscanify) — filet de sécurité :
-      si OpenCV n'est pas prêt ou si aucun contour n'est détecté, on garde la
-      frame brute (recadrage rectangulaire). JAMAIS de résultat fictif. ── */
-async function capture() {
-    const vid = document.getElementById('scanVideo');
-    if (!vid || !vid.videoWidth) return;
-
-    const frame = document.createElement('canvas');
-    frame.width = vid.videoWidth;
-    frame.height = vid.videoHeight;
-    frame.getContext('2d').drawImage(vid, 0, 0);
-
-    let out = null;
-    try {
-        await waitOpenCv(15000);
-        if (typeof cv !== 'undefined' && cv.Mat) {
-            const scanner = new jscanify();
-            out = scanner.extractPaper(frame, 800, 1100);
+        const data = await res.json();
+        
+        if (data.success) {
+            // Load the image into a canvas
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                canvas.getContext('2d').drawImage(img, 0, 0);
+                
+                state.currentCanvas = canvas;
+                addPage(); // Automatically add the scanned page
+                
+                btnStart.innerHTML = '<i class="fas fa-plus"></i> Ajouter une page';
+                btnStart.disabled = false;
+                if(placeholder) placeholder.style.display = 'none';
+            };
+            img.src = data.url;
+        } else {
+            throw new Error(data.message || 'Erreur de numérisation');
         }
     } catch (e) {
-        out = null;
+        showError('Impossible de démarrer la numérisation : ' + e.message);
+        btnStart.innerHTML = '<i class="fas fa-play"></i> Lancer la numérisation';
+        btnStart.disabled = false;
     }
-    state.currentCanvas = (out && out.width > 0) ? out : frame;
-    renderCurrent();
-    document.getElementById('btnRedo').style.display = 'inline-flex';
-    document.getElementById('btnContrast').style.display = 'inline-flex';
-    document.getElementById('btnBW').style.display = 'inline-flex';
 }
 
 function renderCurrent() {
@@ -321,8 +276,6 @@ function renderCurrent() {
     state.currentCanvas.id = 'scanCanvas';
     stage.appendChild(state.currentCanvas);
 }
-
-function redoCapture() { capture(); }
 
 /* ── Améliorations (canvas pur — aucune donnée inventée) ── */
 function enhance() {
@@ -363,12 +316,9 @@ function addPage() {
     refreshSave();
     state.currentCanvas = null;
     document.getElementById('scanStage').innerHTML =
-        '<div class="scan-placeholder" id="scanPlaceholder2"><i class="fas fa-check-circle" style="color:#0d9488"></i>Page ajoutée. Recadrez et « Capturer » pour la page suivante, ou enregistrez.</div>';
-    document.getElementById('btnRedo').style.display = 'none';
+        '<div class="scan-placeholder" id="scanPlaceholder2"><i class="fas fa-check-circle" style="color:#0d9488"></i>Page ajoutée. Cliquez sur « Ajouter une page » pour scanner la suivante.</div>';
     document.getElementById('btnContrast').style.display = 'none';
     document.getElementById('btnBW').style.display = 'none';
-    const vid = document.getElementById('scanVideo');
-    if (vid) vid.style.display = 'block';
 }
 
 function renderPages() {
@@ -392,10 +342,6 @@ function renderPages() {
         thumb.appendChild(num);
         container.appendChild(thumb);
     });
-    // Le bouton capture devient "Ajouter cette page"
-    const btnCapture = document.getElementById('btnCapture');
-    btnCapture.innerHTML = '<i class="fas fa-plus"></i> Ajouter & continuer';
-    btnCapture.onclick = addPage;
 }
 
 /* ── Sauvegarde : PDF (jspdf) + scan_image + métadonnées → POST /scan ── */
@@ -493,16 +439,11 @@ const SecScanner = {
         document.getElementById('scanError').style.display = 'none';
         document.getElementById('scanSuccess').style.display = 'none';
         document.getElementById('scanPages').innerHTML = '';
-        const btnCapture = document.getElementById('btnCapture');
-        if (btnCapture) {
-            btnCapture.style.display = 'none';
-            btnCapture.innerHTML = '<i class="fas fa-camera"></i> Capturer';
-            btnCapture.onclick = capture;
-        }
         const btnStart = document.getElementById('btnStart');
-        if (btnStart) btnStart.style.display = 'inline-flex';
-        const vid = document.getElementById('scanVideo');
-        if (vid) { vid.style.display = 'none'; }
+        if (btnStart) {
+            btnStart.style.display = 'inline-flex';
+            btnStart.innerHTML = '<i class="fas fa-play"></i> Lancer la numérisation';
+        }
         document.getElementById('scanPlaceholder').style.display = 'block';
         document.getElementById('scanModalClose')?.remove();
         document.getElementById('secScannerModal').classList.add('open');

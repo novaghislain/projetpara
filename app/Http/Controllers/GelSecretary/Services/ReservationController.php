@@ -11,7 +11,7 @@ class ReservationController extends Controller
 {
     public function index(Request $request)
     {
-        $activeClientId = session('active_client_id');
+        $activeClientId = $request->query('client_id') ?? session('active_client_id') ?? Auth::user()->active_client_id ?? Auth::user()->client_id;
         $activeClient = $activeClientId ? \App\Models\Gel\Client::find($activeClientId) : null;
 
         if (!$activeClient) {
@@ -36,7 +36,7 @@ class ReservationController extends Controller
 
     public function store(Request $request)
     {
-        $activeClientId = session('active_client_id');
+        $activeClientId = $request->input('client_id') ?? session('active_client_id') ?? Auth::user()->active_client_id ?? Auth::user()->client_id;
         if (!$activeClientId) {
             return back()->with('error', 'Veuillez sélectionner un client.');
         }

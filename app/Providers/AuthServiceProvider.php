@@ -57,13 +57,23 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('paie-view', fn($user) => $user->hasPermissionTo('paie.consulter'));
         Gate::define('paie-payroll', fn($user) => $user->hasPermissionTo('paie.bulletin'));
         Gate::define('paie-cnss', fn($user) => $user->hasPermissionTo('paie.decla_cnss'));
-        Gate::define('paie-irpp', fn($user) => $user->hasPermissionTo('paie.decla_irpp'));
+        Gate::define('paie-its', fn($user) => $user->hasPermissionTo('paie.decla_its'));
 
         // Fiscalité
         Gate::define('fiscal-view', fn($user) => $user->hasPermissionTo('fiscalite.consulter'));
         Gate::define('fiscal-declare', fn($user) => $user->hasPermissionTo('fiscalite.declarer'));
         Gate::define('fiscal-tva', fn($user) => $user->hasPermissionTo('fiscalite.tva'));
         Gate::define('fiscal-emecef', fn($user) => $user->hasPermissionTo('fiscalite.e_mecef'));
+
+        // Fiscalité — actions fines exigées CDC FD2 §22.1 (Action 3) / §6.3
+        // Moteur fiscal (RegleFiscale) : création par Fiscaliste (en_attente_validation),
+        // validation finale réservée au Super Administrateur (double contrôle §7.5).
+        Gate::define('fiscal-regle-create',   fn($user) => $user->hasPermissionTo('fiscalite.parametrer_regle'));
+        Gate::define('fiscal-regle-validate', fn($user) => $user->hasPermissionTo('fiscalite.valider_regle'));
+        // Cycle de vie des déclarations : préparation → validation → téléversement.
+        Gate::define('fiscal-declaration-prepare',  fn($user) => $user->hasPermissionTo('fiscalite.preparer_declaration'));
+        Gate::define('fiscal-declaration-validate', fn($user) => $user->hasPermissionTo('fiscalite.valider_declaration'));
+        Gate::define('fiscal-declaration-upload',   fn($user) => $user->hasPermissionTo('fiscalite.televerser_declaration'));
 
         // CRM
         Gate::define('crm-view', fn($user) => $user->hasPermissionTo('crm.consulter'));

@@ -6,7 +6,7 @@
 <div class="gel-page-header">
     <div>
         <h1 class="gel-page-title"><i class="fas fa-clipboard-check" style="color:var(--gel-primary); margin-right:8px;"></i> Dossiers de Travail</h1>
-        <p class="gel-page-subtitle">Révisez chaque compte avant la clôture — Période : <strong>{{ $period }}</strong></p>
+        <p class="gel-page-subtitle">Révisez chaque compte avant la clôture — Période : <strong>{{ $period }}</strong> (comparaison N vs N-1)</p>
     </div>
     <div style="display:flex; gap:10px; align-items:center;">
         <form method="GET" style="display:flex; gap:8px;">
@@ -41,6 +41,9 @@
             <tr>
                 <th style="padding:10px 14px; text-align:left;">Code</th>
                 <th style="padding:10px 14px; text-align:left;">Intitulé du Compte</th>
+                <th style="padding:10px 14px; text-align:right;">Solde N ({{ $period }})</th>
+                <th style="padding:10px 14px; text-align:right;">Solde N-1 ({{ $prevPeriod }})</th>
+                <th style="padding:10px 14px; text-align:right;">Variation</th>
                 <th style="padding:10px 14px; text-align:center;">Statut</th>
                 <th style="padding:10px 14px; text-align:center;">Actions</th>
             </tr>
@@ -50,6 +53,16 @@
             <tr style="border-bottom:1px solid var(--gel-border);" id="row-{{ $account->id }}">
                 <td style="padding:10px 14px; font-weight:600; font-family:monospace;">{{ $account->code }}</td>
                 <td style="padding:10px 14px;">{{ $account->name }}</td>
+                <td style="padding:10px 14px; text-align:right; font-family:monospace; {{ $account->balance_n < 0 ? 'color:#dc3545;' : '' }}">
+                    {{ number_format($account->balance_n, 0, ',', ' ') }}
+                </td>
+                <td style="padding:10px 14px; text-align:right; font-family:monospace; {{ $account->balance_n1 < 0 ? 'color:#dc3545;' : '' }}">
+                    {{ number_format($account->balance_n1, 0, ',', ' ') }}
+                </td>
+                <td style="padding:10px 14px; text-align:right; font-family:monospace; {{ abs($account->variation) >= 1000000 ? 'color:#f59e0b; font-weight:700;' : '' }}">
+                    @php $sign = $account->variation > 0 ? '+' : ''; @endphp
+                    {{ $sign }}{{ number_format($account->variation, 0, ',', ' ') }}
+                </td>
                 <td style="padding:10px 14px; text-align:center;">
                     @php
                         $status = $account->wp_status;
@@ -74,7 +87,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="4" style="padding:40px; text-align:center; color:var(--gel-text-muted);">
+                <td colspan="7" style="padding:40px; text-align:center; color:var(--gel-text-muted);">
                     <i class="fas fa-inbox" style="font-size:2rem; margin-bottom:10px; display:block;"></i>
                     Aucun compte trouvé. Importez d'abord un plan comptable SYSCOHADA.
                 </td>

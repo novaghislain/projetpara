@@ -5,123 +5,98 @@ namespace App\Services;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Service d'envoi de messages WhatsApp Business.
- */
 class WhatsAppService
 {
-    private string $provider;
+    protected string $baseUrl;
+    protected string $apiKey;
+    protected string $sender;
+    protected string $namespace;
 
     public function __construct()
     {
-        $this->provider = config('services.whatsapp.provider', 'infobip');
+        $this->baseUrl = config('services.infobip.base_url', env('INFOBIP_BASE_URL', 'https://api.infobip.com'));
+        $this->apiKey = config('services.infobip.api_key', env('WHATSAPP_INFOBIP_KEY', env('INFOBIP_API_KEY')));
+        $this->sender = config('services.infobip.whatsapp_sender', env('WHATSAPP_SENDER', 'GEL Cabinet'));
+        $this->namespace = config('services.infobip.whatsapp_namespace', env('WHATSAPP_NAMESPACE', ''));
     }
 
     /**
-     * Envoyer un message texte WhatsApp.
+     * Envoyer un message texte simple via WhatsApp
      */
-    public function sendText(string $to, string $message): array
+    public function sendTextMessage(string $to, string $message): bool
     {
-        return match ($this->provider) {
-            'infobip' => $this->sendViaInfobip($to, $message),
-            'twilio'  => $this->sendViaTwilio($to, $message),
-            default   => ['success' => false, 'error' => "Provider {$this->provider} non supporté."],
-        };
+        if (empty($this->apiKey) || empty($to)) {
+            Log::warning('WhatsAppService: API Key ou destinataire manquant.');
+            return false;
+        }
+
+        // Formater le numéro au format international (sans le +)
+        $to = ltrim($to, '+');
+
+        $payload = [
+            'from' => $this->sender,
+            'to' => $to,
+            'messageId' => uniqid('WA_'),
+            'content' => [
+                'text' => $message
+            ]
+        ];
+
+        $response = Http::withHeaders([
+            'Authorization' => 'App ' . $this->apiKey,
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+        ])->post("{$this->baseUrl}/whatsapp/1/message/text", $payload);
+
+        if ($response->successful()) {
+            Log::info("WhatsApp envoyé à {$to}");
+            return true;
+        }
+
+        Log::error('WhatsApp Text Error', [
+            'status' => $response->status(),
+            'body' => $response->body()
+        ]);
+
+        return false;
     }
 
     /**
-     * Envoyer un message template WhatsApp.
+     * Envoyer un document (PDF) via WhatsApp
      */
-    public function sendTemplate(string $to, string $templateName, array $parameters = []): array
+    public function sendDocument(string $to, string $documentUrl, string $caption = ''): bool
     {
-        try {
-            $response = Http::withHeaders([
-                'Authorization' => 'App ' . config('services.whatsapp.infobip.api_key'),
-                'Content-Type'  => 'application/json',
-            ])->post(config('services.whatsapp.infobip.base_url') . '/whatsapp/1/message/template', [
-                'from' => config('services.whatsapp.infobip.sender'),
-                'to'   => $to,
-                'content' => [
-                    'templateName' => $templateName,
-                    'templateData' => ['body' => ['placeholders' => $parameters]],
-                ],
-            ]);
-
-            return $response->successful()
-                ? ['success' => true, 'message_id' => $response->json('messageId')]
-                : ['success' => false, 'error' => $response->body()];
-        } catch (\Exception $e) {
-            Log::error('WhatsApp template error', ['to' => $to, 'error' => $e->getMessage()]);
-            return ['success' => false, 'error' => $e->getMessage()];
+        if (empty($this->apiKey) || empty($to)) {
+            return false;
         }
-    }
 
-    /**
-     * Envoyer un document PDF via WhatsApp.
-     */
-    public function sendDocument(string $to, string $mediaUrl, string $filename, ?string $caption = null): array
-    {
-        try {
-            $response = Http::withHeaders([
-                'Authorization' => 'App ' . config('services.whatsapp.infobip.api_key'),
-                'Content-Type'  => 'application/json',
-            ])->post(config('services.whatsapp.infobip.base_url') . '/whatsapp/1/message/document', [
-                'from' => config('services.whatsapp.infobip.sender'),
-                'to'   => $to,
-                'content' => [
-                    'mediaUrl' => $mediaUrl,
-                    'filename' => $filename,
-                    'caption'  => $caption,
-                ],
-            ]);
+        $to = ltrim($to, '+');
 
-            return $response->successful()
-                ? ['success' => true, 'message_id' => $response->json('messageId')]
-                : ['success' => false, 'error' => $response->body()];
-        } catch (\Exception $e) {
-            Log::error('WhatsApp document error', ['error' => $e->getMessage()]);
-            return ['success' => false, 'error' => $e->getMessage()];
+        $payload = [
+            'from' => $this->sender,
+            'to' => $to,
+            'messageId' => uniqid('WA_DOC_'),
+            'content' => [
+                'mediaUrl' => $documentUrl,
+                'caption' => $caption
+            ]
+        ];
+
+        $response = Http::withHeaders([
+            'Authorization' => 'App ' . $this->apiKey,
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+        ])->post("{$this->baseUrl}/whatsapp/1/message/document", $payload);
+
+        if ($response->successful()) {
+            return true;
         }
-    }
 
-    private function sendViaInfobip(string $to, string $message): array
-    {
-        try {
-            $response = Http::withHeaders([
-                'Authorization' => 'App ' . config('services.whatsapp.infobip.api_key'),
-                'Content-Type'  => 'application/json',
-            ])->post(config('services.whatsapp.infobip.base_url') . '/whatsapp/1/message/text', [
-                'from' => config('services.whatsapp.infobip.sender'),
-                'to'   => $to,
-                'content' => ['text' => $message],
-            ]);
+        Log::error('WhatsApp Document Error', [
+            'status' => $response->status(),
+            'body' => $response->body()
+        ]);
 
-            return $response->successful()
-                ? ['success' => true, 'message_id' => $response->json('messageId')]
-                : ['success' => false, 'error' => $response->body()];
-        } catch (\Exception $e) {
-            Log::error('WhatsApp Infobip error', ['error' => $e->getMessage()]);
-            return ['success' => false, 'error' => $e->getMessage()];
-        }
-    }
-
-    private function sendViaTwilio(string $to, string $message): array
-    {
-        try {
-            $response = Http::withBasicAuth(
-                config('services.whatsapp.twilio.account_sid'),
-                config('services.whatsapp.twilio.auth_token')
-            )->asForm()->post("https://api.twilio.com/2010-04-01/Accounts/" . config('services.whatsapp.twilio.account_sid') . "/Messages.json", [
-                'From' => config('services.whatsapp.twilio.from'),
-                'To'   => "whatsapp:$to",
-                'Body' => $message,
-            ]);
-
-            return $response->successful()
-                ? ['success' => true, 'message_id' => $response->json('sid')]
-                : ['success' => false, 'error' => $response->json('message')];
-        } catch (\Exception $e) {
-            return ['success' => false, 'error' => $e->getMessage()];
-        }
+        return false;
     }
 }

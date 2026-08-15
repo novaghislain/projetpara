@@ -33,6 +33,10 @@ class CompanyCrmContact extends Model
         'notes',
         'tags',
         'created_by',
+        'ifu',
+        'rccm',
+        'address',
+        'compte_comptable_id',
     ];
 
     protected function casts(): array
@@ -75,5 +79,13 @@ class CompanyCrmContact extends Model
     public function scopeByClient($query, $clientId)
     {
         return $query->where('client_id', $clientId);
+    }
+
+    /**
+     * Compte comptable associé à ce contact client.
+     */
+    public function compteComptable(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Gel\CompteComptable::class, 'compte_comptable_id');
     }
 }

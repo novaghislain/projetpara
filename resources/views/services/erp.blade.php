@@ -245,7 +245,7 @@
                     <div class="gel-feature-card">
                         <div class="gel-feature-icon"><i class="bi-people"></i></div>
                         <h5>RH & Paie intégrée</h5>
-                        <p>Gestion des employés, contrats, planning, paie avec déclarations sociales (CNSS, IRPP) et portail RH.</p>
+                        <p>Gestion des employés, contrats, planning, paie avec déclarations sociales (CNSS, ITS) et portail RH.</p>
                     </div>
                 </div>
                 <div class="col-md-4 anim-fade-up delay-1">

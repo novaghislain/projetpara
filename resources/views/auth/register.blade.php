@@ -392,9 +392,17 @@
                 @csrf
 
                 <div class="gel-field">
-                    <label class="gel-field-label" for="name">Nom complet</label>
+                    <label class="gel-field-label" for="raison_sociale">Nom de l'entreprise (ou Cabinet indépendant)</label>
                     <div class="gel-field-wrap">
-                        <input type="text" id="name" name="name" class="gel-input" value="{{ old('name') }}" required autofocus placeholder="Votre nom">
+                        <input type="text" id="raison_sociale" name="raison_sociale" class="gel-input" value="{{ old('raison_sociale') }}" required autofocus placeholder="Nom de votre structure">
+                        <i class="bi-building gel-field-icon"></i>
+                    </div>
+                </div>
+
+                <div class="gel-field">
+                    <label class="gel-field-label" for="name">Nom complet (Votre nom)</label>
+                    <div class="gel-field-wrap">
+                        <input type="text" id="name" name="name" class="gel-input" value="{{ old('name') }}" required placeholder="Votre nom">
                         <i class="bi-person gel-field-icon"></i>
                     </div>
                 </div>

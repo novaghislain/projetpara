@@ -45,7 +45,7 @@ class CatalogueModulesSeeder extends Seeder
             ['category_id' => $catCompta->id, 'nom' => 'Transactions Récurrentes', 'description' => 'Automatisation des abonnements et factures périodiques.', 'icone' => 'bi-arrow-repeat', 'ordre_affichage' => 6],
             
             // Social, Paie & Juridique
-            ['category_id' => $catRH->id, 'nom' => 'RH & Paie', 'description' => 'Édition des fiches de paie conformes aux barèmes IRPP/CNSS du Bénin.', 'icone' => 'bi-person-badge', 'ordre_affichage' => 1],
+            ['category_id' => $catRH->id, 'nom' => 'RH & Paie', 'description' => 'Édition des fiches de paie conformes aux barèmes ITS/CNSS du Bénin.', 'icone' => 'bi-person-badge', 'ordre_affichage' => 1],
             ['category_id' => $catRH->id, 'nom' => 'Juridique', 'description' => 'Gestion des actes, AG, litiges et conformité réglementaire.', 'icone' => 'bi-bank2', 'ordre_affichage' => 2],
             ['category_id' => $catRH->id, 'nom' => 'Secrétariat DAE', 'description' => 'Direction Administrative et Executive, gestion des courriers.', 'icone' => 'bi-envelope-paper', 'ordre_affichage' => 3],
             ['category_id' => $catRH->id, 'nom' => 'Signature électronique', 'description' => 'Validation légale de documents à distance.', 'icone' => 'bi-pen', 'ordre_affichage' => 4],

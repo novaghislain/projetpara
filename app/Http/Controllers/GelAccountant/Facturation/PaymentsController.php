@@ -20,8 +20,7 @@ class PaymentsController extends Controller
      */
     public function index(Request $request)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $payments = Payment::where('client_id', $clientId)
             ->where('type', 'incoming')
@@ -38,8 +37,7 @@ class PaymentsController extends Controller
      */
     public function create(Request $request)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         // Si on vient d'une facture spécifique
         $selectedInvoiceId = $request->query('invoice_id');
@@ -93,8 +91,7 @@ class PaymentsController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
         $partner = Partner::findOrFail($validated['partner_id']);
 
         // Vérifier que le total appliqué correspond au montant reçu
@@ -103,7 +100,7 @@ class PaymentsController extends Controller
             return back()->withInput()->withErrors(['amount_received' => 'Le montant reçu doit être égal au total des montants appliqués aux factures.']);
         }
 
-        return DB::transaction(function () use ($validated, $user, $clientId, $partner) {
+        return DB::transaction(function () use ($validated, $clientId, $partner) {
             
             // Générer le numéro de paiement
             $lastPayment = Payment::where('client_id', $clientId)
@@ -161,8 +158,7 @@ class PaymentsController extends Controller
      */
     public function getUnpaidInvoices(Request $request, $partnerId)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $invoices = Invoice::where('client_id', $clientId)
             ->where('partner_id', $partnerId)

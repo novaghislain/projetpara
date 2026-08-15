@@ -205,8 +205,8 @@
                                 @if($client->telephone)<div><i class="bi bi-telephone"></i> {{ $client->telephone }}</div>@endif
                             </td>
                             <td>
-                                @if($client->ifu)
-                                    <code style="font-size:12px;background:var(--gel-bg-light);padding:2px 6px;border-radius:4px;">{{ $client->ifu }}</code>
+                                @if($client->nif)
+                                    <code style="font-size:12px;background:var(--gel-bg-light);padding:2px 6px;border-radius:4px;">{{ $client->nif }}</code>
                                 @else
                                     <span style="color:var(--gel-danger);font-size:12px;"><i class="bi bi-exclamation-triangle"></i> Non renseigné</span>
                                 @endif
@@ -236,7 +236,7 @@
                                             <i class="fas fa-ellipsis-v"></i>
                                         </button>
                                         <div class="gel-dropdown-menu" id="dropdownClient{{ $client->id }}" style="right:0;left:auto;">
-                                            <button type="button" class="gel-dropdown-item" onclick="event.stopPropagation(); editClient({{ $client->id }}, '{{ addslashes($client->nom_entreprise) }}', '{{ addslashes($client->sigle) }}', '{{ addslashes($client->secteur) }}', '{{ addslashes($client->ifu) }}', '{{ addslashes($client->rc) }}', '{{ addslashes($client->email) }}', '{{ addslashes($client->telephone) }}', '{{ addslashes($client->adresse) }}', '{{ addslashes($client->ville) }}')">
+                                            <button type="button" class="gel-dropdown-item" onclick="event.stopPropagation(); editClient({{ $client->id }}, '{{ addslashes($client->nom_entreprise) }}', '{{ addslashes($client->sigle) }}', '{{ addslashes($client->secteur) }}', '{{ addslashes($client->nif) }}', '{{ addslashes($client->rc) }}', '{{ addslashes($client->email) }}', '{{ addslashes($client->telephone) }}', '{{ addslashes($client->adresse) }}', '{{ addslashes($client->ville) }}')">
                                                 <i class="fas fa-edit"></i> Modifier le client
                                             </button>
                                             <a href="{{ route('gel-accountant.comptabilite.plan-comptable', ['client_id' => $client->id]) }}" class="gel-dropdown-item">

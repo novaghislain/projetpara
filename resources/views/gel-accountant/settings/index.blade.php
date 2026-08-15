@@ -142,7 +142,7 @@
             <div style="display:flex;flex-direction:column;gap:16px;">
                 @foreach([
                     ['notif_facturation', 'Nouvelles factures et paiements', 'Recevoir un email lorsqu\'une facture est émise ou un paiement reçu'],
-                    ['notif_echeances', 'Rappels d\'échéances fiscales', 'Alerte 7 jours avant chaque échéance (TVA, CNSS, IRPP...)'],
+                    ['notif_echeances', 'Rappels d\'échéances fiscales', 'Alerte 7 jours avant chaque échéance (TVA, CNSS, ITS...)'],
                     ['notif_clients', 'Activité des clients', 'Notification lors des connexions et modifications de vos clients'],
                     ['notif_equipe', 'Activité de l\'équipe', 'Alertes lors de modifications par vos collaborateurs'],
                     ['notif_rapports', 'Rapports disponibles', 'Email lorsqu\'un rapport est généré ou partagé'],

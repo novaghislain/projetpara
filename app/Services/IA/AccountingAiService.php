@@ -186,7 +186,7 @@ class AccountingAiService
     /**
      * Détecte les anomalies comptables pour un client sur une période donnée
      */
-    public function detectAnomalies(?int $clientId, ?string $periodeDebut = null, ?string $periodeFin = null): array
+    public function detectAnomalies(?string $clientId, ?string $periodeDebut = null, ?string $periodeFin = null): array
     {
         if (!$clientId) {
             return [];
@@ -384,7 +384,7 @@ class AccountingAiService
      */
     public function createSuggestion(int $clientId, int $createdBy, array $data): AiSuggestion
     {
-        return AiSuggestion::create([
+        $suggestion = AiSuggestion::create([
             'client_id' => $clientId,
             'user_id' => $createdBy,
             'agent' => 'ohada',
@@ -400,6 +400,24 @@ class AccountingAiService
             ],
             'status' => 'pending',
         ]);
+
+        if (isset($data['action_type'])) {
+            // Créer ou récupérer le workflow d'approbation par défaut pour l'IA
+            $workflow = \App\Models\ApprovalWorkflow::firstOrCreate(
+                ['name' => 'Validation IA', 'trigger_model' => AiSuggestion::class, 'client_id' => $clientId],
+                ['steps' => json_encode([['role' => 'expert_comptable', 'action' => 'review']])]
+            );
+
+            \App\Models\ApprovalRequest::create([
+                'workflow_id' => $workflow->id,
+                'model_type' => AiSuggestion::class,
+                'model_id' => $suggestion->id,
+                'status' => 'pending',
+                'requested_by' => $createdBy,
+            ]);
+        }
+
+        return $suggestion;
     }
 
     /**
@@ -417,9 +435,9 @@ class AccountingAiService
         AiLearningLog::create([
             'agent' => 'ohada',
             'type' => $action,
-            'input_data' => $inputData,
-            'output_data' => $suggestedOutput,
-            'correction' => $actualOutput,
+            'input_data' => json_encode($inputData),
+            'output_data' => json_encode($suggestedOutput),
+            'correction' => $actualOutput !== null ? json_encode($actualOutput) : null,
             'metadata' => ['was_correct' => $wasCorrect],
             'client_id' => $clientId,
             'user_id' => $userId,

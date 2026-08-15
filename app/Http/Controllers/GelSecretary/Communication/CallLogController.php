@@ -62,6 +62,36 @@ class CallLogController extends Controller
 
         return redirect()->back()->with('success', 'Appel consigné avec succès.');
     }
+
+    public function analyzeIa(Request $request, \App\Services\AnthropicService $anthropic)
+    {
+        $request->validate([
+            'text_content' => 'required|string',
+        ]);
+
+        $prompt = "Voici les notes rapides d'un appel téléphonique.
+Extrais les informations suivantes au format JSON strictement :
+- contact_name: nom de la personne
+- phone: numéro de téléphone si mentionné (sinon null)
+- notes: un bref résumé pro de l'appel
+- a_rappeler: true ou false (si on doit le rappeler)
+- date_rappel: date/heure suggérée au format YYYY-MM-DD HH:MM (si mentionné, sinon null)
+
+Notes de l'appel :
+" . $request->text_content;
+
+        $json = $anthropic->generateJson($prompt);
+
+        \App\Services\AuditLogService::log('IA ACTION', Auth::user(), null, ['action' => 'Synthèse Appel IA']);
+
+        return response()->json($json ?? [
+            'contact_name' => '',
+            'phone' => '',
+            'notes' => '',
+            'a_rappeler' => false,
+            'date_rappel' => null
+        ]);
+    }
 }
 
 

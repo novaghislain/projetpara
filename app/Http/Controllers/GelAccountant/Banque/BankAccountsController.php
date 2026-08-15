@@ -16,8 +16,7 @@ class BankAccountsController extends Controller
      */
     public function index()
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $comptes = BankAccount::where('client_id', $clientId)
             ->orderBy('name')
@@ -37,8 +36,7 @@ class BankAccountsController extends Controller
      */
     public function store(Request $request)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -73,8 +71,7 @@ class BankAccountsController extends Controller
      */
     public function show($id)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $compte = BankAccount::where('client_id', $clientId)->findOrFail($id);
 
@@ -92,8 +89,7 @@ class BankAccountsController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $compte = BankAccount::where('client_id', $clientId)->findOrFail($id);
 
@@ -119,8 +115,7 @@ class BankAccountsController extends Controller
      */
     public function destroy($id)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $compte = BankAccount::where('client_id', $clientId)->findOrFail($id);
 

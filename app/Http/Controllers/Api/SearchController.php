@@ -182,7 +182,7 @@ class SearchController extends Controller
             ['title' => 'Clients',           'route' => '/clients',         'icon' => 'bi-building',    'keywords' => 'clients client crm'],
             ['title' => 'Comptabilité',      'route' => '/accounting',      'icon' => 'bi-calculator',  'keywords' => 'compta comptabilité accounting journal balance'],
             ['title' => 'Plan comptable',    'route' => '/accounting/accounts', 'icon' => 'bi-book',  'keywords' => 'plan comptable accounts'],
-            ['title' => 'Télédéclarations',  'route' => '/tele-declarations', 'icon' => 'bi-file-earmark-text', 'keywords' => 'teledeclaration tva irpp cnss fiscal'],
+            ['title' => 'Télédéclarations',  'route' => '/tele-declarations', 'icon' => 'bi-file-earmark-text', 'keywords' => 'teledeclaration tva its ortb cnss fiscal'],
             ['title' => 'Factures ERP',      'route' => '/erp/invoices',    'icon' => 'bi-receipt',     'keywords' => 'factures erp invoices facture'],
             ['title' => 'RH & Paie',         'route' => '/rh',              'icon' => 'bi-people',      'keywords' => 'rh paie employés payroll'],
             ['title' => 'IT Support',        'route' => '/it/tickets',      'icon' => 'bi-laptop',      'keywords' => 'it support helpdesk tickets'],

@@ -26,6 +26,7 @@ class DaeAgendaEvent extends DaeBaseModel
         'recurrence_end', 'created_by',
         // Phase 2: Visio & Invitations
         'visio_type', 'visio_link', 'invitation_sent', 'guest_email', 'guest_name',
+        'proces_verbal',
     ];
 
     protected function casts(): array

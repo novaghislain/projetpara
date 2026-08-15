@@ -15,8 +15,7 @@ class ExpenseClaimsController extends Controller
      */
     public function index(Request $request)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $query = CompanyExpense::whereHas('employee', function ($q) use ($clientId) {
             $q->where('client_id', $clientId);
@@ -36,8 +35,7 @@ class ExpenseClaimsController extends Controller
      */
     public function create()
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $employees = CompanyEmployee::where('client_id', $clientId)
             ->where('status', 'active')
@@ -51,8 +49,7 @@ class ExpenseClaimsController extends Controller
      */
     public function store(Request $request)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $validated = $request->validate([
             'employee_id' => [
@@ -95,8 +92,7 @@ class ExpenseClaimsController extends Controller
      */
     public function show($id)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $claim = CompanyExpense::whereHas('employee', function ($q) use ($clientId) {
             $q->where('client_id', $clientId);
@@ -110,8 +106,7 @@ class ExpenseClaimsController extends Controller
      */
     public function updateStatus(Request $request, $id)
     {
-        $user = Auth::user();
-        $clientId = $user->active_client_id ?? $user->client_id;
+                $clientId = session('active_client_id') ?? session('current_client_id');
 
         $validated = $request->validate([
             'status' => 'required|in:approved,rejected',

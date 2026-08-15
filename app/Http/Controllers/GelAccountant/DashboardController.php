@@ -3,193 +3,143 @@
 namespace App\Http\Controllers\GelAccountant;
 
 use App\Http\Controllers\Controller;
-use App\Models\Gel\Cabinet;
-use App\Models\Gel\Client;
-use App\Models\Gel\EcritureComptable;
+use App\Models\Client;
+use App\Models\EcritureComptable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
-/**
- * Contrôleur du tableau de bord du module comptable (GelAccountant).
- *
- * Ce contrôleur centralise les indicateurs clés de performance (KPI)
- * destinés à la vue d'ensemble d'un cabinet comptable : nombre de clients
- * actifs, volume d'écritures, état de la balance, etc. Il adapte les
- * statistiques en fonction du cabinet connecté et d'un éventuel filtre
- * par client.
- */
 class DashboardController extends Controller
 {
-    /**
-     * Affiche le tableau de bord du cabinet comptable.
-     *
-     * Calcule et renvoie les statistiques consolidées (clients actifs,
-     * écritures du mois, éléments en attente, équilibre de la balance)
-     * ainsi que les listes des clients et écritures récentes. Si
-     * l'utilisateur n'est rattaché à aucun cabinet ($cabinetId nul),
-     * un tableau de bord vide avec des valeurs par défaut est affiché.
-     *
-     * @param  Request $request La requête entrante, contenant
-     *                          optionnellement le filtre `client_id`.
-     * @return \Illuminate\View\View
-     */
     public function index(Request $request)
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        $cabinetId = $user->cabinet_id;
 
-        // Si l'utilisateur n'est pas rattaché à un cabinet, on affiche
-        // un tableau de bord basique avec des valeurs par défaut.
-        if (!$cabinetId) {
-            $stats = [
-                'clients_actifs' => 0,
-                'ecritures_mois' => 0,
-                'en_attente' => 0,
-                'balance_equilibree' => false,
-                'derniere_ecriture' => null,
-                'derniere_ecriture_date' => null,
-            ];
-            $recentClients = collect([]);
-            $recentEcritures = collect([]);
-            $clients = collect([]);
-            $cabinet = null;
+        // Récupère TOUTES les entreprises où l'utilisateur a une affectation active.
+        // Un comptable invité peut être rattaché à plusieurs cabinets.
+        $entrepriseIds = $user->affectations()
+            ->where('statut', 'active')
+            ->pluck('entreprise_id')
+            ->unique()
+            ->values();
 
-            $currentSection = 'dashboard';
-            return view('gel-accountant.dashboard', ['currentSection' => $currentSection, 'currentPage' => 'dashboard'] + compact(
-                'stats', 'recentClients', 'recentEcritures', 'clients', 'cabinet'
-            ));
+        // Gestion du dossier (client) actif depuis la session
+        $activeClientId = session('active_client_id');
+        $activeClient   = null;
+
+        if ($activeClientId) {
+            $activeClient = Client::whereIn('entreprise_id', $entrepriseIds)
+                ->where('id', $activeClientId)
+                ->first();
         }
 
-        $cabinet = Cabinet::find($cabinetId);
-        $clientId = $request->get('client_id');
+        // Si pas de client actif, on ne sélectionne rien par défaut (vue globale cabinet)
+        // L'utilisateur choisira dans le menu déroulant.
 
-        // --- Statistiques générales ---
-        // Requête de base sur les clients du cabinet, avec filtre optionnel
-        $clientsQuery = Client::where('cabinet_id', $cabinetId);
-        if ($clientId) {
-            $clientsQuery->where('id', $clientId);
+        // Tous les clients accessibles (toutes les entreprises affectées)
+        $allClients = Client::whereIn('entreprise_id', $entrepriseIds)
+            ->where('statut', 'actif')
+            ->orderBy('nom_entreprise')
+            ->get();
+
+        // KPIs RÉELS — contextualisés selon le dossier actif ou toute la portée du cabinet
+        $kpis = $this->computeKpis($entrepriseIds, $activeClient?->id);
+
+        return view('gel-accountant.dashboard', compact('activeClient', 'allClients', 'kpis'));
+    }
+
+    /**
+     * Calcule les KPIs réels à partir de la base de données.
+     *
+     * @param  \Illuminate\Support\Collection $entrepriseIds
+     * @param  string|null                    $clientId
+     * @return array
+     */
+    private function computeKpis($entrepriseIds, ?string $clientId = null): array
+    {
+        // -- Trésorerie : solde total des comptes bancaires actifs
+        $tresorerieQuery = DB::table('bank_accounts')
+            ->whereIn('client_id', function ($q) use ($entrepriseIds, $clientId) {
+                $q->select('id')->from('clients')
+                    ->whereIn('entreprise_id', $entrepriseIds)
+                    ->where('statut', 'actif');
+                if ($clientId) {
+                    $q->where('id', $clientId);
+                }
+            })
+            ->where('is_active', true);
+        $tresorerie = $tresorerieQuery->sum('current_balance');
+
+        // -- TVA estimée : total des écritures non validées sur les comptes TVA collectée
+        // Utilise gel_ecritures / gel_lignes_ecriture
+        $tvaEstimee = 0;
+        if (class_exists(\App\Models\GelEcriture::class)) {
+            $tvaEstimee = DB::table('gel_lignes_ecriture as gl')
+                ->join('gel_ecritures as ge', 'gl.ecriture_id', '=', 'ge.id')
+                ->join('gel_account_types as gat', 'gl.compte_id', '=', 'gat.id')
+                ->whereIn('ge.client_id', function ($q) use ($entrepriseIds, $clientId) {
+                    $q->select('id')->from('clients')
+                        ->whereIn('entreprise_id', $entrepriseIds)
+                        ->where('statut', 'actif');
+                    if ($clientId) {
+                        $q->where('id', $clientId);
+                    }
+                })
+                ->where('ge.valide', false)
+                ->where('gl.sens', 'credit')
+                ->sum('gl.montant');
         }
-        $clientsActifs = (clone $clientsQuery)->where('statut', 'actif')->count();
 
-        // Requête de base sur les écritures comptables du cabinet
-        $ecrituresQuery = EcritureComptable::where('cabinet_id', $cabinetId);
-        if ($clientId) {
-            $ecrituresQuery->where('client_id', $clientId);
-        }
-
-        // Nombre d'écritures saisies dans le mois en cours
-        $ecrituresMois = (clone $ecrituresQuery)
-            ->whereMonth('date_ecriture', now()->month)
-            ->whereYear('date_ecriture', now()->year)
-            ->count();
-
-        // Écritures en attente de validation (non approuvées)
-        $enAttente = (clone $ecrituresQuery)
+        // -- Écritures non validées (= "brouillons") en attente
+        $ecrituresEnAttente = DB::table('gel_ecritures')
+            ->whereIn('client_id', function ($q) use ($entrepriseIds, $clientId) {
+                $q->select('id')->from('clients')
+                    ->whereIn('entreprise_id', $entrepriseIds)
+                    ->where('statut', 'actif');
+                if ($clientId) {
+                    $q->where('id', $clientId);
+                }
+            })
             ->where('valide', false)
             ->count();
 
-        // Dernière écriture comptabilisée (date la plus récente)
-        $lastEcriture = (clone $ecrituresQuery)
-            ->latest('date_ecriture')
-            ->first();
-
-        // Vérification de l'équilibre de la balance (total débit = total crédit)
-        $totalDebit = (clone $ecrituresQuery)->sum('total_debit');
-        $totalCredit = (clone $ecrituresQuery)->sum('total_credit');
-        $balanceEquilibree = ($totalDebit === $totalCredit) && $totalDebit > 0;
-
-        $recentClients = (clone $clientsQuery)
-            ->latest()
-            ->take(5)
+        // -- Dernières écritures (gel_ecritures n'a pas de total_debit/credit natif,
+        // les totaux se calculent depuis les lignes d'écriture)
+        $dernieresEcritures = DB::table('gel_ecritures as ge')
+            ->join('gel_journaux as gj', 'ge.journal_id', '=', 'gj.id')
+            ->leftJoin('clients as c', 'ge.client_id', '=', 'c.id')
+            ->whereIn('ge.client_id', function ($q) use ($entrepriseIds, $clientId) {
+                $q->select('id')->from('clients')
+                    ->whereIn('entreprise_id', $entrepriseIds)
+                    ->where('statut', 'actif');
+                if ($clientId) {
+                    $q->where('id', $clientId);
+                }
+            })
+            ->orderByDesc('ge.date_ecriture')
+            ->limit(5)
+            ->select(
+                'ge.id',
+                'ge.date_ecriture',
+                'ge.libelle',
+                'ge.valide',
+                'gj.code as journal_code',
+                'ge.numero_piece',
+                'c.nom_entreprise as client_nom',
+                // Totaux calculés depuis les lignes (sous-requêtes)
+                DB::raw('(SELECT COALESCE(SUM(gl.montant),0) FROM gel_lignes_ecriture gl WHERE gl.ecriture_id = ge.id AND gl.sens = "debit") as total_debit'),
+                DB::raw('(SELECT COALESCE(SUM(gl.montant),0) FROM gel_lignes_ecriture gl WHERE gl.ecriture_id = ge.id AND gl.sens = "credit") as total_credit')
+            )
             ->get();
 
-        $recentEcritures = (clone $ecrituresQuery)
-            ->with(['journal:id,code', 'client:id,nom_entreprise'])
-            ->latest('date_ecriture')
-            ->take(5)
-            ->get();
-
-        // 1. Déclarations TVA imminentes (échéance dans les 15 jours)
-        $declarationsQuery = \App\Models\Gel\GelDeclaration::where('cabinet_id', $cabinetId)
-            ->whereIn('statut', ['brouillon', 'a_soumettre', 'en_retard']);
-        if ($clientId) {
-            $declarationsQuery->where('client_id', $clientId);
-        }
-        $declarationsTvaImminentes = $declarationsQuery
-            ->where('date_echeance', '<=', now()->addDays(15))
-            ->count();
-
-        // 2. Calcul des Revenus (Classe 7) et Dépenses (Classe 6)
-        $ecrituresIds = (clone $ecrituresQuery)
-            ->whereYear('date_ecriture', now()->year)
-            ->pluck('id');
-
-        $lignesClasse7 = \App\Models\Gel\LigneEcriture::whereIn('ecriture_id', $ecrituresIds)
-            ->whereHas('compte', function ($q) {
-                $q->where('code', 'like', '7%');
-            })->get();
-
-        $revenus = $lignesClasse7->where('sens', 'credit')->sum('montant') - $lignesClasse7->where('sens', 'debit')->sum('montant');
-
-        $lignesClasse6 = \App\Models\Gel\LigneEcriture::whereIn('ecriture_id', $ecrituresIds)
-            ->whereHas('compte', function ($q) {
-                $q->where('code', 'like', '6%');
-            })->get();
-
-        $depenses = $lignesClasse6->where('sens', 'debit')->sum('montant') - $lignesClasse6->where('sens', 'credit')->sum('montant');
-
-        $benefice = $revenus - $depenses;
-
-        // Comparatif N-1 (Revenus de l'année précédente)
-        $ecrituresIdsN1 = (clone $ecrituresQuery)
-            ->whereYear('date_ecriture', now()->subYear()->year)
-            ->pluck('id');
-
-        $lignesClasse7N1 = \App\Models\Gel\LigneEcriture::whereIn('ecriture_id', $ecrituresIdsN1)
-            ->whereHas('compte', function ($q) {
-                $q->where('code', 'like', '7%');
-            })->get();
-
-        $revenusN1 = $lignesClasse7N1->where('sens', 'credit')->sum('montant') - $lignesClasse7N1->where('sens', 'debit')->sum('montant');
-        $evolutionRevenus = $revenusN1 > 0 ? (($revenus - $revenusN1) / $revenusN1) * 100 : 0;
-
-        $stats = [
-            'clients_actifs' => $clientsActifs,
-            'ecritures_mois' => $ecrituresMois,
-            'en_attente' => $enAttente,
-            'balance_equilibree' => $balanceEquilibree,
-            'derniere_ecriture' => $lastEcriture?->libelle,
-            'derniere_ecriture_date' => $lastEcriture?->date_ecriture?->format('Y-m-d'),
-            'revenus' => $revenus,
-            'depenses' => $depenses,
-            'benefice' => $benefice,
-            'declarations_tva_imminentes' => $declarationsTvaImminentes,
-            'evolution_revenus' => round($evolutionRevenus, 2),
-            'revenus_n1' => $revenusN1,
+        return [
+            'tresorerie'            => $tresorerie,
+            'tva_estimee'           => $tvaEstimee,
+            'factures_non_lettrees' => $ecrituresEnAttente, // Écritures en brouillon
+            'docs_attente'          => 0, // GED — à implémenter quand GED active
+            'dernieres_ecritures'   => $dernieresEcritures,
+            'nb_clients'            => $allClients ?? 0,
         ];
-
-        $clients = (clone $clientsQuery)->get(['id', 'nom_entreprise']);
-
-        // 3. Bilans en attente (Exercices dont la date de fin est dépassée mais non clôturés)
-        $bilansQuery = \App\Models\Gel\ExerciceComptable::where('cabinet_id', $user->cabinet_id)
-            ->where('cloture', false)
-            ->where('date_fin', '<', now());
-        if ($clientId) {
-            $bilansQuery->where('client_id', $clientId);
-        }
-        $bilansEnAttente = $bilansQuery->count();
-
-        // 4. Messages non lus
-        $messagesQuery = \App\Models\Gel\GelMessage::where('receiver_id', $user->id)
-            ->where('est_lu', false);
-        $messagesNonLus = $messagesQuery->count();
-
-        $stats['bilans_en_attente'] = $bilansEnAttente;
-        $stats['messages_non_lus'] = $messagesNonLus;
-
-        return view('gel-accountant.dashboard', ['currentSection' => 'dashboard', 'currentPage' => 'dashboard'] + compact(
-            'stats', 'recentClients', 'recentEcritures', 'clients', 'cabinet'
-        ));
     }
 }

@@ -38,7 +38,7 @@ class BalanceController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        $cabinetId = $user->cabinet_id;
+        $cabinetId = $user->cabinet_id ?? session('cabinet_id');
 
         $clients = Client::where('cabinet_id', $cabinetId)->actif()->get(['id', 'nom_entreprise']);
 

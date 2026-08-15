@@ -121,7 +121,7 @@ class AgentController extends Controller
             ],
             'fiscal' => [
                 'name' => 'Agent Fiscal',
-                'description' => 'Télédéclarations, TVA, IRPP/CNSS',
+                'description' => 'Télédéclarations, TVA, ITS/CNSS',
                 'icon' => 'bi-file-earmark-text',
                 'color' => '#8B5CF6',
                 'status' => 'active',

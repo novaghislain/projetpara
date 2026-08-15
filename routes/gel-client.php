@@ -1,63 +1,58 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Portal\AuthController;
-use App\Http\Controllers\Portal\ProfileController;
+use App\Http\Controllers\GelClient\DashboardController;
+use App\Http\Controllers\GelClient\SalesController;
+use App\Http\Controllers\GelClient\PurchasesController;
+use App\Http\Controllers\GelClient\DocumentsController;
+use App\Http\Controllers\GelClient\CoordinationController;
+use App\Http\Controllers\GelClient\CrmAiController;
 
 /*
 |--------------------------------------------------------------------------
-| Espace Client (GEL-CLIENT) Routes
+| GEL Client — Portail de l'Entreprise Cliente
 |--------------------------------------------------------------------------
-|
-| Les routes de ce fichier sont chargées via bootstrap/app.php ou RouteServiceProvider,
-| encapsulées sous le sous-domaine 'client.gelsabinet.com' (ou selon PORTAL_DOMAIN).
-|
+| Préfixe : /gel-client
+| Nom    : gel-client.*
+| Middleware : auth, vérification rôle client
 */
 
-// Routes publiques (Authentification)
-Route::get('/{slug}/login', [AuthController::class, 'showLoginForm'])->name('portal.login');
-Route::post('/{slug}/login', [AuthController::class, 'login'])->name('portal.login.submit');
-Route::get('/{slug}/register', [AuthController::class, 'showRegisterForm'])->name('portal.register');
-Route::post('/{slug}/register', [AuthController::class, 'register'])->name('portal.register.submit');
-Route::post('/{slug}/logout', [AuthController::class, 'logout'])->name('portal.logout');
-
-// Routes protégées par le guard 'portal'
-Route::middleware(['auth:portal'])->group(function () {
+Route::middleware(['auth', 'company'])->prefix('gel-client')->name('gel-client.')->group(function () {
     
-    // Le tableau de bord du client
-    Route::get('/{slug}/dashboard', function ($slug) {
-        return view('portal.dashboard.index', compact('slug'));
-    })->name('portal.dashboard');
+    // ─── Dashboard ───
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/', [DashboardController::class, 'index'])->name('home');
 
-    // Profil et Corrections
-    Route::get('/{slug}/profile', [ProfileController::class, 'show'])->name('portal.profile');
-    Route::post('/{slug}/profile', [ProfileController::class, 'update'])->name('portal.profile.update');
-    Route::post('/{slug}/profile/correction/{id}', [ProfileController::class, 'handleCorrection'])->name('portal.profile.correction');
+    // ─── Ventes & Facturation (CRM Client) ───
+    Route::prefix('ventes')->name('ventes.')->group(function () {
+        Route::get('/factures', [SalesController::class, 'index'])->name('factures.index');
+        Route::get('/factures/create', [SalesController::class, 'create'])->name('factures.create');
+        Route::post('/factures', [SalesController::class, 'store'])->name('factures.store');
+        Route::get('/factures/{id}', [SalesController::class, 'show'])->name('factures.show');
+    });
 
-    // Factures
-    Route::get('/{slug}/invoices', [\App\Http\Controllers\GelClient\InvoiceController::class, 'index'])->name('portal.invoices');
-    Route::get('/{slug}/invoices/{id}', [\App\Http\Controllers\GelClient\InvoiceController::class, 'show'])->name('portal.invoices.show');
+    // ─── Achats & Dépenses ───
+    Route::prefix('achats')->name('achats.')->group(function () {
+        Route::get('/depenses', [PurchasesController::class, 'index'])->name('depenses.index');
+        Route::get('/depenses/create', [PurchasesController::class, 'create'])->name('depenses.create');
+        Route::post('/depenses', [PurchasesController::class, 'store'])->name('depenses.store');
+    });
 
-    // Messagerie & Documents
-    Route::get('/{slug}/messages', [\App\Http\Controllers\GelClient\MessageController::class, 'index'])->name('portal.messages');
-    Route::post('/{slug}/messages', [\App\Http\Controllers\GelClient\MessageController::class, 'store'])->name('portal.messages.store');
+    // ─── Boîte à Documents & GED ───
+    Route::prefix('documents')->name('documents.')->group(function () {
+        Route::get('/', [DocumentsController::class, 'index'])->name('index');
+        Route::post('/upload', [DocumentsController::class, 'upload'])->name('upload');
+    });
 
-    // Tickets Support Métier
-    Route::get('/{slug}/tickets/create', [\App\Http\Controllers\GelClient\TicketController::class, 'create'])->name('portal.tickets.create');
-    Route::post('/{slug}/tickets', [\App\Http\Controllers\GelClient\TicketController::class, 'store'])->name('portal.tickets.store');
+    // ─── Messagerie / Coordination ───
+    Route::prefix('coordination')->name('coordination.')->group(function () {
+        Route::get('/', [CoordinationController::class, 'index'])->name('index');
+        Route::post('/send', [CoordinationController::class, 'sendMessage'])->name('send');
+    });
 
-    // Support Technique Informatique (GEL SABINET)
-    Route::post('/{slug}/it-support', [\App\Http\Controllers\GelClient\ItSupportController::class, 'store'])->name('portal.it-support.store');
-
-    // Services Informatiques (Missions commerciales)
-    Route::get('/{slug}/it-services', [\App\Http\Controllers\Client\ItServiceController::class, 'index'])->name('client.it.index');
-    Route::get('/{slug}/it-services/subscribe', [\App\Http\Controllers\Client\ItServiceController::class, 'subscribeForm'])->name('client.it.subscribe');
-    Route::post('/{slug}/it-services/subscribe', [\App\Http\Controllers\Client\ItServiceController::class, 'storeMission'])->name('client.it.store-mission');
-    Route::get('/{slug}/it-services/order', [\App\Http\Controllers\Client\ItServiceController::class, 'orderForm'])->name('client.it.order');
-    Route::post('/{slug}/it-services/order', [\App\Http\Controllers\Client\ItServiceController::class, 'storeOrder'])->name('client.it.store-order');
-
-    // Marketing & Communication
-    Route::get('/{slug}/marketing', [\App\Http\Controllers\Client\MarketingController::class, 'index'])->name('client.marketing.index');
-    Route::post('/{slug}/marketing/briefs', [\App\Http\Controllers\Client\MarketingController::class, 'storeBrief'])->name('client.marketing.store_brief');
-    Route::get('/{slug}/marketing/campaigns/{id}', [\App\Http\Controllers\Client\MarketingController::class, 'showCampaign'])->name('client.marketing.show_campaign');
+    // ─── CRM Intelligent (IA) ───
+    Route::prefix('crm')->name('crm.')->group(function () {
+        Route::get('/deals', [CrmAiController::class, 'kanban'])->name('deals.kanban');
+        Route::get('/contacts/{contact}', [CrmAiController::class, 'showContact'])->name('contacts.show');
+    });
 });

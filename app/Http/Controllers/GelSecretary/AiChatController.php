@@ -11,6 +11,11 @@ use App\Models\Gel\Client;
 
 class AiChatController extends Controller
 {
+    public function index()
+    {
+        return view('gel-secretary.ai.index');
+    }
+
     public function chat(Request $request)
     {
         $request->validate([

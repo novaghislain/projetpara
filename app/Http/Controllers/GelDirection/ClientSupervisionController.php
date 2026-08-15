@@ -4,39 +4,48 @@ namespace App\Http\Controllers\GelDirection;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+
 use App\Models\Client;
+use App\Models\Entreprise;
 use Illuminate\Support\Facades\Auth;
 
 class ClientSupervisionController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        $user = Auth::user();
+        $entrepriseId = session('active_entreprise_id');
         
-        $query = Client::where('cabinet_id', $user->cabinet_id);
-        
-        if ($request->search) {
-            $query->where('nom_entreprise', 'like', '%' . $request->search . '%')
-                  ->orWhere('email_contact', 'like', '%' . $request->search . '%');
+        if (!$entrepriseId) {
+            return redirect()->route('dashboard')->with('error', 'Aucune entreprise sélectionnée.');
         }
-        
-        $clients = $query->paginate(15);
-        
+
+        $clients = Client::where('entreprise_id', $entrepriseId)
+                         ->orderBy('nom_entreprise', 'asc')
+                         ->paginate(15);
+
         return view('gel-direction.clients.index', compact('clients'));
     }
-    
-    public function show(Client $client)
+
+    public function store(Request $request)
     {
-        // Vérifier l'appartenance au cabinet
-        $user = Auth::user();
-        if ($client->cabinet_id !== $user->cabinet_id) {
-            abort(403);
+        $entrepriseId = session('active_entreprise_id');
+        
+        if (!$entrepriseId) {
+            return back()->with('error', 'Aucune entreprise sélectionnée.');
         }
-        
-        // Simuler des statistiques liées au client pour la direction
-        $caGenere = 15400; // Fake CA
-        $tasksCount = \App\Models\Task::where('client_id', $client->id)->count();
-        
-        return view('gel-direction.clients.show', compact('client', 'caGenere', 'tasksCount'));
+
+        $validated = $request->validate([
+            'nom_entreprise' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'telephone' => 'nullable|string|max:255',
+            'nif' => 'nullable|string|max:255',
+            'adresse' => 'nullable|string|max:255',
+        ]);
+
+        $validated['entreprise_id'] = $entrepriseId;
+
+        Client::create($validated);
+
+        return back()->with('success', 'Client ajouté avec succès.');
     }
 }

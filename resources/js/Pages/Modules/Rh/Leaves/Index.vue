@@ -1,201 +1,197 @@
-<!--
-  Composant : Leaves/Index.vue
-  Description : Gestion des demandes de congés avec workflow d'approbation/rejet,
-                filtres par statut et résumé statistique.
--->
-<script setup>
-import { ref, computed, onMounted } from 'vue';
-import GelLayout from '../../../../Layouts/GelLayout.vue';
-
-/* État réactif : demandes de congés, filtres, indicateurs */
-const leaves = ref([]);
-const loading = ref(true);
-const error = ref(null);
-const search = ref('');
-const statusFilter = ref('');
-
-/* Récupération des demandes de congés depuis l'API */
-const fetchLeaves = async () => {
-    loading.value = true;
-    error.value = null;
-    try {
-        const res = await fetch('/rh/leaves');
-        if (!res.ok) throw new Error('Erreur de chargement');
-        leaves.value = await res.json();
-    } catch (e) {
-        error.value = e.message;
-    } finally {
-        loading.value = false;
-    }
-};
-
-/* Filtrage local : recherche et filtre par statut */
-const filteredLeaves = computed(() => {
-    let list = leaves.value;
-    if (search.value) {
-        const q = search.value.toLowerCase();
-        list = list.filter(l =>
-            (l.employe_nom && l.employe_nom.toLowerCase().includes(q)) ||
-            (l.type && l.type.toLowerCase().includes(q))
-        );
-    }
-    if (statusFilter.value) {
-        list = list.filter(l => l.statut === statusFilter.value);
-    }
-    return list;
-});
-
-/* Classe CSS pour le badge de statut du congé */
-const statusBadgeClass = (status) => {
-    const map = {
-        en_attente: 'bg-warning text-dark',
-        approuve: 'bg-success',
-        rejete: 'bg-danger',
-        annule: 'bg-secondary',
-    };
-    return map[status] || 'bg-secondary';
-};
-
-/* Approbation ou rejet d'une demande de congé */
-const updateStatus = async (id, newStatus) => {
-    const actionLabel = newStatus === 'approuve' ? 'approuver' : 'rejeter';
-    if (!confirm('Confirmer la ' + actionLabel + ' de cette demande ?')) return;
-    try {
-        const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
-        const res = await fetch('/rh/leaves/' + id + '/status', {
-            method: 'PUT',
-            headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ statut: newStatus }),
-        });
-        if (!res.ok) throw new Error('Erreur de mise à jour');
-        await fetchLeaves();
-    } catch (e) {
-        alert('Erreur: ' + e.message);
-    }
-};
-
-/* Suppression d'une demande de congé avec confirmation */
-const deleteLeave = async (id) => {
-    if (!confirm('Confirmer la suppression de cette demande ?')) return;
-    try {
-        const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
-        const res = await fetch('/rh/leaves/' + id, {
-            method: 'DELETE',
-            headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
-        });
-        if (!res.ok) throw new Error('Erreur de suppression');
-        await fetchLeaves();
-    } catch (e) {
-        alert('Erreur: ' + e.message);
-    }
-};
-
-onMounted(fetchLeaves);
-</script>
-
 <template>
-    <GelLayout page-title="Congés">
-        <!-- Toolbar -->
-        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-            <div class="d-flex flex-wrap align-items-center gap-2">
-                <div class="input-group input-group-sm" style="max-width:260px;">
-                    <span class="input-group-text bg-white"><i class="bi-search"></i></span>
-                    <input v-model="search" class="form-control form-control-sm" placeholder="Rechercher employé...">
-                </div>
-                <select v-model="statusFilter" class="form-select form-select-sm" style="width:auto;">
-                    <option value="">Tous statuts</option>
-                    <option value="en_attente">En attente</option>
-                    <option value="approuve">Approuvé</option>
-                    <option value="rejete">Rejeté</option>
-                    <option value="annule">Annulé</option>
-                </select>
-            </div>
-            <a href="/rh/leaves/create" class="btn btn-primary btn-sm">
-                <i class="bi-plus-lg me-1"></i>Nouvelle demande
-            </a>
+  <div class="container-fluid p-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="h4 mb-1 text-gray-800">
+                <i class="bi bi-airplane text-warning me-2"></i>Gestion des Congés
+            </h2>
+            <p class="text-muted mb-0">Demandes de congés et absences</p>
         </div>
-
-        <!-- Loading -->
-        <div v-if="loading" class="d-flex justify-content-center py-5">
-            <div class="spinner-border text-primary"><span class="visually-hidden">Chargement...</span></div>
+        <div>
+            <button class="btn btn-outline-secondary me-2"><i class="bi bi-calendar-range me-2"></i>Planning</button>
+            <button class="btn btn-warning text-white"><i class="bi bi-plus-lg me-2"></i>Nouvelle Demande</button>
         </div>
-        <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
+    </div>
 
-        <!-- Summary cards -->
-        <div v-else class="row g-2 mb-3">
-            <div class="col-6 col-md-3">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-body py-2 px-3">
-                        <div class="text-muted small">En attente</div>
-                        <div class="fw-bold fs-5 text-warning">{{ leaves.filter(l => l.statut === 'en_attente').length }}</div>
+    <!-- Filtres -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" class="form-control border-start-0" placeholder="Rechercher un employé..." v-model="search">
                     </div>
                 </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-body py-2 px-3">
-                        <div class="text-muted small">Approuvés</div>
-                        <div class="fw-bold fs-5 text-success">{{ leaves.filter(l => l.statut === 'approuve').length }}</div>
-                    </div>
+                <div class="col-md-3">
+                    <select class="form-select" v-model="filterStatus">
+                        <option value="">Tous les statuts</option>
+                        <option value="En attente">En attente</option>
+                        <option value="Approuvé">Approuvé</option>
+                        <option value="Refusé">Refusé</option>
+                    </select>
                 </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-body py-2 px-3">
-                        <div class="text-muted small">Rejetés</div>
-                        <div class="fw-bold fs-5 text-danger">{{ leaves.filter(l => l.statut === 'rejete').length }}</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-body py-2 px-3">
-                        <div class="text-muted small">Total</div>
-                        <div class="fw-bold fs-5">{{ leaves.length }}</div>
-                    </div>
+                <div class="col-md-3">
+                    <select class="form-select" v-model="filterPeriod">
+                        <option value="">Ce mois-ci</option>
+                        <option value="Mois dernier">Mois dernier</option>
+                        <option value="Cette année">Cette année</option>
+                    </select>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Table -->
-        <div v-if="!loading && !error" class="card card-dashboard">
+    <!-- FilterChips (Data Density P0 V2.2) -->
+    <FilterChips :filters="activeFilters" @remove="removeFilter" @clearAll="clearAllFilters" />
+
+    <!-- Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="small text-muted">
+                <table class="table table-dense align-middle mb-0">
+                    <thead class="table-light">
                         <tr>
-                            <th>Employé</th>
-                            <th>Type</th>
-                            <th>Date début</th>
-                            <th>Date fin</th>
-                            <th>Durée (jours)</th>
-                            <th>Statut</th>
-                            <th class="text-end">Actions</th>
+                            <th class="border-0 ps-4">Employé</th>
+                            <th class="border-0">Type de congé</th>
+                            <th class="border-0">Période</th>
+                            <th class="border-0">Durée</th>
+                            <th class="border-0">Statut</th>
+                            <th class="border-0 text-end pe-4">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-if="!filteredLeaves.length">
-                            <td colspan="7" class="text-center py-4 text-muted">Aucune demande de congé trouvée.</td>
+                        <tr v-if="!leaves || !leaves.data || leaves.data.length === 0">
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="bi bi-calendar-x display-4 d-block mb-3 opacity-25"></i>
+                                Aucune demande de congé trouvée.
+                            </td>
                         </tr>
-                        <tr v-for="l in filteredLeaves" :key="l.id">
-                            <td class="fw-medium">{{ l.employe_nom || l.employe?.nom }} {{ l.employe_prenom || l.employe?.prenom }}</td>
-                            <td><span class="badge bg-info">{{ l.type }}</span></td>
-                            <td class="small">{{ $formatDate ? $formatDate(l.date_debut) : l.date_debut }}</td>
-                            <td class="small">{{ $formatDate ? $formatDate(l.date_fin) : l.date_fin }}</td>
-                            <td class="fw-medium">{{ l.duree_jours || '-' }}</td>
-                            <td><span class="badge" :class="statusBadgeClass(l.statut)">{{ l.statut }}</span></td>
-                            <td class="text-end">
-                                <button v-if="l.statut === 'en_attente'" class="btn btn-sm btn-outline-success me-1" @click="updateStatus(l.id, 'approuve')" title="Approuver"><i class="bi-check-lg"></i></button>
-                                <button v-if="l.statut === 'en_attente'" class="btn btn-sm btn-outline-danger me-1" @click="updateStatus(l.id, 'rejete')" title="Rejeter"><i class="bi-x-lg"></i></button>
-                                <a :href="'/rh/leaves/' + l.id + '/edit'" class="btn btn-sm btn-outline-primary me-1" title="Modifier"><i class="bi-pencil"></i></a>
-                                <button class="btn btn-sm btn-outline-danger" @click="deleteLeave(l.id)" title="Supprimer"><i class="bi-trash"></i></button>
+                        <tr v-for="leave in leaves?.data" :key="leave.id">
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle bg-secondary text-white me-3 d-flex align-items-center justify-content-center fw-bold" style="width: 36px; height: 36px; border-radius: 50%;">
+                                        {{ getInitials(leave.employee?.prenom, leave.employee?.nom) }}
+                                    </div>
+                                    <div class="fw-bold">{{ leave.employee?.prenom }} {{ leave.employee?.nom }}</div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">{{ leave.type || 'Congé payé' }}</span>
+                            </td>
+                            <td>
+                                <div class="text-sm">Du {{ formatDate(leave.start_date) }}</div>
+                                <div class="text-sm">Au {{ formatDate(leave.end_date) }}</div>
+                            </td>
+                            <td>{{ leave.days || '?' }} jours</td>
+                            <td>
+                                <span class="badge" :class="getStatusClass(leave.status)">
+                                    <i class="bi me-1" :class="getStatusIcon(leave.status)"></i>
+                                    {{ leave.status || 'En attente' }}
+                                </span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <button v-if="leave.status === 'En attente'" class="btn btn-sm btn-success text-white me-1" title="Approuver">
+                                    <i class="bi bi-check-lg"></i>
+                                </button>
+                                <button v-if="leave.status === 'En attente'" class="btn btn-sm btn-danger text-white me-1" title="Refuser">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                                <button class="btn btn-sm btn-light text-primary" title="Détails">
+                                    <i class="bi bi-three-dots"></i>
+                                </button>
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-            <div class="card-footer bg-white small text-muted">
-                <span>{{ filteredLeaves.length }} demande(s) sur {{ leaves.length }}</span>
-            </div>
         </div>
-    </GelLayout>
+    </div>
+  </div>
 </template>
+
+<script setup>
+import { ref, computed } from 'vue';
+import FilterChips from '../../../../Components/FilterChips.vue';
+
+const props = defineProps({
+    leaves: {
+        type: Object,
+        default: () => ({ data: [] })
+    }
+});
+
+const search = ref('');
+const filterStatus = ref('');
+const filterPeriod = ref('');
+
+const activeFilters = computed(() => {
+    const filters = [];
+    if (search.value) filters.push({ key: 'search', label: 'Employé', value: search.value });
+    if (filterStatus.value) filters.push({ key: 'status', label: 'Statut', value: filterStatus.value });
+    if (filterPeriod.value) filters.push({ key: 'period', label: 'Période', value: filterPeriod.value });
+    return filters;
+});
+
+const removeFilter = (key) => {
+    if (key === 'search') search.value = '';
+    if (key === 'status') filterStatus.value = '';
+    if (key === 'period') filterPeriod.value = '';
+};
+
+const clearAllFilters = () => {
+    search.value = '';
+    filterStatus.value = '';
+    filterPeriod.value = '';
+};
+
+const getInitials = (prenom, nom) => {
+    let initials = '';
+    if (prenom) initials += prenom.charAt(0);
+    if (nom) initials += nom.charAt(0);
+    return initials.toUpperCase() || 'EMP';
+};
+
+const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR');
+};
+
+const getStatusClass = (status) => {
+    switch(status?.toLowerCase()) {
+        case 'approuvé': return 'bg-success-subtle text-success border border-success-subtle';
+        case 'refusé': return 'bg-danger-subtle text-danger border border-danger-subtle';
+        case 'en attente':
+        default: return 'bg-warning-subtle text-warning border border-warning-subtle';
+    }
+};
+
+const getStatusIcon = (status) => {
+    switch(status?.toLowerCase()) {
+        case 'approuvé': return 'bi-check-circle-fill';
+        case 'refusé': return 'bi-x-circle-fill';
+        case 'en attente':
+        default: return 'bi-clock-fill';
+    }
+};
+</script>
+
+<style scoped>
+.avatar-circle {
+    font-size: 1rem;
+}
+.shadow-sm {
+    box-shadow: 0 .125rem .25rem rgba(0,0,0,.075)!important;
+}
+.bg-success-subtle {
+    background-color: #d1e7dd !important;
+}
+.bg-warning-subtle {
+    background-color: #fff3cd !important;
+}
+.bg-danger-subtle {
+    background-color: #f8d7da !important;
+}
+</style>

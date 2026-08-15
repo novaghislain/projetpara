@@ -5,9 +5,16 @@ namespace App\Models\Gel;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 /**
  * Modèle Client (Client du cabinet).
+ *
+ * LEXIQUE TECHNIQUE : FRONTIÈRE D'ISOLATION
+ * - Entreprise : Entité racine (SaaS), facturation de la plateforme GEL.
+ * - Cabinet : Le cabinet d'expertise comptable (Tenant principal).
+ * - Client : Le "Dossier" géré par le cabinet. Sert de base au cloisonnement 
+ *            (multi-tenant métier via `client_id`) pour toutes les tables transactionnelles.
  *
  * Représente une entreprise cliente d'un cabinet comptable.
  * Un client peut avoir ses propres utilisateurs, journaux, exercices
@@ -37,12 +44,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Client extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, HasUuids;
 
     protected $table = 'gel_clients';
 
     protected $fillable = [
         'cabinet_id',
+        'independant_client_id',
         'nom_entreprise',
         'sigle',
         'email',
@@ -55,10 +63,16 @@ class Client extends Model
         'logo',
         'statut',
         'compte_comptable_id',
+        'score_conformite',
+        'score_calcule_at',
+        'created_by',
+        'notes',
     ];
 
     protected $casts = [
-        'statut' => 'string',
+        'statut'           => 'string',
+        'score_conformite' => 'integer',
+        'score_calcule_at' => 'datetime',
     ];
 
     public function cabinet()
@@ -68,7 +82,7 @@ class Client extends Model
 
     public function users()
     {
-        return $this->hasMany(User::class, 'client_id');
+        return $this->hasMany(\App\Models\User::class, 'client_id');
     }
 
     public function invitations()
@@ -101,5 +115,38 @@ class Client extends Model
         return $this->belongsToMany(\App\Models\PortalContact::class, 'contact_entreprise', 'client_id', 'portal_contact_id')
             ->withPivot('is_active')
             ->withTimestamps();
+    }
+
+    public function conformite()
+    {
+        return $this->hasMany(Conformite::class, 'client_id');
+    }
+
+    public function conformite_actions()
+    {
+        return $this->hasMany(ConformiteAction::class);
+    }
+
+    public function salaries()
+    {
+        return $this->hasMany(Salarie::class);
+    }
+
+    public function immobilisations()
+    {
+        return $this->hasMany(Immobilisation::class);
+    }
+
+    public function bulletins()
+    {
+        return $this->hasMany(Bulletin::class);
+    }
+
+    /**
+     * Obtenir les déclarations fiscales du client.
+     */
+    public function declarationsFiscales()
+    {
+        return $this->hasMany(DeclarationFiscale::class, 'client_id');
     }
 }

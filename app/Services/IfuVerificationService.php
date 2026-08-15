@@ -38,7 +38,9 @@ class IfuVerificationService
 
         $base = (int) substr($ifu, 0, 7);
         $cle = (int) substr($ifu, 7, 2);
-        $cleCalculee = (97 - ($base % 97)) % 97;
+        // La clé rend le NOMBRE COMPLET divisible par 97 :
+        //   (base × 100 + clé) mod 97 === 0
+        $cleCalculee = (97 - (($base * 100) % 97)) % 97;
 
         return [
             'valide'       => $valide,
@@ -61,6 +63,10 @@ class IfuVerificationService
 
     /**
      * Générer un IFU valide à partir d'une base de 7 chiffres.
+     *
+     * La clé est calculée pour que le nombre complet (9 chiffres) soit
+     * divisible par 97 : (base × 100 + clé) mod 97 === 0 — cohérent avec
+     * `estValide()` (norme ISO 7064 mod 97-10).
      */
     public function generer(string $base): ?string
     {
@@ -69,7 +75,7 @@ class IfuVerificationService
         }
 
         $baseNum = (int) $base;
-        $cle = (97 - ($baseNum % 97)) % 97;
+        $cle = (97 - (($baseNum * 100) % 97)) % 97;
 
         return $base . str_pad((string) $cle, 2, '0', STR_PAD_LEFT);
     }

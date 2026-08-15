@@ -31,7 +31,7 @@ class ReunionsController extends Controller
     {
         $user = Auth::user();
 
-        $activeClientId = session('active_client_id') ?? $user->active_client_id ?? $user->client_id;
+        $activeClientId = $request->query('client_id') ?? session('active_client_id') ?? $user->active_client_id ?? $user->client_id;
         $activeClient = $activeClientId ? Client::find($activeClientId) : null;
 
         // ─── Réunions planifiées (agenda, type reunion) ──────────────────────
