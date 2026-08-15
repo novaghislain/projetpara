@@ -475,12 +475,17 @@ const sidebarBySection = {
             { label: 'Clôture',           href: '/accounting/closing',           icon: 'bi-lock' },
         ]},
     ],
-    'gel-settings': [
-        { group: '', items: [
-            { label: 'Mon profil',        href: '/settings',         icon: 'bi-person-circle' },
-            { label: 'Paramètres',        href: '/settings',         icon: 'bi-gear' },
-        ]},
-    ],
+      'gel-settings': [
+          { group: 'Configuration Générale', items: [
+              { label: 'Informations Entreprise',   href: '/settings',         icon: 'bi-building' },
+              { label: 'Sécurité & Accès',          href: '/securite',         icon: 'bi-shield-lock' },
+              { label: 'Utilisateurs & Rôles',      href: '/settings',         icon: 'bi-people' },
+          ]},
+          { group: 'Secrétariat Juridique', items: [
+              { label: 'Dossiers',                  href: '/juridique/dossiers', icon: 'bi-folder2-open' },
+              { label: 'Registres & AG',            href: '/juridique/assemblees', icon: 'bi-journal-bookmark' },
+          ]},
+      ],
     'dae-dashboard': [
         { group: '', items: [
             { label: 'Tableau de bord',   href: '/dae',               icon: 'bi-speedometer2' },

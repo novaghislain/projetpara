@@ -435,7 +435,7 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client',
     });
     // Réglages
     Route::get('/settings', function () {
-        return view('app', ['page' => 'settings']);
+        return view('app', ['page' => 'Gel/Settings/Index']);
     })->name('settings');
 
     // API endpoints (données JSON pour Vue)
