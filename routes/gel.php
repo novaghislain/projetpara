@@ -560,20 +560,20 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client',
         Route::get('/api/accounting/reports/bilan/{clientId}', [ReportController::class, 'bilan']);
         Route::get('/api/accounting/reports/resultat/{clientId}', [ReportController::class, 'resultat']);
 
-        // Comptabilité - Pages des nouvelles fonctionnalités
-        Route::get('/accounting/accounts', function () {
-            return view('app', ['page' => 'gel-accounting-accounts']);
-        })->name('accounting.accounts');
-        Route::get('/accounting/journals', function () {
-            return view('app', ['page' => 'gel-accounting-journals']);
-        })->name('accounting.journals');
-        Route::get('/accounting/entries', function () {
-            return view('app', ['page' => 'gel-accounting-entries']);
-        })->name('accounting.entries');
-        Route::get('/accounting/reports', function () {
-            return view('app', ['page' => 'gel-accounting-reports']);
-        })->name('accounting.reports');
-        Route::get('/accounting/budgets/{clientId}', function ($clientId) {
+    // Comptabilité - Pages des nouvelles fonctionnalités
+    Route::get('/accounting/accounts', function () {
+        return view('app', ['page' => 'Gel/Accounting/Accounts/Index']);
+    })->name('accounting.accounts');
+    Route::get('/accounting/journals', function () {
+        return view('app', ['page' => 'Gel/Accounting/Journals/Index']);
+    })->name('accounting.journals');
+    Route::get('/accounting/entries', function () {
+        return view('app', ['page' => 'Gel/Accounting/Entries/Index']);
+    })->name('accounting.entries');
+    Route::get('/accounting/reports', function () {
+        return view('app', ['page' => 'Gel/Accounting/Reports/Index']);
+    })->name('accounting.reports');
+    Route::get('/accounting/budgets/{clientId}', function ($clientId) {
             return view('app', ['page' => 'gel-accounting-budgets', 'clientId' => $clientId]);
         })->name('accounting.budgets');
         Route::get('/accounting/tax-declarations/{clientId}', function ($clientId) {
