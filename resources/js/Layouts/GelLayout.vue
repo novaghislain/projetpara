@@ -251,6 +251,7 @@ const navItems = [
     { name: 'Juridique',      icon: 'bi-briefcase',           route: '/juridique',                 key: 'legal-dashboard',    group: 'juridique', module: 'juridique' },
 
     // ── Logiciel Comptabilité ──
+    { name: 'CRM & Ventes',   icon: 'bi-people',              route: '/crm',                       key: 'erp-crm',            group: 'logiciel_compta', module: 'commerce' },
     { name: 'Commandes',      icon: 'bi-cart-check',          route: '/admin/catalogue/orders',    key: 'erp-orders',         group: 'logiciel_compta', module: 'commerce' },
     { name: 'Catalogue',      icon: 'bi-tags',                route: '/admin/catalogue/services',  key: 'erp-catalogue',      group: 'logiciel_compta', module: 'commerce' },
     { name: 'Finance ERP',    icon: 'bi-receipt',             route: '/erp/invoices',              key: 'erp-invoice',        group: 'logiciel_compta', module: 'facturation' },
@@ -384,6 +385,12 @@ const sidebarBySection = {
         { group: '', items: [
             { label: 'Services',          href: '/admin/catalogue/services',         icon: 'bi-tags' },
             { label: 'Commandes en cours',href: '/admin/catalogue/orders',           icon: 'bi-cart-check' },
+        ]},
+    ],
+    'erp-crm': [
+        { group: '', items: [
+            { label: 'Pipeline Commercial', href: '/crm', icon: 'bi-funnel' },
+            { label: 'Clients & Devis',     href: '/crm', icon: 'bi-people' },
         ]},
     ],
     'erp-stock': [
@@ -573,6 +580,7 @@ const sectionTitles = {
     'erp-orders': 'Commandes',
     'erp-archives': 'Archives',
     'erp-catalogue': 'Catalogue',
+    'erp-crm': 'CRM & Ventes',
     'erp-invoice': 'Finance ERP',
     'erp-stock': 'Stocks',
     'erp-treasury': 'Trésorerie',
@@ -622,6 +630,7 @@ const pageKey = computed(() => {
     if (path.startsWith('/admin/catalogue/orders/archives')) return 'erp-archives';
     if (path.startsWith('/admin/catalogue/orders'))          return 'erp-orders';
     if (path.startsWith('/admin/catalogue/services'))        return 'erp-catalogue';
+    if (path.startsWith('/crm'))                             return 'erp-crm';
     if (path.startsWith('/erp/stocks'))     return 'erp-stock';
     if (path.startsWith('/erp/invoices'))   return 'erp-invoice';
     if (path.startsWith('/erp/treasury'))   return 'erp-treasury';

@@ -857,6 +857,14 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client',
 
     // ERP - module:erp
     Route::middleware('module:erp')->group(function () {
+        Route::get('/invoices', function () {
+            return view('app', ['page' => 'Gel/Erp/Invoices/Index']);
+        })->name('erp.invoices');
+        
+        Route::get('/crm', function () {
+            return view('app', ['page' => 'Gel/Erp/Crm/Index']);
+        })->name('erp.crm');
+
         Route::get('/erp/stocks', fn() => view('app', ['page' => 'erp-stock']))->name('erp.stock');
         Route::get('/erp/invoices', fn() => view('app', ['page' => 'erp-invoice']))->name('erp.invoice');
         Route::get('/erp/treasury', fn() => view('app', ['page' => 'erp-treasury']))->name('erp.treasury');
