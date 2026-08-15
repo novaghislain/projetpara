@@ -261,6 +261,7 @@ const navItems = [
     { name: 'Plan comptable',    icon: 'bi-list-columns-reverse',  route: '/accounting/accounts',  key: 'gel-compta-plan',       group: 'logiciel_compta' },
     { name: 'Journaux',          icon: 'bi-bookmark-check',        route: '/accounting/journals',  key: 'gel-compta-journaux',   group: 'logiciel_compta' },
     { name: 'Écritures',         icon: 'bi-journal-text',          route: '/accounting/entries',   key: 'gel-compta-ecritures',  group: 'logiciel_compta' },
+    { name: 'Immos.',            icon: 'bi-building-gear',         route: '/accounting/assets',    key: 'gel-compta-assets',     group: 'logiciel_compta' },
     { name: 'États fin.',        icon: 'bi-file-earmark-bar-graph',route: '/accounting/reports',   key: 'gel-compta-etats',      group: 'logiciel_compta' },
 
     // ── IA & Automatisation ──
