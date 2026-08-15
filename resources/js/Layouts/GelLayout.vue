@@ -263,6 +263,7 @@ const navItems = [
     { name: 'Écritures',         icon: 'bi-journal-text',          route: '/accounting/entries',   key: 'gel-compta-ecritures',  group: 'logiciel_compta' },
     { name: 'Immos.',            icon: 'bi-building-gear',         route: '/accounting/assets',    key: 'gel-compta-assets',     group: 'logiciel_compta' },
     { name: 'États fin.',        icon: 'bi-file-earmark-bar-graph',route: '/accounting/reports',   key: 'gel-compta-etats',      group: 'logiciel_compta' },
+    { name: 'Analytique',        icon: 'bi-pie-chart-fill',        route: '/analytics/dashboard',  key: 'gel-analytics',         group: 'logiciel_compta' },
 
     // ── IA & Automatisation ──
     { name: 'Agents IA',          icon: 'bi-robot',            route: '/ai/agents',                 key: 'ai-agents',          group: 'ia_automation' },
