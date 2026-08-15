@@ -734,7 +734,9 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client',
 
     // ─── Workflows d'approbation ─────────────────────────────────────────
     Route::prefix('approval-workflows')->name('gel.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Gel\ApprovalWorkflowController::class, 'index'])->name('approval-workflows.index');
+        Route::get('/', function () {
+            return view('app', ['page' => 'Gel/Document/Workflows/Index']);
+        })->name('approval-workflows.index');
         Route::get('/create', [\App\Http\Controllers\Gel\ApprovalWorkflowController::class, 'create'])->name('approval-workflows.create');
         Route::post('/', [\App\Http\Controllers\Gel\ApprovalWorkflowController::class, 'store'])->name('approval-workflows.store');
         Route::get('/{workflow}', [\App\Http\Controllers\Gel\ApprovalWorkflowController::class, 'show'])->name('approval-workflows.show');
