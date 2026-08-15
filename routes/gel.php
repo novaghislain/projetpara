@@ -576,6 +576,9 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client',
     Route::get('/accounting/assets', function () {
         return view('app', ['page' => 'Gel/Accounting/FixedAssets/Index']);
     })->name('accounting.assets');
+    Route::get('/accounting/tax-declarations', function () {
+        return view('app', ['page' => 'Gel/Accounting/TaxDeclarations/Index']);
+    })->name('accounting.tax-declarations');
     Route::get('/analytics/dashboard', function () {
         return view('app', ['page' => 'Gel/Analytics/Dashboard']);
     })->name('analytics.dashboard');

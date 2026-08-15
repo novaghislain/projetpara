@@ -262,6 +262,7 @@ const navItems = [
     { name: 'Journaux',          icon: 'bi-bookmark-check',        route: '/accounting/journals',  key: 'gel-compta-journaux',   group: 'logiciel_compta' },
     { name: 'Écritures',         icon: 'bi-journal-text',          route: '/accounting/entries',   key: 'gel-compta-ecritures',  group: 'logiciel_compta' },
     { name: 'Immos.',            icon: 'bi-building-gear',         route: '/accounting/assets',    key: 'gel-compta-assets',     group: 'logiciel_compta' },
+    { name: 'Fiscalité',         icon: 'bi-bank',                  route: '/accounting/tax-declarations', key: 'gel-compta-taxes', group: 'logiciel_compta' },
     { name: 'États fin.',        icon: 'bi-file-earmark-bar-graph',route: '/accounting/reports',   key: 'gel-compta-etats',      group: 'logiciel_compta' },
     { name: 'Analytique',        icon: 'bi-pie-chart-fill',        route: '/analytics/dashboard',  key: 'gel-analytics',         group: 'logiciel_compta' },
 
