@@ -257,13 +257,11 @@ const navItems = [
     { name: 'Caisse',         icon: 'bi-cash-stack',          route: '/erp/treasury',              key: 'erp-treasury',       group: 'logiciel_compta', module: 'caisse' },
     { name: 'Tontines',       icon: 'bi-piggy-bank',          route: '/tontines',                  key: 'gel-tontines',       group: 'logiciel_compta', module: 'caisse' },
     { name: 'Validations',    icon: 'bi-check-all',           route: '/approval-workflows',        key: 'gel-approval-workflows', group: 'logiciel_compta', module: 'document' },
-    // ── Comptabilité GEL (vues Blade) ──
-    { name: '📋 Plan comptable',  icon: 'bi-list-columns-reverse', route: '/gel/comptabilite/plan-comptable',  key: 'gel-compta-plan',       group: 'logiciel_compta' },
-    { name: '📒 Journaux',       icon: 'bi-bookmark-check',        route: '/gel/comptabilite/journaux',        key: 'gel-compta-journaux',   group: 'logiciel_compta' },
-    { name: '📝 Écritures',      icon: 'bi-journal-text',          route: '/gel/comptabilite/ecritures',       key: 'gel-compta-ecritures',  group: 'logiciel_compta' },
-    { name: '📚 Grand Livre',    icon: 'bi-book',                  route: '/gel/comptabilite/grand-livre',     key: 'gel-compta-gl',         group: 'logiciel_compta' },
-    { name: '📊 Balance',        icon: 'bi-table',                 route: '/gel/comptabilite/balance',         key: 'gel-compta-balance',    group: 'logiciel_compta' },
-    { name: '📈 États fin.',     icon: 'bi-file-earmark-bar-graph', route: '/gel/comptabilite/etats-financiers', key: 'gel-compta-etats',     group: 'logiciel_compta' },
+    // 💼 Comptabilité GEL (vues Blade) 💼
+    { name: 'Plan comptable',    icon: 'bi-list-columns-reverse',  route: '/accounting/accounts',  key: 'gel-compta-plan',       group: 'logiciel_compta' },
+    { name: 'Journaux',          icon: 'bi-bookmark-check',        route: '/accounting/journals',  key: 'gel-compta-journaux',   group: 'logiciel_compta' },
+    { name: 'Écritures',         icon: 'bi-journal-text',          route: '/accounting/entries',   key: 'gel-compta-ecritures',  group: 'logiciel_compta' },
+    { name: 'États fin.',        icon: 'bi-file-earmark-bar-graph',route: '/accounting/reports',   key: 'gel-compta-etats',      group: 'logiciel_compta' },
 
     // ── IA & Automatisation ──
     { name: 'Agents IA',          icon: 'bi-robot',            route: '/ai/agents',                 key: 'ai-agents',          group: 'ia_automation' },
