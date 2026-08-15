@@ -865,7 +865,9 @@ Route::middleware(['auth', 'verified', 'not_suspended', 'company', 'not_client',
             return view('app', ['page' => 'Gel/Erp/Crm/Index']);
         })->name('erp.crm');
 
-        Route::get('/erp/stocks', fn() => view('app', ['page' => 'erp-stock']))->name('erp.stock');
+        Route::get('/erp/stocks', function () {
+            return view('app', ['page' => 'Gel/Erp/Stocks/Index']);
+        })->name('erp.stock');
         Route::get('/erp/invoices', fn() => view('app', ['page' => 'erp-invoice']))->name('erp.invoice');
         Route::get('/erp/treasury', fn() => view('app', ['page' => 'erp-treasury']))->name('erp.treasury');
 
